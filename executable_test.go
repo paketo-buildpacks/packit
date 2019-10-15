@@ -47,7 +47,7 @@ var _ = Describe("Executable", func() {
 			Expect(stdout).To(ContainSubstring("Output on stdout"))
 			Expect(stderr).To(ContainSubstring("Output on stderr"))
 
-			Expect(stdout).To(ContainSubstring("Arguments: [some-executable something]"))
+			Expect(stdout).To(ContainSubstring(fmt.Sprintf("Arguments: [%s something]", fakeCLI)))
 		})
 
 		Context("when given a execution directory", func() {
@@ -88,34 +88,47 @@ var _ = Describe("Executable", func() {
 			})
 		})
 
-		Context("when the executable errors", func() {
-			var (
-				errorCLI string
-				path     string
-			)
-
-			BeforeEach(func() {
-				os.Setenv("PATH", existingPath)
-
-				var err error
-				errorCLI, err = gexec.Build("github.com/cloudfoundry/packit/fakes/some-executable", "-ldflags", "-X main.fail=true")
-				Expect(err).NotTo(HaveOccurred())
-
-				path = os.Getenv("PATH")
-				os.Setenv("PATH", filepath.Dir(errorCLI))
-			})
-
-			AfterEach(func() {
-				os.Setenv("PATH", path)
-			})
-
-			It("executes the given arguments against the executable", func() {
-				stdout, stderr, err := executable.Execute(packit.Execution{
-					Args: []string{"something"},
+		Context("failure cases", func() {
+			Context("when the executable cannot be found on the path", func() {
+				BeforeEach(func() {
+					os.Unsetenv("PATH")
 				})
-				Expect(err).To(MatchError("exit status 1"))
-				Expect(stdout).To(ContainSubstring("Error on stdout"))
-				Expect(stderr).To(ContainSubstring("Error on stderr"))
+
+				It("returns an error", func() {
+					_, _, err := executable.Execute(packit.Execution{})
+					Expect(err).To(MatchError("exec: \"some-executable\": executable file not found in $PATH"))
+				})
+			})
+
+			Context("when the executable errors", func() {
+				var (
+					errorCLI string
+					path     string
+				)
+
+				BeforeEach(func() {
+					os.Setenv("PATH", existingPath)
+
+					var err error
+					errorCLI, err = gexec.Build("github.com/cloudfoundry/packit/fakes/some-executable", "-ldflags", "-X main.fail=true")
+					Expect(err).NotTo(HaveOccurred())
+
+					path = os.Getenv("PATH")
+					os.Setenv("PATH", filepath.Dir(errorCLI))
+				})
+
+				AfterEach(func() {
+					os.Setenv("PATH", path)
+				})
+
+				It("executes the given arguments against the executable", func() {
+					stdout, stderr, err := executable.Execute(packit.Execution{
+						Args: []string{"something"},
+					})
+					Expect(err).To(MatchError("exit status 1"))
+					Expect(stdout).To(ContainSubstring("Error on stdout"))
+					Expect(stderr).To(ContainSubstring("Error on stderr"))
+				})
 			})
 		})
 	})
