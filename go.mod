@@ -4,6 +4,7 @@ go 1.12
 
 require (
 	code.cloudfoundry.org/lager v2.0.0+incompatible
+	github.com/BurntSushi/toml v0.3.1
 	github.com/cheggaaa/pb v2.0.7+incompatible
 	github.com/mattn/go-colorable v0.1.4 // indirect
 	github.com/mattn/go-isatty v0.0.10 // indirect

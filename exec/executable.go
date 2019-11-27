@@ -1,4 +1,4 @@
-package packit
+package exec
 
 import (
 	"bytes"

@@ -1,4 +1,4 @@
-package packit_test
+package internal_test
 
 import (
 	"fmt"
@@ -11,12 +11,11 @@ import (
 	"github.com/sclevine/spec/report"
 )
 
-func TestUnitPackit(t *testing.T) {
-	suite := spec.New("packit", spec.Report(report.Terminal{}))
-	suite("Build", testBuild)
-	suite("Detect", testDetect)
-	suite("Environment", testEnvironment)
-	suite("Layers", testLayers)
+func TestUnitInternal(t *testing.T) {
+	suite := spec.New("packit/internal", spec.Report(report.Terminal{}))
+	suite("EnvironmentWriter", testEnvironmentWriter)
+	suite("ExitHandler", testExitHandler)
+	suite("TOMLWriter", testTOMLWriter)
 	suite.Run(t)
 }
 
