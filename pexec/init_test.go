@@ -1,4 +1,4 @@
-package exec_test
+package pexec_test
 
 import (
 	"testing"
@@ -8,7 +8,7 @@ import (
 )
 
 func TestUnitExec(t *testing.T) {
-	suite := spec.New("packit/exec", spec.Report(report.Terminal{}))
-	suite("Exec", testExec)
+	suite := spec.New("packit/pexec", spec.Report(report.Terminal{}))
+	suite("pexec", testPexec)
 	suite.Run(t)
 }
