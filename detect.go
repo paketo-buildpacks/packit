@@ -1,7 +1,6 @@
 package packit
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/BurntSushi/toml"
@@ -56,9 +55,6 @@ func Detect(f DetectFunc, options ...Option) {
 		config.exitHandler.Error(err)
 		return
 	}
-
-	fmt.Println("CONFIG ARGS")
-	fmt.Printf("%+v\n", config.args)
 
 	file, err := os.OpenFile(config.args[2], os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0644)
 	if err != nil {
