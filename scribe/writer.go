@@ -2,42 +2,41 @@ package scribe
 
 import (
 	"bytes"
-	"fmt"
 	"io"
 )
 
-type Option func(Log) Log
+type Option func(Writer) Writer
 
 func WithColor(color Color) Option {
-	return func(l Log) Log {
+	return func(l Writer) Writer {
 		l.color = color
 		return l
 	}
 }
 
 func WithIndent(indent int) Option {
-	return func(l Log) Log {
+	return func(l Writer) Writer {
 		l.indent = indent
 		return l
 	}
 }
 
-type Log struct {
-	w      io.Writer
+type Writer struct {
+	writer io.Writer
 	color  Color
 	indent int
 }
 
-func NewLog(w io.Writer, options ...Option) Log {
-	log := Log{w: w}
+func NewWriter(writer io.Writer, options ...Option) Writer {
+	w := Writer{writer: writer}
 	for _, option := range options {
-		log = option(log)
+		w = option(w)
 	}
 
-	return log
+	return w
 }
 
-func (l Log) Write(b []byte) (int, error) {
+func (w Writer) Write(b []byte) (int, error) {
 	var (
 		prefix, suffix []byte
 		reset          = []byte("\r")
@@ -58,7 +57,7 @@ func (l Log) Write(b []byte) (int, error) {
 
 	var indentedLines [][]byte
 	for _, line := range lines {
-		for i := 0; i < l.indent; i++ {
+		for i := 0; i < w.indent; i++ {
 			line = append([]byte("  "), line...)
 		}
 		indentedLines = append(indentedLines, line)
@@ -66,8 +65,8 @@ func (l Log) Write(b []byte) (int, error) {
 
 	b = bytes.Join(indentedLines, newline)
 
-	if l.color != nil {
-		b = []byte(l.color(string(b)))
+	if w.color != nil {
+		b = []byte(w.color(string(b)))
 	}
 
 	if prefix != nil {
@@ -78,21 +77,5 @@ func (l Log) Write(b []byte) (int, error) {
 		b = append(b, suffix...)
 	}
 
-	return l.w.Write(b)
-}
-
-func (l Log) Print(v ...interface{}) {
-	fmt.Fprint(l, v...)
-}
-
-func (l Log) Println(v ...interface{}) {
-	fmt.Fprintln(l, v...)
-}
-
-func (l Log) Printf(format string, v ...interface{}) {
-	fmt.Fprintf(l, format, v...)
-}
-
-func (l Log) Break() {
-	l.Println()
+	return w.writer.Write(b)
 }
