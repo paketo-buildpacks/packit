@@ -7,7 +7,7 @@ import (
 	"github.com/sclevine/spec/report"
 )
 
-func TestUnitNode(t *testing.T) {
+func TestVacation(t *testing.T) {
 	suite := spec.New("vacation", spec.Report(report.Terminal{}))
 	suite("Vacation", testVacation)
 	suite.Run(t)
