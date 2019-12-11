@@ -1,4 +1,4 @@
-package cargo_test
+package main_test
 
 import (
 	"archive/tar"
@@ -9,18 +9,34 @@ import (
 	"os"
 	"testing"
 
+	"github.com/onsi/gomega/gexec"
 	"github.com/sclevine/spec"
 	"github.com/sclevine/spec/report"
+
+	. "github.com/onsi/gomega"
 )
 
-func TestUnitCargo(t *testing.T) {
-	suite := spec.New("cargo", spec.Report(report.Terminal{}))
-	suite("BuildpackParser", testBuildpackParser)
-	suite("FileBundler", testFileBundler)
-	suite("TarBuilder", testTarBuilder)
-	suite("Transport", testTransport)
-	suite("ValidatedReader", testValidatedReader)
-	suite("PrePackager", testPrePackager)
+var path string
+
+func TestUnitJam(t *testing.T) {
+	suite := spec.New("cargo/jam", spec.Report(report.Terminal{}))
+	suite("pack", testPack)
+	suite("Errors", testErrors)
+
+	suite.Before(func(t *testing.T) {
+		var (
+			Expect = NewWithT(t).Expect
+			err    error
+		)
+
+		path, err = gexec.Build("github.com/cloudfoundry/packit/cargo/jam")
+		Expect(err).NotTo(HaveOccurred())
+	})
+
+	suite.After(func(t *testing.T) {
+		gexec.CleanupBuildArtifacts()
+	})
+
 	suite.Run(t)
 }
 

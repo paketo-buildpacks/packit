@@ -11,6 +11,7 @@ import (
 	"github.com/cloudfoundry/packit/fakes"
 	"github.com/sclevine/spec"
 
+	. "github.com/cloudfoundry/packit/matchers"
 	. "github.com/onsi/gomega"
 )
 

@@ -7,9 +7,10 @@ import (
 	"testing"
 
 	"github.com/cloudfoundry/packit/internal"
-
-	. "github.com/onsi/gomega"
 	"github.com/sclevine/spec"
+
+	. "github.com/cloudfoundry/packit/matchers"
+	. "github.com/onsi/gomega"
 )
 
 func testTOMLWriter(t *testing.T, context spec.G, it spec.S) {
