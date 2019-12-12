@@ -19,8 +19,18 @@ type ConfigBuildpack struct {
 }
 
 type ConfigMetadata struct {
-	IncludeFiles []string `toml:"include_files"`
-	PrePackage   string   `toml:"pre_package"`
+	IncludeFiles []string     `toml:"include_files"`
+	PrePackage   string       `toml:"pre_package"`
+	Dependencies []Dependency `toml:"dependencies"`
+}
+
+type Dependency struct {
+	ID      string   `toml:"id"`
+	Name    string   `toml:"name"`
+	Sha256  string   `toml:"sha256"`
+	Stacks  []string `toml:"stacks"`
+	Uri     string   `toml:"uri"`
+	Version string   `toml:"version"`
 }
 
 type BuildpackParser struct{}

@@ -21,12 +21,14 @@ func testPack(t *testing.T, context spec.G, it spec.S) {
 	var (
 		Expect = NewWithT(t).Expect
 
-		buffer       *bytes.Buffer
-		configParser *fakes.ConfigParser
-		tarBuilder   *fakes.TarBuilder
-		prePackager  *fakes.PrePackager
-		fileBundler  *fakes.FileBundler
-		tempDir      string
+		buffer              *bytes.Buffer
+		directoryDuplicator *fakes.DirectoryDuplicator
+		configParser        *fakes.ConfigParser
+		tarBuilder          *fakes.TarBuilder
+		prePackager         *fakes.PrePackager
+		fileBundler         *fakes.FileBundler
+		tempDir             string
+		tempCopyDir         string
 
 		command commands.Pack
 	)
@@ -58,21 +60,27 @@ func testPack(t *testing.T, context spec.G, it spec.S) {
 			},
 		}
 
+		directoryDuplicator = &fakes.DirectoryDuplicator{}
+
 		tarBuilder = &fakes.TarBuilder{}
 
 		buffer = bytes.NewBuffer(nil)
 
 		prePackager = &fakes.PrePackager{}
 
-		command = commands.NewPack(configParser, prePackager, fileBundler, tarBuilder, buffer)
+		command = commands.NewPack(directoryDuplicator, configParser, prePackager, fileBundler, tarBuilder, buffer)
 
 		var err error
 		tempDir, err = ioutil.TempDir("", "buildpack")
+		Expect(err).NotTo(HaveOccurred())
+		tempCopyDir, err = ioutil.TempDir("", "dup-dest")
 		Expect(err).NotTo(HaveOccurred())
 	})
 
 	it.After(func() {
 		Expect(os.RemoveAll(tempDir)).To(Succeed())
+		Expect(os.RemoveAll(tempCopyDir)).To(Succeed())
+
 	})
 
 	context("Execute", func() {
@@ -85,10 +93,15 @@ func testPack(t *testing.T, context spec.G, it spec.S) {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(buffer).To(ContainSubstring("Packing some-buildpack-name some-buildpack-version...\n"))
 
-			Expect(prePackager.ExecuteCall.Receives.Path).To(Equal("some-prepackage-script"))
-			Expect(prePackager.ExecuteCall.Receives.RootDir).To(Equal("buildpack-root"))
+			Expect(directoryDuplicator.DuplicateCall.Receives.SourcePath).To(Equal("buildpack-root"))
+			Expect(directoryDuplicator.DuplicateCall.Receives.DestPath).To(HavePrefix(os.TempDir()))
 
-			Expect(configParser.ParseCall.Receives.Path).To(Equal("buildpack-root/some-buildpack.toml"))
+			buildpackRoot := directoryDuplicator.DuplicateCall.Receives.DestPath
+
+			Expect(configParser.ParseCall.Receives.Path).To(Equal(filepath.Join(buildpackRoot, "some-buildpack.toml")))
+
+			Expect(prePackager.ExecuteCall.Receives.Path).To(Equal("some-prepackage-script"))
+			Expect(prePackager.ExecuteCall.Receives.RootDir).To(Equal(buildpackRoot))
 
 			Expect(tarBuilder.BuildCall.Receives.Path).To(Equal("some-output.tgz"))
 			Expect(tarBuilder.BuildCall.Receives.Files).To(HaveLen(1))
@@ -156,6 +169,20 @@ func testPack(t *testing.T, context spec.G, it spec.S) {
 			})
 		})
 
+		context("when the directoryDuplicator fails", func() {
+			it.Before(func() {
+				directoryDuplicator.DuplicateCall.Returns.Error = errors.New("duplication failed")
+			})
+
+			it("returns an error", func() {
+				err := command.Execute([]string{
+					"--buildpack", "no-such-buildpack.toml",
+					"--output", filepath.Join(tempDir, "tempBuildpack.tar.gz"),
+					"--version", "some-buildpack-version",
+				})
+				Expect(err).To(MatchError("failed to duplicate directory: duplication failed"))
+			})
+		})
 		context("when the prepackager fails", func() {
 			it.Before(func() {
 				prePackager.ExecuteCall.Returns.Error = errors.New("script failed")

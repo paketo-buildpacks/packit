@@ -5,6 +5,8 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"io/ioutil"
+	"os"
 	"path/filepath"
 
 	"github.com/cloudfoundry/packit/cargo"
@@ -30,21 +32,36 @@ type PrePackager interface {
 	Execute(path, rootDir string) error
 }
 
-type Pack struct {
-	configParser ConfigParser
-	tarBuilder   TarBuilder
-	fileBundler  FileBundler
-	prePackager  PrePackager
-	stdout       io.Writer
+//go:generate faux --interface DirectoryDuplicator --output fakes/directory_duplicator.go
+type DirectoryDuplicator interface {
+	Duplicate(sourcePath, destPath string) error
 }
 
-func NewPack(configParser ConfigParser, prePackager PrePackager, fileBundler FileBundler, tarBuilder TarBuilder, stdout io.Writer) Pack {
+type Pack struct {
+	directoryDuplicator DirectoryDuplicator
+	configParser        ConfigParser
+	tarBuilder          TarBuilder
+	fileBundler         FileBundler
+	prePackager         PrePackager
+	stdout              io.Writer
+}
+
+func NewPack(
+	directoryDuplicator DirectoryDuplicator,
+	configParser ConfigParser,
+	prePackager PrePackager,
+	fileBundler FileBundler,
+	tarBuilder TarBuilder,
+	stdout io.Writer,
+) Pack {
+
 	return Pack{
-		configParser: configParser,
-		tarBuilder:   tarBuilder,
-		fileBundler:  fileBundler,
-		prePackager:  prePackager,
-		stdout:       stdout,
+		directoryDuplicator: directoryDuplicator,
+		configParser:        configParser,
+		tarBuilder:          tarBuilder,
+		fileBundler:         fileBundler,
+		prePackager:         prePackager,
+		stdout:              stdout,
 	}
 }
 
@@ -76,6 +93,19 @@ func (p Pack) Execute(args []string) error {
 		return errors.New("missing required flag --version")
 	}
 
+	buildpackDir, err := ioutil.TempDir("", "dup-dest")
+	if err != nil {
+		return fmt.Errorf("unable to create temporary directory: %s", err)
+	}
+	defer os.RemoveAll(buildpackDir)
+
+	err = p.directoryDuplicator.Duplicate(filepath.Dir(buildpackTOMLPath), buildpackDir)
+	if err != nil {
+		return fmt.Errorf("failed to duplicate directory: %s", err)
+	}
+
+	buildpackTOMLPath = filepath.Join(buildpackDir, filepath.Base(buildpackTOMLPath))
+
 	config, err := p.configParser.Parse(buildpackTOMLPath)
 	if err != nil {
 		return fmt.Errorf("failed to parse buildpack.toml: %s", err)
@@ -83,14 +113,14 @@ func (p Pack) Execute(args []string) error {
 
 	config.Buildpack.Version = version
 
-	err = p.prePackager.Execute(config.Metadata.PrePackage, filepath.Dir(buildpackTOMLPath))
+	err = p.prePackager.Execute(config.Metadata.PrePackage, buildpackDir)
 	if err != nil {
 		return fmt.Errorf("failed to execute pre-packaging script %q: %s", config.Metadata.PrePackage, err)
 	}
 
 	fmt.Fprintf(p.stdout, "Packing %s %s...\n", config.Buildpack.Name, version)
 
-	files, err := p.fileBundler.Bundle(filepath.Dir(buildpackTOMLPath), config.Metadata.IncludeFiles, config)
+	files, err := p.fileBundler.Bundle(buildpackDir, config.Metadata.IncludeFiles, config)
 	if err != nil {
 		return fmt.Errorf("failed to bundle files: %s", err)
 	}

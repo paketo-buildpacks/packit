@@ -31,7 +31,16 @@ version = "some-buildpack-version"
 
 [metadata]
 include_files = ["some-include-file", "other-include-file"]
-pre_package = "some-pre-package-script.sh"`)
+pre_package = "some-pre-package-script.sh"
+
+[[metadata.dependencies]]
+  id = "some-dependency"
+  name = "Some Dependency"
+  sha256 = "shasum"
+  stacks = ["io.buildpacks.stacks.bionic", "org.cloudfoundry.stacks.tiny"]
+  uri = "http://some-url"
+  version = "1.2.3"
+`)
 		Expect(err).NotTo(HaveOccurred())
 
 		Expect(file.Close()).To(Succeed())
@@ -62,6 +71,13 @@ pre_package = "some-pre-package-script.sh"`)
 						"other-include-file",
 					},
 					PrePackage: "some-pre-package-script.sh",
+					Dependencies: []cargo.Dependency{{
+						ID:      "some-dependency",
+						Name:    "Some Dependency",
+						Sha256:  "shasum",
+						Stacks:  []string{"io.buildpacks.stacks.bionic", "org.cloudfoundry.stacks.tiny"},
+						Uri:     "http://some-url",
+						Version: "1.2.3"}},
 				},
 			}))
 		})

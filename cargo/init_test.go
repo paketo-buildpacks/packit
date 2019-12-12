@@ -21,6 +21,7 @@ func TestUnitCargo(t *testing.T) {
 	suite("Transport", testTransport)
 	suite("ValidatedReader", testValidatedReader)
 	suite("PrePackager", testPrePackager)
+	suite("DirectoryDuplicator", testDirectoryDuplicator)
 	suite.Run(t)
 }
 

@@ -18,11 +18,12 @@ func main() {
 
 	switch os.Args[1] {
 	case "pack":
+		directoryDuplicator := cargo.NewDirectoryDuplicator()
 		buildpackParser := cargo.NewBuildpackParser()
 		fileBundler := cargo.NewFileBundler()
 		tarBuilder := cargo.NewTarBuilder()
 		prePackager := cargo.NewPrePackager(pexec.NewExecutable("bash", lager.NewLogger("pre-packager")))
-		command := commands.NewPack(buildpackParser, prePackager, fileBundler, tarBuilder, os.Stdout)
+		command := commands.NewPack(directoryDuplicator, buildpackParser, prePackager, fileBundler, tarBuilder, os.Stdout)
 
 		if err := command.Execute(os.Args[2:]); err != nil {
 			fail("failed to execute pack command: %s", err)

@@ -36,7 +36,6 @@ func testPack(t *testing.T, context spec.G, it spec.S) {
 
 	it.After(func() {
 		Expect(os.RemoveAll(tmpDir)).To(Succeed())
-		Expect(os.RemoveAll(filepath.Join("testdata", "example-cnb", "generated-file"))).To(Succeed())
 	})
 
 	it("creates a packaged buildpack", func() {
@@ -66,7 +65,15 @@ version = "some-version"
 
 [metadata]
 include_files = ["bin/build", "bin/detect", "buildpack.toml", "generated-file"]
-pre_package = "./scripts/build.sh"`))
+pre_package = "./scripts/build.sh"
+
+[[metadata.dependencies]]
+  id = "some-dependency"
+  name = "Some Dependency"
+  sha256 = "shasum"
+  stacks = ["io.buildpacks.stacks.bionic", "org.cloudfoundry.stacks.tiny"]
+  uri = "http://some-url"
+  version = "1.2.3"`))
 		Expect(hdr.Mode).To(Equal(int64(0644)))
 
 		contents, hdr, err = ExtractFile(file, "bin/build")
@@ -83,6 +90,65 @@ pre_package = "./scripts/build.sh"`))
 		Expect(err).ToNot(HaveOccurred())
 		Expect(string(contents)).To(Equal("hello\n"))
 		Expect(hdr.Mode).To(Equal(int64(0644)))
+
+		Expect(filepath.Join("testdata", "example-cnb", "generated-file")).NotTo(BeARegularFile())
+	})
+
+	context.Pend("when the buildpack is built to run offline", func() {
+		it("creates an offline packaged buildpack", func() {
+			command := exec.Command(
+				path, "pack",
+				"--buildpack", filepath.Join("testdata", "example-cnb", "buildpack.toml"),
+				"--output", filepath.Join(tmpDir, "output.tgz"),
+				"--version", "some-version",
+				"--offline",
+			)
+			session, err := gexec.Start(command, buffer, buffer)
+			Expect(err).NotTo(HaveOccurred())
+			Eventually(session).Should(gexec.Exit(0), func() string { return buffer.String() })
+
+			Expect(session.Out).To(gbytes.Say("Packing some-buildpack-name some-version..."))
+
+			file, err := os.Open(filepath.Join(tmpDir, "output.tgz"))
+			Expect(err).ToNot(HaveOccurred())
+
+			contents, hdr, err := ExtractFile(file, "buildpack.toml")
+			Expect(err).ToNot(HaveOccurred())
+			Expect(contents).To(MatchTOML(`api = "0.2"
+
+[buildpack]
+id = "some-buildpack-id"
+name = "some-buildpack-name"
+version = "some-version"
+
+[metadata]
+include_files = ["bin/build", "bin/detect", "buildpack.toml", "generated-file"]
+pre_package = "./scripts/build.sh"
+
+[[metadata.dependencies]]
+  id = "some-dependency"
+  name = "Some Dependency"
+  sha256 = "shasum"
+  stacks = ["io.buildpacks.stacks.bionic", "org.cloudfoundry.stacks.tiny"]
+  uri = "http://some-url"
+  version = "1.2.3"`))
+			Expect(hdr.Mode).To(Equal(int64(0644)))
+
+			contents, hdr, err = ExtractFile(file, "bin/build")
+			Expect(err).ToNot(HaveOccurred())
+			Expect(string(contents)).To(Equal("build-contents"))
+			Expect(hdr.Mode).To(Equal(int64(0755)))
+
+			contents, hdr, err = ExtractFile(file, "bin/detect")
+			Expect(err).ToNot(HaveOccurred())
+			Expect(string(contents)).To(Equal("detect-contents"))
+			Expect(hdr.Mode).To(Equal(int64(0755)))
+
+			contents, hdr, err = ExtractFile(file, "generated-file")
+			Expect(err).ToNot(HaveOccurred())
+			Expect(string(contents)).To(Equal("hello\n"))
+			Expect(hdr.Mode).To(Equal(int64(0644)))
+		})
 	})
 
 	context("failure cases", func() {
