@@ -62,7 +62,7 @@ func testFileBundler(t *testing.T, context spec.G, it spec.S) {
 			Expect(string(content)).To(Equal("detect-contents"))
 
 			Expect(files[2].Name).To(Equal("buildpack.toml"))
-			Expect(files[2].Size).To(Equal(int64(242)))
+			Expect(files[2].Size).To(Equal(int64(244)))
 			Expect(files[2].Mode).To(Equal(int64(0644)))
 
 			content, err = ioutil.ReadAll(files[2])

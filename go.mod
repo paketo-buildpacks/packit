@@ -12,7 +12,6 @@ require (
 	github.com/mattn/go-isatty v0.0.10 // indirect
 	github.com/onsi/ginkgo v1.10.3 // indirect
 	github.com/onsi/gomega v1.7.2-0.20191118193045-1526230ca7de
-	github.com/pelletier/go-toml v1.6.0
 	github.com/sclevine/spec v1.3.0
 	golang.org/x/net v0.0.0-20191209160850-c0dbc17a3553 // indirect
 	golang.org/x/sys v0.0.0-20191119195528-f068ffe820e4 // indirect

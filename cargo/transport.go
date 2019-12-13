@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -14,9 +15,9 @@ func NewTransport() Transport {
 	return Transport{}
 }
 
-func (t Transport) Drop(uri string) (io.ReadCloser, error) {
+func (t Transport) Drop(root, uri string) (io.ReadCloser, error) {
 	if strings.HasPrefix(uri, "file://") {
-		file, err := os.Open(strings.TrimPrefix(uri, "file://"))
+		file, err := os.Open(filepath.Join(root, strings.TrimPrefix(uri, "file://")))
 		if err != nil {
 			return nil, fmt.Errorf("failed to open file: %s", err)
 		}

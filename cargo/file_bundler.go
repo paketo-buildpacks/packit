@@ -6,8 +6,6 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-
-	"github.com/pelletier/go-toml"
 )
 
 type FileBundler struct{}
@@ -24,7 +22,7 @@ func (b FileBundler) Bundle(root string, paths []string, config Config) ([]File,
 		switch path {
 		case "buildpack.toml":
 			buf := bytes.NewBuffer(nil)
-			err := toml.NewEncoder(buf).Encode(config)
+			err := EncodeConfig(buf, config)
 			if err != nil {
 				return nil, fmt.Errorf("error encoding buildpack.toml: %s", err)
 			}

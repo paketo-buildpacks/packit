@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/cloudfoundry/packit/cargo"
@@ -43,7 +44,7 @@ func testTransport(t *testing.T, context spec.G, it spec.S) {
 			})
 
 			it("downloads the file from a URI", func() {
-				bundle, err := transport.Drop(fmt.Sprintf("%s/some-bundle", server.URL))
+				bundle, err := transport.Drop("", fmt.Sprintf("%s/some-bundle", server.URL))
 				Expect(err).NotTo(HaveOccurred())
 
 				contents, err := ioutil.ReadAll(bundle)
@@ -56,7 +57,7 @@ func testTransport(t *testing.T, context spec.G, it spec.S) {
 			context("failure cases", func() {
 				context("when the uri is malformed", func() {
 					it("returns an error", func() {
-						_, err := transport.Drop("%%%%")
+						_, err := transport.Drop("", "%%%%")
 						Expect(err).To(MatchError(ContainSubstring("failed to parse request uri")))
 						Expect(err).To(MatchError(ContainSubstring("invalid URL escape")))
 					})
@@ -68,7 +69,7 @@ func testTransport(t *testing.T, context spec.G, it spec.S) {
 					})
 
 					it("returns an error", func() {
-						_, err := transport.Drop(fmt.Sprintf("%s/some-bundle", server.URL))
+						_, err := transport.Drop("", fmt.Sprintf("%s/some-bundle", server.URL))
 						Expect(err).To(MatchError(ContainSubstring("failed to make request")))
 						Expect(err).To(MatchError(ContainSubstring("connection refused")))
 					})
@@ -77,26 +78,28 @@ func testTransport(t *testing.T, context spec.G, it spec.S) {
 		})
 
 		context("when the uri is for a file", func() {
-			var path string
+			var (
+				path string
+				dir  string
+			)
 
 			it.Before(func() {
-				file, err := ioutil.TempFile("", "bundle")
+				var err error
+				dir, err = ioutil.TempDir("", "bundle")
 				Expect(err).NotTo(HaveOccurred())
 
-				_, err = file.WriteString("some-bundle-contents")
+				path = "some-file"
+
+				err = ioutil.WriteFile(filepath.Join(dir, path), []byte("some-bundle-contents"), 0644)
 				Expect(err).NotTo(HaveOccurred())
-
-				Expect(file.Close()).To(Succeed())
-
-				path = file.Name()
 			})
 
 			it.After(func() {
-				Expect(os.RemoveAll(path)).To(Succeed())
+				Expect(os.RemoveAll(dir)).To(Succeed())
 			})
 
 			it("returns the file descriptor", func() {
-				bundle, err := transport.Drop(fmt.Sprintf("file://%s", path))
+				bundle, err := transport.Drop(dir, fmt.Sprintf("file://%s", path))
 				Expect(err).NotTo(HaveOccurred())
 
 				contents, err := ioutil.ReadAll(bundle)
@@ -108,12 +111,12 @@ func testTransport(t *testing.T, context spec.G, it spec.S) {
 
 			context("failure cases", func() {
 				it.Before(func() {
-					Expect(os.RemoveAll(path)).To(Succeed())
+					Expect(os.RemoveAll(dir)).To(Succeed())
 				})
 
 				context("when the file does not exist", func() {
 					it("returns an error", func() {
-						_, err := transport.Drop(fmt.Sprintf("file://%s", path))
+						_, err := transport.Drop(dir, fmt.Sprintf("file://%s", path))
 						Expect(err).To(MatchError(ContainSubstring("failed to open file")))
 						Expect(err).To(MatchError(ContainSubstring("no such file or directory")))
 					})

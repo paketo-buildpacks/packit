@@ -23,7 +23,9 @@ func main() {
 		fileBundler := cargo.NewFileBundler()
 		tarBuilder := cargo.NewTarBuilder()
 		prePackager := cargo.NewPrePackager(pexec.NewExecutable("bash", lager.NewLogger("pre-packager")))
-		command := commands.NewPack(directoryDuplicator, buildpackParser, prePackager, fileBundler, tarBuilder, os.Stdout)
+		transport := cargo.NewTransport()
+		dependencyCacher := cargo.NewDependencyCacher(transport)
+		command := commands.NewPack(directoryDuplicator, buildpackParser, prePackager, dependencyCacher, fileBundler, tarBuilder, os.Stdout)
 
 		if err := command.Execute(os.Args[2:]); err != nil {
 			fail("failed to execute pack command: %s", err)

@@ -28,8 +28,9 @@ func testDirectoryDuplicator(t *testing.T, context spec.G, it spec.S) {
 	})
 
 	context("Duplicate", func() {
-		it.Focus("duplicates the contents of a directory", func() {
+		it("duplicates the contents of a directory", func() {
 			Expect(directoryDup.Duplicate(filepath.Join("jam", "testdata", "example-cnb"), tmpDir)).To(Succeed())
+
 			var files []string
 			err := filepath.Walk(tmpDir, func(path string, info os.FileInfo, err error) error {
 				if err != nil {
@@ -64,11 +65,11 @@ func testDirectoryDuplicator(t *testing.T, context spec.G, it spec.S) {
 
 		context("when source file has bad permissions", func() {
 			it.Before(func() {
-				os.Chmod(filepath.Join("jam", "testdata", "example-cnb", "buildpack.toml"), 0000)
+				Expect(os.Chmod(filepath.Join("jam", "testdata", "example-cnb", "buildpack.toml"), 0000)).To(Succeed())
 			})
 
 			it.After(func() {
-				os.Chmod(filepath.Join("jam", "testdata", "example-cnb", "buildpack.toml"), 644)
+				Expect(os.Chmod(filepath.Join("jam", "testdata", "example-cnb", "buildpack.toml"), 0644)).To(Succeed())
 			})
 
 			it("fails", func() {

@@ -6,13 +6,18 @@ api = "0.2"
   version = "version-string"
 
 [metadata]
-include_files = ["bin/build", "bin/detect", "buildpack.toml", "generated-file"]
-pre_package = "./scripts/build.sh"
+  include_files = ["bin/build", "bin/detect", "buildpack.toml", "generated-file"]
+  pre_package = "./scripts/build.sh"
+  [metadata.default-versions]
+    some-dependency = "some-default-version"
 
-[[metadata.dependencies]]
-  id = "some-dependency"
-  name = "Some Dependency"
-  sha256 = "shasum"
-  stacks = ["io.buildpacks.stacks.bionic", "org.cloudfoundry.stacks.tiny"]
-  uri = "http://some-url"
-  version = "1.2.3"
+  [[metadata.dependencies]]
+    id = "some-dependency"
+    name = "Some Dependency"
+    sha256 = "shasum"
+    stacks = ["io.buildpacks.stacks.bionic", "org.cloudfoundry.stacks.tiny"]
+    uri = "http://some-url"
+    version = "1.2.3"
+
+[[stacks]]
+  id = "some-stack-id"

@@ -27,6 +27,7 @@ func testPack(t *testing.T, context spec.G, it spec.S) {
 		tarBuilder          *fakes.TarBuilder
 		prePackager         *fakes.PrePackager
 		fileBundler         *fakes.FileBundler
+		dependencyCacher    *fakes.DependencyCacher
 		tempDir             string
 		tempCopyDir         string
 
@@ -48,6 +49,16 @@ func testPack(t *testing.T, context spec.G, it spec.S) {
 					"buildpack.toml",
 				},
 				PrePackage: "some-prepackage-script",
+				Dependencies: []cargo.ConfigMetadataDependency{
+					{
+						ID:      "some-dependency-id",
+						Name:    "some-dependency-name",
+						SHA256:  "some-dependency-sha",
+						Stacks:  []string{"some-stack"},
+						URI:     "some-dependency-uri",
+						Version: "some-dependency-version",
+					},
+				},
 			},
 		}
 
@@ -61,14 +72,23 @@ func testPack(t *testing.T, context spec.G, it spec.S) {
 		}
 
 		directoryDuplicator = &fakes.DirectoryDuplicator{}
-
 		tarBuilder = &fakes.TarBuilder{}
+		prePackager = &fakes.PrePackager{}
+		dependencyCacher = &fakes.DependencyCacher{}
+		dependencyCacher.CacheCall.Returns.ConfigMetadataDependencySlice = []cargo.ConfigMetadataDependency{
+			{
+				ID:      "some-dependency-id",
+				Name:    "some-dependency-name",
+				SHA256:  "some-dependency-sha",
+				Stacks:  []string{"some-stack"},
+				URI:     "file:///dependencies/some-dependency-sha",
+				Version: "some-dependency-version",
+			},
+		}
 
 		buffer = bytes.NewBuffer(nil)
 
-		prePackager = &fakes.PrePackager{}
-
-		command = commands.NewPack(directoryDuplicator, configParser, prePackager, fileBundler, tarBuilder, buffer)
+		command = commands.NewPack(directoryDuplicator, configParser, prePackager, dependencyCacher, fileBundler, tarBuilder, buffer)
 
 		var err error
 		tempDir, err = ioutil.TempDir("", "buildpack")
@@ -103,6 +123,39 @@ func testPack(t *testing.T, context spec.G, it spec.S) {
 			Expect(prePackager.ExecuteCall.Receives.Path).To(Equal("some-prepackage-script"))
 			Expect(prePackager.ExecuteCall.Receives.RootDir).To(Equal(buildpackRoot))
 
+			Expect(fileBundler.BundleCall.Receives.Path).To(Equal(buildpackRoot))
+			Expect(fileBundler.BundleCall.Receives.Files).To(Equal([]string{
+				"bin/build",
+				"bin/detect",
+				"buildpack.toml",
+			}))
+			Expect(fileBundler.BundleCall.Receives.Config).To(Equal(cargo.Config{
+				API: "0.2",
+				Buildpack: cargo.ConfigBuildpack{
+					ID:      "some-buildpack-id",
+					Name:    "some-buildpack-name",
+					Version: "some-buildpack-version",
+				},
+				Metadata: cargo.ConfigMetadata{
+					IncludeFiles: []string{
+						"bin/build",
+						"bin/detect",
+						"buildpack.toml",
+					},
+					PrePackage: "some-prepackage-script",
+					Dependencies: []cargo.ConfigMetadataDependency{
+						{
+							ID:      "some-dependency-id",
+							Name:    "some-dependency-name",
+							SHA256:  "some-dependency-sha",
+							Stacks:  []string{"some-stack"},
+							URI:     "some-dependency-uri",
+							Version: "some-dependency-version",
+						},
+					},
+				},
+			}))
+
 			Expect(tarBuilder.BuildCall.Receives.Path).To(Equal("some-output.tgz"))
 			Expect(tarBuilder.BuildCall.Receives.Files).To(HaveLen(1))
 
@@ -113,6 +166,89 @@ func testPack(t *testing.T, context spec.G, it spec.S) {
 			contents, err := ioutil.ReadAll(buildpackTOMLFile)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(string(contents)).To(Equal("buildpack-toml-contents"))
+
+			Expect(dependencyCacher.CacheCall.CallCount).To(Equal(0))
+		})
+
+		context("when given the --offline flag", func() {
+			it("downloads dependencies and builds a buildpack", func() {
+				err := command.Execute([]string{
+					"--buildpack", "buildpack-root/some-buildpack.toml",
+					"--version", "some-buildpack-version",
+					"--output", "some-output.tgz",
+					"--offline",
+				})
+				Expect(err).NotTo(HaveOccurred())
+				Expect(buffer).To(ContainSubstring("Packing some-buildpack-name some-buildpack-version...\n"))
+
+				Expect(directoryDuplicator.DuplicateCall.Receives.SourcePath).To(Equal("buildpack-root"))
+				Expect(directoryDuplicator.DuplicateCall.Receives.DestPath).To(HavePrefix(os.TempDir()))
+
+				buildpackRoot := directoryDuplicator.DuplicateCall.Receives.DestPath
+
+				Expect(configParser.ParseCall.Receives.Path).To(Equal(filepath.Join(buildpackRoot, "some-buildpack.toml")))
+
+				Expect(prePackager.ExecuteCall.Receives.Path).To(Equal("some-prepackage-script"))
+				Expect(prePackager.ExecuteCall.Receives.RootDir).To(Equal(buildpackRoot))
+
+				Expect(dependencyCacher.CacheCall.Receives.Root).To(Equal(buildpackRoot))
+				Expect(dependencyCacher.CacheCall.Receives.Dependencies).To(Equal([]cargo.ConfigMetadataDependency{
+					{
+						ID:      "some-dependency-id",
+						Name:    "some-dependency-name",
+						SHA256:  "some-dependency-sha",
+						Stacks:  []string{"some-stack"},
+						URI:     "some-dependency-uri",
+						Version: "some-dependency-version",
+					},
+				}))
+
+				Expect(fileBundler.BundleCall.Receives.Path).To(Equal(buildpackRoot))
+				Expect(fileBundler.BundleCall.Receives.Files).To(Equal([]string{
+					"bin/build",
+					"bin/detect",
+					"buildpack.toml",
+					"dependencies/some-dependency-sha",
+				}))
+				Expect(fileBundler.BundleCall.Receives.Config).To(Equal(cargo.Config{
+					API: "0.2",
+					Buildpack: cargo.ConfigBuildpack{
+						ID:      "some-buildpack-id",
+						Name:    "some-buildpack-name",
+						Version: "some-buildpack-version",
+					},
+					Metadata: cargo.ConfigMetadata{
+						IncludeFiles: []string{
+							"bin/build",
+							"bin/detect",
+							"buildpack.toml",
+							"dependencies/some-dependency-sha",
+						},
+						PrePackage: "some-prepackage-script",
+						Dependencies: []cargo.ConfigMetadataDependency{
+							{
+								ID:      "some-dependency-id",
+								Name:    "some-dependency-name",
+								SHA256:  "some-dependency-sha",
+								Stacks:  []string{"some-stack"},
+								URI:     "file:///dependencies/some-dependency-sha",
+								Version: "some-dependency-version",
+							},
+						},
+					},
+				}))
+
+				Expect(tarBuilder.BuildCall.Receives.Path).To(Equal("some-output.tgz"))
+				Expect(tarBuilder.BuildCall.Receives.Files).To(HaveLen(1))
+
+				buildpackTOMLFile := tarBuilder.BuildCall.Receives.Files[0]
+				Expect(buildpackTOMLFile.Name).To(Equal("buildpack.toml"))
+				Expect(buildpackTOMLFile.Size).To(Equal(int64(len("buildpack-toml-contents"))))
+
+				contents, err := ioutil.ReadAll(buildpackTOMLFile)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(string(contents)).To(Equal("buildpack-toml-contents"))
+			})
 		})
 	})
 
@@ -227,6 +363,18 @@ func testPack(t *testing.T, context spec.G, it spec.S) {
 				})
 				Expect(err).To(MatchError(ContainSubstring("failed to create output:")))
 				Expect(err).To(MatchError(ContainSubstring("failed to build tarball")))
+			})
+		})
+		context("when caching dependencies fails", func() {
+			it("returns an error", func() {
+				dependencyCacher.CacheCall.Returns.Error = errors.New("it didn't work")
+				err := command.Execute([]string{
+					"--buildpack", "buildpack-root/some-buildpack.toml",
+					"--version", "some-buildpack-version",
+					"--output", "some-output.tgz",
+					"--offline",
+				})
+				Expect(err).To(MatchError("failed to cache dependencies: it didn't work"))
 			})
 		})
 	})

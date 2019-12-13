@@ -2,7 +2,6 @@ package cargo_test
 
 import (
 	"bytes"
-	"errors"
 	"io"
 	"strings"
 	"testing"
@@ -95,10 +94,4 @@ func testValidatedReader(t *testing.T, context spec.G, it spec.S) {
 			})
 		})
 	})
-}
-
-type errorReader struct{}
-
-func (r errorReader) Read(p []byte) (int, error) {
-	return 0, errors.New("failed to read")
 }

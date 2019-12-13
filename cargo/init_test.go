@@ -3,6 +3,7 @@ package cargo_test
 import (
 	"archive/tar"
 	"compress/gzip"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -16,12 +17,14 @@ import (
 func TestUnitCargo(t *testing.T) {
 	suite := spec.New("cargo", spec.Report(report.Terminal{}))
 	suite("BuildpackParser", testBuildpackParser)
+	suite("Config", testConfig)
+	suite("DependencyCacher", testDependencyCacher)
+	suite("DirectoryDuplicator", testDirectoryDuplicator)
 	suite("FileBundler", testFileBundler)
+	suite("PrePackager", testPrePackager)
 	suite("TarBuilder", testTarBuilder)
 	suite("Transport", testTransport)
 	suite("ValidatedReader", testValidatedReader)
-	suite("PrePackager", testPrePackager)
-	suite("DirectoryDuplicator", testDirectoryDuplicator)
 	suite.Run(t)
 }
 
@@ -61,4 +64,10 @@ func ExtractFile(file *os.File, name string) ([]byte, *tar.Header, error) {
 	}
 
 	return nil, nil, fmt.Errorf("no such file: %s", name)
+}
+
+type errorReader struct{}
+
+func (r errorReader) Read(p []byte) (int, error) {
+	return 0, errors.New("failed to read")
 }

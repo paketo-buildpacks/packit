@@ -71,13 +71,16 @@ pre_package = "some-pre-package-script.sh"
 						"other-include-file",
 					},
 					PrePackage: "some-pre-package-script.sh",
-					Dependencies: []cargo.Dependency{{
-						ID:      "some-dependency",
-						Name:    "Some Dependency",
-						Sha256:  "shasum",
-						Stacks:  []string{"io.buildpacks.stacks.bionic", "org.cloudfoundry.stacks.tiny"},
-						Uri:     "http://some-url",
-						Version: "1.2.3"}},
+					Dependencies: []cargo.ConfigMetadataDependency{
+						{
+							ID:      "some-dependency",
+							Name:    "Some Dependency",
+							SHA256:  "shasum",
+							Stacks:  []string{"io.buildpacks.stacks.bionic", "org.cloudfoundry.stacks.tiny"},
+							URI:     "http://some-url",
+							Version: "1.2.3",
+						},
+					},
 				},
 			}))
 		})
@@ -100,7 +103,7 @@ pre_package = "some-pre-package-script.sh"
 
 			it("returns an error", func() {
 				_, err := parser.Parse(path)
-				Expect(err).To(MatchError(ContainSubstring("keys cannot contain % character")))
+				Expect(err).To(MatchError(ContainSubstring("keys cannot contain '%'")))
 			})
 		})
 	})

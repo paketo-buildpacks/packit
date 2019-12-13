@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/cloudfoundry/packit/cargo"
 )
@@ -37,12 +38,18 @@ type DirectoryDuplicator interface {
 	Duplicate(sourcePath, destPath string) error
 }
 
+//go:generate faux --interface DependencyCacher --output fakes/dependency_cacher.go
+type DependencyCacher interface {
+	Cache(root string, dependencies []cargo.ConfigMetadataDependency) ([]cargo.ConfigMetadataDependency, error)
+}
+
 type Pack struct {
 	directoryDuplicator DirectoryDuplicator
 	configParser        ConfigParser
+	prePackager         PrePackager
+	dependencyCacher    DependencyCacher
 	tarBuilder          TarBuilder
 	fileBundler         FileBundler
-	prePackager         PrePackager
 	stdout              io.Writer
 }
 
@@ -50,6 +57,7 @@ func NewPack(
 	directoryDuplicator DirectoryDuplicator,
 	configParser ConfigParser,
 	prePackager PrePackager,
+	dependencyCacher DependencyCacher,
 	fileBundler FileBundler,
 	tarBuilder TarBuilder,
 	stdout io.Writer,
@@ -58,9 +66,10 @@ func NewPack(
 	return Pack{
 		directoryDuplicator: directoryDuplicator,
 		configParser:        configParser,
+		prePackager:         prePackager,
+		dependencyCacher:    dependencyCacher,
 		tarBuilder:          tarBuilder,
 		fileBundler:         fileBundler,
-		prePackager:         prePackager,
 		stdout:              stdout,
 	}
 }
@@ -70,12 +79,14 @@ func (p Pack) Execute(args []string) error {
 		buildpackTOMLPath string
 		output            string
 		version           string
+		offline           bool
 	)
 
 	fset := flag.NewFlagSet("pack", flag.ContinueOnError)
 	fset.StringVar(&buildpackTOMLPath, "buildpack", "", "path to buildpack.toml")
 	fset.StringVar(&output, "output", "", "path to location of output tarball")
 	fset.StringVar(&version, "version", "", "version of the buildpack")
+	fset.BoolVar(&offline, "offline", false, "enable offline caching of dependencies")
 	err := fset.Parse(args)
 	if err != nil {
 		return err
@@ -113,12 +124,23 @@ func (p Pack) Execute(args []string) error {
 
 	config.Buildpack.Version = version
 
+	fmt.Fprintf(p.stdout, "Packing %s %s...\n", config.Buildpack.Name, version)
+
 	err = p.prePackager.Execute(config.Metadata.PrePackage, buildpackDir)
 	if err != nil {
 		return fmt.Errorf("failed to execute pre-packaging script %q: %s", config.Metadata.PrePackage, err)
 	}
 
-	fmt.Fprintf(p.stdout, "Packing %s %s...\n", config.Buildpack.Name, version)
+	if offline {
+		config.Metadata.Dependencies, err = p.dependencyCacher.Cache(buildpackDir, config.Metadata.Dependencies)
+		if err != nil {
+			return fmt.Errorf("failed to cache dependencies: %s", err)
+		}
+
+		for _, dependency := range config.Metadata.Dependencies {
+			config.Metadata.IncludeFiles = append(config.Metadata.IncludeFiles, strings.TrimPrefix(dependency.URI, "file:///"))
+		}
+	}
 
 	files, err := p.fileBundler.Bundle(buildpackDir, config.Metadata.IncludeFiles, config)
 	if err != nil {
