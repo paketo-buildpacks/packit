@@ -19,5 +19,13 @@ api = "0.2"
     uri = "http://some-url"
     version = "1.2.3"
 
+  [[metadata.dependencies]]
+    id = "other-dependency"
+    name = "Other Dependency"
+    sha256 = "shasum"
+    stacks = ["org.cloudfoundry.stacks.tiny"]
+    uri = "http://other-url"
+    version = "4.5.6"
+
 [[stacks]]
   id = "some-stack-id"

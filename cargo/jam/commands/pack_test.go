@@ -58,6 +58,14 @@ func testPack(t *testing.T, context spec.G, it spec.S) {
 						URI:     "some-dependency-uri",
 						Version: "some-dependency-version",
 					},
+					{
+						ID:      "other-dependency-id",
+						Name:    "other-dependency-name",
+						SHA256:  "other-dependency-sha",
+						Stacks:  []string{"other-stack"},
+						URI:     "other-dependency-uri",
+						Version: "other-dependency-version",
+					},
 				},
 			},
 		}
@@ -109,6 +117,7 @@ func testPack(t *testing.T, context spec.G, it spec.S) {
 				"--buildpack", "buildpack-root/some-buildpack.toml",
 				"--version", "some-buildpack-version",
 				"--output", "some-output.tgz",
+				"--stack", "some-stack",
 			})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(buffer).To(ContainSubstring("Packing some-buildpack-name some-buildpack-version...\n"))
@@ -177,6 +186,7 @@ func testPack(t *testing.T, context spec.G, it spec.S) {
 					"--version", "some-buildpack-version",
 					"--output", "some-output.tgz",
 					"--offline",
+					"--stack", "some-stack",
 				})
 				Expect(err).NotTo(HaveOccurred())
 				Expect(buffer).To(ContainSubstring("Packing some-buildpack-name some-buildpack-version...\n"))

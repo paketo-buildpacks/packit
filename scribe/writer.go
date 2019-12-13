@@ -41,6 +41,7 @@ func (w Writer) Write(b []byte) (int, error) {
 		prefix, suffix []byte
 		reset          = []byte("\r")
 		newline        = []byte("\n")
+		n              = len(b)
 	)
 
 	if bytes.HasPrefix(b, reset) {
@@ -77,5 +78,10 @@ func (w Writer) Write(b []byte) (int, error) {
 		b = append(b, suffix...)
 	}
 
-	return w.writer.Write(b)
+	_, err := w.writer.Write(b)
+	if err != nil {
+		return n, err
+	}
+
+	return n, nil
 }

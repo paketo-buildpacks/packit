@@ -9,6 +9,7 @@ import (
 	"github.com/cloudfoundry/packit/cargo"
 	"github.com/cloudfoundry/packit/cargo/jam/commands"
 	"github.com/cloudfoundry/packit/pexec"
+	"github.com/cloudfoundry/packit/scribe"
 )
 
 func main() {
@@ -18,13 +19,16 @@ func main() {
 
 	switch os.Args[1] {
 	case "pack":
+		logger := scribe.NewLogger(os.Stdout)
+		bash := pexec.NewExecutable("bash", lager.NewLogger("pre-packager"))
+
+		transport := cargo.NewTransport()
 		directoryDuplicator := cargo.NewDirectoryDuplicator()
 		buildpackParser := cargo.NewBuildpackParser()
 		fileBundler := cargo.NewFileBundler()
-		tarBuilder := cargo.NewTarBuilder()
-		prePackager := cargo.NewPrePackager(pexec.NewExecutable("bash", lager.NewLogger("pre-packager")))
-		transport := cargo.NewTransport()
-		dependencyCacher := cargo.NewDependencyCacher(transport)
+		tarBuilder := cargo.NewTarBuilder(logger)
+		prePackager := cargo.NewPrePackager(bash, logger, scribe.NewWriter(os.Stdout, scribe.WithIndent(2)))
+		dependencyCacher := cargo.NewDependencyCacher(transport, logger)
 		command := commands.NewPack(directoryDuplicator, buildpackParser, prePackager, dependencyCacher, fileBundler, tarBuilder, os.Stdout)
 
 		if err := command.Execute(os.Args[2:]); err != nil {

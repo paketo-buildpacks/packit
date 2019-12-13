@@ -1,7 +1,6 @@
 package main_test
 
 import (
-	"bytes"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -26,20 +25,20 @@ func testPack(t *testing.T, context spec.G, it spec.S) {
 		Expect     = withT.Expect
 		Eventually = withT.Eventually
 
-		buffer       *bytes.Buffer
+		buffer       *Buffer
 		tmpDir       string
 		buildpackDir string
 	)
 
 	it.Before(func() {
-		buffer = bytes.NewBuffer(nil)
-
 		var err error
 		tmpDir, err = ioutil.TempDir("", "output")
 		Expect(err).NotTo(HaveOccurred())
 
 		buildpackDir, err = ioutil.TempDir("", "buildpack")
 		Expect(err).NotTo(HaveOccurred())
+
+		buffer = &Buffer{}
 
 		err = cargo.NewDirectoryDuplicator().Duplicate(filepath.Join("testdata", "example-cnb"), buildpackDir)
 		Expect(err).NotTo(HaveOccurred())
@@ -62,6 +61,13 @@ func testPack(t *testing.T, context spec.G, it spec.S) {
 		Eventually(session).Should(gexec.Exit(0), func() string { return buffer.String() })
 
 		Expect(session.Out).To(gbytes.Say("Packing some-buildpack-name some-version..."))
+		Expect(session.Out).To(gbytes.Say("  Executing pre-packaging script: ./scripts/build.sh"))
+		Expect(session.Out).To(gbytes.Say("    hello from the pre-packaging script"))
+		Expect(session.Out).To(gbytes.Say(fmt.Sprintf("  Building tarball: %s", filepath.Join(tmpDir, "output.tgz"))))
+		Expect(session.Out).To(gbytes.Say("    bin/build"))
+		Expect(session.Out).To(gbytes.Say("    bin/detect"))
+		Expect(session.Out).To(gbytes.Say("    buildpack.toml"))
+		Expect(session.Out).To(gbytes.Say("    generated-file"))
 
 		file, err := os.Open(filepath.Join(tmpDir, "output.tgz"))
 		Expect(err).ToNot(HaveOccurred())
@@ -88,6 +94,14 @@ func testPack(t *testing.T, context spec.G, it spec.S) {
     stacks = ["io.buildpacks.stacks.bionic", "org.cloudfoundry.stacks.tiny"]
     uri = "http://some-url"
     version = "1.2.3"
+
+  [[metadata.dependencies]]
+    id = "other-dependency"
+    name = "Other Dependency"
+    sha256 = "shasum"
+    stacks = ["org.cloudfoundry.stacks.tiny"]
+    uri = "http://other-url"
+    version = "4.5.6"
 
 [[stacks]]
   id = "some-stack-id"`))
@@ -123,7 +137,7 @@ func testPack(t *testing.T, context spec.G, it spec.S) {
 
 			config, err := cargo.NewBuildpackParser().Parse(filepath.Join(buildpackDir, "buildpack.toml"))
 			Expect(err).NotTo(HaveOccurred())
-			Expect(config.Metadata.Dependencies).To(HaveLen(1))
+			Expect(config.Metadata.Dependencies).To(HaveLen(2))
 
 			config.Metadata.Dependencies[0].URI = fmt.Sprintf("%s/some-dependency.tgz", server.URL)
 			config.Metadata.Dependencies[0].SHA256 = "f058c8bf6b65b829e200ef5c2d22fde0ee65b96c1fbd1b88869be133aafab64a"
@@ -145,12 +159,26 @@ func testPack(t *testing.T, context spec.G, it spec.S) {
 				"--output", filepath.Join(tmpDir, "output.tgz"),
 				"--version", "some-version",
 				"--offline",
+				"--stack", "io.buildpacks.stacks.bionic",
 			)
 			session, err := gexec.Start(command, buffer, buffer)
 			Expect(err).NotTo(HaveOccurred())
 			Eventually(session).Should(gexec.Exit(0), func() string { return buffer.String() })
 
 			Expect(session.Out).To(gbytes.Say("Packing some-buildpack-name some-version..."))
+			Expect(session.Out).To(gbytes.Say("  Executing pre-packaging script: ./scripts/build.sh"))
+			Expect(session.Out).To(gbytes.Say("    hello from the pre-packaging script"))
+			Expect(session.Out).To(gbytes.Say("  Downloading dependencies..."))
+			Expect(session.Out).To(gbytes.Say(`    some-dependency \(1.2.3\) \[io.buildpacks.stacks.bionic, org.cloudfoundry.stacks.tiny\]`))
+			Expect(session.Out).To(gbytes.Say("      ↳  dependencies/f058c8bf6b65b829e200ef5c2d22fde0ee65b96c1fbd1b88869be133aafab64a"))
+			Expect(session.Out).To(gbytes.Say(fmt.Sprintf("  Building tarball: %s", filepath.Join(tmpDir, "output.tgz"))))
+			Expect(session.Out).To(gbytes.Say("    bin/build"))
+			Expect(session.Out).To(gbytes.Say("    bin/detect"))
+			Expect(session.Out).To(gbytes.Say("    buildpack.toml"))
+			Expect(session.Out).To(gbytes.Say("    generated-file"))
+			Expect(session.Out).To(gbytes.Say("    dependencies/f058c8bf6b65b829e200ef5c2d22fde0ee65b96c1fbd1b88869be133aafab64a"))
+
+			Expect(string(session.Out.Contents())).NotTo(ContainSubstring("other-dependency"))
 
 			file, err := os.Open(filepath.Join(tmpDir, "output.tgz"))
 			Expect(err).ToNot(HaveOccurred())

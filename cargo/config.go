@@ -124,3 +124,13 @@ func (m *ConfigMetadata) UnmarshalJSON(data []byte) error {
 
 	return nil
 }
+
+func (cd ConfigMetadataDependency) HasStack(stack string) bool {
+	for _, s := range cd.Stacks {
+		if s == stack {
+			return true
+		}
+	}
+
+	return false
+}

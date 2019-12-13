@@ -13,6 +13,7 @@ func TestUnitScribe(t *testing.T) {
 	suite("Color", testColor)
 	suite("FormattedList", testFormattedList)
 	suite("FormattedMap", testFormattedMap)
+	suite("Logger", testLogger)
 	suite("Writer", testWriter)
 	suite.Run(t)
 }

@@ -1,6 +1,8 @@
 package cargo_test
 
 import (
+	"bytes"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -8,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/cloudfoundry/packit/cargo"
+	"github.com/cloudfoundry/packit/scribe"
 	"github.com/sclevine/spec"
 
 	. "github.com/onsi/gomega"
@@ -19,6 +22,7 @@ func testTarBuilder(t *testing.T, context spec.G, it spec.S) {
 
 		tempFile string
 		tempDir  string
+		output   *bytes.Buffer
 		builder  cargo.TarBuilder
 	)
 
@@ -29,7 +33,8 @@ func testTarBuilder(t *testing.T, context spec.G, it spec.S) {
 
 		tempFile = filepath.Join(tempDir, "buildpack.tgz")
 
-		builder = cargo.NewTarBuilder()
+		output = bytes.NewBuffer(nil)
+		builder = cargo.NewTarBuilder(scribe.NewLogger(output))
 	})
 
 	it.After(func() {
@@ -60,6 +65,11 @@ func testTarBuilder(t *testing.T, context spec.G, it spec.S) {
 					},
 				})
 				Expect(err).ToNot(HaveOccurred())
+
+				Expect(output.String()).To(ContainSubstring(fmt.Sprintf("Building tarball: %s", tempFile)))
+				Expect(output.String()).To(ContainSubstring("bin/build"))
+				Expect(output.String()).To(ContainSubstring("bin/detect"))
+				Expect(output.String()).To(ContainSubstring("buildpack.toml"))
 
 				file, err := os.Open(tempFile)
 				Expect(err).ToNot(HaveOccurred())

@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"io"
 	"os"
+
+	"github.com/cloudfoundry/packit/scribe"
 )
 
 type File struct {
@@ -16,13 +18,18 @@ type File struct {
 	Mode int64
 }
 
-type TarBuilder struct{}
+type TarBuilder struct {
+	logger scribe.Logger
+}
 
-func NewTarBuilder() TarBuilder {
-	return TarBuilder{}
+func NewTarBuilder(logger scribe.Logger) TarBuilder {
+	return TarBuilder{
+		logger: logger,
+	}
 }
 
 func (b TarBuilder) Build(path string, files []File) error {
+	b.logger.Process("Building tarball: %s", path)
 	file, err := os.OpenFile(path, os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0644)
 	if err != nil {
 		return fmt.Errorf("failed to create tarball: %s", err)
@@ -36,6 +43,7 @@ func (b TarBuilder) Build(path string, files []File) error {
 	defer tw.Close()
 
 	for _, file := range files {
+		b.logger.Subprocess(file.Name)
 		err = tw.WriteHeader(&tar.Header{
 			Name: file.Name,
 			Size: file.Size,
@@ -52,6 +60,8 @@ func (b TarBuilder) Build(path string, files []File) error {
 
 		file.Close()
 	}
+
+	b.logger.Break()
 
 	return nil
 }

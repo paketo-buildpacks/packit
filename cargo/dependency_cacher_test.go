@@ -1,6 +1,7 @@
 package cargo_test
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -11,6 +12,7 @@ import (
 
 	"github.com/cloudfoundry/packit/cargo"
 	"github.com/cloudfoundry/packit/cargo/fakes"
+	"github.com/cloudfoundry/packit/scribe"
 	"github.com/sclevine/spec"
 
 	. "github.com/onsi/gomega"
@@ -23,6 +25,7 @@ func testDependencyCacher(t *testing.T, context spec.G, it spec.S) {
 		tmpDir     string
 		downloader *fakes.Downloader
 		cacher     cargo.DependencyCacher
+		output     *bytes.Buffer
 	)
 
 	it.Before(func() {
@@ -47,30 +50,43 @@ func testDependencyCacher(t *testing.T, context spec.G, it spec.S) {
 			}
 		}
 
-		cacher = cargo.NewDependencyCacher(downloader)
+		output = bytes.NewBuffer(nil)
+		cacher = cargo.NewDependencyCacher(downloader, scribe.NewLogger(output))
 	})
 
 	context("Cache", func() {
 		it("caches dependencies and returns updated dependencies list", func() {
 			deps, err := cacher.Cache(tmpDir, []cargo.ConfigMetadataDependency{
 				{
-					URI:    "http://dep1-uri",
-					SHA256: "3c9de6683673f3e8039599d5200d533807c6c35fd9e35d6b6d77009122868f0f",
+					ID:      "dep-1",
+					Version: "1.2.3",
+					Stacks:  []string{"some-stack"},
+					URI:     "http://dep1-uri",
+					SHA256:  "3c9de6683673f3e8039599d5200d533807c6c35fd9e35d6b6d77009122868f0f",
 				},
 				{
-					URI:    "http://dep2-uri",
-					SHA256: "bfc72d62682f4a2edc3218d70b1f7052e4f336c179a8f19ef12ee721d4ea29b7",
+					ID:      "dep-2",
+					Version: "4.5.6",
+					Stacks:  []string{"some-stack", "some-other-stack"},
+					URI:     "http://dep2-uri",
+					SHA256:  "bfc72d62682f4a2edc3218d70b1f7052e4f336c179a8f19ef12ee721d4ea29b7",
 				},
 			})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(deps).To(Equal([]cargo.ConfigMetadataDependency{
 				{
-					URI:    "file:///dependencies/3c9de6683673f3e8039599d5200d533807c6c35fd9e35d6b6d77009122868f0f",
-					SHA256: "3c9de6683673f3e8039599d5200d533807c6c35fd9e35d6b6d77009122868f0f",
+					ID:      "dep-1",
+					Version: "1.2.3",
+					Stacks:  []string{"some-stack"},
+					URI:     "file:///dependencies/3c9de6683673f3e8039599d5200d533807c6c35fd9e35d6b6d77009122868f0f",
+					SHA256:  "3c9de6683673f3e8039599d5200d533807c6c35fd9e35d6b6d77009122868f0f",
 				},
 				{
-					URI:    "file:///dependencies/bfc72d62682f4a2edc3218d70b1f7052e4f336c179a8f19ef12ee721d4ea29b7",
-					SHA256: "bfc72d62682f4a2edc3218d70b1f7052e4f336c179a8f19ef12ee721d4ea29b7",
+					ID:      "dep-2",
+					Version: "4.5.6",
+					Stacks:  []string{"some-stack", "some-other-stack"},
+					URI:     "file:///dependencies/bfc72d62682f4a2edc3218d70b1f7052e4f336c179a8f19ef12ee721d4ea29b7",
+					SHA256:  "bfc72d62682f4a2edc3218d70b1f7052e4f336c179a8f19ef12ee721d4ea29b7",
 				},
 			}))
 
@@ -83,6 +99,13 @@ func testDependencyCacher(t *testing.T, context spec.G, it spec.S) {
 			contents, err = ioutil.ReadFile(filepath.Join(tmpDir, "dependencies", "bfc72d62682f4a2edc3218d70b1f7052e4f336c179a8f19ef12ee721d4ea29b7"))
 			Expect(err).NotTo(HaveOccurred())
 			Expect(string(contents)).To(Equal("dep2-contents"))
+
+			Expect(output.String()).To(ContainSubstring("  Downloading dependencies..."))
+			Expect(output.String()).To(ContainSubstring("    dep-1 (1.2.3) [some-stack]"))
+			Expect(output.String()).To(ContainSubstring("      ↳  dependencies/3c9de6683673f3e8039599d5200d533807c6c35fd9e35d6b6d77009122868f0f"))
+			Expect(output.String()).To(ContainSubstring("    dep-2 (4.5.6) [some-stack, some-other-stack]"))
+			Expect(output.String()).To(ContainSubstring("      ↳  dependencies/bfc72d62682f4a2edc3218d70b1f7052e4f336c179a8f19ef12ee721d4ea29b7"))
+
 		})
 
 		context("failure cases", func() {

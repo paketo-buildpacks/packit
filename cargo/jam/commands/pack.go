@@ -80,6 +80,7 @@ func (p Pack) Execute(args []string) error {
 		output            string
 		version           string
 		offline           bool
+		stack             string
 	)
 
 	fset := flag.NewFlagSet("pack", flag.ContinueOnError)
@@ -87,6 +88,7 @@ func (p Pack) Execute(args []string) error {
 	fset.StringVar(&output, "output", "", "path to location of output tarball")
 	fset.StringVar(&version, "version", "", "version of the buildpack")
 	fset.BoolVar(&offline, "offline", false, "enable offline caching of dependencies")
+	fset.StringVar(&stack, "stack", "", "restricts dependencies to given stack")
 	err := fset.Parse(args)
 	if err != nil {
 		return err
@@ -125,6 +127,17 @@ func (p Pack) Execute(args []string) error {
 	config.Buildpack.Version = version
 
 	fmt.Fprintf(p.stdout, "Packing %s %s...\n", config.Buildpack.Name, version)
+
+	if stack != "" {
+		var filteredDependencies []cargo.ConfigMetadataDependency
+		for _, dep := range config.Metadata.Dependencies {
+			if dep.HasStack(stack) {
+				filteredDependencies = append(filteredDependencies, dep)
+			}
+		}
+
+		config.Metadata.Dependencies = filteredDependencies
+	}
 
 	err = p.prePackager.Execute(config.Metadata.PrePackage, buildpackDir)
 	if err != nil {
