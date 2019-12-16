@@ -9,31 +9,31 @@ import (
 	"path/filepath"
 )
 
-type TarReadyReader struct {
-	io.Reader
+type TarArchive struct {
+	reader io.Reader
 }
 
-func NewTarReader(inputReader io.Reader) (TarReadyReader, error) {
-	return TarReadyReader{inputReader}, nil
+type TarGzipArchive struct {
+	reader io.Reader
 }
 
-func NewGzipTarReader(inputReader io.Reader) (TarReadyReader, error) {
-	gzipReader, err := gzip.NewReader(inputReader)
-	if err != nil {
-		return TarReadyReader{nil}, fmt.Errorf("failed to create gzip reader: %s", err.Error())
-	}
-	return TarReadyReader{gzipReader}, nil
+func NewTarArchive(inputReader io.Reader) TarArchive {
+	return TarArchive{reader: inputReader}
 }
 
-func (tr TarReadyReader) Decompress(destination string) error {
-	tarReader := tar.NewReader(tr)
+func NewTarGzipArchive(inputReader io.Reader) TarGzipArchive {
+	return TarGzipArchive{reader: inputReader}
+}
+
+func (ta TarArchive) Decompress(destination string) error {
+	tarReader := tar.NewReader(ta.reader)
 	for {
 		hdr, err := tarReader.Next()
 		if err == io.EOF {
 			break
 		}
 		if err != nil {
-			return fmt.Errorf("failed to read tar response: %s", err.Error())
+			return fmt.Errorf("failed to read tar response: %s", err)
 		}
 
 		path := filepath.Join(destination, hdr.Name)
@@ -41,13 +41,13 @@ func (tr TarReadyReader) Decompress(destination string) error {
 		case tar.TypeDir:
 			err = os.MkdirAll(path, hdr.FileInfo().Mode())
 			if err != nil {
-				return fmt.Errorf("failed to create archived directory: %s", err.Error())
+				return fmt.Errorf("failed to create archived directory: %s", err)
 			}
 
 		case tar.TypeReg:
 			file, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_TRUNC, hdr.FileInfo().Mode())
 			if err != nil {
-				return fmt.Errorf("failed to create archived file %s", err.Error())
+				return fmt.Errorf("failed to create archived file: %s", err)
 			}
 
 			_, err = io.Copy(file, tarReader)
@@ -63,4 +63,13 @@ func (tr TarReadyReader) Decompress(destination string) error {
 	}
 
 	return nil
+}
+
+func (gz TarGzipArchive) Decompress(destination string) error {
+	gzr, err := gzip.NewReader(gz.reader)
+	if err != nil {
+		return fmt.Errorf("failed to create gzip writer: %s", err)
+	}
+
+	return NewTarArchive(gzr).Decompress(destination)
 }
