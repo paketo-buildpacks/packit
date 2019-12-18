@@ -1,6 +1,9 @@
 package packit_test
 
 import (
+	"io/ioutil"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/cloudfoundry/packit"
@@ -137,6 +140,76 @@ func testEnvironment(t *testing.T, context spec.G, it spec.S) {
 				Expect(environment).To(Equal(packit.Environment{
 					"SOME_NAME.default": "other-default-value",
 				}))
+			})
+		})
+	})
+
+	context("NewEnvironmentFromPath", func() {
+		var dir string
+
+		it.Before(func() {
+			var err error
+			dir, err = ioutil.TempDir("", "env")
+			Expect(err).NotTo(HaveOccurred())
+
+			err = ioutil.WriteFile(filepath.Join(dir, "OVERRIDE_VAR.override"), []byte("override-value"), 0644)
+			Expect(err).NotTo(HaveOccurred())
+
+			err = ioutil.WriteFile(filepath.Join(dir, "DEFAULT_VAR.default"), []byte("default-value"), 0644)
+			Expect(err).NotTo(HaveOccurred())
+
+			err = ioutil.WriteFile(filepath.Join(dir, "INVALID_VAR.invalid"), []byte("invalid-value"), 0644)
+			Expect(err).NotTo(HaveOccurred())
+
+			err = ioutil.WriteFile(filepath.Join(dir, "APPEND_VAR.append"), []byte("append-value"), 0644)
+			Expect(err).NotTo(HaveOccurred())
+
+			err = ioutil.WriteFile(filepath.Join(dir, "APPEND_VAR.delim"), []byte("!"), 0644)
+			Expect(err).NotTo(HaveOccurred())
+
+			err = ioutil.WriteFile(filepath.Join(dir, "PREPEND_VAR.prepend"), []byte("prepend-value"), 0644)
+			Expect(err).NotTo(HaveOccurred())
+
+			err = ioutil.WriteFile(filepath.Join(dir, "PREPEND_VAR.delim"), []byte("#"), 0644)
+			Expect(err).NotTo(HaveOccurred())
+		})
+
+		it.After(func() {
+			Expect(os.RemoveAll(dir)).To(Succeed())
+		})
+
+		it("loads the environment from a directory", func() {
+			environment, err := packit.NewEnvironmentFromPath(dir)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(environment).To(Equal(packit.Environment{
+				"OVERRIDE_VAR.override": "override-value",
+				"DEFAULT_VAR.default":   "default-value",
+				"APPEND_VAR.append":     "append-value",
+				"APPEND_VAR.delim":      "!",
+				"PREPEND_VAR.prepend":   "prepend-value",
+				"PREPEND_VAR.delim":     "#",
+			}))
+		})
+
+		context("failure cases", func() {
+			context("when the directory path is malformed", func() {
+				it("returns an error", func() {
+					_, err := packit.NewEnvironmentFromPath(`[\d---]`)
+					Expect(err).To(MatchError(ContainSubstring("failed to match env directory files:")))
+					Expect(err).To(MatchError(ContainSubstring("syntax error in pattern")))
+				})
+			})
+
+			context("when one of the environment files cannot be read", func() {
+				it.Before(func() {
+					Expect(os.Chmod(filepath.Join(dir, "APPEND_VAR.delim"), 0000)).To(Succeed())
+				})
+
+				it("returns an error", func() {
+					_, err := packit.NewEnvironmentFromPath(dir)
+					Expect(err).To(MatchError(ContainSubstring("failed to load environment variable:")))
+					Expect(err).To(MatchError(ContainSubstring("permission denied")))
+				})
 			})
 		})
 	})
