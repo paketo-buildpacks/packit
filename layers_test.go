@@ -34,7 +34,7 @@ func testLayers(t *testing.T, context spec.G, it spec.S) {
 		Expect(os.RemoveAll(layersDir)).To(Succeed())
 	})
 
-	context("Get", func() {
+	context("layers.Get", func() {
 		it("returns a layer with the given name", func() {
 			layer, err := layers.Get("some-layer")
 			Expect(err).NotTo(HaveOccurred())
@@ -62,12 +62,6 @@ func testLayers(t *testing.T, context spec.G, it spec.S) {
 					LaunchEnv: packit.NewEnvironment(),
 				}))
 			})
-		})
-
-		it("creates a sub-directory with the given name", func() {
-			_, err := layers.Get("some-layer")
-			Expect(err).NotTo(HaveOccurred())
-			Expect(filepath.Join(layersDir, "some-layer")).To(BeADirectory())
 		})
 
 		context("when the layer already exists on disk", func() {
@@ -173,21 +167,6 @@ some-key = "some-value"`), 0644)
 					_, err := layers.Get("some-layer")
 					Expect(err).To(MatchError(ContainSubstring("failed to parse layer content metadata:")))
 					Expect(err).To(MatchError(ContainSubstring("bare keys cannot contain '%'")))
-				})
-			})
-
-			context("when the layers directory cannot be written to", func() {
-				it.Before(func() {
-					Expect(os.Chmod(layersDir, 0111)).To(Succeed())
-				})
-
-				it.After(func() {
-					Expect(os.Chmod(layersDir, os.ModePerm)).To(Succeed())
-				})
-
-				it("returns an error", func() {
-					_, err := layers.Get("some-layer")
-					Expect(err).To(MatchError(ContainSubstring("permission denied")))
 				})
 			})
 

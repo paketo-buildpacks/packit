@@ -12,6 +12,7 @@ func TestUnitPackit(t *testing.T) {
 	suite("Build", testBuild)
 	suite("Detect", testDetect)
 	suite("Environment", testEnvironment)
+	suite("Layer", testLayer)
 	suite("Layers", testLayers)
 	suite.Run(t)
 }
