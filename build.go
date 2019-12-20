@@ -13,11 +13,12 @@ import (
 type BuildFunc func(BuildContext) (BuildResult, error)
 
 type BuildContext struct {
-	CNBPath    string
-	Stack      string
-	WorkingDir string
-	Plan       BuildpackPlan
-	Layers     Layers
+	CNBPath       string
+	Stack         string
+	WorkingDir    string
+	Plan          BuildpackPlan
+	Layers        Layers
+	BuildpackInfo BuildpackInfo
 }
 
 type BuildResult struct {
@@ -31,6 +32,12 @@ type Process struct {
 	Command string   `toml:"command"`
 	Args    []string `toml:"args"`
 	Direct  bool     `toml:"direct"`
+}
+
+type BuildpackInfo struct {
+	ID      string `toml:"id"`
+	Name    string `toml:"name"`
+	Version string `toml:"version"`
 }
 
 type BuildpackPlanEntry struct {
@@ -73,14 +80,26 @@ func Build(f BuildFunc, options ...Option) {
 		return
 	}
 
+	cnbPath := filepath.Clean(strings.TrimSuffix(config.args[0], filepath.Join("bin", "build")))
+
+	var buildpackInfo struct {
+		Buildpack BuildpackInfo `toml:"buildpack"`
+	}
+	_, err = toml.DecodeFile(filepath.Join(cnbPath, "buildpack.toml"), &buildpackInfo)
+	if err != nil {
+		config.exitHandler.Error(err)
+		return
+	}
+
 	result, err := f(BuildContext{
-		CNBPath:    filepath.Clean(strings.TrimSuffix(config.args[0], filepath.Join("bin", "build"))),
+		CNBPath:    cnbPath,
 		Stack:      os.Getenv("CNB_STACK_ID"),
 		WorkingDir: pwd,
 		Plan:       plan,
 		Layers: Layers{
 			Path: layersPath,
 		},
+		BuildpackInfo: buildpackInfo.Buildpack,
 	})
 	if err != nil {
 		config.exitHandler.Error(err)
