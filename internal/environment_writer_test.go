@@ -50,6 +50,13 @@ func testEnvironmentWriter(t *testing.T, context spec.G, it spec.S) {
 		Expect(string(content)).To(Equal("other-content"))
 	})
 
+	it("writes does not create a directory of the env map is empty", func() {
+		err := writer.Write(tmpDir, map[string]string{})
+		Expect(err).NotTo(HaveOccurred())
+
+		Expect(tmpDir).ToNot(BeAnExistingFile())
+	})
+
 	context("failure cases", func() {
 		context("when the directory cannot be created", func() {
 			it.Before(func() {

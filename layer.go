@@ -30,7 +30,7 @@ func (l *Layer) Setup() error {
 	l.SharedEnv = NewEnvironment()
 	l.BuildEnv = NewEnvironment()
 	l.LaunchEnv = NewEnvironment()
-	l.Metadata = nil
+	l.Metadata = map[string]interface{}{}
 
 	err := os.RemoveAll(l.Path)
 	if err != nil {

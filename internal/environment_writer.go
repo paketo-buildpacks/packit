@@ -13,6 +13,10 @@ func NewEnvironmentWriter() EnvironmentWriter {
 }
 
 func (w EnvironmentWriter) Write(dir string, env map[string]string) error {
+	if len(env) == 0 {
+		return nil
+	}
+
 	err := os.MkdirAll(dir, os.ModePerm)
 	if err != nil {
 		return err

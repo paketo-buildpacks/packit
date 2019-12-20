@@ -55,6 +55,7 @@ func testLayer(t *testing.T, context spec.G, it spec.S) {
 					SharedEnv: packit.NewEnvironment(),
 					BuildEnv:  packit.NewEnvironment(),
 					LaunchEnv: packit.NewEnvironment(),
+					Metadata:  map[string]interface{}{},
 				}))
 
 				Expect(filepath.Join(layersDir, "some-layer")).To(BeADirectory())
@@ -123,6 +124,7 @@ func testLayer(t *testing.T, context spec.G, it spec.S) {
 						SharedEnv: packit.NewEnvironment(),
 						BuildEnv:  packit.NewEnvironment(),
 						LaunchEnv: packit.NewEnvironment(),
+						Metadata:  map[string]interface{}{},
 					}))
 
 					Expect(filepath.Join(layersDir, "some-layer")).To(BeADirectory())
