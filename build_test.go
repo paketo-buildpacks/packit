@@ -115,9 +115,10 @@ clear-env = false
 				Path: layersDir,
 			},
 			BuildpackInfo: packit.BuildpackInfo{
-				ID:      "some-id",
-				Name:    "some-name",
-				Version: "some-version",
+				ID:       "some-id",
+				Name:     "some-name",
+				Version:  "some-version",
+				ClearEnv: false,
 			},
 		}))
 	})
