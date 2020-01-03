@@ -7,6 +7,8 @@ import (
 	"github.com/cloudfoundry/packit/internal"
 )
 
+var Fail = internal.Fail
+
 type BuildPlanProvision struct {
 	Name string `toml:"name"`
 }

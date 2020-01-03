@@ -9,6 +9,7 @@ import (
 
 	"github.com/cloudfoundry/packit"
 	"github.com/cloudfoundry/packit/fakes"
+	"github.com/cloudfoundry/packit/internal"
 	"github.com/sclevine/spec"
 
 	. "github.com/cloudfoundry/packit/matchers"
@@ -119,6 +120,20 @@ some-key = "some-value"
 			}, packit.WithExitHandler(exitHandler))
 
 			Expect(exitHandler.ErrorCall.Receives.Error).To(MatchError("failed to detect"))
+		})
+	})
+
+	context("when the DetectFunc fails", func() {
+		it("calls the ExitHandler with the correct exit code", func() {
+			var exitCode int
+
+			packit.Detect(func(ctx packit.DetectContext) (packit.DetectResult, error) {
+				return packit.DetectResult{}, packit.Fail
+			}, packit.WithExitHandler(internal.NewExitHandler(internal.WithExitHandlerExitFunc(func(code int) {
+				exitCode = code
+			}))))
+
+			Expect(exitCode).To(Equal(100))
 		})
 	})
 
