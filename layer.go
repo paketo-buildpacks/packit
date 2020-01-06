@@ -25,12 +25,11 @@ type Layer struct {
 	Metadata  map[string]interface{} `toml:"metadata"`
 }
 
-func (l *Layer) Setup() error {
-
+func (l *Layer) Reset() error {
 	l.SharedEnv = NewEnvironment()
 	l.BuildEnv = NewEnvironment()
 	l.LaunchEnv = NewEnvironment()
-	l.Metadata = map[string]interface{}{}
+	l.Metadata = nil
 
 	err := os.RemoveAll(l.Path)
 	if err != nil {

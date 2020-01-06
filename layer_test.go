@@ -29,7 +29,7 @@ func testLayer(t *testing.T, context spec.G, it spec.S) {
 		Expect(os.RemoveAll(layersDir)).To(Succeed())
 	})
 
-	context("layer.Setup", func() {
+	context("Reset", func() {
 		var layer packit.Layer
 
 		context("when there is no previous build", func() {
@@ -44,7 +44,7 @@ func testLayer(t *testing.T, context spec.G, it spec.S) {
 			})
 
 			it("initializes an empty layer", func() {
-				Expect(layer.Setup()).To(Succeed())
+				Expect(layer.Reset()).To(Succeed())
 
 				Expect(layer).To(Equal(packit.Layer{
 					Name:      "some-layer",
@@ -55,7 +55,6 @@ func testLayer(t *testing.T, context spec.G, it spec.S) {
 					SharedEnv: packit.NewEnvironment(),
 					BuildEnv:  packit.NewEnvironment(),
 					LaunchEnv: packit.NewEnvironment(),
-					Metadata:  map[string]interface{}{},
 				}))
 
 				Expect(filepath.Join(layersDir, "some-layer")).To(BeADirectory())
@@ -110,9 +109,9 @@ func testLayer(t *testing.T, context spec.G, it spec.S) {
 				}
 			})
 
-			context("when Setup is called on a layer", func() {
+			context("when Reset is called on a layer", func() {
 				it("resets all of the layer data and clears the directory", func() {
-					err := layer.Setup()
+					err := layer.Reset()
 					Expect(err).ToNot(HaveOccurred())
 
 					Expect(layer).To(Equal(packit.Layer{
@@ -124,7 +123,6 @@ func testLayer(t *testing.T, context spec.G, it spec.S) {
 						SharedEnv: packit.NewEnvironment(),
 						BuildEnv:  packit.NewEnvironment(),
 						LaunchEnv: packit.NewEnvironment(),
-						Metadata:  map[string]interface{}{},
 					}))
 
 					Expect(filepath.Join(layersDir, "some-layer")).To(BeADirectory())
@@ -153,7 +151,7 @@ func testLayer(t *testing.T, context spec.G, it spec.S) {
 						Path: filepath.Join(layersDir, "some-layer"),
 					}
 
-					err := layer.Setup()
+					err := layer.Reset()
 					Expect(err).To(MatchError(ContainSubstring("error could not remove file: ")))
 					Expect(err).To(MatchError(ContainSubstring("permission denied")))
 				})
