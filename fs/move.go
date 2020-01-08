@@ -87,6 +87,10 @@ func copyDirectory(source, destination string) error {
 				return err
 			}
 
+			if filepath.HasPrefix(link, "..") {
+				link = filepath.Clean(filepath.Join(source, filepath.Base(path), link))
+			}
+
 			relativeLink, err := filepath.Rel(source, link)
 			if err != nil {
 				return err
