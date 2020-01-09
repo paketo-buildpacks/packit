@@ -73,13 +73,14 @@ func testMove(t *testing.T, context spec.G, it spec.S) {
 					})
 				})
 
-				context("when the destination cannot be created", func() {
+				context("when the destination cannot be removed", func() {
 					it.Before(func() {
 						Expect(os.Chmod(destinationDir, 0000)).To(Succeed())
 					})
 
 					it("returns an error", func() {
 						err := fs.Move(source, destination)
+						Expect(err).To(MatchError(ContainSubstring("failed to move: destination exists:")))
 						Expect(err).To(MatchError(ContainSubstring("permission denied")))
 					})
 				})
@@ -115,33 +116,71 @@ func testMove(t *testing.T, context spec.G, it spec.S) {
 				Expect(err).NotTo(HaveOccurred())
 			})
 
-			it("moves the source directory to the destination", func() {
-				err := fs.Move(source, destination)
-				Expect(err).NotTo(HaveOccurred())
+			context("when the destination does not exist", func() {
+				it("moves the source directory to the destination", func() {
+					err := fs.Move(source, destination)
+					Expect(err).NotTo(HaveOccurred())
 
-				Expect(destination).To(BeADirectory())
+					Expect(destination).To(BeADirectory())
 
-				content, err := ioutil.ReadFile(filepath.Join(destination, "some-dir", "some-file"))
-				Expect(err).NotTo(HaveOccurred())
-				Expect(string(content)).To(Equal("some-content"))
+					content, err := ioutil.ReadFile(filepath.Join(destination, "some-dir", "some-file"))
+					Expect(err).NotTo(HaveOccurred())
+					Expect(string(content)).To(Equal("some-content"))
 
-				info, err := os.Stat(filepath.Join(destination, "some-dir", "some-file"))
-				Expect(err).NotTo(HaveOccurred())
-				Expect(info.Mode()).To(Equal(os.FileMode(0644)))
+					info, err := os.Stat(filepath.Join(destination, "some-dir", "some-file"))
+					Expect(err).NotTo(HaveOccurred())
+					Expect(info.Mode()).To(Equal(os.FileMode(0644)))
 
-				info, err = os.Stat(filepath.Join(destination, "some-dir", "readonly-file"))
-				Expect(err).NotTo(HaveOccurred())
-				Expect(info.Mode()).To(Equal(os.FileMode(0444)))
+					info, err = os.Stat(filepath.Join(destination, "some-dir", "readonly-file"))
+					Expect(err).NotTo(HaveOccurred())
+					Expect(info.Mode()).To(Equal(os.FileMode(0444)))
 
-				path, err := os.Readlink(filepath.Join(destination, "some-dir", "some-symlink"))
-				Expect(err).NotTo(HaveOccurred())
-				Expect(path).To(Equal(filepath.Join(destination, "some-dir", "some-file")))
+					path, err := os.Readlink(filepath.Join(destination, "some-dir", "some-symlink"))
+					Expect(err).NotTo(HaveOccurred())
+					Expect(path).To(Equal(filepath.Join(destination, "some-dir", "some-file")))
 
-				path, err = os.Readlink(filepath.Join(destination, "some-dir", "external-symlink"))
-				Expect(err).NotTo(HaveOccurred())
-				Expect(path).To(Equal(filepath.Join(external, "some-file")))
+					path, err = os.Readlink(filepath.Join(destination, "some-dir", "external-symlink"))
+					Expect(err).NotTo(HaveOccurred())
+					Expect(path).To(Equal(filepath.Join(external, "some-file")))
 
-				Expect(source).NotTo(BeAnExistingFile())
+					Expect(source).NotTo(BeAnExistingFile())
+				})
+			})
+
+			context("when the destination is a file", func() {
+				it.Before(func() {
+					Expect(os.RemoveAll(destination))
+					Expect(ioutil.WriteFile(destination, []byte{}, os.ModePerm)).To(Succeed())
+				})
+
+				it("moves the source directory to the destination", func() {
+					err := fs.Move(source, destination)
+					Expect(err).NotTo(HaveOccurred())
+
+					Expect(destination).To(BeADirectory())
+
+					content, err := ioutil.ReadFile(filepath.Join(destination, "some-dir", "some-file"))
+					Expect(err).NotTo(HaveOccurred())
+					Expect(string(content)).To(Equal("some-content"))
+
+					info, err := os.Stat(filepath.Join(destination, "some-dir", "some-file"))
+					Expect(err).NotTo(HaveOccurred())
+					Expect(info.Mode()).To(Equal(os.FileMode(0644)))
+
+					info, err = os.Stat(filepath.Join(destination, "some-dir", "readonly-file"))
+					Expect(err).NotTo(HaveOccurred())
+					Expect(info.Mode()).To(Equal(os.FileMode(0444)))
+
+					path, err := os.Readlink(filepath.Join(destination, "some-dir", "some-symlink"))
+					Expect(err).NotTo(HaveOccurred())
+					Expect(path).To(Equal(filepath.Join(destination, "some-dir", "some-file")))
+
+					path, err = os.Readlink(filepath.Join(destination, "some-dir", "external-symlink"))
+					Expect(err).NotTo(HaveOccurred())
+					Expect(path).To(Equal(filepath.Join(external, "some-file")))
+
+					Expect(source).NotTo(BeAnExistingFile())
+				})
 			})
 
 			context("failure cases", func() {

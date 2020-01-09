@@ -1,12 +1,21 @@
 package fs
 
 import (
+	"errors"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
 )
 
 func Move(source, destination string) error {
+	err := os.Remove(destination)
+	if err != nil {
+		if !errors.Is(err, os.ErrNotExist) {
+			return fmt.Errorf("failed to move: destination exists: %w", err)
+		}
+	}
+
 	info, err := os.Stat(source)
 	if err != nil {
 		return err
