@@ -45,9 +45,11 @@ func (b TarBuilder) Build(path string, files []File) error {
 	for _, file := range files {
 		b.logger.Subprocess(file.Name)
 		err = tw.WriteHeader(&tar.Header{
-			Name: file.Name,
-			Size: file.Size,
-			Mode: file.Mode,
+			Name:  file.Name,
+			Size:  file.Size,
+			Mode:  file.Mode,
+			Uname: "root",
+			Gname: "root",
 		})
 		if err != nil {
 			return fmt.Errorf("failed to write header to tarball: %s", err)

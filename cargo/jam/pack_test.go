@@ -106,21 +106,29 @@ func testPack(t *testing.T, context spec.G, it spec.S) {
 [[stacks]]
   id = "some-stack-id"`))
 		Expect(hdr.Mode).To(Equal(int64(0644)))
+		Expect(hdr.Uname).To(Equal("root"))
+		Expect(hdr.Gname).To(Equal("root"))
 
 		contents, hdr, err = ExtractFile(file, "bin/build")
 		Expect(err).ToNot(HaveOccurred())
 		Expect(string(contents)).To(Equal("build-contents"))
 		Expect(hdr.Mode).To(Equal(int64(0755)))
+		Expect(hdr.Uname).To(Equal("root"))
+		Expect(hdr.Gname).To(Equal("root"))
 
 		contents, hdr, err = ExtractFile(file, "bin/detect")
 		Expect(err).ToNot(HaveOccurred())
 		Expect(string(contents)).To(Equal("detect-contents"))
 		Expect(hdr.Mode).To(Equal(int64(0755)))
+		Expect(hdr.Uname).To(Equal("root"))
+		Expect(hdr.Gname).To(Equal("root"))
 
 		contents, hdr, err = ExtractFile(file, "generated-file")
 		Expect(err).ToNot(HaveOccurred())
 		Expect(string(contents)).To(Equal("hello\n"))
 		Expect(hdr.Mode).To(Equal(int64(0644)))
+		Expect(hdr.Uname).To(Equal("root"))
+		Expect(hdr.Gname).To(Equal("root"))
 
 		Expect(filepath.Join(buildpackDir, "generated-file")).NotTo(BeARegularFile())
 	})
