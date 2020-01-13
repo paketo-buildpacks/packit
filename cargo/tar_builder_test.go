@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/cloudfoundry/packit/cargo"
 	"github.com/cloudfoundry/packit/scribe"
@@ -47,20 +48,17 @@ func testTarBuilder(t *testing.T, context spec.G, it spec.S) {
 				err := builder.Build(tempFile, []cargo.File{
 					{
 						Name:       "bin/build",
-						Size:       int64(len("build-contents")),
-						Mode:       int64(0755),
+						Info:       cargo.NewFileInfo("build", len("build-contents"), 0755, time.Now()),
 						ReadCloser: ioutil.NopCloser(strings.NewReader("build-contents")),
 					},
 					{
 						Name:       "bin/detect",
-						Size:       int64(len("detect-contents")),
-						Mode:       int64(0755),
+						Info:       cargo.NewFileInfo("detect", len("detect-contents"), 0755, time.Now()),
 						ReadCloser: ioutil.NopCloser(strings.NewReader("detect-contents")),
 					},
 					{
 						Name:       "buildpack.toml",
-						Size:       int64(len("buildpack-toml-contents")),
-						Mode:       int64(0644),
+						Info:       cargo.NewFileInfo("buildpack.toml", len("buildpack-toml-contents"), 0644, time.Now()),
 						ReadCloser: ioutil.NopCloser(strings.NewReader("buildpack-toml-contents")),
 					},
 				})
@@ -105,7 +103,7 @@ func testTarBuilder(t *testing.T, context spec.G, it spec.S) {
 					err := builder.Build(tempFile, []cargo.File{
 						{
 							Name:       "bin/build",
-							Size:       int64(len("build-contents")),
+							Info:       cargo.NewFileInfo("build", len("build-contents"), 0755, time.Now()),
 							ReadCloser: ioutil.NopCloser(strings.NewReader("build-contents")),
 						},
 					})
@@ -119,11 +117,25 @@ func testTarBuilder(t *testing.T, context spec.G, it spec.S) {
 					err := builder.Build(tempFile, []cargo.File{
 						{
 							Name:       "bin/build",
+							Info:       cargo.NewFileInfo("build", 1, 0755, time.Now()),
 							ReadCloser: ioutil.NopCloser(strings.NewReader("build-contents")),
 						},
 					})
 					Expect(err).To(MatchError(ContainSubstring("failed to write file to tarball")))
 					Expect(err).To(MatchError(ContainSubstring("write too long")))
+				})
+			})
+
+			context("when one of the files cannot have its header created", func() {
+				it("returns an error", func() {
+					err := builder.Build(tempFile, []cargo.File{
+						{
+							Name:       "bin/build",
+							ReadCloser: ioutil.NopCloser(strings.NewReader("build-contents")),
+						},
+					})
+					Expect(err).To(MatchError(ContainSubstring("failed to create header for file \"bin/build\":")))
+					Expect(err).To(MatchError(ContainSubstring("FileInfo is nil")))
 				})
 			})
 		})

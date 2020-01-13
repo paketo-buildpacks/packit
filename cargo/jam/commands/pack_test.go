@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/cloudfoundry/packit/cargo"
 	"github.com/cloudfoundry/packit/cargo/jam/commands"
@@ -74,7 +75,7 @@ func testPack(t *testing.T, context spec.G, it spec.S) {
 		fileBundler.BundleCall.Returns.FileSlice = []cargo.File{
 			{
 				Name:       "buildpack.toml",
-				Size:       int64(len("buildpack-toml-contents")),
+				Info:       cargo.NewFileInfo("buildpack.toml", len("buildpack-toml-contents"), 0644, time.Now()),
 				ReadCloser: ioutil.NopCloser(strings.NewReader("buildpack-toml-contents")),
 			},
 		}
@@ -170,7 +171,7 @@ func testPack(t *testing.T, context spec.G, it spec.S) {
 
 			buildpackTOMLFile := tarBuilder.BuildCall.Receives.Files[0]
 			Expect(buildpackTOMLFile.Name).To(Equal("buildpack.toml"))
-			Expect(buildpackTOMLFile.Size).To(Equal(int64(len("buildpack-toml-contents"))))
+			Expect(buildpackTOMLFile.Info.Size()).To(Equal(int64(len("buildpack-toml-contents"))))
 
 			contents, err := ioutil.ReadAll(buildpackTOMLFile)
 			Expect(err).NotTo(HaveOccurred())
@@ -253,7 +254,7 @@ func testPack(t *testing.T, context spec.G, it spec.S) {
 
 				buildpackTOMLFile := tarBuilder.BuildCall.Receives.Files[0]
 				Expect(buildpackTOMLFile.Name).To(Equal("buildpack.toml"))
-				Expect(buildpackTOMLFile.Size).To(Equal(int64(len("buildpack-toml-contents"))))
+				Expect(buildpackTOMLFile.Info.Size()).To(Equal(int64(len("buildpack-toml-contents"))))
 
 				contents, err := ioutil.ReadAll(buildpackTOMLFile)
 				Expect(err).NotTo(HaveOccurred())

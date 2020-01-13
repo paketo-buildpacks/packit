@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"time"
 )
 
 type FileBundler struct{}
@@ -28,8 +29,7 @@ func (b FileBundler) Bundle(root string, paths []string, config Config) ([]File,
 			}
 
 			file.ReadCloser = ioutil.NopCloser(buf)
-			file.Size = int64(buf.Len())
-			file.Mode = int64(0644)
+			file.Info = NewFileInfo("buildpack.toml", buf.Len(), 0644, time.Now())
 
 		default:
 			fd, err := os.Open(filepath.Join(root, path))
@@ -43,8 +43,7 @@ func (b FileBundler) Bundle(root string, paths []string, config Config) ([]File,
 			}
 
 			file.ReadCloser = fd
-			file.Size = info.Size()
-			file.Mode = int64(info.Mode())
+			file.Info = info
 
 		}
 
