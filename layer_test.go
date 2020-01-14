@@ -112,7 +112,7 @@ func testLayer(t *testing.T, context spec.G, it spec.S) {
 			context("when Reset is called on a layer", func() {
 				it("resets all of the layer data and clears the directory", func() {
 					err := layer.Reset()
-					Expect(err).ToNot(HaveOccurred())
+					Expect(err).NotTo(HaveOccurred())
 
 					Expect(layer).To(Equal(packit.Layer{
 						Name:      "some-layer",
@@ -128,7 +128,7 @@ func testLayer(t *testing.T, context spec.G, it spec.S) {
 					Expect(filepath.Join(layersDir, "some-layer")).To(BeADirectory())
 
 					files, err := filepath.Glob(filepath.Join(layersDir, "some-layer", "*"))
-					Expect(err).ToNot(HaveOccurred())
+					Expect(err).NotTo(HaveOccurred())
 
 					Expect(files).To(BeEmpty())
 				})

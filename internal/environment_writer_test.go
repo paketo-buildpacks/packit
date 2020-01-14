@@ -54,7 +54,7 @@ func testEnvironmentWriter(t *testing.T, context spec.G, it spec.S) {
 		err := writer.Write(tmpDir, map[string]string{})
 		Expect(err).NotTo(HaveOccurred())
 
-		Expect(tmpDir).ToNot(BeAnExistingFile())
+		Expect(tmpDir).NotTo(BeAnExistingFile())
 	})
 
 	context("failure cases", func() {

@@ -6,57 +6,12 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
+	"sort"
 	"time"
 
 	"github.com/cloudfoundry/packit/scribe"
 )
-
-type File struct {
-	io.ReadCloser
-
-	Name string
-	Info os.FileInfo
-}
-
-type FileInfo struct {
-	name  string
-	size  int
-	mode  uint32
-	mtime time.Time
-}
-
-func NewFileInfo(name string, size int, mode uint32, mtime time.Time) FileInfo {
-	return FileInfo{
-		name:  name,
-		size:  size,
-		mode:  mode,
-		mtime: mtime,
-	}
-}
-
-func (fi FileInfo) Name() string {
-	return fi.name
-}
-
-func (fi FileInfo) Size() int64 {
-	return int64(fi.size)
-}
-
-func (fi FileInfo) Mode() os.FileMode {
-	return os.FileMode(fi.mode)
-}
-
-func (fi FileInfo) ModTime() time.Time {
-	return fi.mtime
-}
-
-func (fi FileInfo) IsDir() bool {
-	return fi.Mode().IsDir()
-}
-
-func (fi FileInfo) Sys() interface{} {
-	return nil
-}
 
 type TarBuilder struct {
 	logger scribe.Logger
@@ -81,6 +36,27 @@ func (b TarBuilder) Build(path string, files []File) error {
 
 	tw := tar.NewWriter(gw)
 	defer tw.Close()
+
+	directories := map[string]struct{}{}
+	for _, file := range files {
+		path := filepath.Dir(file.Name)
+		for path != "." {
+			directories[path] = struct{}{}
+
+			path = filepath.Dir(path)
+		}
+	}
+
+	for dir := range directories {
+		files = append(files, File{
+			Name: dir,
+			Info: NewFileInfo(filepath.Base(dir), 0, os.ModePerm|os.ModeDir, time.Now()),
+		})
+	}
+
+	sort.Slice(files, func(i, j int) bool {
+		return files[i].Name < files[j].Name
+	})
 
 	for _, file := range files {
 		b.logger.Subprocess(file.Name)

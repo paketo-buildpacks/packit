@@ -71,7 +71,7 @@ func testPack(t *testing.T, context spec.G, it spec.S) {
 		Expect(session.Out).To(gbytes.Say("    generated-file"))
 
 		file, err := os.Open(filepath.Join(tmpDir, "output.tgz"))
-		Expect(err).ToNot(HaveOccurred())
+		Expect(err).NotTo(HaveOccurred())
 
 		u, err := user.Current()
 		Expect(err).NotTo(HaveOccurred())
@@ -82,7 +82,7 @@ func testPack(t *testing.T, context spec.G, it spec.S) {
 		groupName := group.Name
 
 		contents, hdr, err := ExtractFile(file, "buildpack.toml")
-		Expect(err).ToNot(HaveOccurred())
+		Expect(err).NotTo(HaveOccurred())
 		Expect(contents).To(MatchTOML(`api = "0.2"
 
 [buildpack]
@@ -117,21 +117,21 @@ func testPack(t *testing.T, context spec.G, it spec.S) {
 		Expect(hdr.Mode).To(Equal(int64(0644)))
 
 		contents, hdr, err = ExtractFile(file, "bin/build")
-		Expect(err).ToNot(HaveOccurred())
+		Expect(err).NotTo(HaveOccurred())
 		Expect(string(contents)).To(Equal("build-contents"))
 		Expect(hdr.Mode).To(Equal(int64(0755)))
 		Expect(hdr.Uname).To(Equal(userName))
 		Expect(hdr.Gname).To(Equal(groupName))
 
 		contents, hdr, err = ExtractFile(file, "bin/detect")
-		Expect(err).ToNot(HaveOccurred())
+		Expect(err).NotTo(HaveOccurred())
 		Expect(string(contents)).To(Equal("detect-contents"))
 		Expect(hdr.Mode).To(Equal(int64(0755)))
 		Expect(hdr.Uname).To(Equal(userName))
 		Expect(hdr.Gname).To(Equal(groupName))
 
 		contents, hdr, err = ExtractFile(file, "generated-file")
-		Expect(err).ToNot(HaveOccurred())
+		Expect(err).NotTo(HaveOccurred())
 		Expect(string(contents)).To(Equal("hello\n"))
 		Expect(hdr.Mode).To(Equal(int64(0644)))
 		Expect(hdr.Uname).To(Equal(userName))
@@ -180,6 +180,8 @@ func testPack(t *testing.T, context spec.G, it spec.S) {
 			Expect(err).NotTo(HaveOccurred())
 			Eventually(session).Should(gexec.Exit(0), func() string { return buffer.String() })
 
+			fmt.Printf("session ->\n%s\n", session.Out.Contents())
+
 			Expect(session.Out).To(gbytes.Say("Packing some-buildpack-name some-version..."))
 			Expect(session.Out).To(gbytes.Say("  Executing pre-packaging script: ./scripts/build.sh"))
 			Expect(session.Out).To(gbytes.Say("    hello from the pre-packaging script"))
@@ -187,19 +189,21 @@ func testPack(t *testing.T, context spec.G, it spec.S) {
 			Expect(session.Out).To(gbytes.Say(`    some-dependency \(1.2.3\) \[io.buildpacks.stacks.bionic, org.cloudfoundry.stacks.tiny\]`))
 			Expect(session.Out).To(gbytes.Say("      ↳  dependencies/f058c8bf6b65b829e200ef5c2d22fde0ee65b96c1fbd1b88869be133aafab64a"))
 			Expect(session.Out).To(gbytes.Say(fmt.Sprintf("  Building tarball: %s", filepath.Join(tmpDir, "output.tgz"))))
+			Expect(session.Out).To(gbytes.Say("    bin"))
 			Expect(session.Out).To(gbytes.Say("    bin/build"))
 			Expect(session.Out).To(gbytes.Say("    bin/detect"))
 			Expect(session.Out).To(gbytes.Say("    buildpack.toml"))
-			Expect(session.Out).To(gbytes.Say("    generated-file"))
+			Expect(session.Out).To(gbytes.Say("    dependencies"))
 			Expect(session.Out).To(gbytes.Say("    dependencies/f058c8bf6b65b829e200ef5c2d22fde0ee65b96c1fbd1b88869be133aafab64a"))
+			Expect(session.Out).To(gbytes.Say("    generated-file"))
 
 			Expect(string(session.Out.Contents())).NotTo(ContainSubstring("other-dependency"))
 
 			file, err := os.Open(filepath.Join(tmpDir, "output.tgz"))
-			Expect(err).ToNot(HaveOccurred())
+			Expect(err).NotTo(HaveOccurred())
 
 			contents, hdr, err := ExtractFile(file, "buildpack.toml")
-			Expect(err).ToNot(HaveOccurred())
+			Expect(err).NotTo(HaveOccurred())
 			Expect(contents).To(MatchTOML(`api = "0.2"
 
 [buildpack]
@@ -226,22 +230,22 @@ func testPack(t *testing.T, context spec.G, it spec.S) {
 			Expect(hdr.Mode).To(Equal(int64(0644)))
 
 			contents, hdr, err = ExtractFile(file, "bin/build")
-			Expect(err).ToNot(HaveOccurred())
+			Expect(err).NotTo(HaveOccurred())
 			Expect(string(contents)).To(Equal("build-contents"))
 			Expect(hdr.Mode).To(Equal(int64(0755)))
 
 			contents, hdr, err = ExtractFile(file, "bin/detect")
-			Expect(err).ToNot(HaveOccurred())
+			Expect(err).NotTo(HaveOccurred())
 			Expect(string(contents)).To(Equal("detect-contents"))
 			Expect(hdr.Mode).To(Equal(int64(0755)))
 
 			contents, hdr, err = ExtractFile(file, "generated-file")
-			Expect(err).ToNot(HaveOccurred())
+			Expect(err).NotTo(HaveOccurred())
 			Expect(string(contents)).To(Equal("hello\n"))
 			Expect(hdr.Mode).To(Equal(int64(0644)))
 
 			contents, hdr, err = ExtractFile(file, "dependencies/f058c8bf6b65b829e200ef5c2d22fde0ee65b96c1fbd1b88869be133aafab64a")
-			Expect(err).ToNot(HaveOccurred())
+			Expect(err).NotTo(HaveOccurred())
 			Expect(string(contents)).To(Equal("dependency-contents"))
 			Expect(hdr.Mode).To(Equal(int64(0644)))
 		})

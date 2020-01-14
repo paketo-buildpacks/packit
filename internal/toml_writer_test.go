@@ -24,7 +24,7 @@ func testTOMLWriter(t *testing.T, context spec.G, it spec.S) {
 	it.Before(func() {
 		var err error
 		tmpDir, err = ioutil.TempDir("", "tomlWriter")
-		Expect(err).ToNot(HaveOccurred())
+		Expect(err).NotTo(HaveOccurred())
 
 		path = filepath.Join(tmpDir, "writer.toml")
 	})
@@ -34,10 +34,10 @@ func testTOMLWriter(t *testing.T, context spec.G, it spec.S) {
 			"some-field":  "some-value",
 			"other-field": "other-value",
 		})
-		Expect(err).ToNot(HaveOccurred())
+		Expect(err).NotTo(HaveOccurred())
 
 		tomlFileContents, err := ioutil.ReadFile(path)
-		Expect(err).ToNot(HaveOccurred())
+		Expect(err).NotTo(HaveOccurred())
 		Expect(string(tomlFileContents)).To(MatchTOML(`
 some-field = "some-value"
 other-field = "other-value"`))

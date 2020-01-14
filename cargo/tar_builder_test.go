@@ -45,16 +45,12 @@ func testTarBuilder(t *testing.T, context spec.G, it spec.S) {
 
 	context("Build", func() {
 		context("given a destination and a list of files", func() {
-			it.Focus("constructs a tar ball", func() {
+			it("constructs a tar ball", func() {
 				err := builder.Build(tempFile, []cargo.File{
 					{
 						Name:       "buildpack.toml",
 						Info:       cargo.NewFileInfo("buildpack.toml", len("buildpack-toml-contents"), 0644, time.Now()),
 						ReadCloser: ioutil.NopCloser(strings.NewReader("buildpack-toml-contents")),
-					},
-					{
-						Name: "bin",
-						Info: cargo.NewFileInfo("bin", 0, uint32(os.ModePerm|os.ModeDir), time.Now()),
 					},
 					{
 						Name:       "bin/build",
