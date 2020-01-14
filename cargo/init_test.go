@@ -49,6 +49,7 @@ func ExtractFile(file *os.File, name string) ([]byte, *tar.Header, error) {
 			if err == io.EOF {
 				break
 			}
+
 			return nil, nil, err
 		}
 
@@ -60,7 +61,6 @@ func ExtractFile(file *os.File, name string) ([]byte, *tar.Header, error) {
 
 			return contents, hdr, nil
 		}
-
 	}
 
 	return nil, nil, fmt.Errorf("no such file: %s", name)

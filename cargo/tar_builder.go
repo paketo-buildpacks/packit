@@ -96,12 +96,14 @@ func (b TarBuilder) Build(path string, files []File) error {
 			return fmt.Errorf("failed to write header to tarball: %w", err)
 		}
 
-		_, err = io.Copy(tw, file)
-		if err != nil {
-			return fmt.Errorf("failed to write file to tarball: %w", err)
-		}
+		if file.ReadCloser != nil {
+			_, err = io.Copy(tw, file)
+			if err != nil {
+				return fmt.Errorf("failed to write file to tarball: %w", err)
+			}
 
-		file.Close()
+			file.Close()
+		}
 	}
 
 	b.logger.Break()

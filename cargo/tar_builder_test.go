@@ -1,6 +1,7 @@
 package cargo_test
 
 import (
+	"archive/tar"
 	"bytes"
 	"fmt"
 	"io/ioutil"
@@ -30,7 +31,7 @@ func testTarBuilder(t *testing.T, context spec.G, it spec.S) {
 	it.Before(func() {
 		var err error
 		tempDir, err = ioutil.TempDir("", "output")
-		Expect(err).ToNot(HaveOccurred())
+		Expect(err).NotTo(HaveOccurred())
 
 		tempFile = filepath.Join(tempDir, "buildpack.tgz")
 
@@ -44,8 +45,17 @@ func testTarBuilder(t *testing.T, context spec.G, it spec.S) {
 
 	context("Build", func() {
 		context("given a destination and a list of files", func() {
-			it("constructs a tar ball", func() {
+			it.Focus("constructs a tar ball", func() {
 				err := builder.Build(tempFile, []cargo.File{
+					{
+						Name:       "buildpack.toml",
+						Info:       cargo.NewFileInfo("buildpack.toml", len("buildpack-toml-contents"), 0644, time.Now()),
+						ReadCloser: ioutil.NopCloser(strings.NewReader("buildpack-toml-contents")),
+					},
+					{
+						Name: "bin",
+						Info: cargo.NewFileInfo("bin", 0, uint32(os.ModePerm|os.ModeDir), time.Now()),
+					},
 					{
 						Name:       "bin/build",
 						Info:       cargo.NewFileInfo("build", len("build-contents"), 0755, time.Now()),
@@ -56,13 +66,8 @@ func testTarBuilder(t *testing.T, context spec.G, it spec.S) {
 						Info:       cargo.NewFileInfo("detect", len("detect-contents"), 0755, time.Now()),
 						ReadCloser: ioutil.NopCloser(strings.NewReader("detect-contents")),
 					},
-					{
-						Name:       "buildpack.toml",
-						Info:       cargo.NewFileInfo("buildpack.toml", len("buildpack-toml-contents"), 0644, time.Now()),
-						ReadCloser: ioutil.NopCloser(strings.NewReader("buildpack-toml-contents")),
-					},
 				})
-				Expect(err).ToNot(HaveOccurred())
+				Expect(err).NotTo(HaveOccurred())
 
 				Expect(output.String()).To(ContainSubstring(fmt.Sprintf("Building tarball: %s", tempFile)))
 				Expect(output.String()).To(ContainSubstring("bin/build"))
@@ -70,20 +75,26 @@ func testTarBuilder(t *testing.T, context spec.G, it spec.S) {
 				Expect(output.String()).To(ContainSubstring("buildpack.toml"))
 
 				file, err := os.Open(tempFile)
-				Expect(err).ToNot(HaveOccurred())
+				Expect(err).NotTo(HaveOccurred())
 
 				contents, hdr, err := ExtractFile(file, "buildpack.toml")
-				Expect(err).ToNot(HaveOccurred())
+				Expect(err).NotTo(HaveOccurred())
 				Expect(string(contents)).To(Equal("buildpack-toml-contents"))
 				Expect(hdr.Mode).To(Equal(int64(0644)))
 
+				contents, hdr, err = ExtractFile(file, "bin")
+				Expect(err).NotTo(HaveOccurred())
+				Expect(string(contents)).To(BeEmpty())
+				Expect(hdr.Mode).To(Equal(int64(0777)))
+				Expect(hdr.Typeflag).To(Equal(uint8(tar.TypeDir)))
+
 				contents, hdr, err = ExtractFile(file, "bin/build")
-				Expect(err).ToNot(HaveOccurred())
+				Expect(err).NotTo(HaveOccurred())
 				Expect(string(contents)).To(Equal("build-contents"))
 				Expect(hdr.Mode).To(Equal(int64(0755)))
 
 				contents, hdr, err = ExtractFile(file, "bin/detect")
-				Expect(err).ToNot(HaveOccurred())
+				Expect(err).NotTo(HaveOccurred())
 				Expect(string(contents)).To(Equal("detect-contents"))
 				Expect(hdr.Mode).To(Equal(int64(0755)))
 			})
