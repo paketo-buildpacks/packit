@@ -93,6 +93,22 @@ func Build(f BuildFunc, options ...Option) {
 		return
 	}
 
+	layerTomls, err := filepath.Glob(filepath.Join(layersPath, "*.toml"))
+	if err != nil {
+		config.exitHandler.Error(err)
+		return
+	}
+
+	for _, file := range layerTomls {
+		if filepath.Base(file) != "launch.toml" && filepath.Base(file) != "store.toml" {
+			err = os.Remove(file)
+			if err != nil {
+				config.exitHandler.Error(fmt.Errorf("failed to remove layer toml: %w", err))
+				return
+			}
+		}
+	}
+
 	for _, layer := range result.Layers {
 		err = config.tomlWriter.Write(filepath.Join(layersPath, fmt.Sprintf("%s.toml", layer.Name)), layer)
 		if err != nil {

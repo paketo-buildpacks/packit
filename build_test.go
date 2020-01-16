@@ -159,6 +159,60 @@ some-key = "some-value"
 `))
 	})
 
+	context("when there are existing layer.toml files", func() {
+		context("when the layer.toml's will not be re-written", func() {
+			var obsoleteLayerPath string
+
+			it.Before(func() {
+				obsoleteLayerPath = filepath.Join(layersDir, "obsolete-layer")
+				Expect(os.MkdirAll(obsoleteLayerPath, os.ModePerm)).To(Succeed())
+				Expect(ioutil.WriteFile(obsoleteLayerPath+".toml", []byte{}, 0755)).To(Succeed())
+
+				Expect(ioutil.WriteFile(filepath.Join(layersDir, "launch.toml"), []byte{}, 0755)).To(Succeed())
+				Expect(ioutil.WriteFile(filepath.Join(layersDir, "store.toml"), []byte{}, 0755)).To(Succeed())
+			})
+
+			it("removes them", func() {
+				packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
+					return packit.BuildResult{
+						Layers: []packit.Layer{},
+					}, nil
+				}, packit.WithArgs([]string{"", layersDir, "", planPath}))
+				Expect(obsoleteLayerPath).NotTo(BeARegularFile())
+				Expect(obsoleteLayerPath + ".toml").NotTo(BeARegularFile())
+
+				Expect(filepath.Join(layersDir, "launch.toml")).To(BeARegularFile())
+				Expect(filepath.Join(layersDir, "store.toml")).To(BeARegularFile())
+			})
+		})
+
+		context("failures", func() {
+			context("when getting the layer toml list", func() {
+				var unremovableTOMLPath string
+
+				it.Before(func() {
+					unremovableTOMLPath = filepath.Join(layersDir, "unremovable.toml")
+					Expect(os.MkdirAll(filepath.Join(layersDir, "unremovable"), os.ModePerm)).To(Succeed())
+					Expect(ioutil.WriteFile(unremovableTOMLPath, []byte{}, os.ModePerm)).To(Succeed())
+					Expect(os.Chmod(layersDir, 0666)).To(Succeed())
+				})
+
+				it.After(func() {
+					Expect(os.Chmod(layersDir, os.ModePerm)).To(Succeed())
+				})
+
+				it("returns an error", func() {
+					packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
+						return packit.BuildResult{
+							Layers: []packit.Layer{},
+						}, nil
+					}, packit.WithArgs([]string{"", layersDir, "", planPath}), packit.WithExitHandler(exitHandler))
+					Expect(exitHandler.ErrorCall.Receives.Error).To(MatchError(ContainSubstring("failed to remove layer toml:")))
+				})
+			})
+		})
+	})
+
 	it("persists a launch.toml", func() {
 		packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
 			return packit.BuildResult{
