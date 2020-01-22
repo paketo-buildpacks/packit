@@ -67,7 +67,6 @@ func (ta TarArchive) Decompress(destination string) error {
 			}
 
 		}
-
 	}
 
 	return nil

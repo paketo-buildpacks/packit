@@ -246,7 +246,6 @@ func testVacation(t *testing.T, context spec.G, it spec.S) {
 
 					err := readyArchive.Decompress(tempDir)
 					Expect(err).To(MatchError(ContainSubstring("failed to create gzip reader")))
-
 				})
 			})
 		})
