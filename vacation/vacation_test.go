@@ -54,6 +54,10 @@ func testVacation(t *testing.T, context spec.G, it spec.S) {
 				Expect(err).NotTo(HaveOccurred())
 			}
 
+			Expect(tw.WriteHeader(&tar.Header{Name: "symlink", Mode: 0755, Size: int64(0), Typeflag: tar.TypeSymlink, Linkname: "first"})).To(Succeed())
+			_, err = tw.Write([]byte{})
+			Expect(err).NotTo(HaveOccurred())
+
 			Expect(tw.Close()).To(Succeed())
 
 			tarArchive = vacation.NewTarArchive(bytes.NewReader(buffer.Bytes()))
@@ -76,6 +80,7 @@ func testVacation(t *testing.T, context spec.G, it spec.S) {
 				filepath.Join(tempDir, "second"),
 				filepath.Join(tempDir, "third"),
 				filepath.Join(tempDir, "some-dir"),
+				filepath.Join(tempDir, "symlink"),
 			}))
 
 			info, err := os.Stat(filepath.Join(tempDir, "first"))
@@ -84,6 +89,10 @@ func testVacation(t *testing.T, context spec.G, it spec.S) {
 
 			Expect(filepath.Join(tempDir, "some-dir", "some-other-dir")).To(BeADirectory())
 			Expect(filepath.Join(tempDir, "some-dir", "some-other-dir", "some-file")).To(BeARegularFile())
+
+			data, err := ioutil.ReadFile(filepath.Join(tempDir, "symlink"))
+			Expect(err).NotTo(HaveOccurred())
+			Expect(data).To(Equal([]byte(`first`)))
 		})
 
 		context("failure cases", func() {
@@ -127,6 +136,30 @@ func testVacation(t *testing.T, context spec.G, it spec.S) {
 					Expect(err).To(MatchError(ContainSubstring("failed to create archived file")))
 				})
 			})
+
+			context("when it tries to decompress a broken symlink", func() {
+				var brokenSymlinkTar vacation.TarArchive
+
+				it.Before(func() {
+					var err error
+
+					buffer := bytes.NewBuffer(nil)
+					tw := tar.NewWriter(buffer)
+
+					Expect(tw.WriteHeader(&tar.Header{Name: "symlink", Mode: 0755, Size: int64(0), Typeflag: tar.TypeSymlink, Linkname: ""})).To(Succeed())
+					_, err = tw.Write([]byte{})
+					Expect(err).NotTo(HaveOccurred())
+
+					Expect(tw.Close()).To(Succeed())
+
+					brokenSymlinkTar = vacation.NewTarArchive(bytes.NewReader(buffer.Bytes()))
+				})
+
+				it("returns an error", func() {
+					err := brokenSymlinkTar.Decompress(tempDir)
+					Expect(err).To(MatchError(ContainSubstring("failed to extract symlink")))
+				})
+			})
 		})
 	})
 
@@ -164,6 +197,10 @@ func testVacation(t *testing.T, context spec.G, it spec.S) {
 				Expect(err).NotTo(HaveOccurred())
 			}
 
+			Expect(tw.WriteHeader(&tar.Header{Name: "symlink", Mode: 0777, Size: int64(0), Typeflag: tar.TypeSymlink, Linkname: "first"})).To(Succeed())
+			_, err = tw.Write([]byte{})
+			Expect(err).NotTo(HaveOccurred())
+
 			Expect(tw.Close()).To(Succeed())
 			Expect(gw.Close()).To(Succeed())
 
@@ -187,6 +224,7 @@ func testVacation(t *testing.T, context spec.G, it spec.S) {
 				filepath.Join(tempDir, "second"),
 				filepath.Join(tempDir, "third"),
 				filepath.Join(tempDir, "some-dir"),
+				filepath.Join(tempDir, "symlink"),
 			}))
 
 			info, err := os.Stat(filepath.Join(tempDir, "first"))
@@ -195,15 +233,19 @@ func testVacation(t *testing.T, context spec.G, it spec.S) {
 
 			Expect(filepath.Join(tempDir, "some-dir", "some-other-dir")).To(BeADirectory())
 			Expect(filepath.Join(tempDir, "some-dir", "some-other-dir", "some-file")).To(BeARegularFile())
+
+			data, err := ioutil.ReadFile(filepath.Join(tempDir, "symlink"))
+			Expect(err).NotTo(HaveOccurred())
+			Expect(data).To(Equal([]byte(`first`)))
 		})
 
 		context("failure cases", func() {
-			context("when it fails to read the tar response", func() {
+			context("when it fails to create a grip reader", func() {
 				it("returns an error", func() {
 					readyArchive := vacation.NewTarGzipArchive(bytes.NewBuffer([]byte(`something`)))
 
 					err := readyArchive.Decompress(tempDir)
-					Expect(err).To(MatchError(ContainSubstring("failed to create gzip writer")))
+					Expect(err).To(MatchError(ContainSubstring("failed to create gzip reader")))
 
 				})
 			})

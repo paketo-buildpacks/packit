@@ -39,7 +39,7 @@ func (ta TarArchive) Decompress(destination string) error {
 		path := filepath.Join(destination, hdr.Name)
 		switch hdr.Typeflag {
 		case tar.TypeDir:
-			err = os.MkdirAll(path, hdr.FileInfo().Mode())
+			err = os.MkdirAll(path, os.ModePerm)
 			if err != nil {
 				return fmt.Errorf("failed to create archived directory: %s", err)
 			}
@@ -59,7 +59,15 @@ func (ta TarArchive) Decompress(destination string) error {
 			if err != nil {
 				return err
 			}
+
+		case tar.TypeSymlink:
+			err = os.Symlink(hdr.Linkname, path)
+			if err != nil {
+				return fmt.Errorf("failed to extract symlink: %s", err)
+			}
+
 		}
+
 	}
 
 	return nil
@@ -68,7 +76,7 @@ func (ta TarArchive) Decompress(destination string) error {
 func (gz TarGzipArchive) Decompress(destination string) error {
 	gzr, err := gzip.NewReader(gz.reader)
 	if err != nil {
-		return fmt.Errorf("failed to create gzip writer: %s", err)
+		return fmt.Errorf("failed to create gzip reader: %s", err)
 	}
 
 	return NewTarArchive(gzr).Decompress(destination)
