@@ -35,10 +35,9 @@ type Process struct {
 }
 
 type BuildpackInfo struct {
-	ID       string `toml:"id"`
-	Name     string `toml:"name"`
-	Version  string `toml:"version"`
-	ClearEnv bool   `toml:"clear-env"`
+	ID      string `toml:"id"`
+	Name    string `toml:"name"`
+	Version string `toml:"version"`
 }
 
 type BuildpackPlanEntry struct {
