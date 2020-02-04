@@ -143,7 +143,7 @@ some-key = "some-value"
 
 			packit.Detect(func(ctx packit.DetectContext) (packit.DetectResult, error) {
 				return packit.DetectResult{}, packit.Fail
-			}, packit.WithExitHandler(internal.NewExitHandler(internal.WithExitHandlerExitFunc(func(code int) {
+			}, packit.WithArgs([]string{binaryPath, "", ""}), packit.WithExitHandler(internal.NewExitHandler(internal.WithExitHandlerExitFunc(func(code int) {
 				exitCode = code
 			}))))
 

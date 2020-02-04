@@ -197,7 +197,7 @@ some-key = "some-value"
 					return packit.BuildResult{
 						Layers: []packit.Layer{},
 					}, nil
-				}, packit.WithArgs([]string{"", layersDir, "", planPath}))
+				}, packit.WithArgs([]string{binaryPath, layersDir, "", planPath}))
 				Expect(obsoleteLayerPath).NotTo(BeARegularFile())
 				Expect(obsoleteLayerPath + ".toml").NotTo(BeARegularFile())
 
@@ -226,7 +226,7 @@ some-key = "some-value"
 						return packit.BuildResult{
 							Layers: []packit.Layer{},
 						}, nil
-					}, packit.WithArgs([]string{"", layersDir, "", planPath}), packit.WithExitHandler(exitHandler))
+					}, packit.WithArgs([]string{binaryPath, layersDir, "", planPath}), packit.WithExitHandler(exitHandler))
 					Expect(exitHandler.ErrorCall.Receives.Error).To(MatchError(ContainSubstring("failed to remove layer toml:")))
 				})
 			})
