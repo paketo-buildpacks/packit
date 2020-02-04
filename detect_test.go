@@ -22,6 +22,8 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 
 		workingDir  string
 		tmpDir      string
+		cnbDir      string
+		binaryPath  string
 		exitHandler *fakes.ExitHandler
 	)
 
@@ -38,26 +40,33 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 
 		Expect(os.Chdir(tmpDir)).To(Succeed())
 
+		cnbDir, err = ioutil.TempDir("", "cnb")
+		Expect(err).NotTo(HaveOccurred())
+
+		binaryPath = filepath.Join(cnbDir, "bin", "detect")
+
+		Expect(ioutil.WriteFile(filepath.Join(cnbDir, "buildpack.toml"), []byte(`
+[buildpack]
+id = "some-id"
+name = "some-name"
+version = "some-version"
+clear-env = false
+`), 0644)).To(Succeed())
+
 		exitHandler = &fakes.ExitHandler{}
 	})
 
 	it.After(func() {
 		Expect(os.Chdir(workingDir)).To(Succeed())
 		Expect(os.RemoveAll(tmpDir)).To(Succeed())
+		Expect(os.RemoveAll(cnbDir)).To(Succeed())
 	})
 
 	context("when providing the detect context to the given DetectFunc", func() {
-		var oldArgs []string
+		var filePath string
 
-		// Test depends on os.Args having at least 3 elements
 		it.Before(func() {
-			filePath := filepath.Join(os.TempDir(), "buildpack.toml")
-			oldArgs = os.Args
-			os.Args = append(os.Args[:2], append([]string{filePath, filePath}, os.Args[2:]...)...)
-		})
-
-		it.After(func() {
-			os.Args = oldArgs
+			filePath = filepath.Join(os.TempDir(), "buildplan.toml")
 		})
 
 		it("succeeds", func() {
@@ -67,10 +76,15 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 				context = ctx
 
 				return packit.DetectResult{}, nil
-			})
+			}, packit.WithArgs([]string{binaryPath, "", filePath}))
 
 			Expect(context).To(Equal(packit.DetectContext{
 				WorkingDir: tmpDir,
+				BuildpackInfo: packit.BuildpackInfo{
+					ID:      "some-id",
+					Name:    "some-name",
+					Version: "some-version",
+				},
 			}))
 		})
 	})
@@ -95,7 +109,7 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 					},
 				},
 			}, nil
-		}, packit.WithArgs([]string{"", "", path}))
+		}, packit.WithArgs([]string{binaryPath, "", path}))
 
 		contents, err := ioutil.ReadFile(path)
 		Expect(err).NotTo(HaveOccurred())
@@ -117,7 +131,7 @@ some-key = "some-value"
 		it("calls the ExitHandler with that error", func() {
 			packit.Detect(func(ctx packit.DetectContext) (packit.DetectResult, error) {
 				return packit.DetectResult{}, errors.New("failed to detect")
-			}, packit.WithExitHandler(exitHandler))
+			}, packit.WithArgs([]string{binaryPath, "", ""}), packit.WithExitHandler(exitHandler))
 
 			Expect(exitHandler.ErrorCall.Receives.Error).To(MatchError("failed to detect"))
 		})
@@ -129,7 +143,7 @@ some-key = "some-value"
 
 			packit.Detect(func(ctx packit.DetectContext) (packit.DetectResult, error) {
 				return packit.DetectResult{}, packit.Fail
-			}, packit.WithExitHandler(internal.NewExitHandler(internal.WithExitHandlerExitFunc(func(code int) {
+			}, packit.WithArgs([]string{binaryPath, "", ""}), packit.WithExitHandler(internal.NewExitHandler(internal.WithExitHandlerExitFunc(func(code int) {
 				exitCode = code
 			}))))
 
@@ -138,6 +152,18 @@ some-key = "some-value"
 	})
 
 	context("failure cases", func() {
+		context("when the buildpack.toml cannot be read", func() {
+			it("returns an error", func() {
+				path := filepath.Join(tmpDir, "buildplan.toml")
+
+				packit.Detect(func(packit.DetectContext) (packit.DetectResult, error) {
+					return packit.DetectResult{}, nil
+				}, packit.WithArgs([]string{"", "", path}), packit.WithExitHandler(exitHandler))
+
+				Expect(exitHandler.ErrorCall.Receives.Error).To(MatchError(ContainSubstring("no such file or directory")))
+			})
+		})
+
 		context("when the buildplan.toml cannot be opened", func() {
 			it("returns an error", func() {
 				path := filepath.Join(tmpDir, "buildplan.toml")
@@ -161,7 +187,7 @@ some-key = "some-value"
 							},
 						},
 					}, nil
-				}, packit.WithArgs([]string{"", "", path}), packit.WithExitHandler(exitHandler))
+				}, packit.WithArgs([]string{binaryPath, "", path}), packit.WithExitHandler(exitHandler))
 
 				Expect(exitHandler.ErrorCall.Receives.Error).To(MatchError(ContainSubstring("permission denied")))
 			})
@@ -186,7 +212,7 @@ some-key = "some-value"
 							},
 						},
 					}, nil
-				}, packit.WithArgs([]string{"", "", path}), packit.WithExitHandler(exitHandler))
+				}, packit.WithArgs([]string{binaryPath, "", path}), packit.WithExitHandler(exitHandler))
 
 				Expect(exitHandler.ErrorCall.Receives.Error).To(MatchError(ContainSubstring("cannot encode a map with non-string key type")))
 			})

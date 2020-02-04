@@ -2,6 +2,8 @@ package packit
 
 import (
 	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/BurntSushi/toml"
 	"github.com/cloudfoundry/packit/internal"
@@ -25,7 +27,8 @@ type BuildPlan struct {
 }
 
 type DetectContext struct {
-	WorkingDir string
+	WorkingDir    string
+	BuildpackInfo BuildpackInfo
 }
 
 type DetectResult struct {
@@ -50,8 +53,20 @@ func Detect(f DetectFunc, options ...Option) {
 		return
 	}
 
+	cnbPath := filepath.Clean(strings.TrimSuffix(config.args[0], filepath.Join("bin", "detect")))
+
+	var buildpackInfo struct {
+		Buildpack BuildpackInfo `toml:"buildpack"`
+	}
+	_, err = toml.DecodeFile(filepath.Join(cnbPath, "buildpack.toml"), &buildpackInfo)
+	if err != nil {
+		config.exitHandler.Error(err)
+		return
+	}
+
 	result, err := f(DetectContext{
-		WorkingDir: dir,
+		WorkingDir:    dir,
+		BuildpackInfo: buildpackInfo.Buildpack,
 	})
 	if err != nil {
 		config.exitHandler.Error(err)
