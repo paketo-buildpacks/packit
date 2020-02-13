@@ -9,7 +9,7 @@ import (
 
 //go:generate faux --interface Executable --output fakes/executable.go
 type Executable interface {
-	Execute(execution pexec.Execution) (stdOut string, stdError string, err error)
+	Execute(execution pexec.Execution) error
 }
 
 type PrePackager struct {
@@ -33,7 +33,7 @@ func (p PrePackager) Execute(scriptPath, rootDir string) error {
 
 	p.logger.Process("Executing pre-packaging script: %s", scriptPath)
 
-	_, _, err := p.executable.Execute(pexec.Execution{
+	err := p.executable.Execute(pexec.Execution{
 		Args:   []string{"-c", scriptPath},
 		Dir:    rootDir,
 		Stdout: p.output,

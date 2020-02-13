@@ -10,7 +10,6 @@ import (
 
 	"github.com/sclevine/spec"
 
-	"code.cloudfoundry.org/lager"
 	"github.com/cloudfoundry/packit/pexec"
 	"github.com/onsi/gomega/gexec"
 
@@ -19,30 +18,34 @@ import (
 
 func testPexec(t *testing.T, context spec.G, it spec.S) {
 	var (
-		Expect       = NewWithT(t).Expect
-		fakeCLI      string
-		existingPath string
-		tmpDir       string
-		executable   pexec.Executable
+		Expect = NewWithT(t).Expect
+
+		fakeCLI        string
+		existingPath   string
+		tmpDir         string
+		stdout, stderr *bytes.Buffer
+
+		executable pexec.Executable
 	)
 
 	it.Before(func() {
 		var err error
-		tmpDir, err = ioutil.TempDir("", "cnb2cf-executable")
+		tmpDir, err = ioutil.TempDir("", "executable")
 		Expect(err).NotTo(HaveOccurred())
 
 		tmpDir, err = filepath.EvalSymlinks(tmpDir)
 		Expect(err).NotTo(HaveOccurred())
 
-		logger := lager.NewLogger("cutlass")
+		stdout = bytes.NewBuffer(nil)
+		stderr = bytes.NewBuffer(nil)
 
-		executable = pexec.NewExecutable("some-executable", logger)
+		executable = pexec.NewExecutable("some-executable")
 
 		fakeCLI, err = gexec.Build("github.com/cloudfoundry/packit/fakes/some-executable")
 		Expect(err).NotTo(HaveOccurred())
+
 		existingPath = os.Getenv("PATH")
 		os.Setenv("PATH", filepath.Dir(fakeCLI))
-
 	})
 
 	it.After(func() {
@@ -53,20 +56,19 @@ func testPexec(t *testing.T, context spec.G, it spec.S) {
 
 	context("Execute", func() {
 		it("executes the given arguments against the executable", func() {
-			stdout, stderr, err := executable.Execute(pexec.Execution{
-				Args: []string{"something"},
+			err := executable.Execute(pexec.Execution{
+				Args:   []string{"something"},
+				Stdout: stdout,
 			})
 			Expect(err).NotTo(HaveOccurred())
-			Expect(stdout).To(ContainSubstring("Output on stdout"))
-			Expect(stderr).To(ContainSubstring("Output on stderr"))
-
 			Expect(stdout).To(ContainSubstring(fmt.Sprintf("Arguments: [%s something]", fakeCLI)))
 		})
 
 		context("when given a execution directory", func() {
 			it("executes within that directory", func() {
-				stdout, _, err := executable.Execute(pexec.Execution{
-					Dir: tmpDir,
+				err := executable.Execute(pexec.Execution{
+					Dir:    tmpDir,
+					Stdout: stdout,
 				})
 				Expect(err).NotTo(HaveOccurred())
 				Expect(stdout).To(ContainSubstring(fmt.Sprintf("PWD=%s", tmpDir)))
@@ -75,8 +77,9 @@ func testPexec(t *testing.T, context spec.G, it spec.S) {
 
 		context("when given an execution environment", func() {
 			it("executes with that environment", func() {
-				stdout, _, err := executable.Execute(pexec.Execution{
-					Env: []string{"SOME_KEY=some-value"},
+				err := executable.Execute(pexec.Execution{
+					Env:    []string{"SOME_KEY=some-value"},
+					Stdout: stdout,
 				})
 				Expect(err).NotTo(HaveOccurred())
 				Expect(stdout).To(ContainSubstring("SOME_KEY=some-value"))
@@ -85,19 +88,14 @@ func testPexec(t *testing.T, context spec.G, it spec.S) {
 
 		context("when given a writer for stdout and stderr", func() {
 			it("pipes stdout to that writer", func() {
-				stdOutBuffer := bytes.NewBuffer(nil)
-				stdErrBuffer := bytes.NewBuffer(nil)
-
-				stdout, stderr, err := executable.Execute(pexec.Execution{
-					Stdout: stdOutBuffer,
-					Stderr: stdErrBuffer,
+				err := executable.Execute(pexec.Execution{
+					Stdout: stdout,
+					Stderr: stderr,
 				})
 				Expect(err).NotTo(HaveOccurred())
-				Expect(stdOutBuffer.String()).To(ContainSubstring("Output on stdout"))
-				Expect(stdOutBuffer.String()).To(Equal(stdout))
 
-				Expect(stdErrBuffer.String()).To(ContainSubstring("Output on stderr"))
-				Expect(stdErrBuffer.String()).To(Equal(stderr))
+				Expect(stdout).To(ContainSubstring("Output on stdout"))
+				Expect(stderr).To(ContainSubstring("Output on stderr"))
 			})
 		})
 
@@ -108,7 +106,7 @@ func testPexec(t *testing.T, context spec.G, it spec.S) {
 				})
 
 				it("returns an error", func() {
-					_, _, err := executable.Execute(pexec.Execution{})
+					err := executable.Execute(pexec.Execution{})
 					Expect(err).To(MatchError("exec: \"some-executable\": executable file not found in $PATH"))
 				})
 			})
@@ -135,8 +133,10 @@ func testPexec(t *testing.T, context spec.G, it spec.S) {
 				})
 
 				it("executes the given arguments against the executable", func() {
-					stdout, stderr, err := executable.Execute(pexec.Execution{
-						Args: []string{"something"},
+					err := executable.Execute(pexec.Execution{
+						Args:   []string{"something"},
+						Stdout: stdout,
+						Stderr: stderr,
 					})
 					Expect(err).To(MatchError("exit status 1"))
 					Expect(stdout).To(ContainSubstring("Error on stdout"))

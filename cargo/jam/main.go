@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"os"
 
-	"code.cloudfoundry.org/lager"
-
 	"github.com/cloudfoundry/packit/cargo"
 	"github.com/cloudfoundry/packit/cargo/jam/commands"
 	"github.com/cloudfoundry/packit/pexec"
@@ -20,7 +18,7 @@ func main() {
 	switch os.Args[1] {
 	case "pack":
 		logger := scribe.NewLogger(os.Stdout)
-		bash := pexec.NewExecutable("bash", lager.NewLogger("pre-packager"))
+		bash := pexec.NewExecutable("bash")
 
 		transport := cargo.NewTransport()
 		directoryDuplicator := cargo.NewDirectoryDuplicator()

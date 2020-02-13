@@ -25,7 +25,7 @@ func testPrePackager(t *testing.T, context spec.G, it spec.S) {
 
 	it.Before(func() {
 		bash = &fakes.Executable{}
-		bash.ExecuteCall.Stub = func(execution pexec.Execution) (string, string, error) {
+		bash.ExecuteCall.Stub = func(execution pexec.Execution) error {
 			if execution.Stdout != nil {
 				execution.Stdout.Write([]byte("hello from stdout"))
 			}
@@ -34,8 +34,9 @@ func testPrePackager(t *testing.T, context spec.G, it spec.S) {
 				execution.Stderr.Write([]byte("hello from stderr"))
 			}
 
-			return "", "", nil
+			return nil
 		}
+
 		output = bytes.NewBuffer(nil)
 		logger = scribe.NewLogger(output)
 		prePackager = cargo.NewPrePackager(bash, logger, output)

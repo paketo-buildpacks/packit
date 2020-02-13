@@ -3,7 +3,6 @@ module github.com/cloudfoundry/packit
 go 1.13
 
 require (
-	code.cloudfoundry.org/lager v2.0.0+incompatible
 	github.com/BurntSushi/toml v0.3.1
 	github.com/Masterminds/semver v1.5.0
 	github.com/cheggaaa/pb/v3 v3.0.4
