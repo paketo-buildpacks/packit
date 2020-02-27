@@ -3,6 +3,7 @@ package scribe_test
 import (
 	"testing"
 
+	"github.com/cloudfoundry/packit"
 	"github.com/cloudfoundry/packit/scribe"
 	"github.com/sclevine/spec"
 
@@ -18,7 +19,27 @@ func testFormattedMap(t *testing.T, context spec.G, it spec.S) {
 				"third":  3,
 				"first":  1,
 				"second": 2,
-			}.String()).To(Equal("first  -> 1\nsecond -> 2\nthird  -> 3"))
+			}.String()).To(Equal("first  -> \"1\"\nsecond -> \"2\"\nthird  -> \"3\""))
+		})
+	})
+
+	context("NewFormattedMapFromEnvironment", func() {
+		context("when the operation is override", func() {
+			it("prints the env in a well formatted map", func() {
+				Expect(scribe.NewFormattedMapFromEnvironment(packit.Environment{
+					"OVERRIDE.override": "some-value",
+					"DEFAULT.default":   "some-value",
+					"PREPEND.prepend":   "some-value",
+					"PREPEND.delim":     ":",
+					"APPEND.append":     "some-value",
+					"APPEND.delim":      ":",
+				})).To(Equal(scribe.FormattedMap{
+					"OVERRIDE": "some-value",
+					"DEFAULT":  "some-value",
+					"PREPEND":  "some-value:$PREPEND",
+					"APPEND":   "$APPEND:some-value",
+				}))
+			})
 		})
 	})
 }
