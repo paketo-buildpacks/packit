@@ -3,6 +3,7 @@ package internal_test
 import (
 	"bytes"
 	"errors"
+	"io/ioutil"
 	"testing"
 
 	"github.com/cloudfoundry/packit/internal"
@@ -23,7 +24,11 @@ func testExitHandler(t *testing.T, context spec.G, it spec.S) {
 	it.Before(func() {
 		stderr = bytes.NewBuffer([]byte{})
 
-		handler = internal.NewExitHandler(internal.WithExitHandlerStderr(stderr), internal.WithExitHandlerExitFunc(func(c int) { exitCode = c }))
+		handler = internal.NewExitHandler(
+			internal.WithExitHandlerStderr(stderr),
+			internal.WithExitHandlerStdout(ioutil.Discard),
+			internal.WithExitHandlerExitFunc(func(c int) { exitCode = c }),
+		)
 	})
 
 	it("prints the error message and exits with the right error code", func() {

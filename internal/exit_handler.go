@@ -18,6 +18,13 @@ func WithExitHandlerStderr(stderr io.Writer) Option {
 	}
 }
 
+func WithExitHandlerStdout(stdout io.Writer) Option {
+	return func(handler ExitHandler) ExitHandler {
+		handler.stdout = stdout
+		return handler
+	}
+}
+
 func WithExitHandlerExitFunc(e func(int)) Option {
 	return func(handler ExitHandler) ExitHandler {
 		handler.exitFunc = e
@@ -26,12 +33,14 @@ func WithExitHandlerExitFunc(e func(int)) Option {
 }
 
 type ExitHandler struct {
+	stdout   io.Writer
 	stderr   io.Writer
 	exitFunc func(int)
 }
 
 func NewExitHandler(options ...Option) ExitHandler {
 	handler := ExitHandler{
+		stdout:   os.Stdout,
 		stderr:   os.Stderr,
 		exitFunc: os.Exit,
 	}
@@ -44,6 +53,7 @@ func NewExitHandler(options ...Option) ExitHandler {
 }
 
 func (h ExitHandler) Error(err error) {
+	fmt.Fprintln(h.stdout, "")
 	fmt.Fprintln(h.stderr, err)
 
 	var code int
