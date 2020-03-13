@@ -7,6 +7,33 @@ import (
 	"github.com/BurntSushi/toml"
 )
 
+// Dependency is a representation of a buildpack dependency.
+type Dependency struct {
+	// ID is the identifier used to specify the dependency.
+	ID string `toml:"id"`
+
+	// Version is the specific version of the dependency.
+	Version string `toml:"version"`
+
+	// Name is the human-readable name of the dependency.
+	Name string `toml:"name"`
+
+	// URI is the uri location of the built dependency.
+	URI string `toml:"uri"`
+
+	// SHA256 is the hex-encoded SHA256 checksum of the built dependency.
+	SHA256 string `toml:"sha256"`
+
+	// Source is the uri location of the source-code representation of the dependency.
+	Source string `toml:"source"`
+
+	// SourceSHA256 is the hex-encoded SHA256 checksum of the source-code representation of the dependency.
+	SourceSHA256 string `toml:"source_sha256"`
+
+	// Stacks is a list of stacks for which the dependency is built.
+	Stacks []string `toml:"stacks"`
+}
+
 func parseBuildpack(path, name string) ([]Dependency, string, error) {
 	file, err := os.Open(path)
 	if err != nil {
@@ -27,20 +54,7 @@ func parseBuildpack(path, name string) ([]Dependency, string, error) {
 	return buildpack.Metadata.Dependencies, buildpack.Metadata.DefaultVersions[name], nil
 }
 
-type Dependency struct {
-	ID           string `toml:"id"`
-	Name         string `toml:"name"`
-	SHA256       string `toml:"sha256"`
-	Source       string `toml:"source"`
-	SourceSHA256 string `toml:"source_sha256"`
-	Stacks       Stacks `toml:"stacks"`
-	URI          string `toml:"uri"`
-	Version      string `toml:"version"`
-}
-
-type Stacks []string
-
-func (stacks Stacks) Include(stack string) bool {
+func stacksInclude(stacks []string, stack string) bool {
 	for _, s := range stacks {
 		if s == stack {
 			return true
