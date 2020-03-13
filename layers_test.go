@@ -41,9 +41,9 @@ func testLayers(t *testing.T, context spec.G, it spec.S) {
 			Expect(layer).To(Equal(packit.Layer{
 				Name:      "some-layer",
 				Path:      filepath.Join(layersDir, "some-layer"),
-				SharedEnv: packit.NewEnvironment(),
-				BuildEnv:  packit.NewEnvironment(),
-				LaunchEnv: packit.NewEnvironment(),
+				SharedEnv: packit.Environment{},
+				BuildEnv:  packit.Environment{},
+				LaunchEnv: packit.Environment{},
 			}))
 		})
 
@@ -57,9 +57,9 @@ func testLayers(t *testing.T, context spec.G, it spec.S) {
 					Launch:    true,
 					Build:     true,
 					Cache:     true,
-					SharedEnv: packit.NewEnvironment(),
-					BuildEnv:  packit.NewEnvironment(),
-					LaunchEnv: packit.NewEnvironment(),
+					SharedEnv: packit.Environment{},
+					BuildEnv:  packit.Environment{},
+					LaunchEnv: packit.Environment{},
 				}))
 			})
 		})
@@ -85,9 +85,9 @@ some-key = "some-value"`), 0644)
 					Launch:    true,
 					Build:     true,
 					Cache:     true,
-					SharedEnv: packit.NewEnvironment(),
-					BuildEnv:  packit.NewEnvironment(),
-					LaunchEnv: packit.NewEnvironment(),
+					SharedEnv: packit.Environment{},
+					BuildEnv:  packit.Environment{},
+					LaunchEnv: packit.Environment{},
 					Metadata: map[string]interface{}{
 						"some-key": "some-value",
 					},

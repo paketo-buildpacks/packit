@@ -52,9 +52,9 @@ func testLayer(t *testing.T, context spec.G, it spec.S) {
 					Launch:    true,
 					Build:     true,
 					Cache:     true,
-					SharedEnv: packit.NewEnvironment(),
-					BuildEnv:  packit.NewEnvironment(),
-					LaunchEnv: packit.NewEnvironment(),
+					SharedEnv: packit.Environment{},
+					BuildEnv:  packit.Environment{},
+					LaunchEnv: packit.Environment{},
 				}))
 
 				Expect(filepath.Join(layersDir, "some-layer")).To(BeADirectory())
@@ -120,9 +120,9 @@ func testLayer(t *testing.T, context spec.G, it spec.S) {
 						Launch:    true,
 						Build:     true,
 						Cache:     true,
-						SharedEnv: packit.NewEnvironment(),
-						BuildEnv:  packit.NewEnvironment(),
-						LaunchEnv: packit.NewEnvironment(),
+						SharedEnv: packit.Environment{},
+						BuildEnv:  packit.Environment{},
+						LaunchEnv: packit.Environment{},
 					}))
 
 					Expect(filepath.Join(layersDir, "some-layer")).To(BeADirectory())
