@@ -7,21 +7,15 @@ import (
 )
 
 func ExampleExecute() {
-	ls := pexec.NewExecutable("ls")
+	echo := pexec.NewExecutable("echo")
 
-	err := ls.Execute(pexec.Execution{
-		Args:   []string{"-al", "/"},
+	err := echo.Execute(pexec.Execution{
+		Args:   []string{"hello from pexec"},
 		Stdout: os.Stdout,
 	})
 	if err != nil {
 		panic(err)
 	}
 
-	err = ls.Execute(pexec.Execution{
-		Args:   []string{"-R", "/etc"},
-		Stdout: os.Stdout,
-	})
-	if err != nil {
-		panic(err)
-	}
+	// Output: hello from pexec
 }
