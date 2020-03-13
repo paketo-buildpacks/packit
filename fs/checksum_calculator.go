@@ -11,8 +11,12 @@ import (
 	"sort"
 )
 
+// ChecksumCalculator can be used to calculate the SHA256 checksum of a given file or
+// directory. When given a directory, checksum calculation will be performed in
+// parallel.
 type ChecksumCalculator struct{}
 
+// NewChecksumCalculator returns a new instance of a ChecksumCalculator.
 func NewChecksumCalculator() ChecksumCalculator {
 	return ChecksumCalculator{}
 }
@@ -23,6 +27,7 @@ type calculatedFile struct {
 	err      error
 }
 
+// Sum returns a hex-encoded SHA256 checksum value of a file or directory given a path.
 func (c ChecksumCalculator) Sum(path string) (string, error) {
 	info, err := os.Stat(path)
 	if err != nil {
