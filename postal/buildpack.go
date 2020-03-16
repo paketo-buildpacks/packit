@@ -3,12 +3,16 @@ package postal
 import (
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/BurntSushi/toml"
 )
 
 // Dependency is a representation of a buildpack dependency.
 type Dependency struct {
+	// DeprecationDate is the data upon which this dependency is considered deprecated.
+	DeprecationDate time.Time `toml:"deprecation_date"`
+
 	// ID is the identifier used to specify the dependency.
 	ID string `toml:"id"`
 

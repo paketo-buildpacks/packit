@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/cloudfoundry/packit/postal"
 	"github.com/cloudfoundry/packit/postal/fakes"
@@ -38,6 +39,7 @@ func testService(t *testing.T, context spec.G, it spec.S) {
 
 		_, err = file.WriteString(`
 [[metadata.dependencies]]
+deprecation_date = 2022-04-01T00:00:00Z
 id = "some-entry"
 sha256 = "some-sha"
 stacks = ["some-stack"]
@@ -76,14 +78,18 @@ version = "4.5.6"
 
 	context("Resolve", func() {
 		it("finds the best matching dependency given a plan entry", func() {
+			deprecationDate, err := time.Parse(time.RFC3339, "2022-04-01T00:00:00Z")
+			Expect(err).NotTo(HaveOccurred())
+
 			dependency, err := service.Resolve(path, "some-entry", "1.2.*", "some-stack")
 			Expect(err).NotTo(HaveOccurred())
 			Expect(dependency).To(Equal(postal.Dependency{
-				ID:      "some-entry",
-				Stacks:  []string{"some-stack"},
-				URI:     "some-uri",
-				SHA256:  "some-sha",
-				Version: "1.2.3",
+				DeprecationDate: deprecationDate,
+				ID:              "some-entry",
+				Stacks:          []string{"some-stack"},
+				URI:             "some-uri",
+				SHA256:          "some-sha",
+				Version:         "1.2.3",
 			}))
 		})
 
