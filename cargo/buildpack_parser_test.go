@@ -4,6 +4,7 @@ import (
 	"io/ioutil"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/cloudfoundry/packit/cargo"
 	"github.com/sclevine/spec"
@@ -34,6 +35,7 @@ include_files = ["some-include-file", "other-include-file"]
 pre_package = "some-pre-package-script.sh"
 
 [[metadata.dependencies]]
+	deprecation_date = 2020-06-01T00:00:00Z
   id = "some-dependency"
   name = "Some Dependency"
   sha256 = "shasum"
@@ -56,6 +58,8 @@ pre_package = "some-pre-package-script.sh"
 
 	context("Parse", func() {
 		it("parses a given buildpack.toml", func() {
+			deprecationDate, err := time.Parse(time.RFC3339, "2020-06-01T00:00:00Z")
+			Expect(err).NotTo(HaveOccurred())
 			config, err := parser.Parse(path)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(config).To(Equal(cargo.Config{
@@ -73,12 +77,13 @@ pre_package = "some-pre-package-script.sh"
 					PrePackage: "some-pre-package-script.sh",
 					Dependencies: []cargo.ConfigMetadataDependency{
 						{
-							ID:      "some-dependency",
-							Name:    "Some Dependency",
-							SHA256:  "shasum",
-							Stacks:  []string{"io.buildpacks.stacks.bionic", "org.cloudfoundry.stacks.tiny"},
-							URI:     "http://some-url",
-							Version: "1.2.3",
+							DeprecationDate: deprecationDate,
+							ID:              "some-dependency",
+							Name:            "Some Dependency",
+							SHA256:          "shasum",
+							Stacks:          []string{"io.buildpacks.stacks.bionic", "org.cloudfoundry.stacks.tiny"},
+							URI:             "http://some-url",
+							Version:         "1.2.3",
 						},
 					},
 				},

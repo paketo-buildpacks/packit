@@ -3,6 +3,7 @@ package cargo
 import (
 	"encoding/json"
 	"io"
+	"time"
 
 	"github.com/BurntSushi/toml"
 )
@@ -33,12 +34,13 @@ type ConfigMetadata struct {
 }
 
 type ConfigMetadataDependency struct {
-	ID      string   `toml:"id" json:"id"`
-	Name    string   `toml:"name" json:"name"`
-	SHA256  string   `toml:"sha256" json:"sha256"`
-	Stacks  []string `toml:"stacks" json:"stacks"`
-	URI     string   `toml:"uri" json:"uri"`
-	Version string   `toml:"version" json:"version"`
+	DeprecationDate time.Time `toml:"deprecation_date" json:"deprecation_date"`
+	ID              string    `toml:"id" json:"id"`
+	Name            string    `toml:"name" json:"name"`
+	SHA256          string    `toml:"sha256" json:"sha256"`
+	Stacks          []string  `toml:"stacks" json:"stacks"`
+	URI             string    `toml:"uri" json:"uri"`
+	Version         string    `toml:"version" json:"version"`
 }
 
 func EncodeConfig(writer io.Writer, config Config) error {

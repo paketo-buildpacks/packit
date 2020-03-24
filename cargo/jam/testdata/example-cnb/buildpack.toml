@@ -12,6 +12,7 @@ api = "0.2"
     some-dependency = "some-default-version"
 
   [[metadata.dependencies]]
+    deprecation_date = 2019-04-01T00:00:00Z
     id = "some-dependency"
     name = "Some Dependency"
     sha256 = "shasum"
@@ -20,6 +21,7 @@ api = "0.2"
     version = "1.2.3"
 
   [[metadata.dependencies]]
+    deprecation_date = 2022-04-01T00:00:00Z
     id = "other-dependency"
     name = "Other Dependency"
     sha256 = "shasum"

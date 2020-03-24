@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/cloudfoundry/packit/cargo"
 	"github.com/sclevine/spec"
@@ -26,7 +27,10 @@ func testConfig(t *testing.T, context spec.G, it spec.S) {
 
 	context("EncodeConfig", func() {
 		it("encodes the config to TOML", func() {
-			err := cargo.EncodeConfig(buffer, cargo.Config{
+			deprecationDate, err := time.Parse(time.RFC3339, "2020-06-01T00:00:00Z")
+			Expect(err).NotTo(HaveOccurred())
+
+			err = cargo.EncodeConfig(buffer, cargo.Config{
 				API: "0.2",
 				Buildpack: cargo.ConfigBuildpack{
 					ID:      "some-buildpack-id",
@@ -47,12 +51,13 @@ func testConfig(t *testing.T, context spec.G, it spec.S) {
 					PrePackage:   "some-pre-package-script.sh",
 					Dependencies: []cargo.ConfigMetadataDependency{
 						{
-							ID:      "some-dependency",
-							Name:    "Some Dependency",
-							SHA256:  "shasum",
-							Stacks:  []string{"io.buildpacks.stacks.bionic", "org.cloudfoundry.stacks.tiny"},
-							URI:     "http://some-url",
-							Version: "1.2.3",
+							DeprecationDate: deprecationDate,
+							ID:              "some-dependency",
+							Name:            "Some Dependency",
+							SHA256:          "shasum",
+							Stacks:          []string{"io.buildpacks.stacks.bionic", "org.cloudfoundry.stacks.tiny"},
+							URI:             "http://some-url",
+							Version:         "1.2.3",
 						},
 					},
 					DefaultVersions: map[string]string{
@@ -75,6 +80,7 @@ pre_package = "some-pre-package-script.sh"
 some-dependency = "1.2.x"
 
 [[metadata.dependencies]]
+  deprecation_date = "2020-06-01T00:00:00Z"
   id = "some-dependency"
   name = "Some Dependency"
   sha256 = "shasum"

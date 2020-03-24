@@ -97,6 +97,7 @@ func testPack(t *testing.T, context spec.G, it spec.S) {
     some-dependency = "some-default-version"
 
   [[metadata.dependencies]]
+    deprecation_date = "2019-04-01T00:00:00Z"
     id = "some-dependency"
     name = "Some Dependency"
     sha256 = "shasum"
@@ -105,6 +106,7 @@ func testPack(t *testing.T, context spec.G, it spec.S) {
     version = "1.2.3"
 
   [[metadata.dependencies]]
+    deprecation_date = "2022-04-01T00:00:00Z"
     id = "other-dependency"
     name = "Other Dependency"
     sha256 = "shasum"
@@ -216,6 +218,7 @@ func testPack(t *testing.T, context spec.G, it spec.S) {
     some-dependency = "some-default-version"
 
   [[metadata.dependencies]]
+    deprecation_date = "2019-04-01T00:00:00Z"
     id = "some-dependency"
     name = "Some Dependency"
     sha256 = "f058c8bf6b65b829e200ef5c2d22fde0ee65b96c1fbd1b88869be133aafab64a"
