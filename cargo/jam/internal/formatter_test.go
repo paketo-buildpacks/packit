@@ -26,7 +26,7 @@ func testFormatter(t *testing.T, context spec.G, it spec.S) {
 
 	context("Markdown", func() {
 		it("returns a list of dependencies", func() {
-			formatter.Markdown([]cargo.ConfigMetadataDependency{
+			dependencies := []cargo.ConfigMetadataDependency{
 				{
 					ID:      "some-dependency",
 					Stacks:  []string{"some-stack"},
@@ -47,11 +47,18 @@ func testFormatter(t *testing.T, context spec.G, it spec.S) {
 					Stacks:  []string{"other-stack"},
 					Version: "2.3.5",
 				},
-			}, map[string]string{
+			}
+			defaults := map[string]string{
 				"some-dependency":  "1.2.x",
 				"other-dependency": "2.3.x",
-			})
-			Expect(buffer.String()).To(ContainSubstring(`Dependencies:
+			}
+			stacks := []string{
+				"some-stack",
+				"other-stack",
+			}
+
+			formatter.Markdown(dependencies, defaults, stacks)
+			Expect(buffer.String()).To(Equal(`Dependencies:
 | name | version | stacks |
 |-|-|-|
 | other-dependency | 2.3.5 | other-stack |
@@ -70,6 +77,23 @@ Supported stacks:
 | other-stack |
 | some-stack |
 `))
+		})
+
+		context("when dependencies and default-versions are empty", func() {
+			it("returns a list of dependencies", func() {
+				stacks := []string{
+					"some-stack",
+					"other-stack",
+				}
+
+				formatter.Markdown(nil, nil, stacks)
+				Expect(buffer.String()).To(Equal(`Supported stacks:
+| name |
+|-|
+| other-stack |
+| some-stack |
+`))
+			})
 		})
 	})
 }

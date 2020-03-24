@@ -22,79 +22,72 @@ func NewFormatter(writer io.Writer) Formatter {
 
 type depKey [2]string
 
-func (f Formatter) Markdown(dependencies []cargo.ConfigMetadataDependency, defaults map[string]string) {
-	infoMap := map[depKey][]string{}
-	stackMap := map[string]interface{}{}
-
-	for _, d := range dependencies {
-		key := depKey{d.ID, d.Version}
-		_, ok := infoMap[key]
-		if !ok {
-			sort.Strings(d.Stacks)
-			infoMap[key] = d.Stacks
-		} else {
-			val := infoMap[key]
-			val = append(val, d.Stacks...)
-			sort.Strings(val)
-			infoMap[key] = val
+func (f Formatter) Markdown(dependencies []cargo.ConfigMetadataDependency, defaults map[string]string, stacks []string) {
+	if len(dependencies) > 0 {
+		infoMap := map[depKey][]string{}
+		for _, d := range dependencies {
+			key := depKey{d.ID, d.Version}
+			_, ok := infoMap[key]
+			if !ok {
+				sort.Strings(d.Stacks)
+				infoMap[key] = d.Stacks
+			} else {
+				val := infoMap[key]
+				val = append(val, d.Stacks...)
+				sort.Strings(val)
+				infoMap[key] = val
+			}
 		}
 
-		for _, s := range d.Stacks {
-			stackMap[s] = nil
+		var sorted []cargo.ConfigMetadataDependency
+		for key, stacks := range infoMap {
+			sorted = append(sorted, cargo.ConfigMetadataDependency{
+				ID:      key[0],
+				Version: key[1],
+				Stacks:  stacks,
+			})
 		}
-	}
 
-	var sorted []cargo.ConfigMetadataDependency
-	for key, stacks := range infoMap {
-		sorted = append(sorted, cargo.ConfigMetadataDependency{
-			ID:      key[0],
-			Version: key[1],
-			Stacks:  stacks,
+		sort.Slice(sorted, func(i, j int) bool {
+			iVal := sorted[i]
+			jVal := sorted[j]
+
+			if iVal.ID < jVal.ID {
+				return true
+			}
+
+			iVersion := semver.MustParse(iVal.Version)
+			jVersion := semver.MustParse(jVal.Version)
+
+			return iVal.ID == jVal.ID && iVersion.GreaterThan(jVersion)
 		})
+
+		fmt.Fprintf(f.writer, "Dependencies:\n| name | version | stacks |\n|-|-|-|\n")
+		for _, d := range sorted {
+			fmt.Fprintf(f.writer, "| %s | %s | %s |\n", d.ID, d.Version, strings.Join(d.Stacks, ", "))
+		}
+		fmt.Fprintln(f.writer)
 	}
 
-	sort.Slice(sorted, func(i, j int) bool {
-		iVal := sorted[i]
-		jVal := sorted[j]
-
-		if iVal.ID < jVal.ID {
-			return true
+	if len(defaults) > 0 {
+		fmt.Fprintf(f.writer, "Default dependencies:\n| name | version |\n|-|-|\n")
+		var sortedDependencies []string
+		for key := range defaults {
+			sortedDependencies = append(sortedDependencies, key)
 		}
 
-		iVersion := semver.MustParse(iVal.Version)
-		jVersion := semver.MustParse(jVal.Version)
+		sort.Strings(sortedDependencies)
 
-		return iVal.ID == jVal.ID && iVersion.GreaterThan(jVersion)
-	})
-
-	fmt.Fprintf(f.writer, "Dependencies:\n| name | version | stacks |\n|-|-|-|\n")
-
-	for _, d := range sorted {
-		fmt.Fprintf(f.writer, "| %s | %s | %s |\n", d.ID, d.Version, strings.Join(d.Stacks, ", "))
+		for _, key := range sortedDependencies {
+			fmt.Fprintf(f.writer, "| %s | %s |\n", key, defaults[key])
+		}
+		fmt.Fprintln(f.writer)
 	}
 
-	fmt.Fprintf(f.writer, "\nDefault dependencies:\n| name | version |\n|-|-|\n")
-	var sortedDependencies []string
-	for key := range defaults {
-		sortedDependencies = append(sortedDependencies, key)
-	}
+	sort.Strings(stacks)
 
-	sort.Strings(sortedDependencies)
-
-	for _, key := range sortedDependencies {
-		fmt.Fprintf(f.writer, "| %s | %s |\n", key, defaults[key])
-	}
-
-	var sortedStacks []string
-	for key := range stackMap {
-		sortedStacks = append(sortedStacks, key)
-	}
-
-	sort.Strings(sortedStacks)
-
-	fmt.Fprintf(f.writer, "\nSupported stacks:\n| name |\n|-|\n")
-
-	for _, s := range sortedStacks {
+	fmt.Fprintf(f.writer, "Supported stacks:\n| name |\n|-|\n")
+	for _, s := range stacks {
 		fmt.Fprintf(f.writer, "| %s |\n", s)
 	}
 }
