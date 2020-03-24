@@ -45,6 +45,12 @@ id = "some-buildpack"
 	id = "other-dependency"
 	stacks = ["other-stack"]
 	version = "other-version"
+
+[[stacks]]
+	id = "some-stack"
+
+[[stacks]]
+	id = "other-stack"
 `)
 
 		err = tr.WriteHeader(&tar.Header{
@@ -73,7 +79,7 @@ id = "some-buildpack"
 
 	context("Dependencies", func() {
 		it("returns a list of dependencies", func() {
-			dependencies, defaultVersions, err := inspector.Dependencies(buildpack)
+			dependencies, defaults, stacks, err := inspector.Dependencies(buildpack)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(dependencies).To(Equal([]cargo.ConfigMetadataDependency{
 				{
@@ -88,16 +94,18 @@ id = "some-buildpack"
 				},
 			}))
 
-			Expect(defaultVersions).To(Equal(map[string]string{
+			Expect(defaults).To(Equal(map[string]string{
 				"some-dependency":  "1.2.x",
 				"other-dependency": "2.3.x",
 			}))
+
+			Expect(stacks).To(Equal([]string{"some-stack", "other-stack"}))
 		})
 
 		context("failure cases", func() {
 			context("when the tarball does not exist", func() {
 				it("returns an error", func() {
-					_, _, err := inspector.Dependencies("/tmp/no-such-file")
+					_, _, _, err := inspector.Dependencies("/tmp/no-such-file")
 					Expect(err).To(MatchError(ContainSubstring("no such file or directory")))
 				})
 			})
@@ -109,7 +117,7 @@ id = "some-buildpack"
 				})
 
 				it("returns an error", func() {
-					_, _, err := inspector.Dependencies(buildpack)
+					_, _, _, err := inspector.Dependencies(buildpack)
 					Expect(err).To(MatchError(ContainSubstring("failed to open gzip reader")))
 					Expect(err).To(MatchError(ContainSubstring("EOF")))
 				})
@@ -144,7 +152,7 @@ id = "some-buildpack"
 				})
 
 				it("returns an error", func() {
-					_, _, err := inspector.Dependencies(buildpack)
+					_, _, _, err := inspector.Dependencies(buildpack)
 					Expect(err).To(MatchError(ContainSubstring("bare keys cannot contain '%'")))
 				})
 			})
@@ -178,7 +186,7 @@ id = "some-buildpack"
 				})
 
 				it("returns an error", func() {
-					_, _, err := inspector.Dependencies(buildpack)
+					_, _, _, err := inspector.Dependencies(buildpack)
 					Expect(err).To(MatchError(ContainSubstring("failed to find buildpack.toml in buildpack tarball")))
 				})
 			})

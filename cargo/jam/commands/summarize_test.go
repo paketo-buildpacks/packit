@@ -25,7 +25,7 @@ func testSummarize(t *testing.T, context spec.G, it spec.S) {
 	it.Before(func() {
 		buildpackInspector = &fakes.BuildpackInspector{}
 
-		buildpackInspector.DependenciesCall.Returns.ConfigMetadataDependencySlice = []cargo.ConfigMetadataDependency{
+		buildpackInspector.DependenciesCall.Returns.Dependencies = []cargo.ConfigMetadataDependency{
 			{
 				ID:      "some-depency",
 				Version: "some-version",
@@ -33,8 +33,12 @@ func testSummarize(t *testing.T, context spec.G, it spec.S) {
 			},
 		}
 
-		buildpackInspector.DependenciesCall.Returns.MapStringString = map[string]string{
+		buildpackInspector.DependenciesCall.Returns.Defaults = map[string]string{
 			"some-dependency": "some-version",
+		}
+
+		buildpackInspector.DependenciesCall.Returns.Stacks = []string{
+			"some-stack",
 		}
 
 		formatter = &fakes.Formatter{}
@@ -60,8 +64,12 @@ func testSummarize(t *testing.T, context spec.G, it spec.S) {
 				},
 			}))
 
-			Expect(formatter.MarkdownCall.Receives.DefaultVersions).To(Equal(map[string]string{
+			Expect(formatter.MarkdownCall.Receives.Defaults).To(Equal(map[string]string{
 				"some-dependency": "some-version",
+			}))
+
+			Expect(formatter.MarkdownCall.Receives.Stacks).To(Equal([]string{
+				"some-stack",
 			}))
 		})
 
@@ -82,7 +90,7 @@ func testSummarize(t *testing.T, context spec.G, it spec.S) {
 					},
 				}))
 
-				Expect(formatter.MarkdownCall.Receives.DefaultVersions).To(Equal(map[string]string{
+				Expect(formatter.MarkdownCall.Receives.Defaults).To(Equal(map[string]string{
 					"some-dependency": "some-version",
 				}))
 			})
@@ -105,7 +113,7 @@ func testSummarize(t *testing.T, context spec.G, it spec.S) {
 
 			context("when buildpack inspector returns an error", func() {
 				it.Before(func() {
-					buildpackInspector.DependenciesCall.Returns.Error = errors.New("failed to get dependencies")
+					buildpackInspector.DependenciesCall.Returns.Err = errors.New("failed to get dependencies")
 				})
 
 				it("returns an error", func() {

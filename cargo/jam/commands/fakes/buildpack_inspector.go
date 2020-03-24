@@ -14,15 +14,16 @@ type BuildpackInspector struct {
 			Path string
 		}
 		Returns struct {
-			ConfigMetadataDependencySlice []cargo.ConfigMetadataDependency
-			MapStringString               map[string]string
-			Error                         error
+			Dependencies []cargo.ConfigMetadataDependency
+			Defaults     map[string]string
+			Stacks       []string
+			Err          error
 		}
-		Stub func(string) ([]cargo.ConfigMetadataDependency, map[string]string, error)
+		Stub func(string) ([]cargo.ConfigMetadataDependency, map[string]string, []string, error)
 	}
 }
 
-func (f *BuildpackInspector) Dependencies(param1 string) ([]cargo.ConfigMetadataDependency, map[string]string, error) {
+func (f *BuildpackInspector) Dependencies(param1 string) ([]cargo.ConfigMetadataDependency, map[string]string, []string, error) {
 	f.DependenciesCall.Lock()
 	defer f.DependenciesCall.Unlock()
 	f.DependenciesCall.CallCount++
@@ -30,5 +31,5 @@ func (f *BuildpackInspector) Dependencies(param1 string) ([]cargo.ConfigMetadata
 	if f.DependenciesCall.Stub != nil {
 		return f.DependenciesCall.Stub(param1)
 	}
-	return f.DependenciesCall.Returns.ConfigMetadataDependencySlice, f.DependenciesCall.Returns.MapStringString, f.DependenciesCall.Returns.Error
+	return f.DependenciesCall.Returns.Dependencies, f.DependenciesCall.Returns.Defaults, f.DependenciesCall.Returns.Stacks, f.DependenciesCall.Returns.Err
 }
