@@ -180,8 +180,6 @@ func testPack(t *testing.T, context spec.G, it spec.S) {
 			Expect(err).NotTo(HaveOccurred())
 			Eventually(session).Should(gexec.Exit(0), func() string { return buffer.String() })
 
-			fmt.Printf("session ->\n%s\n", session.Out.Contents())
-
 			Expect(session.Out).To(gbytes.Say("Packing some-buildpack-name some-version..."))
 			Expect(session.Out).To(gbytes.Say("  Executing pre-packaging script: ./scripts/build.sh"))
 			Expect(session.Out).To(gbytes.Say("    hello from the pre-packaging script"))
