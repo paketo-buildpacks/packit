@@ -59,7 +59,7 @@ func testPack(t *testing.T, context spec.G, it spec.S) {
 		)
 		session, err := gexec.Start(command, buffer, buffer)
 		Expect(err).NotTo(HaveOccurred())
-		Eventually(session).Should(gexec.Exit(0), func() string { return buffer.String() })
+		Eventually(session, "5s").Should(gexec.Exit(0), func() string { return buffer.String() })
 
 		Expect(session.Out).To(gbytes.Say("Packing some-buildpack-name some-version..."))
 		Expect(session.Out).To(gbytes.Say("  Executing pre-packaging script: ./scripts/build.sh"))

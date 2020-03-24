@@ -4,7 +4,9 @@ go 1.13
 
 require (
 	github.com/BurntSushi/toml v0.3.1
+	github.com/MasterMinds/semver v1.5.0
 	github.com/Masterminds/semver v1.5.0
+	github.com/blang/semver v3.5.1+incompatible
 	github.com/cheggaaa/pb/v3 v3.0.4
 	github.com/fatih/color v1.9.0 // indirect
 	github.com/golang/protobuf v1.3.2 // indirect

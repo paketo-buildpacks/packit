@@ -6,14 +6,21 @@ import (
 
 	"github.com/cloudfoundry/packit/cargo"
 	"github.com/cloudfoundry/packit/cargo/jam/commands"
+	"github.com/cloudfoundry/packit/cargo/jam/internal"
 	"github.com/cloudfoundry/packit/pexec"
 	"github.com/cloudfoundry/packit/scribe"
 )
+
+type Command interface {
+	Execute(args []string) error
+}
 
 func main() {
 	if len(os.Args) < 2 {
 		fail("missing command")
 	}
+
+	var command Command
 
 	switch os.Args[1] {
 	case "pack":
@@ -27,15 +34,21 @@ func main() {
 		tarBuilder := cargo.NewTarBuilder(logger)
 		prePackager := cargo.NewPrePackager(bash, logger, scribe.NewWriter(os.Stdout, scribe.WithIndent(2)))
 		dependencyCacher := cargo.NewDependencyCacher(transport, logger)
-		command := commands.NewPack(directoryDuplicator, buildpackParser, prePackager, dependencyCacher, fileBundler, tarBuilder, os.Stdout)
+		command = commands.NewPack(directoryDuplicator, buildpackParser, prePackager, dependencyCacher, fileBundler, tarBuilder, os.Stdout)
 
-		if err := command.Execute(os.Args[2:]); err != nil {
-			fail("failed to execute pack command: %s", err)
-		}
+	case "summarize":
+		inspector := internal.NewBuildpackInspector()
+		formatter := internal.NewFormatter(os.Stdout)
+		command = commands.NewSummarize(inspector, formatter)
 
 	default:
 		fail("unknown command: %q", os.Args[1])
 	}
+
+	if err := command.Execute(os.Args[2:]); err != nil {
+		fail("failed to execute: %s", err)
+	}
+
 }
 
 func fail(format string, v ...interface{}) {

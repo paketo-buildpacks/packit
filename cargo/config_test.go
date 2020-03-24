@@ -55,6 +55,9 @@ func testConfig(t *testing.T, context spec.G, it spec.S) {
 							Version: "1.2.3",
 						},
 					},
+					DefaultVersions: map[string]string{
+						"some-dependency": "1.2.x",
+					},
 				},
 			})
 			Expect(err).NotTo(HaveOccurred())
@@ -67,6 +70,9 @@ version = "some-buildpack-version"
 [metadata]
 include_files = ["some-include-file", "other-include-file"]
 pre_package = "some-pre-package-script.sh"
+
+[metadata.default-versions]
+some-dependency = "1.2.x"
 
 [[metadata.dependencies]]
   id = "some-dependency"
@@ -114,6 +120,9 @@ version = "some-buildpack-version"
 include_files = ["some-include-file", "other-include-file"]
 pre_package = "some-pre-package-script.sh"
 
+[metadata.default-versions]
+some-dependency = "1.2.x"
+
 [[metadata.some-map]]
   key = "value"
 
@@ -159,6 +168,9 @@ pre_package = "some-pre-package-script.sh"
 							URI:     "http://some-url",
 							Version: "1.2.3",
 						},
+					},
+					DefaultVersions: map[string]string{
+						"some-dependency": "1.2.x",
 					},
 				},
 			}))
