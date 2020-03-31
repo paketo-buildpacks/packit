@@ -127,6 +127,95 @@ some-key = "some-value"
 `))
 	})
 
+	it("writes out the buildplan.toml with multiple plans", func() {
+		path := filepath.Join(tmpDir, "buildplan.toml")
+
+		packit.Detect(func(packit.DetectContext) (packit.DetectResult, error) {
+			return packit.DetectResult{
+				Plan: packit.BuildPlan{
+					Provides: []packit.BuildPlanProvision{
+						{Name: "some-provision"},
+					},
+					Requires: []packit.BuildPlanRequirement{
+						{
+							Name:    "some-requirement",
+							Version: "some-version",
+							Metadata: map[string]string{
+								"some-key": "some-value",
+							},
+						},
+					},
+					Or: []packit.BuildPlan{
+						{
+							Provides: []packit.BuildPlanProvision{
+								{Name: "some-other-provision"},
+							},
+							Requires: []packit.BuildPlanRequirement{
+								{
+									Name:    "some-other-requirement",
+									Version: "some-other-version",
+									Metadata: map[string]string{
+										"some-other-key": "some-other-value",
+									},
+								},
+							},
+						},
+						{
+							Provides: []packit.BuildPlanProvision{
+								{Name: "some-another-provision"},
+							},
+							Requires: []packit.BuildPlanRequirement{
+								{
+									Name:    "some-another-requirement",
+									Version: "some-another-version",
+									Metadata: map[string]string{
+										"some-another-key": "some-another-value",
+									},
+								},
+							},
+						},
+					},
+				},
+			}, nil
+		}, packit.WithArgs([]string{binaryPath, "", path}))
+
+		contents, err := ioutil.ReadFile(path)
+		Expect(err).NotTo(HaveOccurred())
+
+		Expect(string(contents)).To(MatchTOML(`
+[[provides]]
+  name = "some-provision"
+
+[[requires]]
+  name = "some-requirement"
+  version = "some-version"
+  [requires.metadata]
+	some-key = "some-value"
+
+[[or]]
+
+  [[or.provides]]
+	name = "some-other-provision"
+
+  [[or.requires]]
+	name = "some-other-requirement"
+	version = "some-other-version"
+	[or.requires.metadata]
+	  some-other-key = "some-other-value"
+
+[[or]]
+
+  [[or.provides]]
+	name = "some-another-provision"
+
+  [[or.requires]]
+	name = "some-another-requirement"
+	version = "some-another-version"
+	[or.requires.metadata]
+	  some-another-key = "some-another-value"
+`))
+	})
+
 	context("when the DetectFunc returns an error", func() {
 		it("calls the ExitHandler with that error", func() {
 			packit.Detect(func(ctx packit.DetectContext) (packit.DetectResult, error) {
