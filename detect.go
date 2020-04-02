@@ -58,7 +58,7 @@ type BuildPlan struct {
 
 	// Or is a list of additional BuildPlans that may be selected by the
 	// lifecycle
-	Or []BuildPlan `toml:"or,omitepty"`
+	Or []BuildPlan `toml:"or,omitempty"`
 }
 
 // BuildPlanProvision is a representation of a dependency that can be provided
