@@ -7,6 +7,8 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+
+	"github.com/ulikunitz/xz"
 )
 
 type TarArchive struct {
@@ -17,12 +19,20 @@ type TarGzipArchive struct {
 	reader io.Reader
 }
 
+type TarXZArchive struct {
+	reader io.Reader
+}
+
 func NewTarArchive(inputReader io.Reader) TarArchive {
 	return TarArchive{reader: inputReader}
 }
 
 func NewTarGzipArchive(inputReader io.Reader) TarGzipArchive {
 	return TarGzipArchive{reader: inputReader}
+}
+
+func NewTarXZArchive(inputReader io.Reader) TarXZArchive {
+	return TarXZArchive{reader: inputReader}
 }
 
 func (ta TarArchive) Decompress(destination string) error {
@@ -75,8 +85,17 @@ func (ta TarArchive) Decompress(destination string) error {
 func (gz TarGzipArchive) Decompress(destination string) error {
 	gzr, err := gzip.NewReader(gz.reader)
 	if err != nil {
-		return fmt.Errorf("failed to create gzip reader: %s", err)
+		return fmt.Errorf("failed to create gzip reader: %w", err)
 	}
 
 	return NewTarArchive(gzr).Decompress(destination)
+}
+
+func (txz TarXZArchive) Decompress(destination string) error {
+	xzr, err := xz.NewReader(txz.reader)
+	if err != nil {
+		return fmt.Errorf("failed to create xz reader: %w", err)
+	}
+
+	return NewTarArchive(xzr).Decompress(destination)
 }
