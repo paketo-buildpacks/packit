@@ -69,7 +69,7 @@ func testVacation(t *testing.T, context spec.G, it spec.S) {
 			Expect(os.RemoveAll(tempDir)).To(Succeed())
 		})
 
-		it("downloads the dependency and unpackages it into the path", func() {
+		it("unpackages the archive into the path", func() {
 			var err error
 			err = tarArchive.Decompress(tempDir)
 			Expect(err).ToNot(HaveOccurred())
@@ -94,6 +94,22 @@ func testVacation(t *testing.T, context spec.G, it spec.S) {
 			data, err := ioutil.ReadFile(filepath.Join(tempDir, "symlink"))
 			Expect(err).NotTo(HaveOccurred())
 			Expect(data).To(Equal([]byte(`first`)))
+		})
+
+		it("unpackages the archive into the path but also strips the first component", func() {
+			var err error
+			err = tarArchive.StripComponents(1).Decompress(tempDir)
+			Expect(err).ToNot(HaveOccurred())
+
+			files, err := filepath.Glob(fmt.Sprintf("%s/*", tempDir))
+			Expect(err).NotTo(HaveOccurred())
+			Expect(files).To(ConsistOf([]string{
+				filepath.Join(tempDir, "some-other-dir"),
+			}))
+
+			Expect(filepath.Join(tempDir, "some-other-dir")).To(BeADirectory())
+			Expect(filepath.Join(tempDir, "some-other-dir", "some-file")).To(BeARegularFile())
+
 		})
 
 		context("failure cases", func() {
@@ -213,7 +229,7 @@ func testVacation(t *testing.T, context spec.G, it spec.S) {
 			Expect(os.RemoveAll(tempDir)).To(Succeed())
 		})
 
-		it("downloads the dependency and unpackages it into the path", func() {
+		it("unpackages the archive into the path", func() {
 			var err error
 			err = tarGzipArchive.Decompress(tempDir)
 			Expect(err).ToNot(HaveOccurred())
@@ -238,6 +254,22 @@ func testVacation(t *testing.T, context spec.G, it spec.S) {
 			data, err := ioutil.ReadFile(filepath.Join(tempDir, "symlink"))
 			Expect(err).NotTo(HaveOccurred())
 			Expect(data).To(Equal([]byte(`first`)))
+		})
+
+		it("unpackages the archive into the path but also strips the first component", func() {
+			var err error
+			err = tarGzipArchive.StripComponents(1).Decompress(tempDir)
+			Expect(err).ToNot(HaveOccurred())
+
+			files, err := filepath.Glob(fmt.Sprintf("%s/*", tempDir))
+			Expect(err).NotTo(HaveOccurred())
+			Expect(files).To(ConsistOf([]string{
+				filepath.Join(tempDir, "some-other-dir"),
+			}))
+
+			Expect(filepath.Join(tempDir, "some-other-dir")).To(BeADirectory())
+			Expect(filepath.Join(tempDir, "some-other-dir", "some-file")).To(BeARegularFile())
+
 		})
 
 		context("failure cases", func() {
@@ -303,7 +335,7 @@ func testVacation(t *testing.T, context spec.G, it spec.S) {
 			Expect(os.RemoveAll(tempDir)).To(Succeed())
 		})
 
-		it("downloads the dependency and unpackages it into the path", func() {
+		it("unpackages the archive into the path", func() {
 			var err error
 			err = tarXZArchive.Decompress(tempDir)
 			Expect(err).ToNot(HaveOccurred())
@@ -328,6 +360,22 @@ func testVacation(t *testing.T, context spec.G, it spec.S) {
 			data, err := ioutil.ReadFile(filepath.Join(tempDir, "symlink"))
 			Expect(err).NotTo(HaveOccurred())
 			Expect(data).To(Equal([]byte(`first`)))
+		})
+
+		it("unpackages the archive into the path but also strips the first component", func() {
+			var err error
+			err = tarXZArchive.StripComponents(1).Decompress(tempDir)
+			Expect(err).ToNot(HaveOccurred())
+
+			files, err := filepath.Glob(fmt.Sprintf("%s/*", tempDir))
+			Expect(err).NotTo(HaveOccurred())
+			Expect(files).To(ConsistOf([]string{
+				filepath.Join(tempDir, "some-other-dir"),
+			}))
+
+			Expect(filepath.Join(tempDir, "some-other-dir")).To(BeADirectory())
+			Expect(filepath.Join(tempDir, "some-other-dir", "some-file")).To(BeARegularFile())
+
 		})
 
 		context("failure cases", func() {

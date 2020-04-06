@@ -7,20 +7,24 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/ulikunitz/xz"
 )
 
 type TarArchive struct {
-	reader io.Reader
+	reader     io.Reader
+	components int
 }
 
 type TarGzipArchive struct {
-	reader io.Reader
+	reader     io.Reader
+	components int
 }
 
 type TarXZArchive struct {
-	reader io.Reader
+	reader     io.Reader
+	components int
 }
 
 func NewTarArchive(inputReader io.Reader) TarArchive {
@@ -46,7 +50,13 @@ func (ta TarArchive) Decompress(destination string) error {
 			return fmt.Errorf("failed to read tar response: %s", err)
 		}
 
-		path := filepath.Join(destination, hdr.Name)
+		fileNames := strings.Split(hdr.Name, string(filepath.Separator))
+
+		if len(fileNames) <= ta.components {
+			continue
+		}
+
+		path := filepath.Join(append([]string{destination}, fileNames[ta.components:]...)...)
 		switch hdr.Typeflag {
 		case tar.TypeDir:
 			err = os.MkdirAll(path, os.ModePerm)
@@ -88,7 +98,7 @@ func (gz TarGzipArchive) Decompress(destination string) error {
 		return fmt.Errorf("failed to create gzip reader: %w", err)
 	}
 
-	return NewTarArchive(gzr).Decompress(destination)
+	return NewTarArchive(gzr).StripComponents(gz.components).Decompress(destination)
 }
 
 func (txz TarXZArchive) Decompress(destination string) error {
@@ -97,5 +107,20 @@ func (txz TarXZArchive) Decompress(destination string) error {
 		return fmt.Errorf("failed to create xz reader: %w", err)
 	}
 
-	return NewTarArchive(xzr).Decompress(destination)
+	return NewTarArchive(xzr).StripComponents(txz.components).Decompress(destination)
+}
+
+func (ta TarArchive) StripComponents(components int) TarArchive {
+	ta.components = components
+	return ta
+}
+
+func (gz TarGzipArchive) StripComponents(components int) TarGzipArchive {
+	gz.components = components
+	return gz
+}
+
+func (txz TarXZArchive) StripComponents(components int) TarXZArchive {
+	txz.components = components
+	return txz
 }
