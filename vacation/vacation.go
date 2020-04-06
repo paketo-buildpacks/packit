@@ -2,6 +2,8 @@ package vacation
 
 import (
 	"archive/tar"
+	"archive/zip"
+	"bytes"
 	"compress/gzip"
 	"fmt"
 	"io"
@@ -98,4 +100,65 @@ func (txz TarXZArchive) Decompress(destination string) error {
 	}
 
 	return NewTarArchive(xzr).Decompress(destination)
+}
+
+type ZipArchive struct {
+	reader io.Reader
+}
+
+func NewZipArchive(inputReader io.Reader) ZipArchive {
+	return ZipArchive{reader: inputReader}
+}
+
+func (z ZipArchive) Decompress(destination string) error {
+	// Have to convert and io.Reader into a bytes.Reader which
+	// implements the ReadAt function making it compatible with
+	// the io.ReaderAt inteface which required for zip.NewReader
+	buff := bytes.NewBuffer(nil)
+	size, err := io.Copy(buff, z.reader)
+	if err != nil {
+		return err
+	}
+
+	readerAt := bytes.NewReader(buff.Bytes())
+
+	zr, err := zip.NewReader(readerAt, size)
+	if err != nil {
+		return fmt.Errorf("failed to create zip reader: %w", err)
+	}
+
+	for _, f := range zr.File {
+		path := filepath.Join(destination, f.Name)
+
+		if f.FileInfo().IsDir() {
+			err = os.MkdirAll(path, os.ModePerm)
+			if err != nil {
+				return fmt.Errorf("failed to unzip directory: %w", err)
+			}
+		} else {
+			err = os.MkdirAll(filepath.Dir(path), os.ModePerm)
+			if err != nil {
+				return fmt.Errorf("failed to unzip directory that was part of file path: %w", err)
+			}
+
+			dst, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode())
+			if err != nil {
+				return fmt.Errorf("failed to unzip file: %w", err)
+			}
+			defer dst.Close()
+
+			src, err := f.Open()
+			if err != nil {
+				return err
+			}
+			defer src.Close()
+
+			_, err = io.Copy(dst, src)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
 }
