@@ -55,6 +55,10 @@ type BuildPlan struct {
 	// Requires is a list of BuildPlanRequirements that are required by this
 	// buildpack.
 	Requires []BuildPlanRequirement `toml:"requires"`
+
+	// Or is a list of additional BuildPlans that may be selected by the
+	// lifecycle
+	Or []BuildPlan `toml:"or,omitempty"`
 }
 
 // BuildPlanProvision is a representation of a dependency that can be provided
