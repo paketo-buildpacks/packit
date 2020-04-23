@@ -18,9 +18,9 @@ type BuildContext struct {
 	// buildpack.toml included in the buildpack contents.
 	BuildpackInfo BuildpackInfo
 
-	// CNBPath is the absolute path location of the buildpack contents, eg.
-	// `/layers/io.buildpacks.example`. This path is useful for finding the
-	// buildpack.toml or any other files included in the buildpack.
+	// CNBPath is the absolute path location of the buildpack contents.
+	// This path is useful for finding the buildpack.toml or any other
+	// files included in the buildpack.
 	CNBPath string
 
 	// Layers provides access to layers managed by the buildpack. It can be used

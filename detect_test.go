@@ -80,6 +80,7 @@ clear-env = false
 
 			Expect(context).To(Equal(packit.DetectContext{
 				WorkingDir: tmpDir,
+				CNBPath:    cnbDir,
 				BuildpackInfo: packit.BuildpackInfo{
 					ID:      "some-id",
 					Name:    "some-name",
