@@ -7,6 +7,7 @@ import (
 	"compress/gzip"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -130,12 +131,28 @@ func (z ZipArchive) Decompress(destination string) error {
 	for _, f := range zr.File {
 		path := filepath.Join(destination, f.Name)
 
-		if f.FileInfo().IsDir() {
+		switch {
+		case f.FileInfo().IsDir():
 			err = os.MkdirAll(path, os.ModePerm)
 			if err != nil {
 				return fmt.Errorf("failed to unzip directory: %w", err)
 			}
-		} else {
+		case f.FileInfo().Mode()&os.ModeSymlink != 0:
+			fd, err := f.Open()
+			if err != nil {
+				return err
+			}
+
+			content, err := ioutil.ReadAll(fd)
+			if err != nil {
+				return err
+			}
+
+			err = os.Symlink(string(content), path)
+			if err != nil {
+				return fmt.Errorf("failed to unzip symlink: %w", err)
+			}
+		default:
 			err = os.MkdirAll(filepath.Dir(path), os.ModePerm)
 			if err != nil {
 				return fmt.Errorf("failed to unzip directory that was part of file path: %w", err)
