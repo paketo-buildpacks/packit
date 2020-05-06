@@ -64,6 +64,21 @@ func testConfig(t *testing.T, context spec.G, it spec.S) {
 						"some-dependency": "1.2.x",
 					},
 				},
+				Order: []cargo.ConfigOrder{
+					{
+						Group: []cargo.ConfigOrderGroup{
+							{
+								ID:      "some-dependency",
+								Version: "some-version",
+							},
+							{
+								ID:       "other-dependency",
+								Version:  "other-version",
+								Optional: true,
+							},
+						},
+					},
+				},
 			})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(buffer.String()).To(MatchTOML(`api = "0.2"
@@ -94,6 +109,15 @@ some-dependency = "1.2.x"
 [[stacks]]
   id = "some-stack-id"
 
+[[order]]
+  [[order.group]]
+	  id = "some-dependency"
+		version = "some-version"
+
+  [[order.group]]
+		id = "other-dependency"
+		version = "other-version"
+		optional = true
 `))
 		})
 
@@ -142,6 +166,16 @@ some-dependency = "1.2.x"
 
 [[stacks]]
   id = "some-stack-id"
+
+[[order]]
+  [[order.group]]
+	  id = "some-dependency"
+		version = "some-version"
+
+  [[order.group]]
+		id = "other-dependency"
+		version = "other-version"
+		optional = true
 `)
 
 			var config cargo.Config
@@ -179,6 +213,22 @@ some-dependency = "1.2.x"
 						"some-dependency": "1.2.x",
 					},
 				},
+				Order: []cargo.ConfigOrder{
+					{
+						Group: []cargo.ConfigOrderGroup{
+							{
+								ID:       "some-dependency",
+								Version:  "some-version",
+								Optional: false,
+							},
+							{
+								ID:       "other-dependency",
+								Version:  "other-version",
+								Optional: true,
+							},
+						},
+					},
+				},
 			}))
 		})
 
@@ -193,7 +243,27 @@ some-dependency = "1.2.x"
 	})
 
 	context("ConfigMetadata", func() {
+		context("MarshalJSON", func() {
+			context("when the all fields are empty", func() {
+				it("does not marshal any fields", func() {
+					var metadata cargo.ConfigMetadata
+					output, err := metadata.MarshalJSON()
+					Expect(err).NotTo(HaveOccurred())
+					Expect(string(output)).To(MatchJSON(`{}`))
+				})
+			})
+		})
+
 		context("UnmarshalJSON", func() {
+			context("when the all fields are empty", func() {
+				it("does not unmarshal any fields", func() {
+					var metadata cargo.ConfigMetadata
+					err := metadata.UnmarshalJSON([]byte(`{}`))
+					Expect(err).NotTo(HaveOccurred())
+					Expect(metadata).To(Equal(cargo.ConfigMetadata{}))
+				})
+			})
+
 			context("failure cases", func() {
 				context("metadata field is not a object", func() {
 					it("it returns an error", func() {

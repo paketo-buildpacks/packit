@@ -9,10 +9,11 @@ import (
 )
 
 type Config struct {
-	API       string          `toml:"api" json:"api"`
+	API       string          `toml:"api"       json:"api"`
 	Buildpack ConfigBuildpack `toml:"buildpack" json:"buildpack"`
-	Metadata  ConfigMetadata  `toml:"metadata" json:"metadata"`
-	Stacks    []ConfigStack   `toml:"stacks" json:"stacks"`
+	Metadata  ConfigMetadata  `toml:"metadata"  json:"metadata"`
+	Stacks    []ConfigStack   `toml:"stacks"    json:"stacks"`
+	Order     []ConfigOrder   `toml:"order"     json:"order"`
 }
 
 type ConfigStack struct {
@@ -20,27 +21,37 @@ type ConfigStack struct {
 }
 
 type ConfigBuildpack struct {
-	ID      string `toml:"id" json:"id"`
-	Name    string `toml:"name" json:"name"`
+	ID      string `toml:"id"      json:"id"`
+	Name    string `toml:"name"    json:"name"`
 	Version string `toml:"version" json:"version"`
 }
 
 type ConfigMetadata struct {
-	IncludeFiles    []string                   `toml:"include_files" json:"include_files"`
+	IncludeFiles    []string                   `toml:"include_files"         json:"include_files"`
 	PrePackage      string                     `toml:"pre_package" json:"pre_package"`
-	DefaultVersions map[string]string          `toml:"default-versions" json:"default-versions"`
-	Dependencies    []ConfigMetadataDependency `toml:"dependencies" json:"dependencies"`
-	Unstructured    map[string]interface{}     `toml:"-" json:"-"`
+	DefaultVersions map[string]string          `toml:"default-versions"      json:"default-versions"`
+	Dependencies    []ConfigMetadataDependency `toml:"dependencies"          json:"dependencies"`
+	Unstructured    map[string]interface{}     `toml:"-"                     json:"-"`
 }
 
 type ConfigMetadataDependency struct {
 	DeprecationDate time.Time `toml:"deprecation_date" json:"deprecation_date"`
-	ID              string    `toml:"id" json:"id"`
-	Name            string    `toml:"name" json:"name"`
-	SHA256          string    `toml:"sha256" json:"sha256"`
-	Stacks          []string  `toml:"stacks" json:"stacks"`
-	URI             string    `toml:"uri" json:"uri"`
-	Version         string    `toml:"version" json:"version"`
+	ID              string    `toml:"id"               json:"id"`
+	Name            string    `toml:"name"             json:"name"`
+	SHA256          string    `toml:"sha256"           json:"sha256"`
+	Stacks          []string  `toml:"stacks"           json:"stacks"`
+	URI             string    `toml:"uri"              json:"uri"`
+	Version         string    `toml:"version"          json:"version"`
+}
+
+type ConfigOrder struct {
+	Group []ConfigOrderGroup `toml:"group" json:"group"`
+}
+
+type ConfigOrderGroup struct {
+	ID       string `toml:"id"       json:"id"`
+	Version  string `toml:"version"  json:"version"`
+	Optional bool   `toml:"optional,omitempty" json:"optional,omitempty"`
 }
 
 func EncodeConfig(writer io.Writer, config Config) error {
@@ -80,10 +91,21 @@ func (m ConfigMetadata) MarshalJSON() ([]byte, error) {
 		metadata[key] = value
 	}
 
-	metadata["include_files"] = m.IncludeFiles
-	metadata["pre_package"] = m.PrePackage
-	metadata["dependencies"] = m.Dependencies
-	metadata["default-versions"] = m.DefaultVersions
+	if len(m.IncludeFiles) > 0 {
+		metadata["include_files"] = m.IncludeFiles
+	}
+
+	if len(m.PrePackage) > 0 {
+		metadata["pre_package"] = m.PrePackage
+	}
+
+	if len(m.Dependencies) > 0 {
+		metadata["dependencies"] = m.Dependencies
+	}
+
+	if len(m.DefaultVersions) > 0 {
+		metadata["default-versions"] = m.DefaultVersions
+	}
 
 	return json.Marshal(metadata)
 }
