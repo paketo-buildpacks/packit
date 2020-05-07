@@ -12,7 +12,7 @@ require (
 	github.com/mattn/go-isatty v0.0.12 // indirect
 	github.com/mattn/go-runewidth v0.0.8 // indirect
 	github.com/onsi/ginkgo v1.11.0 // indirect
-	github.com/onsi/gomega v1.9.0
+	github.com/onsi/gomega v1.10.0
 	github.com/sclevine/spec v1.4.0
 	github.com/ulikunitz/xz v0.5.7
 	golang.org/x/net v0.0.0-20200114155413-6afb5195e5aa // indirect
