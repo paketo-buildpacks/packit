@@ -2,9 +2,12 @@ package vacation
 
 import (
 	"archive/tar"
+	"archive/zip"
+	"bytes"
 	"compress/gzip"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -123,4 +126,81 @@ func (gz TarGzipArchive) StripComponents(components int) TarGzipArchive {
 func (txz TarXZArchive) StripComponents(components int) TarXZArchive {
 	txz.components = components
 	return txz
+}
+
+type ZipArchive struct {
+	reader io.Reader
+}
+
+func NewZipArchive(inputReader io.Reader) ZipArchive {
+	return ZipArchive{reader: inputReader}
+}
+
+func (z ZipArchive) Decompress(destination string) error {
+	// Have to convert and io.Reader into a bytes.Reader which
+	// implements the ReadAt function making it compatible with
+	// the io.ReaderAt inteface which required for zip.NewReader
+	buff := bytes.NewBuffer(nil)
+	size, err := io.Copy(buff, z.reader)
+	if err != nil {
+		return err
+	}
+
+	readerAt := bytes.NewReader(buff.Bytes())
+
+	zr, err := zip.NewReader(readerAt, size)
+	if err != nil {
+		return fmt.Errorf("failed to create zip reader: %w", err)
+	}
+
+	for _, f := range zr.File {
+		path := filepath.Join(destination, f.Name)
+
+		switch {
+		case f.FileInfo().IsDir():
+			err = os.MkdirAll(path, os.ModePerm)
+			if err != nil {
+				return fmt.Errorf("failed to unzip directory: %w", err)
+			}
+		case f.FileInfo().Mode()&os.ModeSymlink != 0:
+			fd, err := f.Open()
+			if err != nil {
+				return err
+			}
+
+			content, err := ioutil.ReadAll(fd)
+			if err != nil {
+				return err
+			}
+
+			err = os.Symlink(string(content), path)
+			if err != nil {
+				return fmt.Errorf("failed to unzip symlink: %w", err)
+			}
+		default:
+			err = os.MkdirAll(filepath.Dir(path), os.ModePerm)
+			if err != nil {
+				return fmt.Errorf("failed to unzip directory that was part of file path: %w", err)
+			}
+
+			dst, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode())
+			if err != nil {
+				return fmt.Errorf("failed to unzip file: %w", err)
+			}
+			defer dst.Close()
+
+			src, err := f.Open()
+			if err != nil {
+				return err
+			}
+			defer src.Close()
+
+			_, err = io.Copy(dst, src)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
 }
