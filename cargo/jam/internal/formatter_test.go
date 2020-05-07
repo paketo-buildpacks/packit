@@ -95,5 +95,52 @@ Supported stacks:
 `))
 			})
 		})
+
+		context("when stacks are empty", func() {
+			it("returns a list of dependencies", func() {
+				dependencies := []cargo.ConfigMetadataDependency{
+					{
+						ID:      "some-dependency",
+						Stacks:  []string{"some-stack"},
+						Version: "1.2.3",
+					},
+					{
+						ID:      "some-dependency",
+						Stacks:  []string{"other-stack"},
+						Version: "1.2.3",
+					},
+					{
+						ID:      "other-dependency",
+						Stacks:  []string{"some-stack", "other-stack"},
+						Version: "2.3.4",
+					},
+					{
+						ID:      "other-dependency",
+						Stacks:  []string{"other-stack"},
+						Version: "2.3.5",
+					},
+				}
+				defaults := map[string]string{
+					"some-dependency":  "1.2.x",
+					"other-dependency": "2.3.x",
+				}
+
+				formatter.Markdown(dependencies, defaults, nil)
+				Expect(buffer.String()).To(Equal(`Dependencies:
+| name | version | stacks |
+|-|-|-|
+| other-dependency | 2.3.5 | other-stack |
+| other-dependency | 2.3.4 | other-stack, some-stack |
+| some-dependency | 1.2.3 | other-stack, some-stack |
+
+Default dependencies:
+| name | version |
+|-|-|
+| other-dependency | 2.3.x |
+| some-dependency | 1.2.x |
+
+`))
+			})
+		})
 	})
 }
