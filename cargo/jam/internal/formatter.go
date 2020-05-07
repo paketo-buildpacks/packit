@@ -84,9 +84,9 @@ func (f Formatter) Markdown(dependencies []cargo.ConfigMetadataDependency, defau
 		fmt.Fprintln(f.writer)
 	}
 
-	sort.Strings(stacks)
-
 	if len(stacks) > 0 {
+		sort.Strings(stacks)
+
 		fmt.Fprintf(f.writer, "Supported stacks:\n| name |\n|-|\n")
 		for _, s := range stacks {
 			fmt.Fprintf(f.writer, "| %s |\n", s)

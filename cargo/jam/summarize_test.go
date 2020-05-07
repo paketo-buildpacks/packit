@@ -49,6 +49,12 @@ other-dependency = "2.3.x"
 	id = "other-dependency"
 	stacks = ["other-stack"]
 	version = "2.3.4"
+
+[[stacks]]
+	id = "some-stack"
+
+[[stacks]]
+	id = "other-stack"
 `)
 
 		err = tw.WriteHeader(&tar.Header{
