@@ -3,7 +3,7 @@ package fakes
 import (
 	"sync"
 
-	"github.com/cloudfoundry/packit/pexec"
+	"github.com/paketo-buildpacks/packit/pexec"
 )
 
 type Executable struct {

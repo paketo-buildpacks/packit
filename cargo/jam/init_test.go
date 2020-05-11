@@ -32,7 +32,7 @@ func TestUnitJam(t *testing.T) {
 			err    error
 		)
 
-		path, err = gexec.Build("github.com/cloudfoundry/packit/cargo/jam")
+		path, err = gexec.Build("github.com/paketo-buildpacks/packit/cargo/jam")
 		Expect(err).NotTo(HaveOccurred())
 	})
 

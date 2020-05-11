@@ -10,8 +10,8 @@ import (
 
 	"github.com/sclevine/spec"
 
-	"github.com/cloudfoundry/packit/pexec"
 	"github.com/onsi/gomega/gexec"
+	"github.com/paketo-buildpacks/packit/pexec"
 
 	. "github.com/onsi/gomega"
 )
@@ -41,7 +41,7 @@ func testPexec(t *testing.T, context spec.G, it spec.S) {
 
 		executable = pexec.NewExecutable("some-executable")
 
-		fakeCLI, err = gexec.Build("github.com/cloudfoundry/packit/fakes/some-executable")
+		fakeCLI, err = gexec.Build("github.com/paketo-buildpacks/packit/fakes/some-executable")
 		Expect(err).NotTo(HaveOccurred())
 
 		existingPath = os.Getenv("PATH")
@@ -121,7 +121,7 @@ func testPexec(t *testing.T, context spec.G, it spec.S) {
 					Expect(os.Setenv("PATH", existingPath)).To(Succeed())
 
 					var err error
-					errorCLI, err = gexec.Build("github.com/cloudfoundry/packit/fakes/some-executable", "-ldflags", "-X main.fail=true")
+					errorCLI, err = gexec.Build("github.com/paketo-buildpacks/packit/fakes/some-executable", "-ldflags", "-X main.fail=true")
 					Expect(err).NotTo(HaveOccurred())
 
 					path = os.Getenv("PATH")

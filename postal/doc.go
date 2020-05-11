@@ -8,8 +8,8 @@
 //   import (
 //   	"log"
 //
-//   	"github.com/cloudfoundry/packit/cargo"
-//   	"github.com/cloudfoundry/packit/postal"
+//   	"github.com/paketo-buildpacks/packit/cargo"
+//   	"github.com/paketo-buildpacks/packit/postal"
 //   )
 //
 //   func main() {

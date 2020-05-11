@@ -5,7 +5,7 @@ import (
 	"flag"
 	"fmt"
 
-	"github.com/cloudfoundry/packit/cargo"
+	"github.com/paketo-buildpacks/packit/cargo"
 )
 
 //go:generate faux --interface BuildpackInspector --output fakes/buildpack_inspector.go

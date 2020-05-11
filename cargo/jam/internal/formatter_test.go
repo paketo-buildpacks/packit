@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/cloudfoundry/packit/cargo"
-	"github.com/cloudfoundry/packit/cargo/jam/internal"
+	"github.com/paketo-buildpacks/packit/cargo"
+	"github.com/paketo-buildpacks/packit/cargo/jam/internal"
 	"github.com/sclevine/spec"
 
 	. "github.com/onsi/gomega"

@@ -7,13 +7,13 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/cloudfoundry/packit"
-	"github.com/cloudfoundry/packit/fakes"
-	"github.com/cloudfoundry/packit/internal"
+	"github.com/paketo-buildpacks/packit"
+	"github.com/paketo-buildpacks/packit/fakes"
+	"github.com/paketo-buildpacks/packit/internal"
 	"github.com/sclevine/spec"
 
-	. "github.com/cloudfoundry/packit/matchers"
 	. "github.com/onsi/gomega"
+	. "github.com/paketo-buildpacks/packit/matchers"
 )
 
 func testDetect(t *testing.T, context spec.G, it spec.S) {

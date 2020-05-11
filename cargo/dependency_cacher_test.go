@@ -10,9 +10,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cloudfoundry/packit/cargo"
-	"github.com/cloudfoundry/packit/cargo/fakes"
-	"github.com/cloudfoundry/packit/scribe"
+	"github.com/paketo-buildpacks/packit/cargo"
+	"github.com/paketo-buildpacks/packit/cargo/fakes"
+	"github.com/paketo-buildpacks/packit/scribe"
 	"github.com/sclevine/spec"
 
 	. "github.com/onsi/gomega"

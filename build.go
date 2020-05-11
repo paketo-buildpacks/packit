@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/BurntSushi/toml"
-	"github.com/cloudfoundry/packit/internal"
+	"github.com/paketo-buildpacks/packit/internal"
 )
 
 // BuildContext provides the contextual details that are made available by the

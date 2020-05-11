@@ -4,10 +4,10 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/cloudfoundry/packit/cargo"
-	"github.com/cloudfoundry/packit/cargo/fakes"
-	"github.com/cloudfoundry/packit/pexec"
-	"github.com/cloudfoundry/packit/scribe"
+	"github.com/paketo-buildpacks/packit/cargo"
+	"github.com/paketo-buildpacks/packit/cargo/fakes"
+	"github.com/paketo-buildpacks/packit/pexec"
+	"github.com/paketo-buildpacks/packit/scribe"
 	"github.com/sclevine/spec"
 
 	. "github.com/onsi/gomega"

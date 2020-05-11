@@ -4,9 +4,9 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/cloudfoundry/packit/cargo"
-	"github.com/cloudfoundry/packit/cargo/jam/commands"
-	"github.com/cloudfoundry/packit/cargo/jam/commands/fakes"
+	"github.com/paketo-buildpacks/packit/cargo"
+	"github.com/paketo-buildpacks/packit/cargo/jam/commands"
+	"github.com/paketo-buildpacks/packit/cargo/jam/commands/fakes"
 	"github.com/sclevine/spec"
 
 	. "github.com/onsi/gomega"

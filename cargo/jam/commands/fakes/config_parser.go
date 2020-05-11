@@ -3,7 +3,7 @@ package fakes
 import (
 	"sync"
 
-	"github.com/cloudfoundry/packit/cargo"
+	"github.com/paketo-buildpacks/packit/cargo"
 )
 
 type ConfigParser struct {

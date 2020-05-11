@@ -5,7 +5,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/cloudfoundry/packit"
+	"github.com/paketo-buildpacks/packit"
 )
 
 type FormattedMap map[string]interface{}

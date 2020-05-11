@@ -11,7 +11,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/cloudfoundry/packit/vacation"
+	"github.com/paketo-buildpacks/packit/vacation"
 	"github.com/sclevine/spec"
 	"github.com/ulikunitz/xz"
 
