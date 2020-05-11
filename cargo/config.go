@@ -21,9 +21,10 @@ type ConfigStack struct {
 }
 
 type ConfigBuildpack struct {
-	ID      string `toml:"id"      json:"id"`
-	Name    string `toml:"name"    json:"name"`
-	Version string `toml:"version" json:"version"`
+	ID       string `toml:"id"                 json:"id"`
+	Name     string `toml:"name"               json:"name"`
+	Version  string `toml:"version"            json:"version"`
+	Homepage string `toml:"homepage,omitempty" json:"homepage,omitempty"`
 }
 
 type ConfigMetadata struct {

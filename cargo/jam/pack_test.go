@@ -158,6 +158,7 @@ func testPack(t *testing.T, context spec.G, it spec.S) {
   id = "some-buildpack-id"
   name = "some-buildpack-name"
   version = "some-version"
+  homepage = "some-homepage-link"
 
 [metadata]
   include_files = ["bin/build", "bin/detect", "buildpack.toml", "generated-file"]
@@ -279,6 +280,7 @@ func testPack(t *testing.T, context spec.G, it spec.S) {
   id = "some-buildpack-id"
   name = "some-buildpack-name"
   version = "some-version"
+  homepage = "some-homepage-link"
 
 [metadata]
   include_files = ["bin/build", "bin/detect", "buildpack.toml", "generated-file", "dependencies/f058c8bf6b65b829e200ef5c2d22fde0ee65b96c1fbd1b88869be133aafab64a"]

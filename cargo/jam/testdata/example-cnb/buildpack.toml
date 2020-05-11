@@ -4,6 +4,7 @@ api = "0.2"
   id = "some-buildpack-id"
   name = "some-buildpack-name"
   version = "version-string"
+  homepage = "some-homepage-link"
 
 [metadata]
   include_files = ["bin/build", "bin/detect", "buildpack.toml", "generated-file"]
