@@ -10,7 +10,7 @@ import (
 	"sort"
 	"time"
 
-	"github.com/cloudfoundry/packit/scribe"
+	"github.com/paketo-buildpacks/packit/scribe"
 )
 
 type TarBuilder struct {

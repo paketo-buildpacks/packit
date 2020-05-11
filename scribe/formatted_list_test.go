@@ -3,7 +3,7 @@ package scribe_test
 import (
 	"testing"
 
-	"github.com/cloudfoundry/packit/scribe"
+	"github.com/paketo-buildpacks/packit/scribe"
 	"github.com/sclevine/spec"
 
 	. "github.com/onsi/gomega"

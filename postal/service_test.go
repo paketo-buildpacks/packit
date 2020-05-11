@@ -15,8 +15,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cloudfoundry/packit/postal"
-	"github.com/cloudfoundry/packit/postal/fakes"
+	"github.com/paketo-buildpacks/packit/postal"
+	"github.com/paketo-buildpacks/packit/postal/fakes"
 	"github.com/sclevine/spec"
 
 	. "github.com/onsi/gomega"

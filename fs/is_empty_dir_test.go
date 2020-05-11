@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/cloudfoundry/packit/fs"
+	"github.com/paketo-buildpacks/packit/fs"
 	"github.com/sclevine/spec"
 
 	. "github.com/onsi/gomega"

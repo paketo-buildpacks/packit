@@ -6,7 +6,7 @@ import (
 	"io/ioutil"
 	"testing"
 
-	"github.com/cloudfoundry/packit/internal"
+	"github.com/paketo-buildpacks/packit/internal"
 	"github.com/sclevine/spec"
 
 	. "github.com/onsi/gomega"

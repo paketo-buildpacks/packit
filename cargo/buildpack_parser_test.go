@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cloudfoundry/packit/cargo"
+	"github.com/paketo-buildpacks/packit/cargo"
 	"github.com/sclevine/spec"
 
 	. "github.com/onsi/gomega"

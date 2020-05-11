@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/BurntSushi/toml"
-	"github.com/cloudfoundry/packit/internal"
+	"github.com/paketo-buildpacks/packit/internal"
 )
 
 // Fail is a sentinal value that can be used to indicate a failure to detect

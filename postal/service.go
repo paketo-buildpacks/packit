@@ -6,8 +6,8 @@ import (
 	"sort"
 
 	"github.com/Masterminds/semver"
-	"github.com/cloudfoundry/packit/cargo"
-	"github.com/cloudfoundry/packit/vacation"
+	"github.com/paketo-buildpacks/packit/cargo"
+	"github.com/paketo-buildpacks/packit/vacation"
 )
 
 //go:generate faux --interface Transport --output fakes/transport.go

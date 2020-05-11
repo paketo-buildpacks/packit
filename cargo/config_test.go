@@ -7,11 +7,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cloudfoundry/packit/cargo"
+	"github.com/paketo-buildpacks/packit/cargo"
 	"github.com/sclevine/spec"
 
-	. "github.com/cloudfoundry/packit/matchers"
 	. "github.com/onsi/gomega"
+	. "github.com/paketo-buildpacks/packit/matchers"
 )
 
 func testConfig(t *testing.T, context spec.G, it spec.S) {

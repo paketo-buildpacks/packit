@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/Masterminds/semver"
-	"github.com/cloudfoundry/packit/cargo"
+	"github.com/paketo-buildpacks/packit/cargo"
 )
 
 type Formatter struct {

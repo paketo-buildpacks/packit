@@ -1,4 +1,4 @@
-module github.com/cloudfoundry/packit
+module github.com/paketo-buildpacks/packit
 
 go 1.13
 

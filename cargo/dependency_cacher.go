@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/cloudfoundry/packit/scribe"
+	"github.com/paketo-buildpacks/packit/scribe"
 )
 
 //go:generate faux --interface Downloader --output fakes/downloader.go
