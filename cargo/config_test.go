@@ -33,9 +33,10 @@ func testConfig(t *testing.T, context spec.G, it spec.S) {
 			err = cargo.EncodeConfig(buffer, cargo.Config{
 				API: "0.2",
 				Buildpack: cargo.ConfigBuildpack{
-					ID:      "some-buildpack-id",
-					Name:    "some-buildpack-name",
-					Version: "some-buildpack-version",
+					ID:       "some-buildpack-id",
+					Name:     "some-buildpack-name",
+					Version:  "some-buildpack-version",
+					Homepage: "some-homepage-link",
 				},
 				Stacks: []cargo.ConfigStack{
 					{
@@ -86,6 +87,7 @@ func testConfig(t *testing.T, context spec.G, it spec.S) {
 id = "some-buildpack-id"
 name = "some-buildpack-name"
 version = "some-buildpack-version"
+homepage = "some-homepage-link"
 
 [metadata]
 include_files = ["some-include-file", "other-include-file"]
@@ -145,6 +147,7 @@ some-dependency = "1.2.x"
 id = "some-buildpack-id"
 name = "some-buildpack-name"
 version = "some-buildpack-version"
+homepage = "some-homepage-link"
 
 [metadata]
 include_files = ["some-include-file", "other-include-file"]
@@ -183,9 +186,10 @@ some-dependency = "1.2.x"
 			Expect(config).To(Equal(cargo.Config{
 				API: "0.2",
 				Buildpack: cargo.ConfigBuildpack{
-					ID:      "some-buildpack-id",
-					Name:    "some-buildpack-name",
-					Version: "some-buildpack-version",
+					ID:       "some-buildpack-id",
+					Name:     "some-buildpack-name",
+					Version:  "some-buildpack-version",
+					Homepage: "some-homepage-link",
 				},
 				Stacks: []cargo.ConfigStack{
 					{
