@@ -1,5 +1,7 @@
 # packit
 
+[![GoDoc](https://img.shields.io/badge/pkg.go.dev-doc-blue)](http://pkg.go.dev/.)
+
 Package packit provides primitives for implementing a Cloud Native Buildpack
 according to the specification:
 [https://github.com/buildpacks/spec/blob/master/buildpack.md](https://github.com/buildpacks/spec/blob/master/buildpack.md).
