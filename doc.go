@@ -96,9 +96,7 @@
 //
 //   package main
 //
-//   import (
-//   	"github.com/paketo-buildpacks/packit"
-//   )
+//   import "github.com/paketo-buildpacks/packit"
 //
 //   func main() {
 //   	// The build phase includes the yarn cli in a new layer that is made
@@ -150,6 +148,37 @@
 //   func InstallYarn(version, path string) error {
 //   	// Implemention omitted.
 //   	return nil
+//   }
+//
+// Run
+//
+// Buildpacks can be created with a single entrypoint executable using the
+// packit.Run function. Here, you can combine both the Detect and Build phases
+// and run will ensure that the correct phase is called when the matching
+// executable is called by the Cloud Native Buildpack Lifecycle. Below is an
+// example that combines a simple detect and build into a single main program.
+//
+//   package main
+//
+//   import "github.com/paketo-buildpacks/packit"
+//
+//   func main() {
+//   	detect := func(context packit.DetectContext) (packit.DetectResult, error) {
+//   		return packit.DetectResult{}, nil
+//   	}
+
+//   	build := func(context packit.BuildContext) (packit.BuildResult, error) {
+//   		return packit.BuildResult{
+//   			Processes: []packit.Process{
+//   				{
+//   					Type:    "web",
+//   					Command: `while true; do nc -l -p $PORT -c 'echo -e "HTTP/1.1 200 OK\n\n Hello, world!\n"'; done`,
+//   				},
+//   			},
+//   		}, nil
+//   	}
+//
+//   	packit.Run(detect, build)
 //   }
 //
 // Summary
