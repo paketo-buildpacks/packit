@@ -10,6 +10,7 @@ import (
 	"os"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/onsi/gomega/gexec"
 	"github.com/sclevine/spec"
@@ -21,6 +22,8 @@ import (
 var path string
 
 func TestUnitJam(t *testing.T) {
+	SetDefaultEventuallyTimeout(10 * time.Second)
+
 	suite := spec.New("cargo/jam", spec.Report(report.Terminal{}))
 	suite("pack", testPack)
 	suite("summarize", testSummarize)
