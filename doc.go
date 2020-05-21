@@ -166,7 +166,7 @@
 //   	detect := func(context packit.DetectContext) (packit.DetectResult, error) {
 //   		return packit.DetectResult{}, nil
 //   	}
-
+//
 //   	build := func(context packit.BuildContext) (packit.BuildResult, error) {
 //   		return packit.BuildResult{
 //   			Processes: []packit.Process{
