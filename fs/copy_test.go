@@ -12,10 +12,10 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-func testMove(t *testing.T, context spec.G, it spec.S) {
+func testCopy(t *testing.T, context spec.G, it spec.S) {
 	var Expect = NewWithT(t).Expect
 
-	context("Move", func() {
+	context("Copy", func() {
 		var (
 			sourceDir      string
 			destinationDir string
@@ -46,8 +46,8 @@ func testMove(t *testing.T, context spec.G, it spec.S) {
 				Expect(err).NotTo(HaveOccurred())
 			})
 
-			it("moves the source file to the destination", func() {
-				err := fs.Move(source, destination)
+			it("copies the source file to the destination", func() {
+				err := fs.Copy(source, destination)
 				Expect(err).NotTo(HaveOccurred())
 
 				content, err := ioutil.ReadFile(destination)
@@ -58,7 +58,7 @@ func testMove(t *testing.T, context spec.G, it spec.S) {
 				Expect(err).NotTo(HaveOccurred())
 				Expect(info.Mode()).To(Equal(os.FileMode(0644)))
 
-				Expect(source).NotTo(BeAnExistingFile())
+				Expect(source).To(BeAnExistingFile())
 			})
 
 			context("failure cases", func() {
@@ -68,7 +68,7 @@ func testMove(t *testing.T, context spec.G, it spec.S) {
 					})
 
 					it("returns an error", func() {
-						err := fs.Move(source, destination)
+						err := fs.Copy(source, destination)
 						Expect(err).To(MatchError(ContainSubstring("permission denied")))
 					})
 				})
@@ -79,8 +79,8 @@ func testMove(t *testing.T, context spec.G, it spec.S) {
 					})
 
 					it("returns an error", func() {
-						err := fs.Move(source, destination)
-						Expect(err).To(MatchError(ContainSubstring("failed to move: failed to copy: destination exists:")))
+						err := fs.Copy(source, destination)
+						Expect(err).To(MatchError(ContainSubstring("failed to copy: destination exists:")))
 						Expect(err).To(MatchError(ContainSubstring("permission denied")))
 					})
 				})
@@ -117,8 +117,8 @@ func testMove(t *testing.T, context spec.G, it spec.S) {
 			})
 
 			context("when the destination does not exist", func() {
-				it("moves the source directory to the destination", func() {
-					err := fs.Move(source, destination)
+				it("copies the source directory to the destination", func() {
+					err := fs.Copy(source, destination)
 					Expect(err).NotTo(HaveOccurred())
 
 					Expect(destination).To(BeADirectory())
@@ -143,7 +143,7 @@ func testMove(t *testing.T, context spec.G, it spec.S) {
 					Expect(err).NotTo(HaveOccurred())
 					Expect(path).To(Equal(filepath.Join(external, "some-file")))
 
-					Expect(source).NotTo(BeAnExistingFile())
+					Expect(source).To(BeAnExistingFile())
 				})
 			})
 
@@ -153,8 +153,8 @@ func testMove(t *testing.T, context spec.G, it spec.S) {
 					Expect(ioutil.WriteFile(destination, []byte{}, os.ModePerm)).To(Succeed())
 				})
 
-				it("moves the source directory to the destination", func() {
-					err := fs.Move(source, destination)
+				it("copies the source directory to the destination", func() {
+					err := fs.Copy(source, destination)
 					Expect(err).NotTo(HaveOccurred())
 
 					Expect(destination).To(BeADirectory())
@@ -179,14 +179,14 @@ func testMove(t *testing.T, context spec.G, it spec.S) {
 					Expect(err).NotTo(HaveOccurred())
 					Expect(path).To(Equal(filepath.Join(external, "some-file")))
 
-					Expect(source).NotTo(BeAnExistingFile())
+					Expect(source).To(BeAnExistingFile())
 				})
 			})
 
 			context("failure cases", func() {
 				context("when the source does not exist", func() {
 					it("returns an error", func() {
-						err := fs.Move("no-such-source", destination)
+						err := fs.Copy("no-such-source", destination)
 						Expect(err).To(MatchError(ContainSubstring("no such file or directory")))
 					})
 				})
@@ -201,7 +201,7 @@ func testMove(t *testing.T, context spec.G, it spec.S) {
 					})
 
 					it("returns an error", func() {
-						err := fs.Move(source, destination)
+						err := fs.Copy(source, destination)
 						Expect(err).To(MatchError(ContainSubstring("permission denied")))
 					})
 				})
