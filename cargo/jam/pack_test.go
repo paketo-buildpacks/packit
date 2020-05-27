@@ -113,7 +113,6 @@ func testPack(t *testing.T, context spec.G, it spec.S) {
 	})
 
 	context("when packaging an implementation buildpack", func() {
-
 		it.Before(func() {
 			err := cargo.NewDirectoryDuplicator().Duplicate(filepath.Join("testdata", "example-cnb"), buildpackDir)
 			Expect(err).NotTo(HaveOccurred())
@@ -136,6 +135,7 @@ func testPack(t *testing.T, context spec.G, it spec.S) {
 			Expect(session.Out).To(gbytes.Say(fmt.Sprintf("  Building tarball: %s", filepath.Join(tmpDir, "output.tgz"))))
 			Expect(session.Out).To(gbytes.Say("    bin/build"))
 			Expect(session.Out).To(gbytes.Say("    bin/detect"))
+			Expect(session.Out).To(gbytes.Say("    bin/link"))
 			Expect(session.Out).To(gbytes.Say("    buildpack.toml"))
 			Expect(session.Out).To(gbytes.Say("    generated-file"))
 
@@ -161,7 +161,7 @@ func testPack(t *testing.T, context spec.G, it spec.S) {
   homepage = "some-homepage-link"
 
 [metadata]
-  include_files = ["bin/build", "bin/detect", "buildpack.toml", "generated-file"]
+  include_files = ["bin/build", "bin/detect", "bin/link", "buildpack.toml", "generated-file"]
   pre_package = "./scripts/build.sh"
   [metadata.default-versions]
     some-dependency = "some-default-version"
@@ -199,6 +199,12 @@ func testPack(t *testing.T, context spec.G, it spec.S) {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(string(contents)).To(Equal("detect-contents"))
 			Expect(hdr.Mode).To(Equal(int64(0755)))
+			Expect(hdr.Uname).To(Equal(userName))
+			Expect(hdr.Gname).To(Equal(groupName))
+
+			_, hdr, err = ExtractFile(file, "bin/link")
+			Expect(err).NotTo(HaveOccurred())
+			Expect(hdr.Linkname).To(Equal("bin/build"))
 			Expect(hdr.Uname).To(Equal(userName))
 			Expect(hdr.Gname).To(Equal(groupName))
 
@@ -283,7 +289,7 @@ func testPack(t *testing.T, context spec.G, it spec.S) {
   homepage = "some-homepage-link"
 
 [metadata]
-  include_files = ["bin/build", "bin/detect", "buildpack.toml", "generated-file", "dependencies/f058c8bf6b65b829e200ef5c2d22fde0ee65b96c1fbd1b88869be133aafab64a"]
+  include_files = ["bin/build", "bin/detect", "bin/link", "buildpack.toml", "generated-file", "dependencies/f058c8bf6b65b829e200ef5c2d22fde0ee65b96c1fbd1b88869be133aafab64a"]
   pre_package = "./scripts/build.sh"
   [metadata.default-versions]
     some-dependency = "some-default-version"

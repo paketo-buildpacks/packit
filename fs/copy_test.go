@@ -109,7 +109,7 @@ func testCopy(t *testing.T, context spec.G, it spec.S) {
 				err = ioutil.WriteFile(filepath.Join(source, "some-dir", "readonly-file"), []byte("some-content"), 0444)
 				Expect(err).NotTo(HaveOccurred())
 
-				err = os.Symlink(filepath.Join(source, "some-dir", "some-file"), filepath.Join(source, "some-dir", "some-symlink"))
+				err = os.Symlink("some-file", filepath.Join(source, "some-dir", "some-symlink"))
 				Expect(err).NotTo(HaveOccurred())
 
 				err = os.Symlink(filepath.Join(external, "some-file"), filepath.Join(source, "some-dir", "external-symlink"))

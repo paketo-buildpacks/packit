@@ -60,7 +60,8 @@ func (b TarBuilder) Build(path string, files []File) error {
 
 	for _, file := range files {
 		b.logger.Subprocess(file.Name)
-		hdr, err := tar.FileInfoHeader(file.Info, file.Name)
+
+		hdr, err := tar.FileInfoHeader(file.Info, file.Link)
 		if err != nil {
 			return fmt.Errorf("failed to create header for file %q: %w", file.Name, err)
 		}
