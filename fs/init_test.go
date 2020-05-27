@@ -10,6 +10,7 @@ import (
 func TestUnitFS(t *testing.T) {
 	suite := spec.New("packit/fs", spec.Report(report.Terminal{}))
 	suite("Move", testMove)
+	suite("Copy", testCopy)
 	suite("IsEmptyDir", testIsEmptyDir)
 	suite("ChecksumCalculator", testChecksumCalculator)
 	suite.Run(t)
