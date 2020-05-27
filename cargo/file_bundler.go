@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 )
 
@@ -15,6 +16,7 @@ type File struct {
 
 	Name string
 	Info os.FileInfo
+	Link string
 }
 
 type FileInfo struct {
@@ -81,18 +83,32 @@ func (b FileBundler) Bundle(root string, paths []string, config Config) ([]File,
 			file.Info = NewFileInfo("buildpack.toml", buf.Len(), 0644, time.Now())
 
 		default:
-			fd, err := os.Open(filepath.Join(root, path))
-			if err != nil {
-				return nil, fmt.Errorf("error opening included file: %s", err)
-			}
-
-			info, err := fd.Stat()
+			var err error
+			file.Info, err = os.Lstat(filepath.Join(root, path))
 			if err != nil {
 				return nil, fmt.Errorf("error stating included file: %s", err)
 			}
 
-			file.ReadCloser = fd
-			file.Info = info
+			if file.Info.Mode()&os.ModeType != 0 {
+				link, err := os.Readlink(filepath.Join(root, path))
+				if err != nil {
+					return nil, fmt.Errorf("error readlinking included file: %s", err)
+				}
+
+				if !strings.HasPrefix(link, string(filepath.Separator)) {
+					link = filepath.Clean(filepath.Join(root, link))
+				}
+
+				file.Link, err = filepath.Rel(root, link)
+				if err != nil {
+					return nil, fmt.Errorf("error finding relative link path: %s", err)
+				}
+			} else {
+				file.ReadCloser, err = os.Open(filepath.Join(root, path))
+				if err != nil {
+					return nil, fmt.Errorf("error opening included file: %s", err)
+				}
+			}
 		}
 
 		files = append(files, file)

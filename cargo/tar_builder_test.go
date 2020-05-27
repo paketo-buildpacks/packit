@@ -45,7 +45,7 @@ func testTarBuilder(t *testing.T, context spec.G, it spec.S) {
 
 	context("Build", func() {
 		context("given a destination and a list of files", func() {
-			it("constructs a tar ball", func() {
+			it("constructs a tarball", func() {
 				err := builder.Build(tempFile, []cargo.File{
 					{
 						Name:       "buildpack.toml",
@@ -62,12 +62,18 @@ func testTarBuilder(t *testing.T, context spec.G, it spec.S) {
 						Info:       cargo.NewFileInfo("detect", len("detect-contents"), 0755, time.Now()),
 						ReadCloser: ioutil.NopCloser(strings.NewReader("detect-contents")),
 					},
+					{
+						Name: "bin/link",
+						Info: cargo.NewFileInfo("link", len("./build"), os.ModeSymlink|0755, time.Now()),
+						Link: "./build",
+					},
 				})
 				Expect(err).NotTo(HaveOccurred())
 
 				Expect(output.String()).To(ContainSubstring(fmt.Sprintf("Building tarball: %s", tempFile)))
 				Expect(output.String()).To(ContainSubstring("bin/build"))
 				Expect(output.String()).To(ContainSubstring("bin/detect"))
+				Expect(output.String()).To(ContainSubstring("bin/link"))
 				Expect(output.String()).To(ContainSubstring("buildpack.toml"))
 
 				file, err := os.Open(tempFile)
@@ -92,6 +98,12 @@ func testTarBuilder(t *testing.T, context spec.G, it spec.S) {
 				contents, hdr, err = ExtractFile(file, "bin/detect")
 				Expect(err).NotTo(HaveOccurred())
 				Expect(string(contents)).To(Equal("detect-contents"))
+				Expect(hdr.Mode).To(Equal(int64(0755)))
+
+				_, hdr, err = ExtractFile(file, "bin/link")
+				Expect(err).NotTo(HaveOccurred())
+				Expect(hdr.Typeflag).To(Equal(byte(tar.TypeSymlink)))
+				Expect(hdr.Linkname).To(Equal("./build"))
 				Expect(hdr.Mode).To(Equal(int64(0755)))
 			})
 		})

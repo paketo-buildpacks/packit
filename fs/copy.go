@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 // Copy will move a source file or directory to a destination. For directories,
@@ -90,25 +91,7 @@ func copyDirectory(source, destination string) error {
 			}
 
 		case (info.Mode() & os.ModeSymlink) != 0:
-			link, err := os.Readlink(filepath.Join(source, path))
-			if err != nil {
-				return err
-			}
-
-			if filepath.HasPrefix(link, "..") {
-				link = filepath.Clean(filepath.Join(source, filepath.Base(path), link))
-			}
-
-			relativeLink, err := filepath.Rel(source, link)
-			if err != nil {
-				return err
-			}
-
-			if filepath.HasPrefix(relativeLink, "..") {
-				err = os.Symlink(link, filepath.Join(destination, path))
-			} else {
-				err = os.Symlink(filepath.Join(destination, relativeLink), filepath.Join(destination, path))
-			}
+			err = copyLink(source, destination, path)
 			if err != nil {
 				return err
 			}
@@ -123,6 +106,37 @@ func copyDirectory(source, destination string) error {
 		return nil
 	})
 
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func copyLink(source, destination, path string) error {
+	link, err := os.Readlink(filepath.Join(source, path))
+	if err != nil {
+		return err
+	}
+
+	switch {
+	case strings.HasPrefix(link, string(filepath.Separator)):
+		// NOOP
+
+	default:
+		link = filepath.Clean(filepath.Join(source, filepath.Dir(path), link))
+	}
+
+	relativeLink, err := filepath.Rel(source, link)
+	if err != nil {
+		return err
+	}
+
+	if strings.HasPrefix(relativeLink, "..") {
+		err = os.Symlink(link, filepath.Join(destination, path))
+	} else {
+		err = os.Symlink(filepath.Join(destination, relativeLink), filepath.Join(destination, path))
+	}
 	if err != nil {
 		return err
 	}

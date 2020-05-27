@@ -30,6 +30,7 @@ func testDirectoryDuplicator(t *testing.T, context spec.G, it spec.S) {
 
 		Expect(os.MkdirAll(filepath.Join(sourceDir, "some-dir"), os.ModePerm)).To(Succeed())
 		Expect(ioutil.WriteFile(filepath.Join(sourceDir, "some-dir", "other-file"), []byte("other content"), 0755)).To(Succeed())
+		Expect(os.Symlink(filepath.Join(sourceDir, "some-dir", "other-file"), filepath.Join(sourceDir, "some-dir", "link"))).To(Succeed())
 
 		destDir, err = ioutil.TempDir("", "dest")
 		Expect(err).NotTo(HaveOccurred())
@@ -75,6 +76,14 @@ func testDirectoryDuplicator(t *testing.T, context spec.G, it spec.S) {
 			Expect(info.Mode()).To(Equal(os.FileMode(0755)))
 
 			Expect(file.Close()).To(Succeed())
+
+			info, err = os.Lstat(filepath.Join(destDir, "some-dir", "link"))
+			Expect(err).NotTo(HaveOccurred())
+			Expect(info.Mode() & os.ModeSymlink).To(Equal(os.ModeSymlink))
+
+			path, err := os.Readlink(filepath.Join(destDir, "some-dir", "link"))
+			Expect(err).NotTo(HaveOccurred())
+			Expect(path).To(Equal(filepath.Join(destDir, "some-dir", "other-file")))
 		})
 	})
 
@@ -82,7 +91,7 @@ func testDirectoryDuplicator(t *testing.T, context spec.G, it spec.S) {
 		context("source dir does not exist", func() {
 			it("fails", func() {
 				err := directoryDup.Duplicate("does-not-exist", destDir)
-				Expect(err).To(MatchError(ContainSubstring("source dir does not exist: ")))
+				Expect(err).To(MatchError(ContainSubstring("no such file or directory")))
 			})
 		})
 
@@ -97,44 +106,7 @@ func testDirectoryDuplicator(t *testing.T, context spec.G, it spec.S) {
 
 			it("fails", func() {
 				err := directoryDup.Duplicate(sourceDir, destDir)
-				Expect(err).To(MatchError(ContainSubstring("opening source file failed:")))
-			})
-		})
-
-		context("when destination directory bad permissions", func() {
-			context("when creating dir", func() {
-				it.Before(func() {
-					Expect(os.Chmod(destDir, 0000)).To(Succeed())
-				})
-
-				it.After(func() {
-					Expect(os.Chmod(destDir, os.ModePerm)).To(Succeed())
-				})
-
-				it("fails", func() {
-					err := directoryDup.Duplicate(sourceDir, destDir)
-					Expect(err).To(MatchError(ContainSubstring("duplicate error creating dir:")))
-					Expect(err).To(MatchError(ContainSubstring("permission denied")))
-				})
-			})
-
-			context("when creating file", func() {
-				var dirPath string
-
-				it.Before(func() {
-					dirPath = filepath.Join(destDir, "some-dir")
-					Expect(os.MkdirAll(dirPath, 0000)).To(Succeed())
-				})
-
-				it.After(func() {
-					Expect(os.Chmod(dirPath, os.ModePerm)).To(Succeed())
-				})
-
-				it("fails", func() {
-					err := directoryDup.Duplicate(sourceDir, destDir)
-					Expect(err).To(MatchError(ContainSubstring("duplicate error creating file:")))
-					Expect(err).To(MatchError(ContainSubstring("permission denied")))
-				})
+				Expect(err).To(MatchError(ContainSubstring("permission denied")))
 			})
 		})
 	})
