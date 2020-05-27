@@ -1,3 +1,7 @@
+// The vacation package implments input stream decompression logic from several
+// popular decompression formats. This allows from decompression from either a
+// file or any other byte stream, which is useful for decompressing files that
+// are being downloaded.
 package vacation
 
 import (
@@ -15,33 +19,41 @@ import (
 	"github.com/ulikunitz/xz"
 )
 
+// A TarArchive decompresses tar files from an input stream.
 type TarArchive struct {
 	reader     io.Reader
 	components int
 }
 
+// A TarGzipArchive decompresses gziped tar files from an input stream.
 type TarGzipArchive struct {
 	reader     io.Reader
 	components int
 }
 
+// A TarXZArchive decompresses xz tar files from an input stream.
 type TarXZArchive struct {
 	reader     io.Reader
 	components int
 }
 
+// NewTarArchive returns a new TarArchive that reads from inputReader.
 func NewTarArchive(inputReader io.Reader) TarArchive {
 	return TarArchive{reader: inputReader}
 }
 
+// NewTarGzipArchive returns a new TarGzipArchive that reads from inputReader.
 func NewTarGzipArchive(inputReader io.Reader) TarGzipArchive {
 	return TarGzipArchive{reader: inputReader}
 }
 
+// NewTarXZArchive returns a new TarXZArchive that reads from inputReader.
 func NewTarXZArchive(inputReader io.Reader) TarXZArchive {
 	return TarXZArchive{reader: inputReader}
 }
 
+// Decompress reads from TarArchive and writes files into the
+// destination specified.
 func (ta TarArchive) Decompress(destination string) error {
 	tarReader := tar.NewReader(ta.reader)
 	for {
@@ -95,6 +107,8 @@ func (ta TarArchive) Decompress(destination string) error {
 	return nil
 }
 
+// Decompress reads from TarGzipArchive and writes files into the
+// destination specified.
 func (gz TarGzipArchive) Decompress(destination string) error {
 	gzr, err := gzip.NewReader(gz.reader)
 	if err != nil {
@@ -104,6 +118,8 @@ func (gz TarGzipArchive) Decompress(destination string) error {
 	return NewTarArchive(gzr).StripComponents(gz.components).Decompress(destination)
 }
 
+// Decompress reads from TarXZArchive and writes files into the
+// destination specified.
 func (txz TarXZArchive) Decompress(destination string) error {
 	xzr, err := xz.NewReader(txz.reader)
 	if err != nil {
@@ -113,29 +129,39 @@ func (txz TarXZArchive) Decompress(destination string) error {
 	return NewTarArchive(xzr).StripComponents(txz.components).Decompress(destination)
 }
 
+// StripComponents behaves like the --strip-components flag on tar command
+// removing the first n levels from the final decompression destination.
 func (ta TarArchive) StripComponents(components int) TarArchive {
 	ta.components = components
 	return ta
 }
 
+// StripComponents behaves like the --strip-components flag on tar command
+// removing the first n levels from the final decompression destination.
 func (gz TarGzipArchive) StripComponents(components int) TarGzipArchive {
 	gz.components = components
 	return gz
 }
 
+// StripComponents behaves like the --strip-components flag on tar command
+// removing the first n levels from the final decompression destination.
 func (txz TarXZArchive) StripComponents(components int) TarXZArchive {
 	txz.components = components
 	return txz
 }
 
+// A ZipArchive decompresses zip files from an input stream.
 type ZipArchive struct {
 	reader io.Reader
 }
 
+// NewZipArchive returns a new ZipArchive that reads from inputReader.
 func NewZipArchive(inputReader io.Reader) ZipArchive {
 	return ZipArchive{reader: inputReader}
 }
 
+// Decompress reads from ZipArchive and writes files into the
+// destination specified.
 func (z ZipArchive) Decompress(destination string) error {
 	// Have to convert and io.Reader into a bytes.Reader which
 	// implements the ReadAt function making it compatible with
