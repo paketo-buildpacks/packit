@@ -1,5 +1,5 @@
-// Package fs provides a set of filesystem helpers that can be useful when
-// developing Cloud Native Buildpacks.
+// Package chronos provides clock functionality that can be useful when
+// developing and testing Cloud Native Buildpacks.
 //
 // Below is an example showing how you might use a Clock to measure the
 // duration of an operation:
