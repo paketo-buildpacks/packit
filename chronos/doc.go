@@ -16,7 +16,7 @@
 //   	duration, err := chronos.DefaultClock.Measure(func() error {
 //      // Perform some operation, like sleep for 10 seconds
 //      time.Sleep(10 * time.Second)
-
+//
 //      return nil
 //    })
 //   	if err != nil {
