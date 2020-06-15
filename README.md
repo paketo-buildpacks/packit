@@ -1,6 +1,6 @@
 # packit
 
-[![GoDoc](https://img.shields.io/badge/pkg.go.dev-doc-blue)](http://pkg.go.dev/.)
+[![GoDoc](https://img.shields.io/badge/pkg.go.dev-doc-blue)](http://pkg.go.dev/github.com/paketo-buildpacks/packit)
 
 Package packit provides primitives for implementing a Cloud Native Buildpack
 according to the specification:
@@ -103,9 +103,7 @@ application source code.
 ```go
 package main
 
-import (
-	"github.com/paketo-buildpacks/packit"
-)
+import "github.com/paketo-buildpacks/packit"
 
 func main() {
 	// The build phase includes the yarn cli in a new layer that is made
@@ -160,6 +158,39 @@ func InstallYarn(version, path string) error {
 }
 ```
 
+## Run
+
+Buildpacks can be created with a single entrypoint executable using the
+packit.Run function. Here, you can combine both the Detect and Build phases
+and run will ensure that the correct phase is called when the matching
+executable is called by the Cloud Native Buildpack Lifecycle. Below is an
+example that combines a simple detect and build into a single main program.
+
+```go
+package main
+
+import "github.com/paketo-buildpacks/packit"
+
+func main() {
+	detect := func(context packit.DetectContext) (packit.DetectResult, error) {
+		return packit.DetectResult{}, nil
+	}
+
+	build := func(context packit.BuildContext) (packit.BuildResult, error) {
+		return packit.BuildResult{
+			Processes: []packit.Process{
+				{
+					Type:    "web",
+					Command: `while true; do nc -l -p $PORT -c 'echo -e "HTTP/1.1 200 OK\n\n Hello, world!\n"'; done`,
+				},
+			},
+		}, nil
+	}
+
+	packit.Run(detect, build)
+}
+```
+
 ## Summary
 
 These examples show the very basics of what a buildpack implementation using
@@ -169,6 +200,8 @@ the types and functions declared herein.
 ## Sub Packages
 
 * [cargo](./cargo)
+
+* [chronos](./chronos): Package chronos provides clock functionality that can be useful when developing and testing Cloud Native Buildpacks.
 
 * [fakes](./fakes)
 
@@ -182,7 +215,26 @@ the types and functions declared herein.
 
 * [scribe](./scribe)
 
-* [vacation](./vacation)
+* [vacation](./vacation): Package vacation provides a set of functions that enable input stream decompression logic from several popular decompression formats.
+
+## `jam` CLI
+
+The `packit` library comes with a command-line tool called `jam` that can be
+used to create buildpack tarball artifacts. The `jam` name is simply a play on
+the idea of "packaging" or "packing" a buildpack.
+
+The `jam` executable can be installed by downloading the latest version from
+the [Releases](/releases) page. Once downloaded, buildpacks can be created from
+a source repository using the `pack` command like this:
+
+```sh
+jam pack \
+  --buildpack ./buildpack.toml \
+  --stack io.paketo.stacks.tiny \
+  --version 1.2.3 \
+  --offline \
+  --output ./buildpack.tgz
+```
 
 ---
 Readme created from Go doc with [goreadme](https://github.com/posener/goreadme)
