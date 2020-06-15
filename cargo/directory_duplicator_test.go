@@ -30,7 +30,7 @@ func testDirectoryDuplicator(t *testing.T, context spec.G, it spec.S) {
 
 		Expect(os.MkdirAll(filepath.Join(sourceDir, "some-dir"), os.ModePerm)).To(Succeed())
 		Expect(ioutil.WriteFile(filepath.Join(sourceDir, "some-dir", "other-file"), []byte("other content"), 0755)).To(Succeed())
-		Expect(os.Symlink(filepath.Join(sourceDir, "some-dir", "other-file"), filepath.Join(sourceDir, "some-dir", "link"))).To(Succeed())
+		Expect(os.Symlink("other-file", filepath.Join(sourceDir, "some-dir", "link"))).To(Succeed())
 
 		destDir, err = ioutil.TempDir("", "dest")
 		Expect(err).NotTo(HaveOccurred())
@@ -83,7 +83,7 @@ func testDirectoryDuplicator(t *testing.T, context spec.G, it spec.S) {
 
 			path, err := os.Readlink(filepath.Join(destDir, "some-dir", "link"))
 			Expect(err).NotTo(HaveOccurred())
-			Expect(path).To(Equal(filepath.Join(destDir, "some-dir", "other-file")))
+			Expect(path).To(Equal(filepath.Join("other-file")))
 		})
 	})
 

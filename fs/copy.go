@@ -6,7 +6,6 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"strings"
 )
 
 // Copy will move a source file or directory to a destination. For directories,
@@ -119,24 +118,7 @@ func copyLink(source, destination, path string) error {
 		return err
 	}
 
-	switch {
-	case strings.HasPrefix(link, string(filepath.Separator)):
-		// NOOP
-
-	default:
-		link = filepath.Clean(filepath.Join(source, filepath.Dir(path), link))
-	}
-
-	relativeLink, err := filepath.Rel(source, link)
-	if err != nil {
-		return err
-	}
-
-	if strings.HasPrefix(relativeLink, "..") {
-		err = os.Symlink(link, filepath.Join(destination, path))
-	} else {
-		err = os.Symlink(filepath.Join(destination, relativeLink), filepath.Join(destination, path))
-	}
+	err = os.Symlink(link, filepath.Join(destination, path))
 	if err != nil {
 		return err
 	}
