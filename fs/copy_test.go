@@ -137,7 +137,7 @@ func testCopy(t *testing.T, context spec.G, it spec.S) {
 
 					path, err := os.Readlink(filepath.Join(destination, "some-dir", "some-symlink"))
 					Expect(err).NotTo(HaveOccurred())
-					Expect(path).To(Equal(filepath.Join(destination, "some-dir", "some-file")))
+					Expect(path).To(Equal("some-file"))
 
 					path, err = os.Readlink(filepath.Join(destination, "some-dir", "external-symlink"))
 					Expect(err).NotTo(HaveOccurred())
@@ -173,7 +173,7 @@ func testCopy(t *testing.T, context spec.G, it spec.S) {
 
 					path, err := os.Readlink(filepath.Join(destination, "some-dir", "some-symlink"))
 					Expect(err).NotTo(HaveOccurred())
-					Expect(path).To(Equal(filepath.Join(destination, "some-dir", "some-file")))
+					Expect(path).To(Equal("some-file"))
 
 					path, err = os.Readlink(filepath.Join(destination, "some-dir", "external-symlink"))
 					Expect(err).NotTo(HaveOccurred())

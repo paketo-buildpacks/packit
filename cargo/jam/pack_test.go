@@ -204,7 +204,7 @@ func testPack(t *testing.T, context spec.G, it spec.S) {
 
 			_, hdr, err = ExtractFile(file, "bin/link")
 			Expect(err).NotTo(HaveOccurred())
-			Expect(hdr.Linkname).To(Equal("bin/build"))
+			Expect(hdr.Linkname).To(Equal("build"))
 			Expect(hdr.Uname).To(Equal(userName))
 			Expect(hdr.Gname).To(Equal(groupName))
 
