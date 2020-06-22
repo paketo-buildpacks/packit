@@ -1,13 +1,10 @@
 package internal
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"os"
 )
-
-var Fail = errors.New("failed")
 
 type Option func(handler ExitHandler) ExitHandler
 
@@ -57,8 +54,8 @@ func (h ExitHandler) Error(err error) {
 	fmt.Fprintln(h.stderr, err)
 
 	var code int
-	switch err {
-	case Fail:
+	switch err.(type) {
+	case failError:
 		code = 100
 	case nil:
 		code = 0

@@ -9,11 +9,6 @@ import (
 	"github.com/paketo-buildpacks/packit/internal"
 )
 
-// Fail is a sentinal value that can be used to indicate a failure to detect
-// during the detect phase. Fail implements the Error interface and should be
-// returned as the error value in the DetectFunc signature.
-var Fail = internal.Fail
-
 // DetectContext provides the contextual details that are made available by the
 // buildpack lifecycle during the detect phase. This context is populated by
 // the Detect function and passed to the DetectFunc during execution.

@@ -11,6 +11,7 @@ func TestUnitInternal(t *testing.T) {
 	suite := spec.New("packit/internal", spec.Report(report.Terminal{}))
 	suite("EnvironmentWriter", testEnvironmentWriter)
 	suite("ExitHandler", testExitHandler)
+	suite("Fail", testFail)
 	suite("TOMLWriter", testTOMLWriter)
 	suite.Run(t)
 }
