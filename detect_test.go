@@ -1,6 +1,7 @@
 package packit_test
 
 import (
+	"bytes"
 	"errors"
 	"io/ioutil"
 	"os"
@@ -230,14 +231,24 @@ some-key = "some-value"
 	context("when the DetectFunc fails", func() {
 		it("calls the ExitHandler with the correct exit code", func() {
 			var exitCode int
+			buffer := bytes.NewBuffer(nil)
 
 			packit.Detect(func(ctx packit.DetectContext) (packit.DetectResult, error) {
-				return packit.DetectResult{}, packit.Fail
-			}, packit.WithArgs([]string{binaryPath, "", ""}), packit.WithExitHandler(internal.NewExitHandler(internal.WithExitHandlerExitFunc(func(code int) {
-				exitCode = code
-			}))))
+				return packit.DetectResult{}, packit.Fail.WithMessage("failure message")
+			},
+				packit.WithArgs([]string{binaryPath, "", ""}),
+				packit.WithExitHandler(
+					internal.NewExitHandler(
+						internal.WithExitHandlerExitFunc(func(code int) {
+							exitCode = code
+						}),
+						internal.WithExitHandlerStderr(buffer),
+					),
+				),
+			)
 
 			Expect(exitCode).To(Equal(100))
+			Expect(buffer.String()).To(Equal("failure message\n"))
 		})
 	})
 
