@@ -9,10 +9,17 @@ import (
 	"strings"
 )
 
-type Transport struct{}
+type Transport struct{
+	header http.Header
+}
 
 func NewTransport() Transport {
 	return Transport{}
+}
+
+func (t Transport) WithHeader(header http.Header) Transport {
+	t.header = header
+	return t
 }
 
 func (t Transport) Drop(root, uri string) (io.ReadCloser, error) {
@@ -30,6 +37,10 @@ func (t Transport) Drop(root, uri string) (io.ReadCloser, error) {
 		return nil, fmt.Errorf("failed to parse request uri: %s", err)
 	}
 
+	if t.header != nil {
+		request.Header = t.header
+	}
+
 	response, err := http.DefaultClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("failed to make request: %s", err)
@@ -37,3 +48,4 @@ func (t Transport) Drop(root, uri string) (io.ReadCloser, error) {
 
 	return response.Body, nil
 }
+
