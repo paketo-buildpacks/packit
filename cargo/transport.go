@@ -17,12 +17,7 @@ func NewTransport() Transport {
 	return Transport{}
 }
 
-func (t Transport) WithHeader(header http.Header) Transport {
-	t.header = header
-	return t
-}
-
-func (t Transport) Drop(root, uri string) (io.ReadCloser, error) {
+func (t Transport) Drop(root, uri string, header http.Header) (io.ReadCloser, error) {
 	if strings.HasPrefix(uri, "file://") {
 		file, err := os.Open(filepath.Join(root, strings.TrimPrefix(uri, "file://")))
 		if err != nil {
@@ -37,8 +32,8 @@ func (t Transport) Drop(root, uri string) (io.ReadCloser, error) {
 		return nil, fmt.Errorf("failed to parse request uri: %s", err)
 	}
 
-	if t.header != nil {
-		request.Header = t.header
+	if header != nil {
+		request.Header = header
 	}
 
 	response, err := http.DefaultClient.Do(request)

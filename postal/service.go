@@ -3,6 +3,7 @@ package postal
 import (
 	"fmt"
 	"io"
+	"net/http"
 	"sort"
 
 	"github.com/Masterminds/semver"
@@ -15,7 +16,7 @@ import (
 // Transport serves as the interface for types that can fetch dependencies
 // given a location uri using either the http:// or file:// scheme.
 type Transport interface {
-	Drop(root, uri string) (io.ReadCloser, error)
+	Drop(root, uri string, header http.Header) (io.ReadCloser, error)
 }
 
 // Service provides a mechanism for resolving and installing dependencies given
@@ -96,7 +97,7 @@ func (s Service) Resolve(path, id, version, stack string) (Dependency, error) {
 // Dependency and will error if there are inconsistencies in the fetched
 // result.
 func (s Service) Install(dependency Dependency, cnbPath, layerPath string) error {
-	bundle, err := s.transport.Drop(cnbPath, dependency.URI)
+	bundle, err := s.transport.Drop(cnbPath, dependency.URI, nil)
 	if err != nil {
 		return fmt.Errorf("failed to fetch dependency: %s", err)
 	}

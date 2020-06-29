@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -34,7 +35,7 @@ func testDependencyCacher(t *testing.T, context spec.G, it spec.S) {
 		Expect(err).NotTo(HaveOccurred())
 
 		downloader = &fakes.Downloader{}
-		downloader.DropCall.Stub = func(root, uri string) (io.ReadCloser, error) {
+		downloader.DropCall.Stub = func(root, uri string, header http.Header) (io.ReadCloser, error) {
 			switch uri {
 			case "http://dep1-uri":
 				return ioutil.NopCloser(strings.NewReader("dep1-contents")), nil
