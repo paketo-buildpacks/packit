@@ -9,7 +9,9 @@ import (
 	"strings"
 )
 
-type Transport struct{}
+type Transport struct{
+	header http.Header
+}
 
 func NewTransport() Transport {
 	return Transport{}
@@ -41,3 +43,4 @@ func (t Transport) Drop(root, uri string, header http.Header) (io.ReadCloser, er
 
 	return response.Body, nil
 }
+
