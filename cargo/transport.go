@@ -9,15 +9,13 @@ import (
 	"strings"
 )
 
-type Transport struct{
-	header http.Header
-}
+type Transport struct{}
 
 func NewTransport() Transport {
 	return Transport{}
 }
 
-func (t Transport) Drop(root, uri string, header http.Header) (io.ReadCloser, error) {
+func (t Transport) Drop(root, uri string) (io.ReadCloser, error) {
 	if strings.HasPrefix(uri, "file://") {
 		file, err := os.Open(filepath.Join(root, strings.TrimPrefix(uri, "file://")))
 		if err != nil {
@@ -32,10 +30,6 @@ func (t Transport) Drop(root, uri string, header http.Header) (io.ReadCloser, er
 		return nil, fmt.Errorf("failed to parse request uri: %s", err)
 	}
 
-	if header != nil {
-		request.Header = header
-	}
-
 	response, err := http.DefaultClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("failed to make request: %s", err)
@@ -43,4 +37,3 @@ func (t Transport) Drop(root, uri string, header http.Header) (io.ReadCloser, er
 
 	return response.Body, nil
 }
-
