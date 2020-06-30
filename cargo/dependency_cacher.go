@@ -3,7 +3,6 @@ package cargo
 import (
 	"fmt"
 	"io"
-	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -13,7 +12,7 @@ import (
 
 //go:generate faux --interface Downloader --output fakes/downloader.go
 type Downloader interface {
-	Drop(root, uri string, header http.Header) (io.ReadCloser, error)
+	Drop(root, uri string) (io.ReadCloser, error)
 }
 
 type DependencyCacher struct {
@@ -41,7 +40,7 @@ func (dc DependencyCacher) Cache(root string, deps []ConfigMetadataDependency) (
 		dc.logger.Subprocess("%s (%s) [%s]", dep.ID, dep.Version, strings.Join(dep.Stacks, ", "))
 		dc.logger.Action("↳  dependencies/%s", dep.SHA256)
 
-		source, err := dc.downloader.Drop("", dep.URI, nil)
+		source, err := dc.downloader.Drop("", dep.URI)
 		if err != nil {
 			return nil, fmt.Errorf("failed to download dependency: %s", err)
 		}
