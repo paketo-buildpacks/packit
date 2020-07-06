@@ -112,6 +112,40 @@ func testVacation(t *testing.T, context spec.G, it spec.S) {
 
 		})
 
+		context("there is no directory metadata", func() {
+			it.Before(func() {
+				var err error
+
+				buffer := bytes.NewBuffer(nil)
+				tw := tar.NewWriter(buffer)
+
+				nestedFile := filepath.Join("some-dir", "some-other-dir", "some-file")
+				Expect(tw.WriteHeader(&tar.Header{Name: nestedFile, Mode: 0755, Size: int64(len(nestedFile))})).To(Succeed())
+				_, err = tw.Write([]byte(nestedFile))
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(tw.WriteHeader(&tar.Header{Name: filepath.Join("sym-dir", "symlink"), Mode: 0755, Size: int64(0), Typeflag: tar.TypeSymlink, Linkname: filepath.Join("..", nestedFile)})).To(Succeed())
+				_, err = tw.Write([]byte{})
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(tw.Close()).To(Succeed())
+
+				tarArchive = vacation.NewTarArchive(bytes.NewReader(buffer.Bytes()))
+			})
+
+			it("unpackages the archive into the path", func() {
+				err := tarArchive.Decompress(tempDir)
+				Expect(err).ToNot(HaveOccurred())
+
+				Expect(filepath.Join(tempDir, "some-dir", "some-other-dir")).To(BeADirectory())
+				Expect(filepath.Join(tempDir, "some-dir", "some-other-dir", "some-file")).To(BeARegularFile())
+
+				data, err := ioutil.ReadFile(filepath.Join(tempDir, "sym-dir", "symlink"))
+				Expect(err).NotTo(HaveOccurred())
+				Expect(data).To(Equal([]byte(filepath.Join("some-dir", "some-other-dir", "some-file"))))
+			})
+		})
+
 		context("failure cases", func() {
 			context("when it fails to read the tar response", func() {
 				it("returns an error", func() {
@@ -134,6 +168,29 @@ func testVacation(t *testing.T, context spec.G, it spec.S) {
 				it("returns an error", func() {
 					err := tarArchive.Decompress(tempDir)
 					Expect(err).To(MatchError(ContainSubstring("failed to create archived directory")))
+				})
+
+				context("there are no directory headers", func() {
+					it.Before(func() {
+						var err error
+
+						buffer := bytes.NewBuffer(nil)
+						tw := tar.NewWriter(buffer)
+
+						nestedFile := filepath.Join("some-dir", "some-other-dir", "some-file")
+						Expect(tw.WriteHeader(&tar.Header{Name: nestedFile, Mode: 0755, Size: int64(len(nestedFile))})).To(Succeed())
+						_, err = tw.Write([]byte(nestedFile))
+						Expect(err).NotTo(HaveOccurred())
+
+						Expect(tw.Close()).To(Succeed())
+
+						tarArchive = vacation.NewTarArchive(bytes.NewReader(buffer.Bytes()))
+					})
+
+					it("returns an error", func() {
+						err := tarArchive.Decompress(tempDir)
+						Expect(err).To(MatchError(ContainSubstring("failed to create archived directory from file path")))
+					})
 				})
 			})
 
