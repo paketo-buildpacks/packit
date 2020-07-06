@@ -55,6 +55,13 @@ func NewTarXZArchive(inputReader io.Reader) TarXZArchive {
 // Decompress reads from TarArchive and writes files into the
 // destination specified.
 func (ta TarArchive) Decompress(destination string) error {
+	// This map keeps track of what directories have been made already
+	// so that we only attempt to make them once for a cleaner interaction.
+	// This map is only necessary in cases where there are no directory headers
+	// in the tarball, which can be seen in the test around there being
+	// no directory metadata.
+	directories := map[string]interface{}{}
+
 	tarReader := tar.NewReader(ta.reader)
 	for {
 		hdr, err := tarReader.Next()
@@ -72,6 +79,9 @@ func (ta TarArchive) Decompress(destination string) error {
 		}
 
 		path := filepath.Join(append([]string{destination}, fileNames[ta.components:]...)...)
+
+		// This switch case handles all cases for creating the directory structure
+		// this logic is needed to handle tarballs with no directory headers.
 		switch hdr.Typeflag {
 		case tar.TypeDir:
 			err = os.MkdirAll(path, os.ModePerm)
@@ -79,6 +89,22 @@ func (ta TarArchive) Decompress(destination string) error {
 				return fmt.Errorf("failed to create archived directory: %s", err)
 			}
 
+			directories[path] = nil
+
+		default:
+			dir := filepath.Dir(path)
+			_, ok := directories[dir]
+			if !ok {
+				err = os.MkdirAll(dir, os.ModePerm)
+				if err != nil {
+					return fmt.Errorf("failed to create archived directory from file path: %s", err)
+				}
+				directories[dir] = nil
+			}
+		}
+
+		// This switch case handles the creation of files during the untaring process.
+		switch hdr.Typeflag {
 		case tar.TypeReg:
 			file, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_TRUNC, hdr.FileInfo().Mode())
 			if err != nil {
@@ -163,7 +189,7 @@ func NewZipArchive(inputReader io.Reader) ZipArchive {
 // Decompress reads from ZipArchive and writes files into the
 // destination specified.
 func (z ZipArchive) Decompress(destination string) error {
-	// Have to convert and io.Reader into a bytes.Reader which
+	// Have to convert an io.Reader into a bytes.Reader which
 	// implements the ReadAt function making it compatible with
 	// the io.ReaderAt inteface which required for zip.NewReader
 	buff := bytes.NewBuffer(nil)
