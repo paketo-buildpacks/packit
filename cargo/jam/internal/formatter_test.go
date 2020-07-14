@@ -26,52 +26,59 @@ func testFormatter(t *testing.T, context spec.G, it spec.S) {
 
 	context("Markdown", func() {
 		it("returns a list of dependencies", func() {
-			dependencies := []cargo.ConfigMetadataDependency{
-				{
-					ID:      "some-dependency",
-					Stacks:  []string{"some-stack"},
-					Version: "1.2.3",
+			formatter.Markdown(cargo.Config{
+				Buildpack: cargo.ConfigBuildpack{
+					ID:      "some-buildpack",
+					Version: "some-version",
 				},
-				{
-					ID:      "some-dependency",
-					Stacks:  []string{"other-stack"},
-					Version: "1.2.3",
+				Metadata: cargo.ConfigMetadata{
+					Dependencies: []cargo.ConfigMetadataDependency{
+						{
+							ID:      "some-dependency",
+							Stacks:  []string{"some-stack"},
+							Version: "1.2.3",
+						},
+						{
+							ID:      "some-dependency",
+							Stacks:  []string{"other-stack"},
+							Version: "1.2.3",
+						},
+						{
+							ID:      "other-dependency",
+							Stacks:  []string{"some-stack", "other-stack"},
+							Version: "2.3.4",
+						},
+						{
+							ID:      "other-dependency",
+							Stacks:  []string{"other-stack"},
+							Version: "2.3.5",
+						},
+					},
+					DefaultVersions: map[string]string{
+						"some-dependency":  "1.2.x",
+						"other-dependency": "2.3.x",
+					},
 				},
-				{
-					ID:      "other-dependency",
-					Stacks:  []string{"some-stack", "other-stack"},
-					Version: "2.3.4",
+				Stacks: []cargo.ConfigStack{
+					{ID: "some-stack"},
+					{ID: "other-stack"},
 				},
-				{
-					ID:      "other-dependency",
-					Stacks:  []string{"other-stack"},
-					Version: "2.3.5",
-				},
-			}
-			defaults := map[string]string{
-				"some-dependency":  "1.2.x",
-				"other-dependency": "2.3.x",
-			}
-			stacks := []string{
-				"some-stack",
-				"other-stack",
-			}
-
-			formatter.Markdown(dependencies, defaults, stacks)
-			Expect(buffer.String()).To(Equal(`Dependencies:
+			})
+			Expect(buffer.String()).To(Equal(`## some-buildpack some-version
+### Dependencies
 | name | version | stacks |
 |-|-|-|
 | other-dependency | 2.3.5 | other-stack |
 | other-dependency | 2.3.4 | other-stack, some-stack |
 | some-dependency | 1.2.3 | other-stack, some-stack |
 
-Default dependencies:
+### Default Dependencies
 | name | version |
 |-|-|
 | other-dependency | 2.3.x |
 | some-dependency | 1.2.x |
 
-Supported stacks:
+### Supported Stacks
 | name |
 |-|
 | other-stack |
@@ -81,13 +88,18 @@ Supported stacks:
 
 		context("when dependencies and default-versions are empty", func() {
 			it("returns a list of dependencies", func() {
-				stacks := []string{
-					"some-stack",
-					"other-stack",
-				}
-
-				formatter.Markdown(nil, nil, stacks)
-				Expect(buffer.String()).To(Equal(`Supported stacks:
+				formatter.Markdown(cargo.Config{
+					Buildpack: cargo.ConfigBuildpack{
+						ID:      "some-buildpack",
+						Version: "some-version",
+					},
+					Stacks: []cargo.ConfigStack{
+						{ID: "some-stack"},
+						{ID: "other-stack"},
+					},
+				})
+				Expect(buffer.String()).To(Equal(`## some-buildpack some-version
+### Supported Stacks
 | name |
 |-|
 | other-stack |
@@ -98,46 +110,99 @@ Supported stacks:
 
 		context("when stacks are empty", func() {
 			it("returns a list of dependencies", func() {
-				dependencies := []cargo.ConfigMetadataDependency{
-					{
-						ID:      "some-dependency",
-						Stacks:  []string{"some-stack"},
-						Version: "1.2.3",
+				formatter.Markdown(cargo.Config{
+					Buildpack: cargo.ConfigBuildpack{
+						ID:      "some-buildpack",
+						Version: "some-version",
 					},
-					{
-						ID:      "some-dependency",
-						Stacks:  []string{"other-stack"},
-						Version: "1.2.3",
+					Metadata: cargo.ConfigMetadata{
+						Dependencies: []cargo.ConfigMetadataDependency{
+							{
+								ID:      "some-dependency",
+								Stacks:  []string{"some-stack"},
+								Version: "1.2.3",
+							},
+							{
+								ID:      "some-dependency",
+								Stacks:  []string{"other-stack"},
+								Version: "1.2.3",
+							},
+							{
+								ID:      "other-dependency",
+								Stacks:  []string{"some-stack", "other-stack"},
+								Version: "2.3.4",
+							},
+							{
+								ID:      "other-dependency",
+								Stacks:  []string{"other-stack"},
+								Version: "2.3.5",
+							},
+						},
+						DefaultVersions: map[string]string{
+							"some-dependency":  "1.2.x",
+							"other-dependency": "2.3.x",
+						},
 					},
-					{
-						ID:      "other-dependency",
-						Stacks:  []string{"some-stack", "other-stack"},
-						Version: "2.3.4",
-					},
-					{
-						ID:      "other-dependency",
-						Stacks:  []string{"other-stack"},
-						Version: "2.3.5",
-					},
-				}
-				defaults := map[string]string{
-					"some-dependency":  "1.2.x",
-					"other-dependency": "2.3.x",
-				}
-
-				formatter.Markdown(dependencies, defaults, nil)
-				Expect(buffer.String()).To(Equal(`Dependencies:
+				})
+				Expect(buffer.String()).To(Equal(`## some-buildpack some-version
+### Dependencies
 | name | version | stacks |
 |-|-|-|
 | other-dependency | 2.3.5 | other-stack |
 | other-dependency | 2.3.4 | other-stack, some-stack |
 | some-dependency | 1.2.3 | other-stack, some-stack |
 
-Default dependencies:
+### Default Dependencies
 | name | version |
 |-|-|
 | other-dependency | 2.3.x |
 | some-dependency | 1.2.x |
+
+`))
+			})
+		})
+
+		context("when there are order groupings", func() {
+			it("prints a the order groupings", func() {
+				formatter.Markdown(cargo.Config{
+					Buildpack: cargo.ConfigBuildpack{
+						ID:      "some-buildpack",
+						Version: "some-version",
+					},
+					Order: []cargo.ConfigOrder{
+						{
+							Group: []cargo.ConfigOrderGroup{
+								{
+									ID:      "some-buildpack",
+									Version: "1.2.3",
+								},
+								{
+									ID:       "optional-buildpack",
+									Version:  "2.3.4",
+									Optional: true,
+								},
+							},
+						},
+						{
+							Group: []cargo.ConfigOrderGroup{
+								{
+									ID:      "other-buildpack",
+									Version: "3.4.5",
+								},
+							},
+						},
+					},
+				})
+				Expect(buffer.String()).To(Equal(`# some-buildpack some-version
+### Order Groupings
+| name | version | optional |
+|-|-|-|
+| some-buildpack | 1.2.3 | false |
+| optional-buildpack | 2.3.4 | true |
+
+| name | version | optional |
+|-|-|-|
+| other-buildpack | 3.4.5 | false |
 
 `))
 			})
