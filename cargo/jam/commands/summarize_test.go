@@ -18,30 +18,62 @@ func testSummarize(t *testing.T, context spec.G, it spec.S) {
 
 		buildpackInspector *fakes.BuildpackInspector
 		formatter          *fakes.Formatter
+		configs            []cargo.Config
 
 		command commands.Summarize
 	)
 
 	it.Before(func() {
 		buildpackInspector = &fakes.BuildpackInspector{}
-
-		buildpackInspector.DependenciesCall.Returns.Dependencies = []cargo.ConfigMetadataDependency{
+		buildpackInspector.DependenciesCall.Returns.ConfigSlice = []cargo.Config{
 			{
-				ID:      "some-depency",
-				Version: "some-version",
-				Stacks:  []string{"some-stack"},
+				Buildpack: cargo.ConfigBuildpack{
+					ID:      "some-buildpack",
+					Version: "some-version",
+				},
+				Metadata: cargo.ConfigMetadata{
+					Dependencies: []cargo.ConfigMetadataDependency{
+						{
+							ID:      "some-depency",
+							Version: "some-version",
+							Stacks:  []string{"some-stack"},
+						},
+					},
+					DefaultVersions: map[string]string{
+						"some-dependency": "some-version",
+					},
+				},
+				Stacks: []cargo.ConfigStack{
+					{ID: "some-stack"},
+				},
+			},
+			{
+				Buildpack: cargo.ConfigBuildpack{
+					ID:      "other-buildpack",
+					Version: "other-version",
+				},
+				Metadata: cargo.ConfigMetadata{
+					Dependencies: []cargo.ConfigMetadataDependency{
+						{
+							ID:      "other-depency",
+							Version: "other-version",
+							Stacks:  []string{"other-stack"},
+						},
+					},
+					DefaultVersions: map[string]string{
+						"other-dependency": "other-version",
+					},
+				},
+				Stacks: []cargo.ConfigStack{
+					{ID: "other-stack"},
+				},
 			},
 		}
 
-		buildpackInspector.DependenciesCall.Returns.Defaults = map[string]string{
-			"some-dependency": "some-version",
-		}
-
-		buildpackInspector.DependenciesCall.Returns.Stacks = []string{
-			"some-stack",
-		}
-
 		formatter = &fakes.Formatter{}
+		formatter.MarkdownCall.Stub = func(config cargo.Config) {
+			configs = append(configs, config)
+		}
 
 		command = commands.NewSummarize(buildpackInspector, formatter)
 	})
@@ -56,20 +88,50 @@ func testSummarize(t *testing.T, context spec.G, it spec.S) {
 
 			Expect(buildpackInspector.DependenciesCall.Receives.Path).To(Equal("buildpack.tgz"))
 
-			Expect(formatter.MarkdownCall.Receives.Dependencies).To(Equal([]cargo.ConfigMetadataDependency{
+			Expect(formatter.MarkdownCall.CallCount).To(Equal(2))
+			Expect(configs).To(Equal([]cargo.Config{
 				{
-					ID:      "some-depency",
-					Version: "some-version",
-					Stacks:  []string{"some-stack"},
+					Buildpack: cargo.ConfigBuildpack{
+						ID:      "some-buildpack",
+						Version: "some-version",
+					},
+					Metadata: cargo.ConfigMetadata{
+						Dependencies: []cargo.ConfigMetadataDependency{
+							{
+								ID:      "some-depency",
+								Version: "some-version",
+								Stacks:  []string{"some-stack"},
+							},
+						},
+						DefaultVersions: map[string]string{
+							"some-dependency": "some-version",
+						},
+					},
+					Stacks: []cargo.ConfigStack{
+						{ID: "some-stack"},
+					},
 				},
-			}))
-
-			Expect(formatter.MarkdownCall.Receives.Defaults).To(Equal(map[string]string{
-				"some-dependency": "some-version",
-			}))
-
-			Expect(formatter.MarkdownCall.Receives.Stacks).To(Equal([]string{
-				"some-stack",
+				{
+					Buildpack: cargo.ConfigBuildpack{
+						ID:      "other-buildpack",
+						Version: "other-version",
+					},
+					Metadata: cargo.ConfigMetadata{
+						Dependencies: []cargo.ConfigMetadataDependency{
+							{
+								ID:      "other-depency",
+								Version: "other-version",
+								Stacks:  []string{"other-stack"},
+							},
+						},
+						DefaultVersions: map[string]string{
+							"other-dependency": "other-version",
+						},
+					},
+					Stacks: []cargo.ConfigStack{
+						{ID: "other-stack"},
+					},
+				},
 			}))
 		})
 
@@ -82,16 +144,50 @@ func testSummarize(t *testing.T, context spec.G, it spec.S) {
 
 				Expect(buildpackInspector.DependenciesCall.Receives.Path).To(Equal("buildpack.tgz"))
 
-				Expect(formatter.MarkdownCall.Receives.Dependencies).To(Equal([]cargo.ConfigMetadataDependency{
+				Expect(formatter.MarkdownCall.CallCount).To(Equal(2))
+				Expect(configs).To(Equal([]cargo.Config{
 					{
-						ID:      "some-depency",
-						Version: "some-version",
-						Stacks:  []string{"some-stack"},
+						Buildpack: cargo.ConfigBuildpack{
+							ID:      "some-buildpack",
+							Version: "some-version",
+						},
+						Metadata: cargo.ConfigMetadata{
+							Dependencies: []cargo.ConfigMetadataDependency{
+								{
+									ID:      "some-depency",
+									Version: "some-version",
+									Stacks:  []string{"some-stack"},
+								},
+							},
+							DefaultVersions: map[string]string{
+								"some-dependency": "some-version",
+							},
+						},
+						Stacks: []cargo.ConfigStack{
+							{ID: "some-stack"},
+						},
 					},
-				}))
-
-				Expect(formatter.MarkdownCall.Receives.Defaults).To(Equal(map[string]string{
-					"some-dependency": "some-version",
+					{
+						Buildpack: cargo.ConfigBuildpack{
+							ID:      "other-buildpack",
+							Version: "other-version",
+						},
+						Metadata: cargo.ConfigMetadata{
+							Dependencies: []cargo.ConfigMetadataDependency{
+								{
+									ID:      "other-depency",
+									Version: "other-version",
+									Stacks:  []string{"other-stack"},
+								},
+							},
+							DefaultVersions: map[string]string{
+								"other-dependency": "other-version",
+							},
+						},
+						Stacks: []cargo.ConfigStack{
+							{ID: "other-stack"},
+						},
+					},
 				}))
 			})
 		})
@@ -113,7 +209,7 @@ func testSummarize(t *testing.T, context spec.G, it spec.S) {
 
 			context("when buildpack inspector returns an error", func() {
 				it.Before(func() {
-					buildpackInspector.DependenciesCall.Returns.Err = errors.New("failed to get dependencies")
+					buildpackInspector.DependenciesCall.Returns.Error = errors.New("failed to get dependencies")
 				})
 
 				it("returns an error", func() {

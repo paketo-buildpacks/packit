@@ -10,12 +10,12 @@ import (
 
 //go:generate faux --interface BuildpackInspector --output fakes/buildpack_inspector.go
 type BuildpackInspector interface {
-	Dependencies(path string) (dependencies []cargo.ConfigMetadataDependency, defaults map[string]string, stacks []string, err error)
+	Dependencies(path string) ([]cargo.Config, error)
 }
 
 //go:generate faux --interface Formatter --output fakes/formatter.go
 type Formatter interface {
-	Markdown(dependencies []cargo.ConfigMetadataDependency, defaults map[string]string, stacks []string)
+	Markdown(cargo.Config)
 }
 
 type Summarize struct {
@@ -37,7 +37,7 @@ func (s Summarize) Execute(args []string) error {
 	)
 
 	fset := flag.NewFlagSet("summarize", flag.ContinueOnError)
-	fset.StringVar(&buildpackTarballPath, "buildpack", "", "path to a buildpack tarball (required)")
+	fset.StringVar(&buildpackTarballPath, "buildpack", "", "path to a buildpackage tarball (required)")
 	fset.StringVar(&format, "format", "markdown", "format of output options are (markdown)")
 	err := fset.Parse(args)
 	if err != nil {
@@ -48,14 +48,16 @@ func (s Summarize) Execute(args []string) error {
 		return errors.New("missing required flag --buildpack")
 	}
 
-	dependencies, defaults, stacks, err := s.buildpackInspector.Dependencies(buildpackTarballPath)
+	configs, err := s.buildpackInspector.Dependencies(buildpackTarballPath)
 	if err != nil {
 		return fmt.Errorf("failed to inspect buildpack dependencies: %w", err)
 	}
 
 	switch format {
 	case "markdown":
-		s.formatter.Markdown(dependencies, defaults, stacks)
+		for _, config := range configs {
+			s.formatter.Markdown(config)
+		}
 	default:
 		return fmt.Errorf("unknown format %q, please choose from the following formats (\"markdown\")", format)
 	}

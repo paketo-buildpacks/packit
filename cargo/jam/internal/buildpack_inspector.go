@@ -3,11 +3,13 @@ package internal
 import (
 	"archive/tar"
 	"compress/gzip"
-	"errors"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
+	"sort"
+	"strings"
 
 	"github.com/paketo-buildpacks/packit/cargo"
 )
@@ -18,42 +20,103 @@ func NewBuildpackInspector() BuildpackInspector {
 	return BuildpackInspector{}
 }
 
-func (i BuildpackInspector) Dependencies(path string) ([]cargo.ConfigMetadataDependency, map[string]string, []string, error) {
+func (i BuildpackInspector) Dependencies(path string) ([]cargo.Config, error) {
 	file, err := os.Open(path)
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, err
 	}
+	defer file.Close()
 
-	gr, err := gzip.NewReader(file)
+	indexJSON, err := fetchArchivedFile(tar.NewReader(file), "index.json")
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("failed to open gzip reader: %w", err)
+		return nil, err
 	}
-	defer gr.Close()
 
-	tr := tar.NewReader(gr)
+	var index struct {
+		Manifests []struct {
+			Digest string `json:"digest"`
+		} `json:"manifests"`
+	}
 
+	err = json.NewDecoder(indexJSON).Decode(&index)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = file.Seek(0, 0)
+	if err != nil {
+		return nil, err
+	}
+
+	manifest, err := fetchArchivedFile(tar.NewReader(file), filepath.Join("blobs", "sha256", strings.TrimPrefix(index.Manifests[0].Digest, "sha256:")))
+	if err != nil {
+		return nil, err
+	}
+
+	var m struct {
+		Layers []struct {
+			Digest string `json:"digest"`
+		} `json:"layers"`
+	}
+
+	err = json.NewDecoder(manifest).Decode(&m)
+	if err != nil {
+		return nil, err
+	}
+
+	var configs []cargo.Config
+	for _, layer := range m.Layers {
+		_, err = file.Seek(0, 0)
+		if err != nil {
+			return nil, err
+		}
+
+		buildpack, err := fetchArchivedFile(tar.NewReader(file), filepath.Join("blobs", "sha256", strings.TrimPrefix(layer.Digest, "sha256:")))
+		if err != nil {
+			return nil, err
+		}
+
+		buildpackGR, err := gzip.NewReader(buildpack)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read buildpack gzip: %w", err)
+		}
+		defer buildpackGR.Close()
+
+		buildpackTOML, err := fetchArchivedFile(tar.NewReader(buildpackGR), "buildpack.toml")
+		if err != nil {
+			return nil, err
+		}
+
+		var config cargo.Config
+		err = cargo.DecodeConfig(buildpackTOML, &config)
+		if err != nil {
+			return nil, err
+		}
+
+		configs = append(configs, config)
+	}
+
+	sort.Slice(configs, func(i, j int) bool {
+		return len(configs[i].Order) > 0
+	})
+
+	return configs, nil
+}
+
+func fetchArchivedFile(tr *tar.Reader, filename string) (io.Reader, error) {
 	for {
 		hdr, err := tr.Next()
 		if err == io.EOF {
 			break
 		}
 		if err != nil {
-			return nil, nil, nil, err
+			return nil, err
 		}
 
-		if filepath.Base(hdr.Name) == "buildpack.toml" {
-			var config cargo.Config
-			err = cargo.DecodeConfig(tr, &config)
-			if err != nil {
-				return nil, nil, nil, err
-			}
-			var stacks []string
-			for _, s := range config.Stacks {
-				stacks = append(stacks, s.ID)
-			}
-			return config.Metadata.Dependencies, config.Metadata.DefaultVersions, stacks, nil
+		if strings.HasSuffix(hdr.Name, filename) {
+			return tr, nil
 		}
 	}
 
-	return nil, nil, nil, errors.New("failed to find buildpack.toml in buildpack tarball")
+	return nil, fmt.Errorf("failed to fetch archived file %s", filename)
 }
