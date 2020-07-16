@@ -224,7 +224,7 @@ used to create buildpack tarball artifacts. The `jam` name is simply a play on
 the idea of "packaging" or "packing" a buildpack.
 
 The `jam` executable can be installed by downloading the latest version from
-the [Releases](/releases) page. Once downloaded, buildpacks can be created from
+the [Releases](../../releases) page. Once downloaded, buildpacks can be created from
 a source repository using the `pack` command like this:
 
 ```sh
