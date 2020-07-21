@@ -16,6 +16,8 @@ function main() {
       GOOS="${os}" GOARCH="amd64" go build -o "${ARTIFACTS_DIR}/jam-${os}" ./cargo/jam/main.go
       chmod +x "${ARTIFACTS_DIR}/jam-${os}"
     done
+    echo "* building jam on windows"
+    GOOS="windows" go build -o "${ARTIFACTS_DIR}/jam-windows.exe" ./cargo/jam/main.go
   popd > /dev/null || return
 }
 
