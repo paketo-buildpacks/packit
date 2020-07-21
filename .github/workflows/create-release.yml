@@ -58,6 +58,11 @@ jobs:
               "path": "build/jam-linux",
               "name": "jam-linux",
               "content_type": "application/octet-stream"
+            },
+            {
+              "path": "build/jam-windows.exe",
+              "name": "jam-windows.exe",
+              "content_type": "application/octet-stream"
             }
           ]
 
