@@ -63,7 +63,7 @@ func copyFile(source, destination string) error {
 		return err
 	}
 
-	err = destinationFile.Chmod(info.Mode())
+	err = os.Chmod(destination, info.Mode())
 	if err != nil {
 		return err
 	}
