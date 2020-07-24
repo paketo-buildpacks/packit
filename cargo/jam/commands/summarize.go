@@ -15,7 +15,7 @@ type BuildpackInspector interface {
 
 //go:generate faux --interface Formatter --output fakes/formatter.go
 type Formatter interface {
-	Markdown(cargo.Config)
+	Markdown([]cargo.Config)
 }
 
 type Summarize struct {
@@ -55,9 +55,7 @@ func (s Summarize) Execute(args []string) error {
 
 	switch format {
 	case "markdown":
-		for _, config := range configs {
-			s.formatter.Markdown(config)
-		}
+		s.formatter.Markdown(configs)
 	default:
 		return fmt.Errorf("unknown format %q, please choose from the following formats (\"markdown\")", format)
 	}
