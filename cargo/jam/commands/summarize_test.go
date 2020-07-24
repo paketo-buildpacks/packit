@@ -18,7 +18,6 @@ func testSummarize(t *testing.T, context spec.G, it spec.S) {
 
 		buildpackInspector *fakes.BuildpackInspector
 		formatter          *fakes.Formatter
-		configs            []cargo.Config
 
 		command commands.Summarize
 	)
@@ -71,9 +70,6 @@ func testSummarize(t *testing.T, context spec.G, it spec.S) {
 		}
 
 		formatter = &fakes.Formatter{}
-		formatter.MarkdownCall.Stub = func(config cargo.Config) {
-			configs = append(configs, config)
-		}
 
 		command = commands.NewSummarize(buildpackInspector, formatter)
 	})
@@ -88,8 +84,7 @@ func testSummarize(t *testing.T, context spec.G, it spec.S) {
 
 			Expect(buildpackInspector.DependenciesCall.Receives.Path).To(Equal("buildpack.tgz"))
 
-			Expect(formatter.MarkdownCall.CallCount).To(Equal(2))
-			Expect(configs).To(Equal([]cargo.Config{
+			Expect(formatter.MarkdownCall.Receives.ConfigSlice).To(Equal([]cargo.Config{
 				{
 					Buildpack: cargo.ConfigBuildpack{
 						ID:      "some-buildpack",
@@ -144,8 +139,7 @@ func testSummarize(t *testing.T, context spec.G, it spec.S) {
 
 				Expect(buildpackInspector.DependenciesCall.Receives.Path).To(Equal("buildpack.tgz"))
 
-				Expect(formatter.MarkdownCall.CallCount).To(Equal(2))
-				Expect(configs).To(Equal([]cargo.Config{
+				Expect(formatter.MarkdownCall.Receives.ConfigSlice).To(Equal([]cargo.Config{
 					{
 						Buildpack: cargo.ConfigBuildpack{
 							ID:      "some-buildpack",

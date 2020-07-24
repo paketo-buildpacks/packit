@@ -11,17 +11,17 @@ type Formatter struct {
 		sync.Mutex
 		CallCount int
 		Receives  struct {
-			Config cargo.Config
+			ConfigSlice []cargo.Config
 		}
-		Stub func(cargo.Config)
+		Stub func([]cargo.Config)
 	}
 }
 
-func (f *Formatter) Markdown(param1 cargo.Config) {
+func (f *Formatter) Markdown(param1 []cargo.Config) {
 	f.MarkdownCall.Lock()
 	defer f.MarkdownCall.Unlock()
 	f.MarkdownCall.CallCount++
-	f.MarkdownCall.Receives.Config = param1
+	f.MarkdownCall.Receives.ConfigSlice = param1
 	if f.MarkdownCall.Stub != nil {
 		f.MarkdownCall.Stub(param1)
 	}
