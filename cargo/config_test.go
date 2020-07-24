@@ -52,7 +52,7 @@ func testConfig(t *testing.T, context spec.G, it spec.S) {
 					PrePackage:   "some-pre-package-script.sh",
 					Dependencies: []cargo.ConfigMetadataDependency{
 						{
-							DeprecationDate: deprecationDate,
+							DeprecationDate: &deprecationDate,
 							ID:              "some-dependency",
 							Name:            "Some Dependency",
 							SHA256:          "shasum",

@@ -228,59 +228,163 @@ version = "3.4.5"
 		Expect(os.Remove(buildpackage)).To(Succeed())
 	})
 
-	it("prints out the summary of a buildpack tarball", func() {
-		command := exec.Command(
-			path, "summarize",
-			"--buildpack", buildpackage,
-			"--format", "markdown",
-		)
-		session, err := gexec.Start(command, buffer, buffer)
-		Expect(err).NotTo(HaveOccurred())
-		Eventually(session).Should(gexec.Exit(0), func() string { return buffer.String() })
+	context("when the format is set to markdown", func() {
+		it("prints out the summary of a buildpack tarball", func() {
+			command := exec.Command(
+				path, "summarize",
+				"--buildpack", buildpackage,
+				"--format", "markdown",
+			)
+			session, err := gexec.Start(command, buffer, buffer)
+			Expect(err).NotTo(HaveOccurred())
+			Eventually(session).Should(gexec.Exit(0), func() string { return buffer.String() })
 
-		Expect(session.Out).To(gbytes.Say("# meta-buildpack 3.4.5"))
-		Expect(session.Out).To(gbytes.Say("### Order Groupings"))
-		Expect(session.Out).To(gbytes.Say("| name | version | optional |"))
-		Expect(session.Out).To(gbytes.Say("|-|-|-|"))
-		Expect(session.Out).To(gbytes.Say("| some-buildpack | 1.2.3 | false |"))
-		Expect(session.Out).To(gbytes.Say("| other-buildpack | 2.3.4 | false |"))
+			Expect(session.Out).To(gbytes.Say("# meta-buildpack 3.4.5"))
+			Expect(session.Out).To(gbytes.Say("### Order Groupings"))
+			Expect(session.Out).To(gbytes.Say("| name | version | optional |"))
+			Expect(session.Out).To(gbytes.Say("|-|-|-|"))
+			Expect(session.Out).To(gbytes.Say("| some-buildpack | 1.2.3 | false |"))
+			Expect(session.Out).To(gbytes.Say("| other-buildpack | 2.3.4 | false |"))
 
-		Expect(session.Out).To(gbytes.Say("## some-buildpack 1.2.3"))
-		Expect(session.Out).To(gbytes.Say("### Dependencies"))
-		Expect(session.Out).To(gbytes.Say("| name | version | stacks |"))
-		Expect(session.Out).To(gbytes.Say("|-|-|-|"))
-		Expect(session.Out).To(gbytes.Say("| other-dependency | 2.3.4 | other-stack |"))
-		Expect(session.Out).To(gbytes.Say("| some-dependency | 1.2.3 | some-stack |"))
+			Expect(session.Out).To(gbytes.Say("## some-buildpack 1.2.3"))
+			Expect(session.Out).To(gbytes.Say("### Dependencies"))
+			Expect(session.Out).To(gbytes.Say("| name | version | stacks |"))
+			Expect(session.Out).To(gbytes.Say("|-|-|-|"))
+			Expect(session.Out).To(gbytes.Say("| other-dependency | 2.3.4 | other-stack |"))
+			Expect(session.Out).To(gbytes.Say("| some-dependency | 1.2.3 | some-stack |"))
 
-		Expect(session.Out).To(gbytes.Say("### Default Dependencies"))
-		Expect(session.Out).To(gbytes.Say("| name | version |"))
-		Expect(session.Out).To(gbytes.Say("|-|-|"))
-		Expect(session.Out).To(gbytes.Say("| other-dependency | 2.3.x |"))
-		Expect(session.Out).To(gbytes.Say("| some-dependency | 1.2.x |"))
+			Expect(session.Out).To(gbytes.Say("### Default Dependencies"))
+			Expect(session.Out).To(gbytes.Say("| name | version |"))
+			Expect(session.Out).To(gbytes.Say("|-|-|"))
+			Expect(session.Out).To(gbytes.Say("| other-dependency | 2.3.x |"))
+			Expect(session.Out).To(gbytes.Say("| some-dependency | 1.2.x |"))
 
-		Expect(session.Out).To(gbytes.Say("### Supported Stacks"))
-		Expect(session.Out).To(gbytes.Say("| name |"))
-		Expect(session.Out).To(gbytes.Say("|-|"))
-		Expect(session.Out).To(gbytes.Say("| other-stack |"))
-		Expect(session.Out).To(gbytes.Say("| some-stack |"))
+			Expect(session.Out).To(gbytes.Say("### Supported Stacks"))
+			Expect(session.Out).To(gbytes.Say("| name |"))
+			Expect(session.Out).To(gbytes.Say("|-|"))
+			Expect(session.Out).To(gbytes.Say("| other-stack |"))
+			Expect(session.Out).To(gbytes.Say("| some-stack |"))
 
-		Expect(session.Out).To(gbytes.Say("## other-buildpack 2.3.4"))
-		Expect(session.Out).To(gbytes.Say("### Dependencies"))
-		Expect(session.Out).To(gbytes.Say("| name | version | stacks |"))
-		Expect(session.Out).To(gbytes.Say("|-|-|-|"))
-		Expect(session.Out).To(gbytes.Say("| first-dependency | 4.5.6 | first-stack |"))
-		Expect(session.Out).To(gbytes.Say("| second-dependency | 5.6.7 | second-stack |"))
+			Expect(session.Out).To(gbytes.Say("## other-buildpack 2.3.4"))
+			Expect(session.Out).To(gbytes.Say("### Dependencies"))
+			Expect(session.Out).To(gbytes.Say("| name | version | stacks |"))
+			Expect(session.Out).To(gbytes.Say("|-|-|-|"))
+			Expect(session.Out).To(gbytes.Say("| first-dependency | 4.5.6 | first-stack |"))
+			Expect(session.Out).To(gbytes.Say("| second-dependency | 5.6.7 | second-stack |"))
 
-		Expect(session.Out).To(gbytes.Say("### Default Dependencies"))
-		Expect(session.Out).To(gbytes.Say("| name | version |"))
-		Expect(session.Out).To(gbytes.Say("|-|-|"))
-		Expect(session.Out).To(gbytes.Say("| first-dependency | 4.5.x |"))
-		Expect(session.Out).To(gbytes.Say("| second-dependency | 5.6.x |"))
+			Expect(session.Out).To(gbytes.Say("### Default Dependencies"))
+			Expect(session.Out).To(gbytes.Say("| name | version |"))
+			Expect(session.Out).To(gbytes.Say("|-|-|"))
+			Expect(session.Out).To(gbytes.Say("| first-dependency | 4.5.x |"))
+			Expect(session.Out).To(gbytes.Say("| second-dependency | 5.6.x |"))
 
-		Expect(session.Out).To(gbytes.Say("### Supported Stacks"))
-		Expect(session.Out).To(gbytes.Say("| name |"))
-		Expect(session.Out).To(gbytes.Say("|-|"))
-		Expect(session.Out).To(gbytes.Say("| first-stack |"))
-		Expect(session.Out).To(gbytes.Say("| second-stack |"))
+			Expect(session.Out).To(gbytes.Say("### Supported Stacks"))
+			Expect(session.Out).To(gbytes.Say("| name |"))
+			Expect(session.Out).To(gbytes.Say("|-|"))
+			Expect(session.Out).To(gbytes.Say("| first-stack |"))
+			Expect(session.Out).To(gbytes.Say("| second-stack |"))
+		})
+	})
+
+	context("when the format is set to json", func() {
+		it("prints out the summary of a buildpack tarball", func() {
+			command := exec.Command(
+				path, "summarize",
+				"--buildpack", buildpackage,
+				"--format", "json",
+			)
+			session, err := gexec.Start(command, buffer, buffer)
+			Expect(err).NotTo(HaveOccurred())
+			Eventually(session).Should(gexec.Exit(0), func() string { return buffer.String() })
+
+			Expect(buffer.String()).To(MatchJSON(`{
+	"buildpackage": {
+		"buildpack": {
+			"id": "meta-buildpack",
+			"version": "3.4.5"
+		},
+		"metadata": {},
+		"order": [{
+			"group": [{
+					"id": "some-buildpack",
+					"version": "1.2.3"
+				},
+				{
+					"id": "other-buildpack",
+					"version": "2.3.4"
+				}
+			]
+		}]
+	},
+	"children": [{
+			"buildpack": {
+				"id": "some-buildpack",
+				"version": "1.2.3"
+			},
+			"metadata": {
+				"default-versions": {
+					"some-dependency": "1.2.x",
+					"other-dependency": "2.3.x"
+				},
+				"dependencies": [{
+						"id": "some-dependency",
+						"stacks": [
+							"some-stack"
+						],
+						"version": "1.2.3"
+
+					},
+					{
+						"id": "other-dependency",
+						"stacks": [
+							"other-stack"
+						],
+						"version": "2.3.4"
+					}
+				]
+			},
+			"stacks": [{
+				"id": "some-stack"
+      },
+			{
+				"id": "other-stack"
+			}]
+		},
+		{
+			"buildpack": {
+				"id": "other-buildpack",
+				"version": "2.3.4"
+			},
+			"metadata": {
+				"default-versions": {
+					"first-dependency": "4.5.x",
+					"second-dependency": "5.6.x"
+				},
+				"dependencies": [{
+						"id": "first-dependency",
+						"stacks": [
+							"first-stack"
+						],
+						"version": "4.5.6"
+					},
+					{
+						"id": "second-dependency",
+						"stacks": [
+							"second-stack"
+						],
+						"version": "5.6.7"
+					}
+				]
+			},
+			"stacks": [{
+				"id": "first-stack"
+			},
+			{
+				"id": "second-stack"
+			}]
+		}
+	]
+}`))
+		})
 	})
 }
