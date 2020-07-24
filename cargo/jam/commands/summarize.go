@@ -16,6 +16,7 @@ type BuildpackInspector interface {
 //go:generate faux --interface Formatter --output fakes/formatter.go
 type Formatter interface {
 	Markdown([]cargo.Config)
+	JSON([]cargo.Config)
 }
 
 type Summarize struct {
@@ -56,6 +57,8 @@ func (s Summarize) Execute(args []string) error {
 	switch format {
 	case "markdown":
 		s.formatter.Markdown(configs)
+	case "json":
+		s.formatter.JSON(configs)
 	default:
 		return fmt.Errorf("unknown format %q, please choose from the following formats (\"markdown\")", format)
 	}

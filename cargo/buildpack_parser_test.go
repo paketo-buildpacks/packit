@@ -77,7 +77,7 @@ pre_package = "some-pre-package-script.sh"
 					PrePackage: "some-pre-package-script.sh",
 					Dependencies: []cargo.ConfigMetadataDependency{
 						{
-							DeprecationDate: deprecationDate,
+							DeprecationDate: &deprecationDate,
 							ID:              "some-dependency",
 							Name:            "Some Dependency",
 							SHA256:          "shasum",

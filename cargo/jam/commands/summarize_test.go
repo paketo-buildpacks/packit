@@ -75,59 +75,118 @@ func testSummarize(t *testing.T, context spec.G, it spec.S) {
 	})
 
 	context("Execute", func() {
-		it("prints a summary", func() {
-			err := command.Execute([]string{
-				"--buildpack", "buildpack.tgz",
-				"--format", "markdown",
+		context("when the format is set to markdown", func() {
+			it("prints a summary", func() {
+				err := command.Execute([]string{
+					"--buildpack", "buildpack.tgz",
+					"--format", "markdown",
+				})
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(buildpackInspector.DependenciesCall.Receives.Path).To(Equal("buildpack.tgz"))
+
+				Expect(formatter.MarkdownCall.Receives.ConfigSlice).To(Equal([]cargo.Config{
+					{
+						Buildpack: cargo.ConfigBuildpack{
+							ID:      "some-buildpack",
+							Version: "some-version",
+						},
+						Metadata: cargo.ConfigMetadata{
+							Dependencies: []cargo.ConfigMetadataDependency{
+								{
+									ID:      "some-depency",
+									Version: "some-version",
+									Stacks:  []string{"some-stack"},
+								},
+							},
+							DefaultVersions: map[string]string{
+								"some-dependency": "some-version",
+							},
+						},
+						Stacks: []cargo.ConfigStack{
+							{ID: "some-stack"},
+						},
+					},
+					{
+						Buildpack: cargo.ConfigBuildpack{
+							ID:      "other-buildpack",
+							Version: "other-version",
+						},
+						Metadata: cargo.ConfigMetadata{
+							Dependencies: []cargo.ConfigMetadataDependency{
+								{
+									ID:      "other-depency",
+									Version: "other-version",
+									Stacks:  []string{"other-stack"},
+								},
+							},
+							DefaultVersions: map[string]string{
+								"other-dependency": "other-version",
+							},
+						},
+						Stacks: []cargo.ConfigStack{
+							{ID: "other-stack"},
+						},
+					},
+				}))
 			})
-			Expect(err).NotTo(HaveOccurred())
+		})
 
-			Expect(buildpackInspector.DependenciesCall.Receives.Path).To(Equal("buildpack.tgz"))
+		context("when the format is set to json", func() {
+			it("prints a summary", func() {
+				err := command.Execute([]string{
+					"--buildpack", "buildpack.tgz",
+					"--format", "json",
+				})
+				Expect(err).NotTo(HaveOccurred())
 
-			Expect(formatter.MarkdownCall.Receives.ConfigSlice).To(Equal([]cargo.Config{
-				{
-					Buildpack: cargo.ConfigBuildpack{
-						ID:      "some-buildpack",
-						Version: "some-version",
-					},
-					Metadata: cargo.ConfigMetadata{
-						Dependencies: []cargo.ConfigMetadataDependency{
-							{
-								ID:      "some-depency",
-								Version: "some-version",
-								Stacks:  []string{"some-stack"},
+				Expect(buildpackInspector.DependenciesCall.Receives.Path).To(Equal("buildpack.tgz"))
+
+				Expect(formatter.JSONCall.Receives.ConfigSlice).To(Equal([]cargo.Config{
+					{
+						Buildpack: cargo.ConfigBuildpack{
+							ID:      "some-buildpack",
+							Version: "some-version",
+						},
+						Metadata: cargo.ConfigMetadata{
+							Dependencies: []cargo.ConfigMetadataDependency{
+								{
+									ID:      "some-depency",
+									Version: "some-version",
+									Stacks:  []string{"some-stack"},
+								},
+							},
+							DefaultVersions: map[string]string{
+								"some-dependency": "some-version",
 							},
 						},
-						DefaultVersions: map[string]string{
-							"some-dependency": "some-version",
+						Stacks: []cargo.ConfigStack{
+							{ID: "some-stack"},
 						},
 					},
-					Stacks: []cargo.ConfigStack{
-						{ID: "some-stack"},
-					},
-				},
-				{
-					Buildpack: cargo.ConfigBuildpack{
-						ID:      "other-buildpack",
-						Version: "other-version",
-					},
-					Metadata: cargo.ConfigMetadata{
-						Dependencies: []cargo.ConfigMetadataDependency{
-							{
-								ID:      "other-depency",
-								Version: "other-version",
-								Stacks:  []string{"other-stack"},
+					{
+						Buildpack: cargo.ConfigBuildpack{
+							ID:      "other-buildpack",
+							Version: "other-version",
+						},
+						Metadata: cargo.ConfigMetadata{
+							Dependencies: []cargo.ConfigMetadataDependency{
+								{
+									ID:      "other-depency",
+									Version: "other-version",
+									Stacks:  []string{"other-stack"},
+								},
+							},
+							DefaultVersions: map[string]string{
+								"other-dependency": "other-version",
 							},
 						},
-						DefaultVersions: map[string]string{
-							"other-dependency": "other-version",
+						Stacks: []cargo.ConfigStack{
+							{ID: "other-stack"},
 						},
 					},
-					Stacks: []cargo.ConfigStack{
-						{ID: "other-stack"},
-					},
-				},
-			}))
+				}))
+			})
 		})
 
 		context("when not given a --format flag", func() {

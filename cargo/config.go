@@ -9,49 +9,49 @@ import (
 )
 
 type Config struct {
-	API       string          `toml:"api"       json:"api"`
-	Buildpack ConfigBuildpack `toml:"buildpack" json:"buildpack"`
-	Metadata  ConfigMetadata  `toml:"metadata"  json:"metadata"`
-	Stacks    []ConfigStack   `toml:"stacks"    json:"stacks"`
-	Order     []ConfigOrder   `toml:"order"     json:"order"`
+	API       string          `toml:"api"       json:"api,omitempty"`
+	Buildpack ConfigBuildpack `toml:"buildpack" json:"buildpack,omitempty"`
+	Metadata  ConfigMetadata  `toml:"metadata"  json:"metadata,omitempty"`
+	Stacks    []ConfigStack   `toml:"stacks"    json:"stacks,omitempty"`
+	Order     []ConfigOrder   `toml:"order"     json:"order,omitempty"`
 }
 
 type ConfigStack struct {
-	ID string `toml:"id" json:"id"`
+	ID string `toml:"id" json:"id,omitempty"`
 }
 
 type ConfigBuildpack struct {
-	ID       string `toml:"id"                 json:"id"`
-	Name     string `toml:"name"               json:"name"`
-	Version  string `toml:"version"            json:"version"`
+	ID       string `toml:"id"                 json:"id,omitempty"`
+	Name     string `toml:"name"               json:"name,omitempty"`
+	Version  string `toml:"version"            json:"version,omitempty"`
 	Homepage string `toml:"homepage,omitempty" json:"homepage,omitempty"`
 }
 
 type ConfigMetadata struct {
-	IncludeFiles    []string                   `toml:"include_files"         json:"include_files"`
-	PrePackage      string                     `toml:"pre_package" json:"pre_package"`
-	DefaultVersions map[string]string          `toml:"default-versions"      json:"default-versions"`
-	Dependencies    []ConfigMetadataDependency `toml:"dependencies"          json:"dependencies"`
+	IncludeFiles    []string                   `toml:"include_files"         json:"include_files,omitempty"`
+	PrePackage      string                     `toml:"pre_package"           json:"pre_package,omitempty"`
+	DefaultVersions map[string]string          `toml:"default-versions"      json:"default-versions,omitempty"`
+	Dependencies    []ConfigMetadataDependency `toml:"dependencies"          json:"dependencies,omitempty"`
 	Unstructured    map[string]interface{}     `toml:"-"                     json:"-"`
 }
 
 type ConfigMetadataDependency struct {
-	DeprecationDate time.Time `toml:"deprecation_date" json:"deprecation_date"`
-	ID              string    `toml:"id"               json:"id"`
-	Name            string    `toml:"name"             json:"name"`
-	SHA256          string    `toml:"sha256"           json:"sha256"`
-	Stacks          []string  `toml:"stacks"           json:"stacks"`
-	URI             string    `toml:"uri"              json:"uri"`
-	Version         string    `toml:"version"          json:"version"`
+	DeprecationDate *time.Time `toml:"deprecation_date" json:"deprecation_date,omitempty"`
+	ID              string     `toml:"id"               json:"id,omitempty"`
+	Name            string     `toml:"name"             json:"name,omitempty"`
+	SHA256          string     `toml:"sha256"           json:"sha256,omitempty"`
+	Stacks          []string   `toml:"stacks"           json:"stacks,omitempty"`
+	URI             string     `toml:"uri"              json:"uri,omitempty"`
+	Version         string     `toml:"version"          json:"version,omitempty"`
 }
 
 type ConfigOrder struct {
-	Group []ConfigOrderGroup `toml:"group" json:"group"`
+	Group []ConfigOrderGroup `toml:"group" json:"group,omitempty"`
 }
 
 type ConfigOrderGroup struct {
-	ID       string `toml:"id"       json:"id"`
-	Version  string `toml:"version"  json:"version"`
+	ID       string `toml:"id"       json:"id,omitempty"`
+	Version  string `toml:"version"  json:"version,omitempty"`
 	Optional bool   `toml:"optional,omitempty" json:"optional,omitempty"`
 }
 

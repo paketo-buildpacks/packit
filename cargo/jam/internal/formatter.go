@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"sort"
@@ -114,4 +115,21 @@ func (f Formatter) Markdown(configs []cargo.Config) {
 			}
 		}
 	}
+}
+
+func (f Formatter) JSON(configs []cargo.Config) {
+	var output struct {
+		Buildpackage cargo.Config   `json:"buildpackage"`
+		Children     []cargo.Config `json:"children,omitempty"`
+	}
+
+	for i, config := range configs {
+		if i == 0 {
+			output.Buildpackage = config
+		} else {
+			output.Children = append(output.Children, config)
+		}
+	}
+
+	_ = json.NewEncoder(f.writer).Encode(&output)
 }
