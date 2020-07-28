@@ -39,7 +39,7 @@ func (s Summarize) Execute(args []string) error {
 
 	fset := flag.NewFlagSet("summarize", flag.ContinueOnError)
 	fset.StringVar(&buildpackTarballPath, "buildpack", "", "path to a buildpackage tarball (required)")
-	fset.StringVar(&format, "format", "markdown", "format of output options are (markdown)")
+	fset.StringVar(&format, "format", "markdown", "format of output options are (markdown, json)")
 	err := fset.Parse(args)
 	if err != nil {
 		return err
