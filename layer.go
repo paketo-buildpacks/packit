@@ -7,7 +7,7 @@ import (
 
 // LayerType defines the set of layer types that can be declared according to
 // the specification:
-// https://github.com/buildpacks/spec/blob/master/buildpack.md#layer-types.
+// https://github.com/buildpacks/spec/blob/main/buildpack.md#layer-types.
 type LayerType uint8
 
 const (
@@ -26,7 +26,7 @@ const (
 
 // Layer provides a representation of a layer managed by a buildpack as
 // described by the specification:
-// https://github.com/buildpacks/spec/blob/master/buildpack.md#layers.
+// https://github.com/buildpacks/spec/blob/main/buildpack.md#layers.
 type Layer struct {
 	// Path is the absolute location of the layer on disk.
 	Path string `toml:"-"`
@@ -36,35 +36,35 @@ type Layer struct {
 
 	// Build indicates whether the layer is available to subsequent buildpacks
 	// during their build phase according to the specification:
-	// https://github.com/buildpacks/spec/blob/master/buildpack.md#build-layers.
+	// https://github.com/buildpacks/spec/blob/main/buildpack.md#build-layers.
 	Build bool `toml:"build"`
 
 	// Launch indicates whether the layer is exported into the application image
 	// and made available during the launch phase according to the specification:
-	// https://github.com/buildpacks/spec/blob/master/buildpack.md#launch-layers.
+	// https://github.com/buildpacks/spec/blob/main/buildpack.md#launch-layers.
 	Launch bool `toml:"launch"`
 
 	// Cache indicates whether the layer is persisted and made available to
 	// subsequent builds of the same application according to the specification:
-	// https://github.com/buildpacks/spec/blob/master/buildpack.md#launch-layers
+	// https://github.com/buildpacks/spec/blob/main/buildpack.md#launch-layers
 	// and
-	// https://github.com/buildpacks/spec/blob/master/buildpack.md#build-layers.
+	// https://github.com/buildpacks/spec/blob/main/buildpack.md#build-layers.
 	Cache bool `toml:"cache"`
 
 	// SharedEnv is the set of environment variables attached to the layer and
 	// made available during both the build and launch phases according to the
 	// specification:
-	// https://github.com/buildpacks/spec/blob/master/buildpack.md#provided-by-the-buildpacks.
+	// https://github.com/buildpacks/spec/blob/main/buildpack.md#provided-by-the-buildpacks.
 	SharedEnv Environment `toml:"-"`
 
 	// BuildEnv is the set of environment variables attached to the layer and
 	// made available during the build phase according to the specification:
-	// https://github.com/buildpacks/spec/blob/master/buildpack.md#provided-by-the-buildpacks.
+	// https://github.com/buildpacks/spec/blob/main/buildpack.md#provided-by-the-buildpacks.
 	BuildEnv Environment `toml:"-"`
 
 	// LaunchEnv is the set of environment variables attached to the layer and
 	// made available during the launch phase according to the specification:
-	// https://github.com/buildpacks/spec/blob/master/buildpack.md#provided-by-the-buildpacks.
+	// https://github.com/buildpacks/spec/blob/main/buildpack.md#provided-by-the-buildpacks.
 	LaunchEnv Environment `toml:"-"`
 
 	// Metadata is an unspecified field allowing buildpacks to communicate extra
@@ -73,7 +73,7 @@ type Layer struct {
 	// that subsequent builds can inspect that metadata and choose to reuse the
 	// layer if suitable. The Metadata field ultimately fills the metadata field
 	// of the Layer Content Metadata TOML file according to the specification:
-	// https://github.com/buildpacks/spec/blob/master/buildpack.md#layer-content-metadata-toml.
+	// https://github.com/buildpacks/spec/blob/main/buildpack.md#layer-content-metadata-toml.
 	Metadata map[string]interface{} `toml:"metadata"`
 }
 

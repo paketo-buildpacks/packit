@@ -44,7 +44,7 @@ type DetectResult struct {
 
 // BuildPlan is a representation of the Build Plan as specified in the
 // specification:
-// https://github.com/buildpacks/spec/blob/master/buildpack.md#build-plan-toml.
+// https://github.com/buildpacks/spec/blob/main/buildpack.md#build-plan-toml.
 // The BuildPlan allows buildpacks to indicate what dependencies they provide
 // or require.
 type BuildPlan struct {
