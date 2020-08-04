@@ -10,7 +10,6 @@ import (
 	"os/exec"
 	"testing"
 
-	"github.com/onsi/gomega/gbytes"
 	"github.com/onsi/gomega/gexec"
 	"github.com/sclevine/spec"
 
@@ -39,6 +38,7 @@ func testSummarize(t *testing.T, context spec.G, it spec.S) {
 
 		content := []byte(`[buildpack]
 id = "some-buildpack"
+name = "Some Buildpack"
 version = "1.2.3"
 
 [metadata.default-versions]
@@ -91,6 +91,7 @@ other-dependency = "2.3.x"
 
 		content = []byte(`[buildpack]
 id = "other-buildpack"
+name = "Other Buildpack"
 version = "2.3.4"
 
 [metadata.default-versions]
@@ -143,6 +144,7 @@ second-dependency = "5.6.x"
 
 		content = []byte(`[buildpack]
 id = "meta-buildpack"
+name = "Meta Buildpack"
 version = "3.4.5"
 
 [[order]]
@@ -239,50 +241,67 @@ version = "3.4.5"
 			Expect(err).NotTo(HaveOccurred())
 			Eventually(session).Should(gexec.Exit(0), func() string { return buffer.String() })
 
-			Expect(session.Out).To(gbytes.Say("# meta-buildpack 3.4.5"))
-			Expect(session.Out).To(gbytes.Say("### Order Groupings"))
-			Expect(session.Out).To(gbytes.Say("| name | version | optional |"))
-			Expect(session.Out).To(gbytes.Say("|-|-|-|"))
-			Expect(session.Out).To(gbytes.Say("| some-buildpack | 1.2.3 | false |"))
-			Expect(session.Out).To(gbytes.Say("| other-buildpack | 2.3.4 | false |"))
+			Expect(string(session.Out.Contents())).To(Equal(`# Meta Buildpack 3.4.5
+**ID:** meta-buildpack
 
-			Expect(session.Out).To(gbytes.Say("## some-buildpack 1.2.3"))
-			Expect(session.Out).To(gbytes.Say("### Dependencies"))
-			Expect(session.Out).To(gbytes.Say("| name | version | stacks |"))
-			Expect(session.Out).To(gbytes.Say("|-|-|-|"))
-			Expect(session.Out).To(gbytes.Say("| other-dependency | 2.3.4 | other-stack |"))
-			Expect(session.Out).To(gbytes.Say("| some-dependency | 1.2.3 | some-stack |"))
+| Name | ID | Version |
+|-|-|-|
+| Some Buildpack | some-buildpack | 1.2.3 |
+| Other Buildpack | other-buildpack | 2.3.4 |
 
-			Expect(session.Out).To(gbytes.Say("### Default Dependencies"))
-			Expect(session.Out).To(gbytes.Say("| name | version |"))
-			Expect(session.Out).To(gbytes.Say("|-|-|"))
-			Expect(session.Out).To(gbytes.Say("| other-dependency | 2.3.x |"))
-			Expect(session.Out).To(gbytes.Say("| some-dependency | 1.2.x |"))
+<details>
+<summary>More Information</summary>
 
-			Expect(session.Out).To(gbytes.Say("### Supported Stacks"))
-			Expect(session.Out).To(gbytes.Say("| name |"))
-			Expect(session.Out).To(gbytes.Say("|-|"))
-			Expect(session.Out).To(gbytes.Say("| other-stack |"))
-			Expect(session.Out).To(gbytes.Say("| some-stack |"))
+### Order Groupings
+| Name | ID | Version | Optional |
+|-|-|-|-|
+| Some Buildpack | some-buildpack | 1.2.3 | false |
+| Other Buildpack | other-buildpack | 2.3.4 | false |
 
-			Expect(session.Out).To(gbytes.Say("## other-buildpack 2.3.4"))
-			Expect(session.Out).To(gbytes.Say("### Dependencies"))
-			Expect(session.Out).To(gbytes.Say("| name | version | stacks |"))
-			Expect(session.Out).To(gbytes.Say("|-|-|-|"))
-			Expect(session.Out).To(gbytes.Say("| first-dependency | 4.5.6 | first-stack |"))
-			Expect(session.Out).To(gbytes.Say("| second-dependency | 5.6.7 | second-stack |"))
+## Some Buildpack 1.2.3
+**ID:** some-buildpack
 
-			Expect(session.Out).To(gbytes.Say("### Default Dependencies"))
-			Expect(session.Out).To(gbytes.Say("| name | version |"))
-			Expect(session.Out).To(gbytes.Say("|-|-|"))
-			Expect(session.Out).To(gbytes.Say("| first-dependency | 4.5.x |"))
-			Expect(session.Out).To(gbytes.Say("| second-dependency | 5.6.x |"))
+### Dependencies
+| Name | Version | Stacks |
+|-|-|-|
+| other-dependency | 2.3.4 | other-stack |
+| some-dependency | 1.2.3 | some-stack |
 
-			Expect(session.Out).To(gbytes.Say("### Supported Stacks"))
-			Expect(session.Out).To(gbytes.Say("| name |"))
-			Expect(session.Out).To(gbytes.Say("|-|"))
-			Expect(session.Out).To(gbytes.Say("| first-stack |"))
-			Expect(session.Out).To(gbytes.Say("| second-stack |"))
+### Default Dependencies
+| Name | Version |
+|-|-|
+| other-dependency | 2.3.x |
+| some-dependency | 1.2.x |
+
+### Supported Stacks
+| Name |
+|-|
+| other-stack |
+| some-stack |
+
+## Other Buildpack 2.3.4
+**ID:** other-buildpack
+
+### Dependencies
+| Name | Version | Stacks |
+|-|-|-|
+| first-dependency | 4.5.6 | first-stack |
+| second-dependency | 5.6.7 | second-stack |
+
+### Default Dependencies
+| Name | Version |
+|-|-|
+| first-dependency | 4.5.x |
+| second-dependency | 5.6.x |
+
+### Supported Stacks
+| Name |
+|-|
+| first-stack |
+| second-stack |
+
+</details>
+`))
 		})
 	})
 
@@ -298,93 +317,96 @@ version = "3.4.5"
 			Eventually(session).Should(gexec.Exit(0), func() string { return buffer.String() })
 
 			Expect(buffer.String()).To(MatchJSON(`{
-	"buildpackage": {
-		"buildpack": {
-			"id": "meta-buildpack",
-			"version": "3.4.5"
-		},
-		"metadata": {},
-		"order": [{
-			"group": [{
-					"id": "some-buildpack",
-					"version": "1.2.3"
+				"buildpackage": {
+					"buildpack": {
+						"id": "meta-buildpack",
+						"name": "Meta Buildpack",
+						"version": "3.4.5"
+					},
+					"metadata": {},
+					"order": [{
+						"group": [{
+								"id": "some-buildpack",
+								"version": "1.2.3"
+							},
+							{
+								"id": "other-buildpack",
+								"version": "2.3.4"
+							}
+						]
+					}]
 				},
-				{
-					"id": "other-buildpack",
-					"version": "2.3.4"
-				}
-			]
-		}]
-	},
-	"children": [{
-			"buildpack": {
-				"id": "some-buildpack",
-				"version": "1.2.3"
-			},
-			"metadata": {
-				"default-versions": {
-					"some-dependency": "1.2.x",
-					"other-dependency": "2.3.x"
-				},
-				"dependencies": [{
-						"id": "some-dependency",
-						"stacks": [
-							"some-stack"
-						],
-						"version": "1.2.3"
+				"children": [{
+						"buildpack": {
+							"id": "some-buildpack",
+							"name": "Some Buildpack",
+							"version": "1.2.3"
+						},
+						"metadata": {
+							"default-versions": {
+								"some-dependency": "1.2.x",
+								"other-dependency": "2.3.x"
+							},
+							"dependencies": [{
+									"id": "some-dependency",
+									"stacks": [
+										"some-stack"
+									],
+									"version": "1.2.3"
 
+								},
+								{
+									"id": "other-dependency",
+									"stacks": [
+										"other-stack"
+									],
+									"version": "2.3.4"
+								}
+							]
+						},
+						"stacks": [{
+							"id": "some-stack"
+						},
+						{
+							"id": "other-stack"
+						}]
 					},
 					{
-						"id": "other-dependency",
-						"stacks": [
-							"other-stack"
-						],
-						"version": "2.3.4"
+						"buildpack": {
+							"id": "other-buildpack",
+							"name": "Other Buildpack",
+							"version": "2.3.4"
+						},
+						"metadata": {
+							"default-versions": {
+								"first-dependency": "4.5.x",
+								"second-dependency": "5.6.x"
+							},
+							"dependencies": [{
+									"id": "first-dependency",
+									"stacks": [
+										"first-stack"
+									],
+									"version": "4.5.6"
+								},
+								{
+									"id": "second-dependency",
+									"stacks": [
+										"second-stack"
+									],
+									"version": "5.6.7"
+								}
+							]
+						},
+						"stacks": [{
+							"id": "first-stack"
+						},
+						{
+							"id": "second-stack"
+						}]
 					}
 				]
-			},
-			"stacks": [{
-				"id": "some-stack"
-      },
-			{
-				"id": "other-stack"
-			}]
-		},
-		{
-			"buildpack": {
-				"id": "other-buildpack",
-				"version": "2.3.4"
-			},
-			"metadata": {
-				"default-versions": {
-					"first-dependency": "4.5.x",
-					"second-dependency": "5.6.x"
-				},
-				"dependencies": [{
-						"id": "first-dependency",
-						"stacks": [
-							"first-stack"
-						],
-						"version": "4.5.6"
-					},
-					{
-						"id": "second-dependency",
-						"stacks": [
-							"second-stack"
-						],
-						"version": "5.6.7"
-					}
-				]
-			},
-			"stacks": [{
-				"id": "first-stack"
-			},
-			{
-				"id": "second-stack"
-			}]
-		}
-	]
-}`))
+			}`))
 		})
 	})
 }

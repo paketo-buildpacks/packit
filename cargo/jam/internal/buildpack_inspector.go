@@ -8,7 +8,6 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"sort"
 	"strings"
 
 	"github.com/paketo-buildpacks/packit/cargo"
@@ -95,10 +94,6 @@ func (i BuildpackInspector) Dependencies(path string) ([]cargo.Config, error) {
 
 		configs = append(configs, config)
 	}
-
-	sort.Slice(configs, func(i, j int) bool {
-		return len(configs[i].Order) > 0
-	})
 
 	return configs, nil
 }

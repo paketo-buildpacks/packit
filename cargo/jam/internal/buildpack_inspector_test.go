@@ -233,30 +233,6 @@ version = "2.3.4"
 			Expect(configs).To(Equal([]cargo.Config{
 				{
 					Buildpack: cargo.ConfigBuildpack{
-						ID:      "meta-buildpack",
-						Version: "3.4.5",
-					},
-					Order: []cargo.ConfigOrder{
-						{
-							Group: []cargo.ConfigOrderGroup{
-								{
-									ID:      "some-buildpack",
-									Version: "1.2.3",
-								},
-							},
-						},
-						{
-							Group: []cargo.ConfigOrderGroup{
-								{
-									ID:      "other-buildpack",
-									Version: "2.3.4",
-								},
-							},
-						},
-					},
-				},
-				{
-					Buildpack: cargo.ConfigBuildpack{
 						ID:      "some-buildpack",
 						Version: "1.2.3",
 					},
@@ -309,6 +285,30 @@ version = "2.3.4"
 					Stacks: []cargo.ConfigStack{
 						{ID: "first-stack"},
 						{ID: "second-stack"},
+					},
+				},
+				{
+					Buildpack: cargo.ConfigBuildpack{
+						ID:      "meta-buildpack",
+						Version: "3.4.5",
+					},
+					Order: []cargo.ConfigOrder{
+						{
+							Group: []cargo.ConfigOrderGroup{
+								{
+									ID:      "some-buildpack",
+									Version: "1.2.3",
+								},
+							},
+						},
+						{
+							Group: []cargo.ConfigOrderGroup{
+								{
+									ID:      "other-buildpack",
+									Version: "2.3.4",
+								},
+							},
+						},
 					},
 				},
 			}))
