@@ -29,7 +29,7 @@ type BuildContext struct {
 
 	// Plan includes the BuildpackPlan provided by the lifecycle as specified in
 	// the specification:
-	// https://github.com/buildpacks/spec/blob/master/buildpack.md#buildpack-plan-toml.
+	// https://github.com/buildpacks/spec/blob/main/buildpack.md#buildpack-plan-toml.
 	Plan BuildpackPlan
 
 	// Stack is the value of the chosen stack. This value is populated from the
@@ -67,10 +67,10 @@ type BuildResult struct {
 
 // Process represents a process to be run during the launch phase as described
 // in the specification:
-// https://github.com/buildpacks/spec/blob/master/buildpack.md#launch. The
+// https://github.com/buildpacks/spec/blob/main/buildpack.md#launch. The
 // fields of the process are describe in the specification of the launch.toml
 // file:
-// https://github.com/buildpacks/spec/blob/master/buildpack.md#launchtoml-toml.
+// https://github.com/buildpacks/spec/blob/main/buildpack.md#launchtoml-toml.
 type Process struct {
 	// Type is an identifier to describe the type of process to be executed, eg.
 	// "web".
@@ -88,7 +88,7 @@ type Process struct {
 
 // BuildpackInfo is a representation of the basic information for a buildpack
 // provided in its buildpack.toml file as described in the specification:
-// https://github.com/buildpacks/spec/blob/master/buildpack.md#buildpacktoml-toml.
+// https://github.com/buildpacks/spec/blob/main/buildpack.md#buildpacktoml-toml.
 type BuildpackInfo struct {
 	// ID is the identifier specified in the `buildpack.id` field of the buildpack.toml.
 	ID string `toml:"id"`
@@ -102,7 +102,7 @@ type BuildpackInfo struct {
 
 // BuildpackPlan is a representation of the buildpack plan provided by the
 // lifecycle and defined in the specification:
-// https://github.com/buildpacks/spec/blob/master/buildpack.md#buildpack-plan-toml.
+// https://github.com/buildpacks/spec/blob/main/buildpack.md#buildpack-plan-toml.
 // It is also used to return a set of refinements to the plan at the end of the
 // build phase.
 type BuildpackPlan struct {

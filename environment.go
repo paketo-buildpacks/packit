@@ -11,7 +11,7 @@ type Environment map[string]string
 
 // Append adds a key-value pair to the environment as an appended value
 // according to the specification:
-// https://github.com/buildpacks/spec/blob/master/buildpack.md#append.
+// https://github.com/buildpacks/spec/blob/main/buildpack.md#append.
 func (e Environment) Append(name, value, delim string) {
 	e[name+".append"] = value
 
@@ -23,21 +23,21 @@ func (e Environment) Append(name, value, delim string) {
 
 // Default adds a key-value pair to the environment as a default value
 // according to the specification:
-// https://github.com/buildpacks/spec/blob/master/buildpack.md#default.
+// https://github.com/buildpacks/spec/blob/main/buildpack.md#default.
 func (e Environment) Default(name, value string) {
 	e[name+".default"] = value
 }
 
 // Override adds a key-value pair to the environment as an overridden value
 // according to the specification:
-// https://github.com/buildpacks/spec/blob/master/buildpack.md#override.
+// https://github.com/buildpacks/spec/blob/main/buildpack.md#override.
 func (e Environment) Override(name, value string) {
 	e[name+".override"] = value
 }
 
 // Prepend adds a key-value pair to the environment as a prepended value
 // according to the specification:
-// https://github.com/buildpacks/spec/blob/master/buildpack.md#prepend.
+// https://github.com/buildpacks/spec/blob/main/buildpack.md#prepend.
 func (e Environment) Prepend(name, value, delim string) {
 	e[name+".prepend"] = value
 

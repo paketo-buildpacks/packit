@@ -18,8 +18,8 @@ type Option func(config OptionConfig) OptionConfig
 // ExitHandler serves as the interface for types that can handle an error
 // during the Detect or Build functions. ExitHandlers are responsible for
 // translating error values into exit codes according the specification:
-// https://github.com/buildpacks/spec/blob/master/buildpack.md#detection and
-// https://github.com/buildpacks/spec/blob/master/buildpack.md#build.
+// https://github.com/buildpacks/spec/blob/main/buildpack.md#detection and
+// https://github.com/buildpacks/spec/blob/main/buildpack.md#build.
 type ExitHandler interface {
 	Error(error)
 }
@@ -33,7 +33,7 @@ type TOMLWriter interface {
 
 // EnvironmentWriter serves as the interface for types that can write an
 // Environment to a directory on disk according to the specification:
-// https://github.com/buildpacks/spec/blob/master/buildpack.md#provided-by-the-buildpacks.
+// https://github.com/buildpacks/spec/blob/main/buildpack.md#provided-by-the-buildpacks.
 type EnvironmentWriter interface {
 	Write(dir string, env map[string]string) error
 }
