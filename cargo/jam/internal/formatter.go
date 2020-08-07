@@ -35,7 +35,7 @@ func (f Formatter) Markdown(configs []cargo.Config) {
 		if len(config.Order) > 0 {
 			fmt.Fprintf(f.writer, "### Order Groupings\n")
 			for _, o := range config.Order {
-				fmt.Fprintf(f.writer, "| name | version | optional |\n|-|-|-|\n")
+				fmt.Fprintf(f.writer, "| name | version | optional |\n|---|---|---|\n")
 				for _, g := range o.Group {
 					fmt.Fprintf(f.writer, "| %s | %s | %t |\n", g.ID, g.Version, g.Optional)
 				}
@@ -82,7 +82,7 @@ func (f Formatter) Markdown(configs []cargo.Config) {
 				return iVal.ID == jVal.ID && iVersion.GreaterThan(jVersion)
 			})
 
-			fmt.Fprintf(f.writer, "### Dependencies\n| name | version | stacks |\n|-|-|-|\n")
+			fmt.Fprintf(f.writer, "### Dependencies\n| name | version | stacks |\n|---|---|---|\n")
 			for _, d := range sorted {
 				fmt.Fprintf(f.writer, "| %s | %s | %s |\n", d.ID, d.Version, strings.Join(d.Stacks, ", "))
 			}
@@ -90,7 +90,7 @@ func (f Formatter) Markdown(configs []cargo.Config) {
 		}
 
 		if len(config.Metadata.DefaultVersions) > 0 {
-			fmt.Fprintf(f.writer, "### Default Dependencies\n| name | version |\n|-|-|\n")
+			fmt.Fprintf(f.writer, "### Default Dependencies\n| name | version |\n|---|---|\n")
 			var sortedDependencies []string
 			for key := range config.Metadata.DefaultVersions {
 				sortedDependencies = append(sortedDependencies, key)
@@ -109,7 +109,7 @@ func (f Formatter) Markdown(configs []cargo.Config) {
 				return config.Stacks[i].ID < config.Stacks[j].ID
 			})
 
-			fmt.Fprintf(f.writer, "### Supported Stacks\n| name |\n|-|\n")
+			fmt.Fprintf(f.writer, "### Supported Stacks\n| name |\n|---|\n")
 			for _, s := range config.Stacks {
 				fmt.Fprintf(f.writer, "| %s |\n", s.ID)
 			}

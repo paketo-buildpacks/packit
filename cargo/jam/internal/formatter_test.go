@@ -69,20 +69,20 @@ func testFormatter(t *testing.T, context spec.G, it spec.S) {
 			Expect(buffer.String()).To(Equal(`## some-buildpack some-version
 ### Dependencies
 | name | version | stacks |
-|-|-|-|
+|---|---|---|
 | other-dependency | 2.3.5 | other-stack |
 | other-dependency | 2.3.4 | other-stack, some-stack |
 | some-dependency | 1.2.3 | other-stack, some-stack |
 
 ### Default Dependencies
 | name | version |
-|-|-|
+|---|---|
 | other-dependency | 2.3.x |
 | some-dependency | 1.2.x |
 
 ### Supported Stacks
 | name |
-|-|
+|---|
 | other-stack |
 | some-stack |
 `))
@@ -105,7 +105,7 @@ func testFormatter(t *testing.T, context spec.G, it spec.S) {
 				Expect(buffer.String()).To(Equal(`## some-buildpack some-version
 ### Supported Stacks
 | name |
-|-|
+|---|
 | other-stack |
 | some-stack |
 `))
@@ -153,14 +153,14 @@ func testFormatter(t *testing.T, context spec.G, it spec.S) {
 				Expect(buffer.String()).To(Equal(`## some-buildpack some-version
 ### Dependencies
 | name | version | stacks |
-|-|-|-|
+|---|---|---|
 | other-dependency | 2.3.5 | other-stack |
 | other-dependency | 2.3.4 | other-stack, some-stack |
 | some-dependency | 1.2.3 | other-stack, some-stack |
 
 ### Default Dependencies
 | name | version |
-|-|-|
+|---|---|
 | other-dependency | 2.3.x |
 | some-dependency | 1.2.x |
 
@@ -204,12 +204,12 @@ func testFormatter(t *testing.T, context spec.G, it spec.S) {
 				Expect(buffer.String()).To(Equal(`# some-buildpack some-version
 ### Order Groupings
 | name | version | optional |
-|-|-|-|
+|---|---|---|
 | some-buildpack | 1.2.3 | false |
 | optional-buildpack | 2.3.4 | true |
 
 | name | version | optional |
-|-|-|-|
+|---|---|---|
 | other-buildpack | 3.4.5 | false |
 
 `))
