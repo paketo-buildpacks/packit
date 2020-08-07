@@ -245,7 +245,7 @@ version = "3.4.5"
 **ID:** meta-buildpack
 
 | Name | ID | Version |
-|-|-|-|
+|---|---|---|
 | Some Buildpack | some-buildpack | 1.2.3 |
 | Other Buildpack | other-buildpack | 2.3.4 |
 
@@ -254,7 +254,7 @@ version = "3.4.5"
 
 ### Order Groupings
 | Name | ID | Version | Optional |
-|-|-|-|-|
+|---|---|---|---|
 | Some Buildpack | some-buildpack | 1.2.3 | false |
 | Other Buildpack | other-buildpack | 2.3.4 | false |
 
@@ -263,19 +263,19 @@ version = "3.4.5"
 
 ### Dependencies
 | Name | Version | Stacks |
-|-|-|-|
+|---|---|---|
 | other-dependency | 2.3.4 | other-stack |
 | some-dependency | 1.2.3 | some-stack |
 
 ### Default Dependencies
 | Name | Version |
-|-|-|
+|---|---|
 | other-dependency | 2.3.x |
 | some-dependency | 1.2.x |
 
 ### Supported Stacks
 | Name |
-|-|
+|---|
 | other-stack |
 | some-stack |
 
@@ -284,19 +284,19 @@ version = "3.4.5"
 
 ### Dependencies
 | Name | Version | Stacks |
-|-|-|-|
+|---|---|---|
 | first-dependency | 4.5.6 | first-stack |
 | second-dependency | 5.6.7 | second-stack |
 
 ### Default Dependencies
 | Name | Version |
-|-|-|
+|---|---|
 | first-dependency | 4.5.x |
 | second-dependency | 5.6.x |
 
 ### Supported Stacks
 | Name |
-|-|
+|---|
 | first-stack |
 | second-stack |
 
