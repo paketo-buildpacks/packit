@@ -45,14 +45,14 @@ func (f Formatter) Markdown(configs []cargo.Config) {
 
 	if (familyConfig.Buildpack != cargo.ConfigBuildpack{}) {
 		fmt.Fprintf(f.writer, "# %s %s\n**ID:** %s\n\n", familyConfig.Buildpack.Name, familyConfig.Buildpack.Version, familyConfig.Buildpack.ID)
-		fmt.Fprintf(f.writer, "| Name | ID | Version |\n|-|-|-|\n")
+		fmt.Fprintf(f.writer, "| Name | ID | Version |\n|---|---|---|\n")
 		for _, config := range configs {
 			fmt.Fprintf(f.writer, "| %s | %s | %s |\n", config.Buildpack.Name, config.Buildpack.ID, config.Buildpack.Version)
 		}
 		fmt.Fprintf(f.writer, "\n<details>\n<summary>More Information</summary>\n\n")
 		fmt.Fprintf(f.writer, "### Order Groupings\n")
 		for _, o := range familyConfig.Order {
-			fmt.Fprintf(f.writer, "| Name | ID | Version | Optional |\n|-|-|-|-|\n")
+			fmt.Fprintf(f.writer, "| Name | ID | Version | Optional |\n|---|---|---|---|\n")
 			for _, g := range o.Group {
 				fmt.Fprintf(f.writer, "| %s | %s | %s | %t |\n", lookupName(configs, g.ID), g.ID, g.Version, g.Optional)
 			}
@@ -102,7 +102,7 @@ func (f Formatter) Markdown(configs []cargo.Config) {
 				return iVal.ID == jVal.ID && iVersion.GreaterThan(jVersion)
 			})
 
-			fmt.Fprintf(f.writer, "### Dependencies\n| Name | Version | Stacks |\n|-|-|-|\n")
+			fmt.Fprintf(f.writer, "### Dependencies\n| Name | Version | Stacks |\n|---|---|---|\n")
 			for _, d := range sorted {
 				fmt.Fprintf(f.writer, "| %s | %s | %s |\n", d.ID, d.Version, strings.Join(d.Stacks, ", "))
 			}
@@ -110,7 +110,7 @@ func (f Formatter) Markdown(configs []cargo.Config) {
 		}
 
 		if len(config.Metadata.DefaultVersions) > 0 {
-			fmt.Fprintf(f.writer, "### Default Dependencies\n| Name | Version |\n|-|-|\n")
+			fmt.Fprintf(f.writer, "### Default Dependencies\n| Name | Version |\n|---|---|\n")
 			var sortedDependencies []string
 			for key := range config.Metadata.DefaultVersions {
 				sortedDependencies = append(sortedDependencies, key)
@@ -129,7 +129,7 @@ func (f Formatter) Markdown(configs []cargo.Config) {
 				return config.Stacks[i].ID < config.Stacks[j].ID
 			})
 
-			fmt.Fprintf(f.writer, "### Supported Stacks\n| Name |\n|-|\n")
+			fmt.Fprintf(f.writer, "### Supported Stacks\n| Name |\n|---|\n")
 			for _, s := range config.Stacks {
 				fmt.Fprintf(f.writer, "| %s |\n", s.ID)
 			}

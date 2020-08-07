@@ -72,20 +72,20 @@ func testFormatter(t *testing.T, context spec.G, it spec.S) {
 
 ### Dependencies
 | Name | Version | Stacks |
-|-|-|-|
+|---|---|---|
 | other-dependency | 2.3.5 | other-stack |
 | other-dependency | 2.3.4 | other-stack, some-stack |
 | some-dependency | 1.2.3 | other-stack, some-stack |
 
 ### Default Dependencies
 | Name | Version |
-|-|-|
+|---|---|
 | other-dependency | 2.3.x |
 | some-dependency | 1.2.x |
 
 ### Supported Stacks
 | Name |
-|-|
+|---|
 | other-stack |
 | some-stack |
 
@@ -112,7 +112,7 @@ func testFormatter(t *testing.T, context spec.G, it spec.S) {
 
 ### Supported Stacks
 | Name |
-|-|
+|---|
 | other-stack |
 | some-stack |
 
@@ -164,14 +164,14 @@ func testFormatter(t *testing.T, context spec.G, it spec.S) {
 
 ### Dependencies
 | Name | Version | Stacks |
-|-|-|-|
+|---|---|---|
 | other-dependency | 2.3.5 | other-stack |
 | other-dependency | 2.3.4 | other-stack, some-stack |
 | some-dependency | 1.2.3 | other-stack, some-stack |
 
 ### Default Dependencies
 | Name | Version |
-|-|-|
+|---|---|
 | other-dependency | 2.3.x |
 | some-dependency | 1.2.x |
 
@@ -242,7 +242,7 @@ func testFormatter(t *testing.T, context spec.G, it spec.S) {
 **ID:** order-buildpack
 
 | Name | ID | Version |
-|-|-|-|
+|---|---|---|
 | Some Buildpack | some-buildpack | 1.2.3 |
 | Optional Buildpack | optional-buildpack | 2.3.4 |
 | Other Buildpack | other-buildpack | 3.4.5 |
@@ -252,12 +252,12 @@ func testFormatter(t *testing.T, context spec.G, it spec.S) {
 
 ### Order Groupings
 | Name | ID | Version | Optional |
-|-|-|-|-|
+|---|---|---|---|
 | Some Buildpack | some-buildpack | 1.2.3 | false |
 | Optional Buildpack | optional-buildpack | 2.3.4 | true |
 
 | Name | ID | Version | Optional |
-|-|-|-|-|
+|---|---|---|---|
 | Some Buildpack | some-buildpack | 1.2.3 | false |
 | Other Buildpack | other-buildpack | 3.4.5 | false |
 
