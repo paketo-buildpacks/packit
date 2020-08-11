@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"sort"
-	"strings"
 
 	"github.com/Masterminds/semver"
 	"github.com/paketo-buildpacks/packit/cargo"
@@ -21,7 +20,7 @@ func NewFormatter(writer io.Writer) Formatter {
 	}
 }
 
-type depKey [2]string
+type depKey [3]string
 
 func lookupName(configs []cargo.Config, id string) string {
 	for _, config := range configs {
@@ -31,6 +30,86 @@ func lookupName(configs []cargo.Config, id string) string {
 	}
 
 	return ""
+}
+
+func printImplementation(writer io.Writer, config cargo.Config) {
+	fmt.Fprintf(writer, "\n**ID:** %s\n\n", config.Buildpack.ID)
+
+	if len(config.Stacks) > 0 {
+		sort.Slice(config.Stacks, func(i, j int) bool {
+			return config.Stacks[i].ID < config.Stacks[j].ID
+		})
+
+		fmt.Fprintf(writer, "#### Supported Stacks:\n")
+		for _, s := range config.Stacks {
+			fmt.Fprintf(writer, "- %s\n", s.ID)
+		}
+		fmt.Fprintln(writer)
+	}
+
+	if len(config.Metadata.DefaultVersions) > 0 {
+		fmt.Fprintf(writer, "#### Default Dependency Versions:\n| ID | Version |\n|---|---|\n")
+		var sortedDependencies []string
+		for key := range config.Metadata.DefaultVersions {
+			sortedDependencies = append(sortedDependencies, key)
+		}
+
+		sort.Strings(sortedDependencies)
+
+		for _, key := range sortedDependencies {
+			fmt.Fprintf(writer, "| %s | %s |\n", key, config.Metadata.DefaultVersions[key])
+		}
+		fmt.Fprintln(writer)
+	}
+
+	if len(config.Metadata.Dependencies) > 0 {
+		infoMap := map[depKey][]string{}
+		for _, d := range config.Metadata.Dependencies {
+			key := depKey{d.ID, d.Version, d.SHA256}
+			_, ok := infoMap[key]
+			if !ok {
+				sort.Strings(d.Stacks)
+				infoMap[key] = d.Stacks
+			} else {
+				val := infoMap[key]
+				val = append(val, d.Stacks...)
+				sort.Strings(val)
+				infoMap[key] = val
+			}
+		}
+
+		var sorted []cargo.ConfigMetadataDependency
+		for key, stacks := range infoMap {
+			sorted = append(sorted, cargo.ConfigMetadataDependency{
+				ID:      key[0],
+				Version: key[1],
+				Stacks:  stacks,
+				SHA256:  key[2],
+			})
+		}
+
+		sort.Slice(sorted, func(i, j int) bool {
+			iVal := sorted[i]
+			jVal := sorted[j]
+
+			if iVal.ID < jVal.ID {
+				return true
+			}
+
+			iVersion := semver.MustParse(iVal.Version)
+			jVersion := semver.MustParse(jVal.Version)
+
+			return iVal.ID == jVal.ID && iVersion.GreaterThan(jVersion)
+		})
+
+		fmt.Fprintf(writer, "#### Dependencies:\n| Name | Version | SHA256 |\n|---|---|---|\n")
+		for _, d := range sorted {
+			fmt.Fprintf(writer, "| %s | %s | %s |\n", d.ID, d.Version, d.SHA256)
+		}
+		fmt.Fprintln(writer)
+	}
+
+	fmt.Fprintf(writer, "---\n\n</details>\n")
 }
 
 func (f Formatter) Markdown(configs []cargo.Config) {
@@ -43,103 +122,37 @@ func (f Formatter) Markdown(configs []cargo.Config) {
 		}
 	}
 
+	//Language-family case
 	if (familyConfig.Buildpack != cargo.ConfigBuildpack{}) {
-		fmt.Fprintf(f.writer, "# %s %s\n**ID:** %s\n\n", familyConfig.Buildpack.Name, familyConfig.Buildpack.Version, familyConfig.Buildpack.ID)
+		//Header section
+		fmt.Fprintf(f.writer, "# %s %s\n\n**ID:** %s\n\n", familyConfig.Buildpack.Name, familyConfig.Buildpack.Version, familyConfig.Buildpack.ID)
+		fmt.Fprintf(f.writer, "#### Included Buildpackages:\n")
 		fmt.Fprintf(f.writer, "| Name | ID | Version |\n|---|---|---|\n")
 		for _, config := range configs {
 			fmt.Fprintf(f.writer, "| %s | %s | %s |\n", config.Buildpack.Name, config.Buildpack.ID, config.Buildpack.Version)
 		}
-		fmt.Fprintf(f.writer, "\n<details>\n<summary>More Information</summary>\n\n")
-		fmt.Fprintf(f.writer, "### Order Groupings\n")
+		//Sub Header
+		fmt.Fprintf(f.writer, "\n<details>\n<summary>Order Groupings</summary>\n\n")
 		for _, o := range familyConfig.Order {
-			fmt.Fprintf(f.writer, "| Name | ID | Version | Optional |\n|---|---|---|---|\n")
+			fmt.Fprintf(f.writer, "| ID | Version | Optional |\n|---|---|---|\n")
 			for _, g := range o.Group {
-				fmt.Fprintf(f.writer, "| %s | %s | %s | %t |\n", lookupName(configs, g.ID), g.ID, g.Version, g.Optional)
+				fmt.Fprintf(f.writer, "| %s | %s | %t |\n", g.ID, g.Version, g.Optional)
 			}
 			fmt.Fprintln(f.writer)
 		}
+
+		for _, config := range configs {
+			fmt.Fprintf(f.writer, "\n<details>\n<summary>%s %s</summary>\n", config.Buildpack.Name, config.Buildpack.Version)
+			printImplementation(f.writer, config)
+			fmt.Fprintf(f.writer, "</details>\n\n---\n")
+		}
+
+	} else {
+		//Implementation case
+		fmt.Fprintf(f.writer, "# %s %s\n", configs[0].Buildpack.Name, configs[0].Buildpack.Version)
+		printImplementation(f.writer, configs[0])
 	}
 
-	for _, config := range configs {
-		fmt.Fprintf(f.writer, "## %s %s\n**ID:** %s\n\n", config.Buildpack.Name, config.Buildpack.Version, config.Buildpack.ID)
-
-		if len(config.Metadata.Dependencies) > 0 {
-			infoMap := map[depKey][]string{}
-			for _, d := range config.Metadata.Dependencies {
-				key := depKey{d.ID, d.Version}
-				_, ok := infoMap[key]
-				if !ok {
-					sort.Strings(d.Stacks)
-					infoMap[key] = d.Stacks
-				} else {
-					val := infoMap[key]
-					val = append(val, d.Stacks...)
-					sort.Strings(val)
-					infoMap[key] = val
-				}
-			}
-
-			var sorted []cargo.ConfigMetadataDependency
-			for key, stacks := range infoMap {
-				sorted = append(sorted, cargo.ConfigMetadataDependency{
-					ID:      key[0],
-					Version: key[1],
-					Stacks:  stacks,
-				})
-			}
-
-			sort.Slice(sorted, func(i, j int) bool {
-				iVal := sorted[i]
-				jVal := sorted[j]
-
-				if iVal.ID < jVal.ID {
-					return true
-				}
-
-				iVersion := semver.MustParse(iVal.Version)
-				jVersion := semver.MustParse(jVal.Version)
-
-				return iVal.ID == jVal.ID && iVersion.GreaterThan(jVersion)
-			})
-
-			fmt.Fprintf(f.writer, "### Dependencies\n| Name | Version | Stacks |\n|---|---|---|\n")
-			for _, d := range sorted {
-				fmt.Fprintf(f.writer, "| %s | %s | %s |\n", d.ID, d.Version, strings.Join(d.Stacks, ", "))
-			}
-			fmt.Fprintln(f.writer)
-		}
-
-		if len(config.Metadata.DefaultVersions) > 0 {
-			fmt.Fprintf(f.writer, "### Default Dependencies\n| Name | Version |\n|---|---|\n")
-			var sortedDependencies []string
-			for key := range config.Metadata.DefaultVersions {
-				sortedDependencies = append(sortedDependencies, key)
-			}
-
-			sort.Strings(sortedDependencies)
-
-			for _, key := range sortedDependencies {
-				fmt.Fprintf(f.writer, "| %s | %s |\n", key, config.Metadata.DefaultVersions[key])
-			}
-			fmt.Fprintln(f.writer)
-		}
-
-		if len(config.Stacks) > 0 {
-			sort.Slice(config.Stacks, func(i, j int) bool {
-				return config.Stacks[i].ID < config.Stacks[j].ID
-			})
-
-			fmt.Fprintf(f.writer, "### Supported Stacks\n| Name |\n|---|\n")
-			for _, s := range config.Stacks {
-				fmt.Fprintf(f.writer, "| %s |\n", s.ID)
-			}
-			fmt.Fprintln(f.writer)
-		}
-	}
-
-	if (familyConfig.Buildpack != cargo.ConfigBuildpack{}) {
-		fmt.Fprintln(f.writer, "</details>")
-	}
 }
 
 func (f Formatter) JSON(configs []cargo.Config) {
