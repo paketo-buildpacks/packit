@@ -39,21 +39,25 @@ func testFormatter(t *testing.T, context spec.G, it spec.S) {
 								ID:      "some-dependency",
 								Stacks:  []string{"some-stack"},
 								Version: "1.2.3",
+								SHA256:  "one-more-sha",
 							},
 							{
 								ID:      "some-dependency",
 								Stacks:  []string{"other-stack"},
 								Version: "1.2.3",
+								SHA256:  "one-more-sha",
 							},
 							{
 								ID:      "other-dependency",
 								Stacks:  []string{"some-stack", "other-stack"},
 								Version: "2.3.4",
+								SHA256:  "another-sha",
 							},
 							{
 								ID:      "other-dependency",
 								Stacks:  []string{"other-stack"},
 								Version: "2.3.5",
+								SHA256:  "some-sha",
 							},
 						},
 						DefaultVersions: map[string]string{
@@ -67,28 +71,30 @@ func testFormatter(t *testing.T, context spec.G, it spec.S) {
 					},
 				},
 			})
-			Expect(buffer.String()).To(Equal(`## Some Buildpack some-version
+			Expect(buffer.String()).To(Equal(`# Some Buildpack some-version
+
 **ID:** some-buildpack
 
-### Dependencies
-| Name | Version | Stacks |
-|---|---|---|
-| other-dependency | 2.3.5 | other-stack |
-| other-dependency | 2.3.4 | other-stack, some-stack |
-| some-dependency | 1.2.3 | other-stack, some-stack |
+#### Supported Stacks:
+- other-stack
+- some-stack
 
-### Default Dependencies
-| Name | Version |
+#### Default Dependency Versions:
+| ID | Version |
 |---|---|
 | other-dependency | 2.3.x |
 | some-dependency | 1.2.x |
 
-### Supported Stacks
-| Name |
-|---|
-| other-stack |
-| some-stack |
+#### Dependencies:
+| Name | Version | SHA256 |
+|---|---|---|
+| other-dependency | 2.3.5 | some-sha |
+| other-dependency | 2.3.4 | another-sha |
+| some-dependency | 1.2.3 | one-more-sha |
 
+---
+
+</details>
 `))
 		})
 
@@ -107,15 +113,17 @@ func testFormatter(t *testing.T, context spec.G, it spec.S) {
 						},
 					},
 				})
-				Expect(buffer.String()).To(Equal(`## Some Buildpack some-version
+				Expect(buffer.String()).To(Equal(`# Some Buildpack some-version
+
 **ID:** some-buildpack
 
-### Supported Stacks
-| Name |
-|---|
-| other-stack |
-| some-stack |
+#### Supported Stacks:
+- other-stack
+- some-stack
 
+---
+
+</details>
 `))
 			})
 		})
@@ -135,21 +143,25 @@ func testFormatter(t *testing.T, context spec.G, it spec.S) {
 									ID:      "some-dependency",
 									Stacks:  []string{"some-stack"},
 									Version: "1.2.3",
+									SHA256:  "one-more-sha",
 								},
 								{
 									ID:      "some-dependency",
 									Stacks:  []string{"other-stack"},
 									Version: "1.2.3",
+									SHA256:  "one-more-sha",
 								},
 								{
 									ID:      "other-dependency",
 									Stacks:  []string{"some-stack", "other-stack"},
 									Version: "2.3.4",
+									SHA256:  "another-sha",
 								},
 								{
 									ID:      "other-dependency",
 									Stacks:  []string{"other-stack"},
 									Version: "2.3.5",
+									SHA256:  "some-sha",
 								},
 							},
 							DefaultVersions: map[string]string{
@@ -159,28 +171,32 @@ func testFormatter(t *testing.T, context spec.G, it spec.S) {
 						},
 					},
 				})
-				Expect(buffer.String()).To(Equal(`## Some Buildpack some-version
+				Expect(buffer.String()).To(Equal(`# Some Buildpack some-version
+
 **ID:** some-buildpack
 
-### Dependencies
-| Name | Version | Stacks |
-|---|---|---|
-| other-dependency | 2.3.5 | other-stack |
-| other-dependency | 2.3.4 | other-stack, some-stack |
-| some-dependency | 1.2.3 | other-stack, some-stack |
-
-### Default Dependencies
-| Name | Version |
+#### Default Dependency Versions:
+| ID | Version |
 |---|---|
 | other-dependency | 2.3.x |
 | some-dependency | 1.2.x |
 
+#### Dependencies:
+| Name | Version | SHA256 |
+|---|---|---|
+| other-dependency | 2.3.5 | some-sha |
+| other-dependency | 2.3.4 | another-sha |
+| some-dependency | 1.2.3 | one-more-sha |
+
+---
+
+</details>
 `))
 			})
 		})
 
 		context("when there are order groupings", func() {
-			it("prints a the order groupings", func() {
+			it("prints the order groupings", func() {
 				formatter.Markdown([]cargo.Config{
 					{
 						Buildpack: cargo.ConfigBuildpack{
@@ -239,8 +255,10 @@ func testFormatter(t *testing.T, context spec.G, it spec.S) {
 					},
 				})
 				Expect(buffer.String()).To(ContainSubstring(`# Order Buildpack order-version
+
 **ID:** order-buildpack
 
+#### Included Buildpackages:
 | Name | ID | Version |
 |---|---|---|
 | Some Buildpack | some-buildpack | 1.2.3 |
@@ -248,27 +266,46 @@ func testFormatter(t *testing.T, context spec.G, it spec.S) {
 | Other Buildpack | other-buildpack | 3.4.5 |
 
 <details>
-<summary>More Information</summary>
+<summary>Order Groupings</summary>
 
-### Order Groupings
-| Name | ID | Version | Optional |
-|---|---|---|---|
-| Some Buildpack | some-buildpack | 1.2.3 | false |
-| Optional Buildpack | optional-buildpack | 2.3.4 | true |
+| ID | Version | Optional |
+|---|---|---|
+| some-buildpack | 1.2.3 | false |
+| optional-buildpack | 2.3.4 | true |
 
-| Name | ID | Version | Optional |
-|---|---|---|---|
-| Some Buildpack | some-buildpack | 1.2.3 | false |
-| Other Buildpack | other-buildpack | 3.4.5 | false |
+| ID | Version | Optional |
+|---|---|---|
+| some-buildpack | 1.2.3 | false |
+| other-buildpack | 3.4.5 | false |
 
-## Some Buildpack 1.2.3
+</details>
+
+---
+
+<details>
+<summary>Some Buildpack 1.2.3</summary>
+
 **ID:** some-buildpack
 
-## Optional Buildpack 2.3.4
+---
+
+</details>
+
+<details>
+<summary>Optional Buildpack 2.3.4</summary>
+
 **ID:** optional-buildpack
 
-## Other Buildpack 3.4.5
+---
+
+</details>
+
+<details>
+<summary>Other Buildpack 3.4.5</summary>
+
 **ID:** other-buildpack
+
+---
 
 </details>
 `))

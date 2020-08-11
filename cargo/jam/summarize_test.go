@@ -49,11 +49,13 @@ other-dependency = "2.3.x"
 	id = "some-dependency"
 	stacks = ["some-stack"]
 	version = "1.2.3"
+	sha256 = "some-sha"
 
 [[metadata.dependencies]]
 	id = "other-dependency"
 	stacks = ["other-stack"]
 	version = "2.3.4"
+	sha256 = "other-sha"
 
 [[stacks]]
 	id = "some-stack"
@@ -102,11 +104,13 @@ second-dependency = "5.6.x"
 	id = "first-dependency"
 	stacks = ["first-stack"]
 	version = "4.5.6"
+	sha256 = "first-sha"
 
 [[metadata.dependencies]]
 	id = "second-dependency"
 	stacks = ["second-stack"]
 	version = "5.6.7"
+	sha256 = "second-sha"
 
 [[stacks]]
 	id = "first-stack"
@@ -242,63 +246,80 @@ version = "3.4.5"
 			Eventually(session).Should(gexec.Exit(0), func() string { return buffer.String() })
 
 			Expect(string(session.Out.Contents())).To(Equal(`# Meta Buildpack 3.4.5
+
 **ID:** meta-buildpack
 
+**Digest:** meta-buildpack-sha
+
+#### Included Buildpackages:
 | Name | ID | Version |
 |---|---|---|
 | Some Buildpack | some-buildpack | 1.2.3 |
 | Other Buildpack | other-buildpack | 2.3.4 |
 
 <details>
-<summary>More Information</summary>
+<summary>Order Groupings</summary>
 
-### Order Groupings
-| Name | ID | Version | Optional |
-|---|---|---|---|
-| Some Buildpack | some-buildpack | 1.2.3 | false |
-| Other Buildpack | other-buildpack | 2.3.4 | false |
+| ID | Version | Optional |
+|---|---|---|
+| some-buildpack | 1.2.3 | false |
+| other-buildpack | 2.3.4 | false |
 
-## Some Buildpack 1.2.3
+</details>
+
+---
+
+<details>
+<summary>Some Buildpack 1.2.3</summary>
+
 **ID:** some-buildpack
 
-### Dependencies
-| Name | Version | Stacks |
-|---|---|---|
-| other-dependency | 2.3.4 | other-stack |
-| some-dependency | 1.2.3 | some-stack |
+**Digest:** first-buildpack-sha
 
-### Default Dependencies
-| Name | Version |
+#### Supported Stacks:
+- other-stack
+- some-stack
+
+#### Default Dependency Versions:
+| ID | Version |
 |---|---|
 | other-dependency | 2.3.x |
 | some-dependency | 1.2.x |
 
-### Supported Stacks
-| Name |
-|---|
-| other-stack |
-| some-stack |
+#### Dependencies:
+| Name | Version | SHA256 |
+|---|---|---|
+| other-dependency | 2.3.4 | other-sha |
+| some-dependency | 1.2.3 | some-sha |
 
-## Other Buildpack 2.3.4
+---
+
+</details>
+
+<details>
+<summary>Other Buildpack 2.3.4</summary>
+
 **ID:** other-buildpack
 
-### Dependencies
-| Name | Version | Stacks |
-|---|---|---|
-| first-dependency | 4.5.6 | first-stack |
-| second-dependency | 5.6.7 | second-stack |
+**Digest:** second-buildpack-sha
 
-### Default Dependencies
-| Name | Version |
+#### Supported Stacks:
+- first-stack
+- second-stack
+
+#### Default Dependency Versions:
+| ID | Version |
 |---|---|
 | first-dependency | 4.5.x |
 | second-dependency | 5.6.x |
 
-### Supported Stacks
-| Name |
-|---|
-| first-stack |
-| second-stack |
+#### Dependencies:
+| Name | Version | SHA256 |
+|---|---|---|
+| first-dependency | 4.5.6 | first-sha |
+| second-dependency | 5.6.7 | second-sha |
+
+---
 
 </details>
 `))
@@ -352,7 +373,8 @@ version = "3.4.5"
 									"stacks": [
 										"some-stack"
 									],
-									"version": "1.2.3"
+									"version": "1.2.3",
+									"sha256": "some-sha"
 
 								},
 								{
@@ -360,7 +382,8 @@ version = "3.4.5"
 									"stacks": [
 										"other-stack"
 									],
-									"version": "2.3.4"
+									"version": "2.3.4",
+									"sha256": "other-sha"
 								}
 							]
 						},
@@ -387,14 +410,16 @@ version = "3.4.5"
 									"stacks": [
 										"first-stack"
 									],
-									"version": "4.5.6"
+									"version": "4.5.6",
+									"sha256": "first-sha"
 								},
 								{
 									"id": "second-dependency",
 									"stacks": [
 										"second-stack"
 									],
-									"version": "5.6.7"
+									"version": "5.6.7",
+									"sha256": "second-sha"
 								}
 							]
 						},
