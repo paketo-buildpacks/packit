@@ -32,6 +32,7 @@ func testFormatter(t *testing.T, context spec.G, it spec.S) {
 						ID:      "some-buildpack",
 						Name:    "Some Buildpack",
 						Version: "some-version",
+						SHA256:  "sha256:some-buildpack-sha",
 					},
 					Metadata: cargo.ConfigMetadata{
 						Dependencies: []cargo.ConfigMetadataDependency{
@@ -75,6 +76,8 @@ func testFormatter(t *testing.T, context spec.G, it spec.S) {
 
 **ID:** some-buildpack
 
+**Digest:** sha256:some-buildpack-sha
+
 #### Supported Stacks:
 - other-stack
 - some-stack
@@ -92,9 +95,6 @@ func testFormatter(t *testing.T, context spec.G, it spec.S) {
 | other-dependency | 2.3.4 | another-sha |
 | some-dependency | 1.2.3 | one-more-sha |
 
----
-
-</details>
 `))
 		})
 
@@ -106,6 +106,7 @@ func testFormatter(t *testing.T, context spec.G, it spec.S) {
 							ID:      "some-buildpack",
 							Name:    "Some Buildpack",
 							Version: "some-version",
+							SHA256:  "sha256:some-buildpack-sha",
 						},
 						Stacks: []cargo.ConfigStack{
 							{ID: "some-stack"},
@@ -117,13 +118,12 @@ func testFormatter(t *testing.T, context spec.G, it spec.S) {
 
 **ID:** some-buildpack
 
+**Digest:** sha256:some-buildpack-sha
+
 #### Supported Stacks:
 - other-stack
 - some-stack
 
----
-
-</details>
 `))
 			})
 		})
@@ -136,6 +136,7 @@ func testFormatter(t *testing.T, context spec.G, it spec.S) {
 							ID:      "some-buildpack",
 							Name:    "Some Buildpack",
 							Version: "some-version",
+							SHA256:  "sha256:some-buildpack-sha",
 						},
 						Metadata: cargo.ConfigMetadata{
 							Dependencies: []cargo.ConfigMetadataDependency{
@@ -175,6 +176,8 @@ func testFormatter(t *testing.T, context spec.G, it spec.S) {
 
 **ID:** some-buildpack
 
+**Digest:** sha256:some-buildpack-sha
+
 #### Default Dependency Versions:
 | ID | Version |
 |---|---|
@@ -188,9 +191,6 @@ func testFormatter(t *testing.T, context spec.G, it spec.S) {
 | other-dependency | 2.3.4 | another-sha |
 | some-dependency | 1.2.3 | one-more-sha |
 
----
-
-</details>
 `))
 			})
 		})
@@ -203,6 +203,7 @@ func testFormatter(t *testing.T, context spec.G, it spec.S) {
 							ID:      "order-buildpack",
 							Name:    "Order Buildpack",
 							Version: "order-version",
+							SHA256:  "sha256:order-buildpack-sha",
 						},
 						Order: []cargo.ConfigOrder{
 							{
@@ -257,6 +258,8 @@ func testFormatter(t *testing.T, context spec.G, it spec.S) {
 				Expect(buffer.String()).To(ContainSubstring(`# Order Buildpack order-version
 
 **ID:** order-buildpack
+
+**Digest:** sha256:order-buildpack-sha
 
 #### Included Buildpackages:
 | Name | ID | Version |

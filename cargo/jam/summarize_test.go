@@ -249,7 +249,7 @@ version = "3.4.5"
 
 **ID:** meta-buildpack
 
-**Digest:** meta-buildpack-sha
+**Digest:** sha256:manifest-sha
 
 #### Included Buildpackages:
 | Name | ID | Version |
@@ -273,8 +273,6 @@ version = "3.4.5"
 <summary>Some Buildpack 1.2.3</summary>
 
 **ID:** some-buildpack
-
-**Digest:** first-buildpack-sha
 
 #### Supported Stacks:
 - other-stack
@@ -300,8 +298,6 @@ version = "3.4.5"
 <summary>Other Buildpack 2.3.4</summary>
 
 **ID:** other-buildpack
-
-**Digest:** second-buildpack-sha
 
 #### Supported Stacks:
 - first-stack
