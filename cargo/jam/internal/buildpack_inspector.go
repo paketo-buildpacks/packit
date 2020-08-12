@@ -52,6 +52,8 @@ func (i BuildpackInspector) Dependencies(path string) ([]cargo.Config, error) {
 		return nil, err
 	}
 
+	buildpackageDigest := index.Manifests[0].Digest
+
 	var m struct {
 		Layers []struct {
 			Digest string `json:"digest"`
@@ -92,7 +94,14 @@ func (i BuildpackInspector) Dependencies(path string) ([]cargo.Config, error) {
 			return nil, err
 		}
 
+		if len(config.Order) > 0 {
+			config.Buildpack.SHA256 = buildpackageDigest
+		}
 		configs = append(configs, config)
+	}
+
+	if len(configs) == 1 {
+		configs[0].Buildpack.SHA256 = buildpackageDigest
 	}
 
 	return configs, nil

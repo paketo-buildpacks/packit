@@ -25,6 +25,7 @@ type ConfigBuildpack struct {
 	Name     string `toml:"name"               json:"name,omitempty"`
 	Version  string `toml:"version"            json:"version,omitempty"`
 	Homepage string `toml:"homepage,omitempty" json:"homepage,omitempty"`
+	SHA256   string `toml:"-"                  json:"-"`
 }
 
 type ConfigMetadata struct {

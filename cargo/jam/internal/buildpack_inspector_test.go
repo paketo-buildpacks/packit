@@ -291,6 +291,7 @@ version = "2.3.4"
 					Buildpack: cargo.ConfigBuildpack{
 						ID:      "meta-buildpack",
 						Version: "3.4.5",
+						SHA256:  "sha256:manifest-sha",
 					},
 					Order: []cargo.ConfigOrder{
 						{
