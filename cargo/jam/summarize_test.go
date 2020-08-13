@@ -245,11 +245,12 @@ version = "3.4.5"
 			Expect(err).NotTo(HaveOccurred())
 			Eventually(session).Should(gexec.Exit(0), func() string { return buffer.String() })
 
-			Expect(string(session.Out.Contents())).To(Equal(`# Meta Buildpack 3.4.5
+			Expect(string(session.Out.Contents())).To(Equal(`## Meta Buildpack 3.4.5` +
 
-**ID:** meta-buildpack
+				"\n\n**ID:** `meta-buildpack`\n\n" +
 
-**Digest:** sha256:manifest-sha
+				"**Digest:** `sha256:manifest-sha`" +
+				`
 
 #### Included Buildpackages:
 | Name | ID | Version |
@@ -270,11 +271,11 @@ version = "3.4.5"
 ---
 
 <details>
-<summary>Some Buildpack 1.2.3</summary>
+<summary>Some Buildpack 1.2.3</summary>` +
 
-**ID:** some-buildpack
+				"\n\n**ID:** `some-buildpack`\n\n" +
 
-#### Supported Stacks:
+				`#### Supported Stacks:
 - other-stack
 - some-stack
 
@@ -295,11 +296,11 @@ version = "3.4.5"
 </details>
 
 <details>
-<summary>Other Buildpack 2.3.4</summary>
+<summary>Other Buildpack 2.3.4</summary>` +
 
-**ID:** other-buildpack
+				"\n\n**ID:** `other-buildpack`\n\n" +
 
-#### Supported Stacks:
+				`#### Supported Stacks:
 - first-stack
 - second-stack
 

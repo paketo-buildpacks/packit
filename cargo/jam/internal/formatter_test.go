@@ -72,11 +72,13 @@ func testFormatter(t *testing.T, context spec.G, it spec.S) {
 					},
 				},
 			})
-			Expect(buffer.String()).To(Equal(`# Some Buildpack some-version
+			Expect(buffer.String()).To(Equal(`## Some Buildpack some-version` +
 
-**ID:** some-buildpack
+				"\n\n**ID:** `some-buildpack`\n\n" +
 
-**Digest:** sha256:some-buildpack-sha
+				"**Digest:** `sha256:some-buildpack-sha`" +
+
+				`
 
 #### Supported Stacks:
 - other-stack
@@ -114,11 +116,13 @@ func testFormatter(t *testing.T, context spec.G, it spec.S) {
 						},
 					},
 				})
-				Expect(buffer.String()).To(Equal(`# Some Buildpack some-version
+				Expect(buffer.String()).To(Equal(`## Some Buildpack some-version` +
 
-**ID:** some-buildpack
+					"\n\n**ID:** `some-buildpack`\n\n" +
 
-**Digest:** sha256:some-buildpack-sha
+					"**Digest:** `sha256:some-buildpack-sha`" +
+
+					`
 
 #### Supported Stacks:
 - other-stack
@@ -172,11 +176,13 @@ func testFormatter(t *testing.T, context spec.G, it spec.S) {
 						},
 					},
 				})
-				Expect(buffer.String()).To(Equal(`# Some Buildpack some-version
+				Expect(buffer.String()).To(Equal(`## Some Buildpack some-version` +
 
-**ID:** some-buildpack
+					"\n\n**ID:** `some-buildpack`\n\n" +
 
-**Digest:** sha256:some-buildpack-sha
+					"**Digest:** `sha256:some-buildpack-sha`" +
+
+					`
 
 #### Default Dependency Versions:
 | ID | Version |
@@ -255,11 +261,13 @@ func testFormatter(t *testing.T, context spec.G, it spec.S) {
 						},
 					},
 				})
-				Expect(buffer.String()).To(ContainSubstring(`# Order Buildpack order-version
+				Expect(buffer.String()).To(Equal(`## Order Buildpack order-version` +
 
-**ID:** order-buildpack
+					"\n\n**ID:** `order-buildpack`\n\n" +
 
-**Digest:** sha256:order-buildpack-sha
+					"**Digest:** `sha256:order-buildpack-sha`" +
+
+					`
 
 #### Included Buildpackages:
 | Name | ID | Version |
@@ -286,29 +294,29 @@ func testFormatter(t *testing.T, context spec.G, it spec.S) {
 ---
 
 <details>
-<summary>Some Buildpack 1.2.3</summary>
+<summary>Some Buildpack 1.2.3</summary>` +
 
-**ID:** some-buildpack
+					"\n\n**ID:** `some-buildpack`\n\n" +
 
----
-
-</details>
-
-<details>
-<summary>Optional Buildpack 2.3.4</summary>
-
-**ID:** optional-buildpack
-
----
+					`---
 
 </details>
 
 <details>
-<summary>Other Buildpack 3.4.5</summary>
+<summary>Optional Buildpack 2.3.4</summary>` +
 
-**ID:** other-buildpack
+					"\n\n**ID:** `optional-buildpack`\n\n" +
 
----
+					`---
+
+</details>
+
+<details>
+<summary>Other Buildpack 3.4.5</summary>` +
+
+					"\n\n**ID:** `other-buildpack`\n\n" +
+
+					`---
 
 </details>
 `))

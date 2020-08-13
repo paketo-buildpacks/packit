@@ -122,8 +122,8 @@ func (f Formatter) Markdown(configs []cargo.Config) {
 	//Language-family case
 	if (familyConfig.Buildpack != cargo.ConfigBuildpack{}) {
 		//Header section
-		fmt.Fprintf(f.writer, "# %s %s\n\n**ID:** %s\n\n", familyConfig.Buildpack.Name, familyConfig.Buildpack.Version, familyConfig.Buildpack.ID)
-		fmt.Fprintf(f.writer, "**Digest:** %s\n\n", familyConfig.Buildpack.SHA256)
+		fmt.Fprintf(f.writer, "## %s %s\n\n**ID:** `%s`\n\n", familyConfig.Buildpack.Name, familyConfig.Buildpack.Version, familyConfig.Buildpack.ID)
+		fmt.Fprintf(f.writer, "**Digest:** `%s`\n\n", familyConfig.Buildpack.SHA256)
 		fmt.Fprintf(f.writer, "#### Included Buildpackages:\n")
 		fmt.Fprintf(f.writer, "| Name | ID | Version |\n|---|---|---|\n")
 		for _, config := range configs {
@@ -142,15 +142,15 @@ func (f Formatter) Markdown(configs []cargo.Config) {
 
 		for _, config := range configs {
 			fmt.Fprintf(f.writer, "\n<details>\n<summary>%s %s</summary>\n", config.Buildpack.Name, config.Buildpack.Version)
-			fmt.Fprintf(f.writer, "\n**ID:** %s\n\n", config.Buildpack.ID)
+			fmt.Fprintf(f.writer, "\n**ID:** `%s`\n\n", config.Buildpack.ID)
 			printImplementation(f.writer, config)
 			fmt.Fprintf(f.writer, "---\n\n</details>\n")
 		}
 
 	} else { //Implementation case
-		fmt.Fprintf(f.writer, "# %s %s\n", configs[0].Buildpack.Name, configs[0].Buildpack.Version)
-		fmt.Fprintf(f.writer, "\n**ID:** %s\n\n", configs[0].Buildpack.ID)
-		fmt.Fprintf(f.writer, "**Digest:** %s\n\n", configs[0].Buildpack.SHA256)
+		fmt.Fprintf(f.writer, "## %s %s\n", configs[0].Buildpack.Name, configs[0].Buildpack.Version)
+		fmt.Fprintf(f.writer, "\n**ID:** `%s`\n\n", configs[0].Buildpack.ID)
+		fmt.Fprintf(f.writer, "**Digest:** `%s`\n\n", configs[0].Buildpack.SHA256)
 		printImplementation(f.writer, configs[0])
 	}
 
