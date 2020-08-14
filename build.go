@@ -63,6 +63,10 @@ type BuildResult struct {
 	// Processes is a list of processes that will be returned to the lifecycle to
 	// be executed during the launch phase.
 	Processes []Process
+
+	// Slices is a list of slices that will be returned to the lifecycle to be
+	// exported as separate layers during the export phase.
+	Slices []Slice
 }
 
 // Process represents a process to be run during the launch phase as described
@@ -84,6 +88,17 @@ type Process struct {
 
 	// Direct indicates whether the process should bypass the shell when invoked.
 	Direct bool `toml:"direct"`
+}
+
+// Slice represents a layer of the working directory to be exported during the
+// export phase. These slices help to optimize data transfer for files that are
+// commonly shared across applications.  Slices are described in the layers
+// section of the buildpack spec:
+// https://github.com/buildpacks/spec/blob/main/buildpack.md#layers.  The slice
+// fields are described in the specification of the launch.toml file:
+// https://github.com/buildpacks/spec/blob/main/buildpack.md#launchtoml-toml.
+type Slice struct {
+	Paths []string `toml:"paths"`
 }
 
 // BuildpackInfo is a representation of the basic information for a buildpack
@@ -235,11 +250,13 @@ func Build(f BuildFunc, options ...Option) {
 		}
 	}
 
-	if len(result.Processes) > 0 {
+	if len(result.Processes) > 0 || len(result.Slices) > 0 {
 		var launch struct {
 			Processes []Process `toml:"processes"`
+			Slices    []Slice   `toml:"slices"`
 		}
 		launch.Processes = result.Processes
+		launch.Slices = result.Slices
 
 		err = config.tomlWriter.Write(filepath.Join(layersPath, "launch.toml"), launch)
 		if err != nil {

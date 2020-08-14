@@ -233,33 +233,57 @@ some-key = "some-value"
 		})
 	})
 
-	it("persists a launch.toml", func() {
-		packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
-			return packit.BuildResult{
-				Processes: []packit.Process{
-					{
-						Type:    "some-type",
-						Command: "some-command",
-						Args:    []string{"some-arg"},
-						Direct:  true,
+	context("when there are processes in the result", func() {
+		it("persists a launch.toml", func() {
+			packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
+				return packit.BuildResult{
+					Processes: []packit.Process{
+						{
+							Type:    "some-type",
+							Command: "some-command",
+							Args:    []string{"some-arg"},
+							Direct:  true,
+						},
 					},
-				},
-			}, nil
-		}, packit.WithArgs([]string{binaryPath, layersDir, "", planPath}))
+				}, nil
+			}, packit.WithArgs([]string{binaryPath, layersDir, "", planPath}))
 
-		contents, err := ioutil.ReadFile(filepath.Join(layersDir, "launch.toml"))
-		Expect(err).NotTo(HaveOccurred())
+			contents, err := ioutil.ReadFile(filepath.Join(layersDir, "launch.toml"))
+			Expect(err).NotTo(HaveOccurred())
 
-		Expect(string(contents)).To(MatchTOML(`
-[[processes]]
-type = "some-type"
-command = "some-command"
-args = ["some-arg"]
-direct = true
-`))
+			Expect(string(contents)).To(MatchTOML(`
+	[[processes]]
+	type = "some-type"
+	command = "some-command"
+	args = ["some-arg"]
+	direct = true
+	`))
+		})
 	})
 
-	context("when there are no processes in the result", func() {
+	context("when there are slices in the result", func() {
+		it("persists a launch.toml", func() {
+			packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
+				return packit.BuildResult{
+					Slices: []packit.Slice{
+						{
+							Paths: []string{"some-slice"},
+						},
+					},
+				}, nil
+			}, packit.WithArgs([]string{binaryPath, layersDir, "", planPath}))
+
+			contents, err := ioutil.ReadFile(filepath.Join(layersDir, "launch.toml"))
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(string(contents)).To(MatchTOML(`
+	[[slices]]
+	paths = ["some-slice"]
+	`))
+		})
+	})
+
+	context("when there are no processes or slices in the result", func() {
 		it("does not persist a launch.toml", func() {
 			packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
 				return packit.BuildResult{}, nil
