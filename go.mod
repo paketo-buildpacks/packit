@@ -11,7 +11,7 @@ require (
 	github.com/mattn/go-runewidth v0.0.8 // indirect
 	github.com/onsi/gomega v1.10.1
 	github.com/sclevine/spec v1.4.0
-	github.com/ulikunitz/xz v0.5.7
+	github.com/ulikunitz/xz v0.5.8
 	golang.org/x/text v0.3.2 // indirect
 	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
 )
