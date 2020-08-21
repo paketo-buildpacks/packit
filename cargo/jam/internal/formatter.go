@@ -22,16 +22,6 @@ func NewFormatter(writer io.Writer) Formatter {
 
 type depKey [3]string
 
-func lookupName(configs []cargo.Config, id string) string {
-	for _, config := range configs {
-		if config.Buildpack.ID == id {
-			return config.Buildpack.Name
-		}
-	}
-
-	return ""
-}
-
 func printImplementation(writer io.Writer, config cargo.Config) {
 	if len(config.Stacks) > 0 {
 		sort.Slice(config.Stacks, func(i, j int) bool {

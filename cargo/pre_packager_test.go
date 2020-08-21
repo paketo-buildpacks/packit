@@ -2,6 +2,7 @@ package cargo_test
 
 import (
 	"bytes"
+	"fmt"
 	"testing"
 
 	"github.com/paketo-buildpacks/packit/cargo"
@@ -27,11 +28,11 @@ func testPrePackager(t *testing.T, context spec.G, it spec.S) {
 		bash = &fakes.Executable{}
 		bash.ExecuteCall.Stub = func(execution pexec.Execution) error {
 			if execution.Stdout != nil {
-				execution.Stdout.Write([]byte("hello from stdout"))
+				fmt.Fprint(execution.Stdout, "hello from stdout")
 			}
 
 			if execution.Stderr != nil {
-				execution.Stderr.Write([]byte("hello from stderr"))
+				fmt.Fprint(execution.Stderr, "hello from stderr")
 			}
 
 			return nil

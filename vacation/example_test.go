@@ -6,6 +6,8 @@ import (
 	"bytes"
 	"compress/gzip"
 	"fmt"
+	"io/ioutil"
+	"log"
 	"os"
 	"path/filepath"
 
@@ -13,354 +15,443 @@ import (
 	"github.com/ulikunitz/xz"
 )
 
+type ArchiveFile struct {
+	Name    string
+	Content []byte
+}
+
 func ExampleTarArchive() {
-	os.Mkdir("destination", os.ModePerm)
-	defer os.RemoveAll("destination")
-
 	buffer := bytes.NewBuffer(nil)
-
-	// Constructing a tar byte stream on buffer.
 	tw := tar.NewWriter(buffer)
 
-	tw.WriteHeader(&tar.Header{Name: "some-dir", Mode: 0755, Typeflag: tar.TypeDir})
-	tw.Write(nil)
+	files := []ArchiveFile{
+		{Name: "some-dir/"},
+		{Name: "some-dir/some-other-dir/"},
+		{Name: "some-dir/some-other-dir/some-file", Content: []byte("some-dir/some-other-dir/some-file")},
+		{Name: "first", Content: []byte("first")},
+		{Name: "second", Content: []byte("second")},
+		{Name: "third", Content: []byte("third")},
+	}
 
-	tw.WriteHeader(&tar.Header{Name: filepath.Join("some-dir", "some-other-dir"), Mode: 0755, Typeflag: tar.TypeDir})
-	tw.Write(nil)
+	for _, file := range files {
+		err := tw.WriteHeader(&tar.Header{Name: file.Name, Mode: 0755, Size: int64(len(file.Content))})
+		if err != nil {
+			log.Fatal(err)
+		}
 
-	nestedFile := filepath.Join("some-dir", "some-other-dir", "some-file")
-	tw.WriteHeader(&tar.Header{Name: nestedFile, Mode: 0755, Size: int64(len(nestedFile))})
-	tw.Write([]byte(nestedFile))
-
-	for _, file := range []string{"first", "second", "third"} {
-		tw.WriteHeader(&tar.Header{Name: file, Mode: 0755, Size: int64(len(file))})
-		tw.Write([]byte(file))
+		_, err = tw.Write(file.Content)
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 
 	tw.Close()
 
-	//Running decompression
-	vacation.NewTarArchive(bytes.NewReader(buffer.Bytes())).Decompress("destination")
+	destination, err := ioutil.TempDir("", "destination")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer os.RemoveAll(destination)
 
-	// Showing files in destination
-	var files []string
-	filepath.Walk("destination", func(path string, info os.FileInfo, err error) error {
+	archive := vacation.NewTarArchive(bytes.NewReader(buffer.Bytes()))
+	if err := archive.Decompress(destination); err != nil {
+		log.Fatal(err)
+	}
+
+	err = filepath.Walk(destination, func(path string, info os.FileInfo, err error) error {
 		if !info.IsDir() {
-			files = append(files, path)
+			rel, err := filepath.Rel(destination, path)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			fmt.Printf("%s\n", rel)
 			return nil
 		}
 		return nil
 	})
-
-	for _, f := range files {
-		fmt.Printf("%s\n", f)
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	// Output:
-	// destination/first
-	// destination/second
-	// destination/some-dir/some-other-dir/some-file
-	// destination/third
+	// first
+	// second
+	// some-dir/some-other-dir/some-file
+	// third
 }
 
 func ExampleTarArchive_StripComponents() {
-	os.Mkdir("destination", os.ModePerm)
-	defer os.RemoveAll("destination")
-
 	buffer := bytes.NewBuffer(nil)
-
-	// Constructing a tar byte stream on buffer.
 	tw := tar.NewWriter(buffer)
 
-	tw.WriteHeader(&tar.Header{Name: "some-dir", Mode: 0755, Typeflag: tar.TypeDir})
-	tw.Write(nil)
+	files := []ArchiveFile{
+		{Name: "some-dir/"},
+		{Name: "some-dir/some-other-dir/"},
+		{Name: "some-dir/some-other-dir/some-file", Content: []byte("some-dir/some-other-dir/some-file")},
+		{Name: "first", Content: []byte("first")},
+		{Name: "second", Content: []byte("second")},
+		{Name: "third", Content: []byte("third")},
+	}
 
-	tw.WriteHeader(&tar.Header{Name: filepath.Join("some-dir", "some-other-dir"), Mode: 0755, Typeflag: tar.TypeDir})
-	tw.Write(nil)
+	for _, file := range files {
+		err := tw.WriteHeader(&tar.Header{Name: file.Name, Mode: 0755, Size: int64(len(file.Content))})
+		if err != nil {
+			log.Fatal(err)
+		}
 
-	nestedFile := filepath.Join("some-dir", "some-other-dir", "some-file")
-	tw.WriteHeader(&tar.Header{Name: nestedFile, Mode: 0755, Size: int64(len(nestedFile))})
-	tw.Write([]byte(nestedFile))
-
-	for _, file := range []string{"first", "second", "third"} {
-		tw.WriteHeader(&tar.Header{Name: file, Mode: 0755, Size: int64(len(file))})
-		tw.Write([]byte(file))
+		_, err = tw.Write(file.Content)
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 
 	tw.Close()
 
-	//Running decompression
-	vacation.NewTarArchive(bytes.NewReader(buffer.Bytes())).StripComponents(1).Decompress("destination")
+	destination, err := ioutil.TempDir("", "destination")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer os.RemoveAll(destination)
 
-	// Showing files in destination
-	var files []string
-	filepath.Walk("destination", func(path string, info os.FileInfo, err error) error {
+	archive := vacation.NewTarArchive(bytes.NewReader(buffer.Bytes())).StripComponents(1)
+	if err := archive.Decompress(destination); err != nil {
+		log.Fatal(err)
+	}
+
+	err = filepath.Walk(destination, func(path string, info os.FileInfo, err error) error {
 		if !info.IsDir() {
-			files = append(files, path)
+			rel, err := filepath.Rel(destination, path)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			fmt.Printf("%s\n", rel)
 			return nil
 		}
 		return nil
 	})
-
-	for _, f := range files {
-		fmt.Printf("%s\n", f)
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	// Output:
-	// destination/some-other-dir/some-file
+	// some-other-dir/some-file
 }
 
 func ExampleTarGzipArchive() {
-	os.Mkdir("destination", os.ModePerm)
-	defer os.RemoveAll("destination")
-
 	buffer := bytes.NewBuffer(nil)
-
-	// Constructing a gzip tar byte stream on buffer.
 	gw := gzip.NewWriter(buffer)
 	tw := tar.NewWriter(gw)
 
-	tw.WriteHeader(&tar.Header{Name: "some-dir", Mode: 0755, Typeflag: tar.TypeDir})
-	tw.Write(nil)
+	files := []ArchiveFile{
+		{Name: "some-dir/"},
+		{Name: "some-dir/some-other-dir/"},
+		{Name: "some-dir/some-other-dir/some-file", Content: []byte("some-dir/some-other-dir/some-file")},
+		{Name: "first", Content: []byte("first")},
+		{Name: "second", Content: []byte("second")},
+		{Name: "third", Content: []byte("third")},
+	}
 
-	tw.WriteHeader(&tar.Header{Name: filepath.Join("some-dir", "some-other-dir"), Mode: 0755, Typeflag: tar.TypeDir})
-	tw.Write(nil)
+	for _, file := range files {
+		err := tw.WriteHeader(&tar.Header{Name: file.Name, Mode: 0755, Size: int64(len(file.Content))})
+		if err != nil {
+			log.Fatal(err)
+		}
 
-	nestedFile := filepath.Join("some-dir", "some-other-dir", "some-file")
-	tw.WriteHeader(&tar.Header{Name: nestedFile, Mode: 0755, Size: int64(len(nestedFile))})
-	tw.Write([]byte(nestedFile))
-
-	for _, file := range []string{"first", "second", "third"} {
-		tw.WriteHeader(&tar.Header{Name: file, Mode: 0755, Size: int64(len(file))})
-		tw.Write([]byte(file))
+		_, err = tw.Write(file.Content)
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 
 	tw.Close()
 	gw.Close()
 
-	//Running decompression
-	vacation.NewTarGzipArchive(bytes.NewReader(buffer.Bytes())).Decompress("destination")
+	destination, err := ioutil.TempDir("", "destination")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer os.RemoveAll(destination)
 
-	// Showing files in destination
-	var files []string
-	filepath.Walk("destination", func(path string, info os.FileInfo, err error) error {
+	archive := vacation.NewTarGzipArchive(bytes.NewReader(buffer.Bytes()))
+	if err := archive.Decompress(destination); err != nil {
+		log.Fatal(err)
+	}
+
+	err = filepath.Walk(destination, func(path string, info os.FileInfo, err error) error {
 		if !info.IsDir() {
-			files = append(files, path)
+			rel, err := filepath.Rel(destination, path)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			fmt.Printf("%s\n", rel)
 			return nil
 		}
 		return nil
 	})
-
-	for _, f := range files {
-		fmt.Printf("%s\n", f)
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	// Output:
-	// destination/first
-	// destination/second
-	// destination/some-dir/some-other-dir/some-file
-	// destination/third
+	// first
+	// second
+	// some-dir/some-other-dir/some-file
+	// third
 }
 
 func ExampleTarGzipArchive_StripComponents() {
-	os.Mkdir("destination", os.ModePerm)
-	defer os.RemoveAll("destination")
-
 	buffer := bytes.NewBuffer(nil)
-
-	// Constructing a gzip tar byte stream on buffer.
 	gw := gzip.NewWriter(buffer)
 	tw := tar.NewWriter(gw)
 
-	tw.WriteHeader(&tar.Header{Name: "some-dir", Mode: 0755, Typeflag: tar.TypeDir})
-	tw.Write(nil)
+	files := []ArchiveFile{
+		{Name: "some-dir/"},
+		{Name: "some-dir/some-other-dir/"},
+		{Name: "some-dir/some-other-dir/some-file", Content: []byte("some-dir/some-other-dir/some-file")},
+		{Name: "first", Content: []byte("first")},
+		{Name: "second", Content: []byte("second")},
+		{Name: "third", Content: []byte("third")},
+	}
 
-	tw.WriteHeader(&tar.Header{Name: filepath.Join("some-dir", "some-other-dir"), Mode: 0755, Typeflag: tar.TypeDir})
-	tw.Write(nil)
+	for _, file := range files {
+		err := tw.WriteHeader(&tar.Header{Name: file.Name, Mode: 0755, Size: int64(len(file.Content))})
+		if err != nil {
+			log.Fatal(err)
+		}
 
-	nestedFile := filepath.Join("some-dir", "some-other-dir", "some-file")
-	tw.WriteHeader(&tar.Header{Name: nestedFile, Mode: 0755, Size: int64(len(nestedFile))})
-	tw.Write([]byte(nestedFile))
-
-	for _, file := range []string{"first", "second", "third"} {
-		tw.WriteHeader(&tar.Header{Name: file, Mode: 0755, Size: int64(len(file))})
-		tw.Write([]byte(file))
+		_, err = tw.Write(file.Content)
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 
 	tw.Close()
 	gw.Close()
 
-	//Running decompression
-	vacation.NewTarGzipArchive(bytes.NewReader(buffer.Bytes())).StripComponents(1).Decompress("destination")
+	destination, err := ioutil.TempDir("", "destination")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer os.RemoveAll(destination)
 
-	// Showing files in destination
-	var files []string
-	filepath.Walk("destination", func(path string, info os.FileInfo, err error) error {
+	archive := vacation.NewTarGzipArchive(bytes.NewReader(buffer.Bytes())).StripComponents(1)
+	if err := archive.Decompress(destination); err != nil {
+		log.Fatal(err)
+	}
+
+	err = filepath.Walk(destination, func(path string, info os.FileInfo, err error) error {
 		if !info.IsDir() {
-			files = append(files, path)
+			rel, err := filepath.Rel(destination, path)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			fmt.Printf("%s\n", rel)
 			return nil
 		}
 		return nil
 	})
-
-	for _, f := range files {
-		fmt.Printf("%s\n", f)
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	// Output:
-	// destination/some-other-dir/some-file
+	// some-other-dir/some-file
 }
 
 func ExampleTarXZArchive() {
-	os.Mkdir("destination", os.ModePerm)
-	defer os.RemoveAll("destination")
-
 	buffer := bytes.NewBuffer(nil)
+	xw, err := xz.NewWriter(buffer)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	// Constructing a xz tar byte stream on buffer.
-	xw, _ := xz.NewWriter(buffer)
 	tw := tar.NewWriter(xw)
 
-	tw.WriteHeader(&tar.Header{Name: "some-dir", Mode: 0755, Typeflag: tar.TypeDir})
-	tw.Write(nil)
+	files := []ArchiveFile{
+		{Name: "some-dir/"},
+		{Name: "some-dir/some-other-dir/"},
+		{Name: "some-dir/some-other-dir/some-file", Content: []byte("some-dir/some-other-dir/some-file")},
+		{Name: "first", Content: []byte("first")},
+		{Name: "second", Content: []byte("second")},
+		{Name: "third", Content: []byte("third")},
+	}
 
-	tw.WriteHeader(&tar.Header{Name: filepath.Join("some-dir", "some-other-dir"), Mode: 0755, Typeflag: tar.TypeDir})
-	tw.Write(nil)
+	for _, file := range files {
+		err := tw.WriteHeader(&tar.Header{Name: file.Name, Mode: 0755, Size: int64(len(file.Content))})
+		if err != nil {
+			log.Fatal(err)
+		}
 
-	nestedFile := filepath.Join("some-dir", "some-other-dir", "some-file")
-	tw.WriteHeader(&tar.Header{Name: nestedFile, Mode: 0755, Size: int64(len(nestedFile))})
-	tw.Write([]byte(nestedFile))
-
-	for _, file := range []string{"first", "second", "third"} {
-		tw.WriteHeader(&tar.Header{Name: file, Mode: 0755, Size: int64(len(file))})
-		tw.Write([]byte(file))
+		_, err = tw.Write(file.Content)
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 
 	tw.Close()
 	xw.Close()
 
-	//Running decompression
-	vacation.NewTarXZArchive(bytes.NewReader(buffer.Bytes())).Decompress("destination")
+	destination, err := ioutil.TempDir("", "destination")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer os.RemoveAll(destination)
 
-	// Showing files in destination
-	var files []string
-	filepath.Walk("destination", func(path string, info os.FileInfo, err error) error {
+	archive := vacation.NewTarXZArchive(bytes.NewReader(buffer.Bytes()))
+	if err := archive.Decompress(destination); err != nil {
+		log.Fatal(err)
+	}
+
+	err = filepath.Walk(destination, func(path string, info os.FileInfo, err error) error {
 		if !info.IsDir() {
-			files = append(files, path)
+			rel, err := filepath.Rel(destination, path)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			fmt.Printf("%s\n", rel)
 			return nil
 		}
 		return nil
 	})
-
-	for _, f := range files {
-		fmt.Printf("%s\n", f)
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	// Output:
-	// destination/first
-	// destination/second
-	// destination/some-dir/some-other-dir/some-file
-	// destination/third
+	// first
+	// second
+	// some-dir/some-other-dir/some-file
+	// third
 }
 
 func ExampleTarXZArchive_StripComponents() {
-	os.Mkdir("destination", os.ModePerm)
-	defer os.RemoveAll("destination")
-
 	buffer := bytes.NewBuffer(nil)
+	xw, err := xz.NewWriter(buffer)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	// Constructing a gzip tar byte stream on buffer.
-	xw, _ := xz.NewWriter(buffer)
 	tw := tar.NewWriter(xw)
 
-	tw.WriteHeader(&tar.Header{Name: "some-dir", Mode: 0755, Typeflag: tar.TypeDir})
-	tw.Write(nil)
+	files := []ArchiveFile{
+		{Name: "some-dir/"},
+		{Name: "some-dir/some-other-dir/"},
+		{Name: "some-dir/some-other-dir/some-file", Content: []byte("some-dir/some-other-dir/some-file")},
+		{Name: "first", Content: []byte("first")},
+		{Name: "second", Content: []byte("second")},
+		{Name: "third", Content: []byte("third")},
+	}
 
-	tw.WriteHeader(&tar.Header{Name: filepath.Join("some-dir", "some-other-dir"), Mode: 0755, Typeflag: tar.TypeDir})
-	tw.Write(nil)
+	for _, file := range files {
+		err := tw.WriteHeader(&tar.Header{Name: file.Name, Mode: 0755, Size: int64(len(file.Content))})
+		if err != nil {
+			log.Fatal(err)
+		}
 
-	nestedFile := filepath.Join("some-dir", "some-other-dir", "some-file")
-	tw.WriteHeader(&tar.Header{Name: nestedFile, Mode: 0755, Size: int64(len(nestedFile))})
-	tw.Write([]byte(nestedFile))
-
-	for _, file := range []string{"first", "second", "third"} {
-		tw.WriteHeader(&tar.Header{Name: file, Mode: 0755, Size: int64(len(file))})
-		tw.Write([]byte(file))
+		_, err = tw.Write(file.Content)
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 
 	tw.Close()
 	xw.Close()
 
-	//Running decompression
-	vacation.NewTarXZArchive(bytes.NewReader(buffer.Bytes())).StripComponents(1).Decompress("destination")
+	destination, err := ioutil.TempDir("", "destination")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer os.RemoveAll(destination)
 
-	// Showing files in destination
-	var files []string
-	filepath.Walk("destination", func(path string, info os.FileInfo, err error) error {
+	archive := vacation.NewTarXZArchive(bytes.NewReader(buffer.Bytes())).StripComponents(1)
+	if err := archive.Decompress(destination); err != nil {
+		log.Fatal(err)
+	}
+
+	err = filepath.Walk(destination, func(path string, info os.FileInfo, err error) error {
 		if !info.IsDir() {
-			files = append(files, path)
+			rel, err := filepath.Rel(destination, path)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			fmt.Printf("%s\n", rel)
 			return nil
 		}
 		return nil
 	})
-
-	for _, f := range files {
-		fmt.Printf("%s\n", f)
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	// Output:
-	// destination/some-other-dir/some-file
+	// some-other-dir/some-file
 }
 
 func ExampleZipArchive() {
-	os.Mkdir("destination", os.ModePerm)
-	defer os.RemoveAll("destination")
-
 	buffer := bytes.NewBuffer(nil)
-
-	// Constructing a zip byte stream on buffer.
 	zw := zip.NewWriter(buffer)
 
-	zw.Create("some-dir/")
+	files := []ArchiveFile{
+		{Name: "some-dir/"},
+		{Name: "some-dir/some-other-dir/"},
+		{Name: "some-dir/some-other-dir/some-file", Content: []byte("some-dir/some-other-dir/some-file")},
+		{Name: "first", Content: []byte("first")},
+		{Name: "second", Content: []byte("second")},
+		{Name: "third", Content: []byte("third")},
+	}
 
-	zw.Create(fmt.Sprintf("%s/", filepath.Join("some-dir", "some-other-dir")))
+	for _, file := range files {
+		header := &zip.FileHeader{Name: file.Name}
+		header.SetMode(0755)
 
-	fileHeader := &zip.FileHeader{Name: filepath.Join("some-dir", "some-other-dir", "some-file")}
-	fileHeader.SetMode(0644)
+		f, err := zw.CreateHeader(header)
+		if err != nil {
+			log.Fatal(err)
+		}
 
-	nestedFile, _ := zw.CreateHeader(fileHeader)
-	nestedFile.Write([]byte("nested file"))
-
-	for _, name := range []string{"first", "second", "third"} {
-		fileHeader := &zip.FileHeader{Name: name}
-		fileHeader.SetMode(0755)
-
-		f, _ := zw.CreateHeader(fileHeader)
-		f.Write([]byte(name))
+		if _, err := f.Write(file.Content); err != nil {
+			log.Fatal(err)
+		}
 	}
 
 	zw.Close()
 
-	//Running decompression
-	vacation.NewZipArchive(bytes.NewReader(buffer.Bytes())).Decompress("destination")
+	destination, err := ioutil.TempDir("", "destination")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer os.RemoveAll(destination)
 
-	// Showing files in destination
-	var files []string
-	filepath.Walk("destination", func(path string, info os.FileInfo, err error) error {
+	archive := vacation.NewZipArchive(bytes.NewReader(buffer.Bytes()))
+	if err := archive.Decompress(destination); err != nil {
+		log.Fatal(err)
+	}
+
+	err = filepath.Walk(destination, func(path string, info os.FileInfo, err error) error {
 		if !info.IsDir() {
-			files = append(files, path)
+			rel, err := filepath.Rel(destination, path)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			fmt.Printf("%s\n", rel)
 			return nil
 		}
 		return nil
 	})
-
-	for _, f := range files {
-		fmt.Printf("%s\n", f)
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	// Output:
-	// destination/first
-	// destination/second
-	// destination/some-dir/some-other-dir/some-file
-	// destination/third
+	// first
+	// second
+	// some-dir/some-other-dir/some-file
+	// third
 }
