@@ -134,11 +134,13 @@ type BuildpackPlanEntry struct {
 
 	// Version if the version contraint that defines what would be an acceptable
 	// dependency provided by the buildpack.
+	//
+	// Deprecated: Retrieve version information from Metadata instead.
 	Version string `toml:"version"`
 
 	// Metadata is an unspecified field allowing buildpacks to communicate extra
 	// details about their requirement. Examples of this type of metadata might
-	// include details about what source was used to decide the Version
+	// include details about what source was used to decide the version
 	// constraint for a requirement.
 	Metadata map[string]interface{} `toml:"metadata"`
 }
