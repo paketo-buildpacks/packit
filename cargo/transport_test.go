@@ -32,7 +32,7 @@ func testTransport(t *testing.T, context spec.G, it spec.S) {
 				server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 					switch req.URL.Path {
 					case "/some-bundle":
-						w.Write([]byte("some-bundle-contents"))
+						fmt.Fprint(w, "some-bundle-contents")
 					default:
 						http.NotFound(w, req)
 					}

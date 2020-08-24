@@ -225,7 +225,8 @@ func testPack(t *testing.T, context spec.G, it spec.S) {
 					if req.URL.Path != "/some-dependency.tgz" {
 						http.NotFound(w, req)
 					}
-					w.Write([]byte("dependency-contents"))
+
+					fmt.Fprint(w, "dependency-contents")
 				}))
 
 				config, err := cargo.NewBuildpackParser().Parse(filepath.Join(buildpackDir, "buildpack.toml"))
