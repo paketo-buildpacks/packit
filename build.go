@@ -178,7 +178,10 @@ func Build(f BuildFunc, options ...Option) {
 		return
 	}
 
-	cnbPath := filepath.Clean(strings.TrimSuffix(config.args[0], filepath.Join("bin", "build")))
+	cnbPath := os.Getenv("CNB_BUILDPACK_DIR")
+	if cnbPath == "" {
+		cnbPath = filepath.Clean(strings.TrimSuffix(config.args[0], filepath.Join("bin", "build")))
+	}
 
 	var buildpackInfo struct {
 		Buildpack BuildpackInfo `toml:"buildpack"`
