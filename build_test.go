@@ -334,7 +334,33 @@ some-key = "some-value"
 		})
 	})
 
-	context("when there are no processes or slices in the result", func() {
+	context("when there are labels in the result", func() {
+		it("persists a launch.toml", func() {
+			packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
+				return packit.BuildResult{
+					Labels: map[string]string{
+						"some key":       "some value",
+						"some-other-key": "some-other-value",
+					},
+				}, nil
+			}, packit.WithArgs([]string{binaryPath, layersDir, "", planPath}))
+
+			contents, err := ioutil.ReadFile(filepath.Join(layersDir, "launch.toml"))
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(string(contents)).To(MatchTOML(`
+	[[labels]]
+	key = "some key"
+	value = "some value"
+
+	[[labels]]
+	key = "some-other-key"
+	value = "some-other-value"
+	`))
+		})
+	})
+
+	context("when there are no processes, slices or labels in the result", func() {
 		it("does not persist a launch.toml", func() {
 			packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
 				return packit.BuildResult{}, nil

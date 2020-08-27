@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/BurntSushi/toml"
@@ -67,6 +68,10 @@ type BuildResult struct {
 	// Slices is a list of slices that will be returned to the lifecycle to be
 	// exported as separate layers during the export phase.
 	Slices []Slice
+
+	// Labels is a map of key-value pairs that will be returned to the lifecycle to be
+	// added as config label on the image metadata. Keys must be unique.
+	Labels map[string]string `toml:"labels"`
 }
 
 // Process represents a process to be run during the launch phase as described
@@ -255,13 +260,34 @@ func Build(f BuildFunc, options ...Option) {
 		}
 	}
 
-	if len(result.Processes) > 0 || len(result.Slices) > 0 {
+	if len(result.Processes) > 0 ||
+		len(result.Slices) > 0 ||
+		len(result.Labels) > 0 {
+
+		type label struct {
+			Key   string `toml:"key"`
+			Value string `toml:"value"`
+		}
+
 		var launch struct {
 			Processes []Process `toml:"processes"`
 			Slices    []Slice   `toml:"slices"`
+			Labels    []label   `toml:"labels"`
 		}
+
 		launch.Processes = result.Processes
 		launch.Slices = result.Slices
+
+		if len(result.Labels) > 0 {
+			launch.Labels = []label{}
+			for k, v := range result.Labels {
+				launch.Labels = append(launch.Labels, label{Key: k, Value: v})
+			}
+
+			sort.Slice(launch.Labels, func(i, j int) bool {
+				return launch.Labels[i].Key < launch.Labels[j].Key
+			})
+		}
 
 		err = config.tomlWriter.Write(filepath.Join(layersPath, "launch.toml"), launch)
 		if err != nil {
