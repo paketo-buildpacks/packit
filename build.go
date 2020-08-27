@@ -11,6 +11,10 @@ import (
 	"github.com/paketo-buildpacks/packit/internal"
 )
 
+const (
+	ProcessEnvLayerName = "packit-process-launch"
+)
+
 // BuildContext provides the contextual details that are made available by the
 // buildpack lifecycle during the build phase. This context is populated by the
 // Build function and passed to BuildFunc during execution.
@@ -93,6 +97,9 @@ type Process struct {
 
 	// Direct indicates whether the process should bypass the shell when invoked.
 	Direct bool `toml:"direct"`
+
+	// Env is the set of environment variables made available to the launch process.
+	Env Environment `toml:"-"`
 }
 
 // Slice represents a layer of the working directory to be exported during the
@@ -194,14 +201,15 @@ func Build(f BuildFunc, options ...Option) {
 		return
 	}
 
+	buildpackLayers := Layers{
+		Path: layersPath,
+	}
 	result, err := f(BuildContext{
-		CNBPath:    cnbPath,
-		Stack:      os.Getenv("CNB_STACK_ID"),
-		WorkingDir: pwd,
-		Plan:       plan,
-		Layers: Layers{
-			Path: layersPath,
-		},
+		CNBPath:       cnbPath,
+		Stack:         os.Getenv("CNB_STACK_ID"),
+		WorkingDir:    pwd,
+		Plan:          plan,
+		Layers:        buildpackLayers,
 		BuildpackInfo: buildpackInfo.Buildpack,
 	})
 	if err != nil {
@@ -287,6 +295,52 @@ func Build(f BuildFunc, options ...Option) {
 		}
 
 		err = config.tomlWriter.Write(filepath.Join(layersPath, "launch.toml"), launch)
+		if err != nil {
+			config.exitHandler.Error(err)
+			return
+		}
+	}
+
+	setupProcessEnvs(result, buildpackLayers, config)
+}
+
+// Creates a special launch layer to house process specific env vars
+// Though processes can exist independent of a layer, the spec only allows
+// buildpacks to implement process specific env vars via a launch layer.
+func setupProcessEnvs(result BuildResult, layers Layers, config OptionConfig) {
+	exists := false
+
+	for _, process := range result.Processes {
+		if process.Env != nil {
+			exists = true
+			break
+		}
+	}
+
+	if !exists {
+		return
+	}
+
+	launchLayer, err := layers.Get(ProcessEnvLayerName, LaunchLayer)
+	if err != nil {
+		config.exitHandler.Error(err)
+		return
+	}
+
+	err = launchLayer.Reset()
+	if err != nil {
+		config.exitHandler.Error(err)
+		return
+	}
+
+	err = config.tomlWriter.Write(filepath.Join(layers.Path, fmt.Sprintf("%s.toml", launchLayer.Name)), launchLayer)
+	if err != nil {
+		config.exitHandler.Error(err)
+		return
+	}
+
+	for _, process := range result.Processes {
+		err = config.envWriter.Write(filepath.Join(launchLayer.Path, "env.launch", process.Type), process.Env)
 		if err != nil {
 			config.exitHandler.Error(err)
 			return
