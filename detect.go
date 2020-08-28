@@ -106,8 +106,8 @@ func Detect(f DetectFunc, options ...Option) {
 		return
 	}
 
-	cnbPath := os.Getenv("CNB_BUILDPACK_DIR")
-	if cnbPath == "" {
+	cnbPath, ok := os.LookupEnv("CNB_BUILDPACK_DIR")
+	if !ok {
 		cnbPath = filepath.Clean(strings.TrimSuffix(config.args[0], filepath.Join("bin", "detect")))
 	}
 
