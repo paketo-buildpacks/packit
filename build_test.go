@@ -25,6 +25,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 		layersDir   string
 		planPath    string
 		cnbDir      string
+		envCnbDir   string
 		binaryPath  string
 		exitHandler *fakes.ExitHandler
 	)
@@ -64,13 +65,18 @@ some-key = "some-value"
 		cnbDir, err = ioutil.TempDir("", "cnb")
 		Expect(err).NotTo(HaveOccurred())
 
-		Expect(ioutil.WriteFile(filepath.Join(cnbDir, "buildpack.toml"), []byte(`
+		envCnbDir, err = ioutil.TempDir("", "envCnb")
+		Expect(err).NotTo(HaveOccurred())
+
+		bpTOML := []byte(`
 [buildpack]
 id = "some-id"
 name = "some-name"
 version = "some-version"
 clear-env = false
-`), 0644)).To(Succeed())
+`)
+		Expect(ioutil.WriteFile(filepath.Join(cnbDir, "buildpack.toml"), bpTOML, 0644)).To(Succeed())
+		Expect(ioutil.WriteFile(filepath.Join(envCnbDir, "buildpack.toml"), bpTOML, 0644)).To(Succeed())
 
 		binaryPath = filepath.Join(cnbDir, "bin", "build")
 
@@ -206,6 +212,51 @@ some-key = "some-value"
 			})
 		})
 
+		context("when the CNB_BUILDPACK_DIR environment variable is set", func() {
+			it.Before(func() {
+				os.Setenv("CNB_BUILDPACK_DIR", envCnbDir)
+			})
+
+			it.After(func() {
+				os.Unsetenv("CNB_BUILDPACK_DIR")
+			})
+
+			it("sets the correct value for CNBdir in the Build context", func() {
+
+				var context packit.BuildContext
+
+				packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
+					context = ctx
+
+					return packit.BuildResult{}, nil
+				}, packit.WithArgs([]string{binaryPath, layersDir, "", planPath}))
+
+				Expect(context).To(Equal(packit.BuildContext{
+					CNBPath:    envCnbDir,
+					Stack:      "some-stack",
+					WorkingDir: tmpDir,
+					Plan: packit.BuildpackPlan{
+						Entries: []packit.BuildpackPlanEntry{
+							{
+								Name:    "some-entry",
+								Version: "some-version",
+								Metadata: map[string]interface{}{
+									"some-key": "some-value",
+								},
+							},
+						},
+					},
+					Layers: packit.Layers{
+						Path: layersDir,
+					},
+					BuildpackInfo: packit.BuildpackInfo{
+						ID:      "some-id",
+						Name:    "some-name",
+						Version: "some-version",
+					},
+				}))
+			})
+		})
 		context("failures", func() {
 			context("when getting the layer toml list", func() {
 				var unremovableTOMLPath string

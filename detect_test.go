@@ -24,6 +24,7 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 		workingDir  string
 		tmpDir      string
 		cnbDir      string
+		cnbEnvDir   string
 		binaryPath  string
 		exitHandler *fakes.ExitHandler
 	)
@@ -44,15 +45,21 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 		cnbDir, err = ioutil.TempDir("", "cnb")
 		Expect(err).NotTo(HaveOccurred())
 
+		//Separate, but valid CNB dir for testing env parsing
+		cnbEnvDir, err = ioutil.TempDir("", "cnbEnv")
+		Expect(err).NotTo(HaveOccurred())
+
 		binaryPath = filepath.Join(cnbDir, "bin", "detect")
 
-		Expect(ioutil.WriteFile(filepath.Join(cnbDir, "buildpack.toml"), []byte(`
+		bpTOMLContent := []byte(`
 [buildpack]
 id = "some-id"
 name = "some-name"
 version = "some-version"
 clear-env = false
-`), 0644)).To(Succeed())
+`)
+		Expect(ioutil.WriteFile(filepath.Join(cnbDir, "buildpack.toml"), bpTOMLContent, 0644)).To(Succeed())
+		Expect(ioutil.WriteFile(filepath.Join(cnbEnvDir, "buildpack.toml"), bpTOMLContent, 0644)).To(Succeed())
 
 		exitHandler = &fakes.ExitHandler{}
 	})
@@ -216,6 +223,39 @@ some-key = "some-value"
 	[or.requires.metadata]
 	  some-another-key = "some-another-value"
 `))
+	})
+
+	context("when CNB_BUILDPACK_DIR is set", func() {
+		var filePath string
+
+		it.Before(func() {
+			filePath = filepath.Join(os.TempDir(), "buildplan.toml")
+			Expect(os.Setenv("CNB_BUILDPACK_DIR", cnbEnvDir)).To(Succeed())
+		})
+
+		it.After(func() {
+			Expect(os.Unsetenv("CNB_BUILDPACK_DIR")).To(Succeed())
+		})
+
+		it("the Detect context receives the correct value", func() {
+			var context packit.DetectContext
+
+			packit.Detect(func(ctx packit.DetectContext) (packit.DetectResult, error) {
+				context = ctx
+
+				return packit.DetectResult{}, nil
+			}, packit.WithArgs([]string{binaryPath, "", filePath}))
+
+			Expect(context).To(Equal(packit.DetectContext{
+				WorkingDir: tmpDir,
+				CNBPath:    cnbEnvDir,
+				BuildpackInfo: packit.BuildpackInfo{
+					ID:      "some-id",
+					Name:    "some-name",
+					Version: "some-version",
+				},
+			}))
+		})
 	})
 
 	context("when the DetectFunc returns an error", func() {

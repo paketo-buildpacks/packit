@@ -106,7 +106,10 @@ func Detect(f DetectFunc, options ...Option) {
 		return
 	}
 
-	cnbPath := filepath.Clean(strings.TrimSuffix(config.args[0], filepath.Join("bin", "detect")))
+	cnbPath, ok := os.LookupEnv("CNB_BUILDPACK_DIR")
+	if !ok {
+		cnbPath = filepath.Clean(strings.TrimSuffix(config.args[0], filepath.Join("bin", "detect")))
+	}
 
 	var buildpackInfo struct {
 		Buildpack BuildpackInfo `toml:"buildpack"`
