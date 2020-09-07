@@ -9,7 +9,7 @@ require (
 	github.com/fatih/color v1.9.0 // indirect
 	github.com/kr/pretty v0.2.0 // indirect
 	github.com/mattn/go-runewidth v0.0.8 // indirect
-	github.com/onsi/gomega v1.10.1
+	github.com/onsi/gomega v1.10.2
 	github.com/sclevine/spec v1.4.0
 	github.com/ulikunitz/xz v0.5.8
 	golang.org/x/text v0.3.2 // indirect
