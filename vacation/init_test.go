@@ -9,6 +9,10 @@ import (
 
 func TestVacation(t *testing.T) {
 	suite := spec.New("vacation", spec.Report(report.Terminal{}))
-	suite("Vacation", testVacation)
+	suite("VacationArchive", testVacationArchive)
+	suite("VacationTar", testVacationTar)
+	suite("VacationTarGzip", testVacationTarGzip)
+	suite("VacationTarXZ", testVacationTarXZ)
+	suite("VacationZip", testVacationZip)
 	suite.Run(t)
 }
