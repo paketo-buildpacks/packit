@@ -99,6 +99,23 @@ func testPexec(t *testing.T, context spec.G, it spec.S) {
 			})
 		})
 
+		context("when the executable is on the PATH given as an argument", func() {
+			it.Before(func() {
+				os.Setenv("PATH", "some-path")
+			})
+
+			it("executes the given arguments against the executable", func() {
+				err := executable.Execute(pexec.Execution{
+					Args:   []string{"something"},
+					Env:    []string{fmt.Sprintf("PATH=%s", filepath.Dir(fakeCLI))},
+					Stdout: stdout,
+				})
+				Expect(err).NotTo(HaveOccurred())
+				Expect(stdout).To(ContainSubstring(fmt.Sprintf("Arguments: [%s something]", fakeCLI)))
+				Expect(os.Getenv("PATH")).To(Equal("some-path"))
+			})
+		})
+
 		context("failure cases", func() {
 			context("when the executable cannot be found on the path", func() {
 				it.Before(func() {
