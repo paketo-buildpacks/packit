@@ -272,7 +272,7 @@ func testVacationArchive(t *testing.T, context spec.G, it spec.S) {
 
 				it("returns an error", func() {
 					err := archive.Decompress(tempDir)
-					Expect(err).To(MatchError(ContainSubstring("Unsupported archive type:")))
+					Expect(err).To(MatchError(ContainSubstring("unsupported archive type:")))
 				})
 			})
 		})

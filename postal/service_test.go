@@ -11,7 +11,6 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 	"time"
 
@@ -337,7 +336,11 @@ version = "this is super not semver"
 
 			context("when the file contents are empty", func() {
 				it.Before(func() {
-					transport.DropCall.Returns.ReadCloser = ioutil.NopCloser(strings.NewReader(""))
+					buffer := bytes.NewBuffer(nil)
+					transport.DropCall.Returns.ReadCloser = ioutil.NopCloser(buffer)
+
+					sum := sha256.Sum256(buffer.Bytes())
+					dependencySHA = hex.EncodeToString(sum[:])
 				})
 
 				it("fails to create a gzip reader", func() {
@@ -349,7 +352,7 @@ version = "this is super not semver"
 						Version: "1.2.3",
 					}, "some-cnb-path", tmpDir)
 
-					Expect(err).To(MatchError(ContainSubstring("failed to create gzip reader")))
+					Expect(err).To(MatchError(ContainSubstring("unsupported archive type")))
 				})
 			})
 
@@ -364,6 +367,9 @@ version = "this is super not semver"
 					Expect(gzipWriter.Close()).To(Succeed())
 
 					transport.DropCall.Returns.ReadCloser = ioutil.NopCloser(buffer)
+
+					sum := sha256.Sum256(buffer.Bytes())
+					dependencySHA = hex.EncodeToString(sum[:])
 				})
 
 				it("fails to create a tar reader", func() {
