@@ -178,7 +178,7 @@ func (a Archive) Decompress(destination string) error {
 	case "application/zip":
 		return NewZipArchive(bufferedReader).Decompress(destination)
 	default:
-		return fmt.Errorf("Unsupported archive type: %s", mime.String())
+		return fmt.Errorf("unsupported archive type: %s", mime.String())
 	}
 }
 

@@ -104,7 +104,7 @@ func (s Service) Install(dependency Dependency, cnbPath, layerPath string) error
 
 	validatedReader := cargo.NewValidatedReader(bundle, dependency.SHA256)
 
-	err = vacation.NewTarGzipArchive(validatedReader).Decompress(layerPath)
+	err = vacation.NewArchive(validatedReader).Decompress(layerPath)
 	if err != nil {
 		return err
 	}
