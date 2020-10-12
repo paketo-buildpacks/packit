@@ -38,7 +38,7 @@ func testBuildpackInspector(t *testing.T, context spec.G, it spec.S) {
 id = "some-buildpack"
 version = "1.2.3"
 
-[metadata.default-versions]
+[metadata.default_versions]
 some-dependency = "1.2.x"
 other-dependency = "2.3.x"
 
@@ -90,7 +90,7 @@ other-dependency = "2.3.x"
 id = "other-buildpack"
 version = "2.3.4"
 
-[metadata.default-versions]
+[metadata.default_versions]
 first-dependency = "4.5.x"
 second-dependency = "5.6.x"
 

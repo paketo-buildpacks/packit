@@ -41,7 +41,7 @@ id = "some-buildpack"
 name = "Some Buildpack"
 version = "1.2.3"
 
-[metadata.default-versions]
+[metadata.default_versions]
 some-dependency = "1.2.x"
 other-dependency = "2.3.x"
 
@@ -96,7 +96,7 @@ id = "other-buildpack"
 name = "Other Buildpack"
 version = "2.3.4"
 
-[metadata.default-versions]
+[metadata.default_versions]
 first-dependency = "4.5.x"
 second-dependency = "5.6.x"
 
@@ -361,7 +361,7 @@ version = "3.4.5"
 							"version": "1.2.3"
 						},
 						"metadata": {
-							"default-versions": {
+							"default_versions": {
 								"some-dependency": "1.2.x",
 								"other-dependency": "2.3.x"
 							},
@@ -398,7 +398,7 @@ version = "3.4.5"
 							"version": "2.3.4"
 						},
 						"metadata": {
-							"default-versions": {
+							"default_versions": {
 								"first-dependency": "4.5.x",
 								"second-dependency": "5.6.x"
 							},

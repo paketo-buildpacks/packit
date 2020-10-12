@@ -29,11 +29,11 @@ type ConfigBuildpack struct {
 }
 
 type ConfigMetadata struct {
-	IncludeFiles    []string                   `toml:"include_files"         json:"include_files,omitempty"`
-	PrePackage      string                     `toml:"pre_package"           json:"pre_package,omitempty"`
-	DefaultVersions map[string]string          `toml:"default-versions"      json:"default-versions,omitempty"`
-	Dependencies    []ConfigMetadataDependency `toml:"dependencies"          json:"dependencies,omitempty"`
-	Unstructured    map[string]interface{}     `toml:"-"                     json:"-"`
+	IncludeFiles    []string                   `toml:"include_files"    json:"include_files,omitempty"`
+	PrePackage      string                     `toml:"pre_package"      json:"pre_package,omitempty"`
+	DefaultVersions map[string]string          `toml:"default_versions" json:"default_versions,omitempty"`
+	Dependencies    []ConfigMetadataDependency `toml:"dependencies"     json:"dependencies,omitempty"`
+	Unstructured    map[string]interface{}     `toml:"-"                json:"-"`
 }
 
 type ConfigMetadataDependency struct {
@@ -106,7 +106,7 @@ func (m ConfigMetadata) MarshalJSON() ([]byte, error) {
 	}
 
 	if len(m.DefaultVersions) > 0 {
-		metadata["default-versions"] = m.DefaultVersions
+		metadata["default_versions"] = m.DefaultVersions
 	}
 
 	return json.Marshal(metadata)
@@ -143,12 +143,12 @@ func (m *ConfigMetadata) UnmarshalJSON(data []byte) error {
 		delete(metadata, "dependencies")
 	}
 
-	if defaultVersions, ok := metadata["default-versions"]; ok {
+	if defaultVersions, ok := metadata["default_versions"]; ok {
 		err = json.Unmarshal(defaultVersions, &m.DefaultVersions)
 		if err != nil {
 			return err
 		}
-		delete(metadata, "default-versions")
+		delete(metadata, "default_versions")
 	}
 
 	if len(metadata) > 0 {

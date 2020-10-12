@@ -93,7 +93,7 @@ homepage = "some-homepage-link"
 include_files = ["some-include-file", "other-include-file"]
 pre_package = "some-pre-package-script.sh"
 
-[metadata.default-versions]
+[metadata.default_versions]
 some-dependency = "1.2.x"
 
 [[metadata.dependencies]]
@@ -153,7 +153,7 @@ homepage = "some-homepage-link"
 include_files = ["some-include-file", "other-include-file"]
 pre_package = "some-pre-package-script.sh"
 
-[metadata.default-versions]
+[metadata.default_versions]
 some-dependency = "1.2.x"
 
 [[metadata.some-map]]

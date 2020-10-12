@@ -100,7 +100,7 @@ func testFormatter(t *testing.T, context spec.G, it spec.S) {
 `))
 		})
 
-		context("when dependencies and default-versions are empty", func() {
+		context("when dependencies and default_versions are empty", func() {
 			it("returns a list of dependencies", func() {
 				formatter.Markdown([]cargo.Config{
 					{
@@ -373,7 +373,7 @@ func testFormatter(t *testing.T, context spec.G, it spec.S) {
 			"version": "some-version"
 		},
 		"metadata": {
-			"default-versions": {
+			"default_versions": {
 				"some-dependency": "1.2.x",
 				"other-dependency": "2.3.x"
 			},
@@ -503,7 +503,7 @@ func testFormatter(t *testing.T, context spec.G, it spec.S) {
 			"version": "some-version"
 		},
 		"metadata": {
-			"default-versions": {
+			"default_versions": {
 				"some-dependency": "1.2.x"
 			},
 			"dependencies": [{
