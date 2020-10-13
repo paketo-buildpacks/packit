@@ -46,7 +46,7 @@ func parseBuildpack(path, name string) ([]Dependency, string, error) {
 
 	var buildpack struct {
 		Metadata struct {
-			DefaultVersions map[string]string `toml:"default-versions"`
+			DefaultVersions map[string]string `toml:"default_versions"`
 			Dependencies    []Dependency      `toml:"dependencies"`
 		} `toml:"metadata"`
 	}

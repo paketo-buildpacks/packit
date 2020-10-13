@@ -163,7 +163,7 @@ func testPack(t *testing.T, context spec.G, it spec.S) {
 [metadata]
   include_files = ["bin/build", "bin/detect", "bin/link", "buildpack.toml", "generated-file"]
   pre_package = "./scripts/build.sh"
-  [metadata.default-versions]
+  [metadata.default_versions]
     some-dependency = "some-default-version"
 
   [[metadata.dependencies]]
@@ -292,7 +292,7 @@ func testPack(t *testing.T, context spec.G, it spec.S) {
 [metadata]
   include_files = ["bin/build", "bin/detect", "bin/link", "buildpack.toml", "generated-file", "dependencies/f058c8bf6b65b829e200ef5c2d22fde0ee65b96c1fbd1b88869be133aafab64a"]
   pre_package = "./scripts/build.sh"
-  [metadata.default-versions]
+  [metadata.default_versions]
     some-dependency = "some-default-version"
 
   [[metadata.dependencies]]

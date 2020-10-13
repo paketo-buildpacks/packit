@@ -9,7 +9,7 @@ api = "0.2"
 [metadata]
   include_files = ["bin/build", "bin/detect", "bin/link", "buildpack.toml", "generated-file"]
   pre_package = "./scripts/build.sh"
-  [metadata.default-versions]
+  [metadata.default_versions]
     some-dependency = "some-default-version"
 
   [[metadata.dependencies]]

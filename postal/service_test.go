@@ -126,7 +126,7 @@ version = "4.5.6"
 			it.Before(func() {
 				err := ioutil.WriteFile(path, []byte(`
 [metadata]
-[metadata.default-versions]
+[metadata.default_versions]
 some-entry = "1.2.x"
 
 [[metadata.dependencies]]
