@@ -29,11 +29,11 @@ type ConfigBuildpack struct {
 }
 
 type ConfigMetadata struct {
-	IncludeFiles    []string                   `toml:"include_files"         json:"include_files,omitempty"`
-	PrePackage      string                     `toml:"pre_package"           json:"pre_package,omitempty"`
-	DefaultVersions map[string]string          `toml:"default-versions"      json:"default-versions,omitempty"`
-	Dependencies    []ConfigMetadataDependency `toml:"dependencies"          json:"dependencies,omitempty"`
-	Unstructured    map[string]interface{}     `toml:"-"                     json:"-"`
+	IncludeFiles    []string                   `toml:"include-files"    json:"include-files,omitempty"`
+	PrePackage      string                     `toml:"pre-package"      json:"pre-package,omitempty"`
+	DefaultVersions map[string]string          `toml:"default-versions" json:"default-versions,omitempty"`
+	Dependencies    []ConfigMetadataDependency `toml:"dependencies"     json:"dependencies,omitempty"`
+	Unstructured    map[string]interface{}     `toml:"-"                json:"-"`
 }
 
 type ConfigMetadataDependency struct {
@@ -94,11 +94,11 @@ func (m ConfigMetadata) MarshalJSON() ([]byte, error) {
 	}
 
 	if len(m.IncludeFiles) > 0 {
-		metadata["include_files"] = m.IncludeFiles
+		metadata["include-files"] = m.IncludeFiles
 	}
 
 	if len(m.PrePackage) > 0 {
-		metadata["pre_package"] = m.PrePackage
+		metadata["pre-package"] = m.PrePackage
 	}
 
 	if len(m.Dependencies) > 0 {
@@ -119,20 +119,20 @@ func (m *ConfigMetadata) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	if includeFiles, ok := metadata["include_files"]; ok {
+	if includeFiles, ok := metadata["include-files"]; ok {
 		err = json.Unmarshal(includeFiles, &m.IncludeFiles)
 		if err != nil {
 			return err
 		}
-		delete(metadata, "include_files")
+		delete(metadata, "include-files")
 	}
 
-	if prePackage, ok := metadata["pre_package"]; ok {
+	if prePackage, ok := metadata["pre-package"]; ok {
 		err = json.Unmarshal(prePackage, &m.PrePackage)
 		if err != nil {
 			return err
 		}
-		delete(metadata, "pre_package")
+		delete(metadata, "pre-package")
 	}
 
 	if dependencies, ok := metadata["dependencies"]; ok {

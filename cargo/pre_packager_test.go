@@ -44,7 +44,7 @@ func testPrePackager(t *testing.T, context spec.G, it spec.S) {
 	})
 
 	context("Execute", func() {
-		it("executes the pre_package script", func() {
+		it("executes the pre-package script", func() {
 			err := prePackager.Execute("some-script", "some-dir")
 			Expect(err).NotTo(HaveOccurred())
 			Expect(bash.ExecuteCall.Receives.Execution.Args).To(Equal([]string{"-c", "some-script"}))

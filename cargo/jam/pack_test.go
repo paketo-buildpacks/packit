@@ -81,7 +81,7 @@ func testPack(t *testing.T, context spec.G, it spec.S) {
   version = "some-version"
 
 [metadata]
-  include_files = ["buildpack.toml"]
+  include-files = ["buildpack.toml"]
 
   [[metadata.dependencies]]
     deprecation_date = "2019-04-01T00:00:00Z"
@@ -161,8 +161,8 @@ func testPack(t *testing.T, context spec.G, it spec.S) {
   homepage = "some-homepage-link"
 
 [metadata]
-  include_files = ["bin/build", "bin/detect", "bin/link", "buildpack.toml", "generated-file"]
-  pre_package = "./scripts/build.sh"
+  include-files = ["bin/build", "bin/detect", "bin/link", "buildpack.toml", "generated-file"]
+  pre-package = "./scripts/build.sh"
   [metadata.default-versions]
     some-dependency = "some-default-version"
 
@@ -290,8 +290,8 @@ func testPack(t *testing.T, context spec.G, it spec.S) {
   homepage = "some-homepage-link"
 
 [metadata]
-  include_files = ["bin/build", "bin/detect", "bin/link", "buildpack.toml", "generated-file", "dependencies/f058c8bf6b65b829e200ef5c2d22fde0ee65b96c1fbd1b88869be133aafab64a"]
-  pre_package = "./scripts/build.sh"
+  include-files = ["bin/build", "bin/detect", "bin/link", "buildpack.toml", "generated-file", "dependencies/f058c8bf6b65b829e200ef5c2d22fde0ee65b96c1fbd1b88869be133aafab64a"]
+  pre-package = "./scripts/build.sh"
   [metadata.default-versions]
     some-dependency = "some-default-version"
 

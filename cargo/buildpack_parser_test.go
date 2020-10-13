@@ -31,8 +31,8 @@ name = "some-buildpack-name"
 version = "some-buildpack-version"
 
 [metadata]
-include_files = ["some-include-file", "other-include-file"]
-pre_package = "some-pre-package-script.sh"
+include-files = ["some-include-file", "other-include-file"]
+pre-package = "some-pre-package-script.sh"
 
 [[metadata.dependencies]]
 	deprecation_date = 2020-06-01T00:00:00Z

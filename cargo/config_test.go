@@ -90,8 +90,8 @@ version = "some-buildpack-version"
 homepage = "some-homepage-link"
 
 [metadata]
-include_files = ["some-include-file", "other-include-file"]
-pre_package = "some-pre-package-script.sh"
+include-files = ["some-include-file", "other-include-file"]
+pre-package = "some-pre-package-script.sh"
 
 [metadata.default-versions]
 some-dependency = "1.2.x"
@@ -150,8 +150,8 @@ version = "some-buildpack-version"
 homepage = "some-homepage-link"
 
 [metadata]
-include_files = ["some-include-file", "other-include-file"]
-pre_package = "some-pre-package-script.sh"
+include-files = ["some-include-file", "other-include-file"]
+pre-package = "some-pre-package-script.sh"
 
 [metadata.default-versions]
 some-dependency = "1.2.x"
@@ -277,18 +277,18 @@ some-dependency = "1.2.x"
 					})
 				})
 
-				context("metadata field include_files is not a []string", func() {
+				context("metadata field include-files is not a []string", func() {
 					it("it returns an error", func() {
 						var metadata cargo.ConfigMetadata
-						err := metadata.UnmarshalJSON([]byte(`{"include_files": "some-string"}`))
+						err := metadata.UnmarshalJSON([]byte(`{"include-files": "some-string"}`))
 						Expect(err).To(MatchError(ContainSubstring("json: cannot unmarshal")))
 					})
 				})
 
-				context("metadata field pre_package is not a string", func() {
+				context("metadata field pre-package is not a string", func() {
 					it("it returns an error", func() {
 						var metadata cargo.ConfigMetadata
-						err := metadata.UnmarshalJSON([]byte(`{"pre_package": true}`))
+						err := metadata.UnmarshalJSON([]byte(`{"pre-package": true}`))
 						Expect(err).To(MatchError(ContainSubstring("json: cannot unmarshal")))
 					})
 				})
