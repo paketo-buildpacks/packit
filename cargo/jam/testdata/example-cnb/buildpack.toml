@@ -7,8 +7,8 @@ api = "0.2"
   homepage = "some-homepage-link"
 
 [metadata]
-  include_files = ["bin/build", "bin/detect", "bin/link", "buildpack.toml", "generated-file"]
-  pre_package = "./scripts/build.sh"
+  include-files = ["bin/build", "bin/detect", "bin/link", "buildpack.toml", "generated-file"]
+  pre-package = "./scripts/build.sh"
   [metadata.default-versions]
     some-dependency = "some-default-version"
 

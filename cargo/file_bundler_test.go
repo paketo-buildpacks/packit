@@ -85,8 +85,8 @@ name = "other-buildpack-name"
 version = "other-buildpack-version"
 
 [metadata]
-include_files = ["bin/build", "bin/detect", "bin/link", "buildpack.toml"]
-pre_package = "some-pre-package-script.sh"`))
+include-files = ["bin/build", "bin/detect", "bin/link", "buildpack.toml"]
+pre-package = "some-pre-package-script.sh"`))
 		})
 
 		context("error cases", func() {

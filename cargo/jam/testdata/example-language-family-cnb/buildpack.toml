@@ -6,7 +6,7 @@ api = "0.2"
   version = "version-string"
 
 [metadata]
-  include_files = ["buildpack.toml"]
+  include-files = ["buildpack.toml"]
 
   [[metadata.dependencies]]
     deprecation_date = 2019-04-01T00:00:00Z
