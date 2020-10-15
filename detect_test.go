@@ -26,6 +26,7 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 		cnbDir      string
 		cnbEnvDir   string
 		binaryPath  string
+		stackID     string
 		exitHandler *fakes.ExitHandler
 	)
 
@@ -44,6 +45,9 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 
 		cnbDir, err = ioutil.TempDir("", "cnb")
 		Expect(err).NotTo(HaveOccurred())
+
+		stackID = "io.packit.test.stack"
+		Expect(os.Setenv("CNB_STACK_ID", stackID)).To(Succeed())
 
 		//Separate, but valid CNB dir for testing env parsing
 		cnbEnvDir, err = ioutil.TempDir("", "cnbEnv")
@@ -68,6 +72,7 @@ clear-env = false
 		Expect(os.Chdir(workingDir)).To(Succeed())
 		Expect(os.RemoveAll(tmpDir)).To(Succeed())
 		Expect(os.RemoveAll(cnbDir)).To(Succeed())
+		Expect(os.Unsetenv("CNB_STACK_ID")).To(Succeed())
 	})
 
 	context("when providing the detect context to the given DetectFunc", func() {
@@ -94,6 +99,7 @@ clear-env = false
 					Name:    "some-name",
 					Version: "some-version",
 				},
+				Stack: stackID,
 			}))
 		})
 	})
@@ -254,6 +260,7 @@ some-key = "some-value"
 					Name:    "some-name",
 					Version: "some-version",
 				},
+				Stack: stackID,
 			}))
 		})
 	})
