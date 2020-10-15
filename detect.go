@@ -25,6 +25,10 @@ type DetectContext struct {
 	// BuildpackInfo includes the details of the buildpack parsed from the
 	// buildpack.toml included in the buildpack contents.
 	BuildpackInfo BuildpackInfo
+
+	// Stack is the value of the chosen stack. This value is populated from the
+	// $CNB_STACK_ID environment variable.
+	Stack string
 }
 
 // DetectFunc is the definition of a callback that can be invoked when the
@@ -124,6 +128,7 @@ func Detect(f DetectFunc, options ...Option) {
 		WorkingDir:    dir,
 		CNBPath:       cnbPath,
 		BuildpackInfo: buildpackInfo.Buildpack,
+		Stack:         os.Getenv("CNB_STACK_ID"),
 	})
 	if err != nil {
 		config.exitHandler.Error(err)
