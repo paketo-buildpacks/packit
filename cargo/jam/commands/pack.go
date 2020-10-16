@@ -43,14 +43,20 @@ type DependencyCacher interface {
 	Cache(root string, dependencies []cargo.ConfigMetadataDependency) ([]cargo.ConfigMetadataDependency, error)
 }
 
+//go:generate faux --interface BuildpackTOMLDeprecation --output fakes/buildpack_toml_deprecation.go
+type BuildpackTOMLDeprecation interface {
+	WarnDeprecatedFields(path string) error
+}
+
 type Pack struct {
-	directoryDuplicator DirectoryDuplicator
-	configParser        ConfigParser
-	prePackager         PrePackager
-	dependencyCacher    DependencyCacher
-	tarBuilder          TarBuilder
-	fileBundler         FileBundler
-	stdout              io.Writer
+	directoryDuplicator      DirectoryDuplicator
+	configParser             ConfigParser
+	prePackager              PrePackager
+	dependencyCacher         DependencyCacher
+	tarBuilder               TarBuilder
+	fileBundler              FileBundler
+	buildpackTOMLDeprecation BuildpackTOMLDeprecation
+	stdout                   io.Writer
 }
 
 func NewPack(
@@ -60,17 +66,19 @@ func NewPack(
 	dependencyCacher DependencyCacher,
 	fileBundler FileBundler,
 	tarBuilder TarBuilder,
+	buildpackTOMLDeprecation BuildpackTOMLDeprecation,
 	stdout io.Writer,
 ) Pack {
 
 	return Pack{
-		directoryDuplicator: directoryDuplicator,
-		configParser:        configParser,
-		prePackager:         prePackager,
-		dependencyCacher:    dependencyCacher,
-		tarBuilder:          tarBuilder,
-		fileBundler:         fileBundler,
-		stdout:              stdout,
+		directoryDuplicator:      directoryDuplicator,
+		configParser:             configParser,
+		prePackager:              prePackager,
+		dependencyCacher:         dependencyCacher,
+		tarBuilder:               tarBuilder,
+		fileBundler:              fileBundler,
+		buildpackTOMLDeprecation: buildpackTOMLDeprecation,
+		stdout:                   stdout,
 	}
 }
 
@@ -122,6 +130,13 @@ func (p Pack) Execute(args []string) error {
 	config, err := p.configParser.Parse(buildpackTOMLPath)
 	if err != nil {
 		return fmt.Errorf("failed to parse buildpack.toml: %s", err)
+	}
+
+	// Temporary error check to aid in conversion from old buildpack.toml format
+	// Will return error if buildpack.toml contains depercated fields
+	err = p.buildpackTOMLDeprecation.WarnDeprecatedFields(buildpackTOMLPath)
+	if err != nil {
+		return err
 	}
 
 	config.Buildpack.Version = version
