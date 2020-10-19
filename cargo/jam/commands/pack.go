@@ -133,7 +133,7 @@ func (p Pack) Execute(args []string) error {
 	}
 
 	// Temporary error check to aid in conversion from old buildpack.toml format
-	// Will return error if buildpack.toml contains depercated fields
+	// Will return error if buildpack.toml contains deprecated fields
 	err = p.buildpackTOMLDeprecation.WarnDeprecatedFields(buildpackTOMLPath)
 	if err != nil {
 		return err

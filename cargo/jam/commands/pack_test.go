@@ -326,7 +326,7 @@ func testPack(t *testing.T, context spec.G, it spec.S) {
 
 		context("when the buildpack toml deprecation fails", func() {
 			it.Before(func() {
-				buildpackTOMLDeprecation.WarnDeprecatedFieldsCall.Returns.Error = errors.New("there is a depercated field in the buildpack.toml")
+				buildpackTOMLDeprecation.WarnDeprecatedFieldsCall.Returns.Error = errors.New("there is a deprecated field in the buildpack.toml")
 			})
 
 			it("returns an error", func() {
@@ -335,7 +335,7 @@ func testPack(t *testing.T, context spec.G, it spec.S) {
 					"--output", filepath.Join(tempDir, "tempBuildpack.tar.gz"),
 					"--version", "some-buildpack-version",
 				})
-				Expect(err).To(MatchError("there is a depercated field in the buildpack.toml"))
+				Expect(err).To(MatchError("there is a deprecated field in the buildpack.toml"))
 			})
 		})
 
