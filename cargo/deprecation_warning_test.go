@@ -50,7 +50,7 @@ pre_package = "some-pre-package-script.sh"
 
 			it("fails if the buildpack.toml contains a depercated field", func() {
 				err := deprecationWarning.WarnDeprecatedFields(filepath.Join(buildpackDir, "buildpack.toml"))
-				Expect(err).To(MatchError("the include_files and pre_package feilds in the metadata section of the buildpack.toml have been changed to include-file and pre-package respectively: please update the buildpack.toml to refelct this change"))
+				Expect(err).To(MatchError("the include_files and pre_package fields in the metadata section of the buildpack.toml have been changed to include-file and pre-package respectively: please update the buildpack.toml to reflect this change"))
 			})
 		})
 
