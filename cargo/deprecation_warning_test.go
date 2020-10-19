@@ -31,7 +31,7 @@ func testDeprecationWarning(t *testing.T, context spec.G, it spec.S) {
 		Expect(os.RemoveAll(buildpackDir)).To(Succeed())
 	})
 
-	context("WarnDepercatedFields", func() {
+	context("WarnDeprecatedFields", func() {
 		context("when there are depercated fields", func() {
 			it.Before(func() {
 				err := ioutil.WriteFile(filepath.Join(buildpackDir, "buildpack.toml"), []byte(`api = "0.2"
@@ -50,7 +50,7 @@ pre_package = "some-pre-package-script.sh"
 
 			it("fails if the buildpack.toml contains a depercated field", func() {
 				err := deprecationWarning.WarnDeprecatedFields(filepath.Join(buildpackDir, "buildpack.toml"))
-				Expect(err).To(MatchError("the include_files and pre_package fields in the metadata section of the buildpack.toml have been changed to include-file and pre-package respectively: please update the buildpack.toml to reflect this change"))
+				Expect(err).To(MatchError("the include_files and pre_package fields in the metadata section of the buildpack.toml have been changed to include-files and pre-package respectively: please update the buildpack.toml to reflect this change"))
 			})
 		})
 
@@ -70,7 +70,7 @@ pre-package = "some-pre-package-script.sh"
 				Expect(err).NotTo(HaveOccurred())
 			})
 
-			it("fails if the buildpack.toml contains a depercated field", func() {
+			it("does not fail", func() {
 				err := deprecationWarning.WarnDeprecatedFields(filepath.Join(buildpackDir, "buildpack.toml"))
 				Expect(err).NotTo(HaveOccurred())
 			})

@@ -26,7 +26,7 @@ func (d DeprecationWarning) WarnDeprecatedFields(path string) error {
 	}
 
 	if !(deprecatedFields.Metadata.IncludeFiles == nil && deprecatedFields.Metadata.PrePackage == "") {
-		return fmt.Errorf("the include_files and pre_package fields in the metadata section of the buildpack.toml have been changed to include-file and pre-package respectively: please update the buildpack.toml to reflect this change")
+		return fmt.Errorf("the include_files and pre_package fields in the metadata section of the buildpack.toml have been changed to include-files and pre-package respectively: please update the buildpack.toml to reflect this change")
 	}
 
 	return nil

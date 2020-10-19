@@ -372,7 +372,7 @@ func testPack(t *testing.T, context spec.G, it spec.S) {
 					Expect(err).NotTo(HaveOccurred())
 					Eventually(session).Should(gexec.Exit(1), func() string { return buffer.String() })
 
-					Expect(session.Err).To(gbytes.Say("the include_files and pre_package fields in the metadata section of the buildpack.toml have been changed to include-file and pre-package respectively: please update the buildpack.toml to reflect this change"))
+					Expect(session.Err).To(gbytes.Say("the include_files and pre_package fields in the metadata section of the buildpack.toml have been changed to include-files and pre-package respectively: please update the buildpack.toml to reflect this change"))
 				})
 			})
 		})
