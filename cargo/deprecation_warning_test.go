@@ -76,7 +76,7 @@ pre-package = "some-pre-package-script.sh"
 			})
 		})
 
-		context("fuilure cases", func() {
+		context("failure cases", func() {
 			it("returns an error", func() {
 				err := deprecationWarning.WarnDeprecatedFields(filepath.Join(buildpackDir, "buildpack.toml"))
 				Expect(err).To(MatchError(ContainSubstring("no such file or directory")))
