@@ -17,7 +17,8 @@ type Config struct {
 }
 
 type ConfigStack struct {
-	ID string `toml:"id" json:"id,omitempty"`
+	ID     string   `toml:"id"     json:"id,omitempty"`
+	Mixins []string `toml:"mixins" json:"mixins,omitempty"`
 }
 
 type ConfigBuildpack struct {

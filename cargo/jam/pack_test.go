@@ -185,7 +185,8 @@ func testPack(t *testing.T, context spec.G, it spec.S) {
     version = "4.5.6"
 
 [[stacks]]
-  id = "some-stack-id"`))
+  id = "some-stack-id"
+  mixins = ["some-mixin-id"]`))
 			Expect(hdr.Mode).To(Equal(int64(0644)))
 
 			contents, hdr, err = ExtractFile(file, "bin/build")
@@ -305,7 +306,8 @@ func testPack(t *testing.T, context spec.G, it spec.S) {
     version = "1.2.3"
 
 [[stacks]]
-  id = "some-stack-id"`))
+  id = "some-stack-id"
+  mixins = ["some-mixin-id"]`))
 				Expect(hdr.Mode).To(Equal(int64(0644)))
 
 				contents, hdr, err = ExtractFile(file, "bin/build")

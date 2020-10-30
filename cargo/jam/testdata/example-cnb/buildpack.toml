@@ -32,3 +32,4 @@ api = "0.2"
 
 [[stacks]]
   id = "some-stack-id"
+  mixins = ["some-mixin-id"]
