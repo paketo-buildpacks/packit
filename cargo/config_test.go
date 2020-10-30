@@ -40,7 +40,11 @@ func testConfig(t *testing.T, context spec.G, it spec.S) {
 				},
 				Stacks: []cargo.ConfigStack{
 					{
-						ID: "some-stack-id",
+						ID:     "some-stack-id",
+						Mixins: []string{"some-mixin-id"},
+					},
+					{
+						ID: "other-stack-id",
 					},
 				},
 				Metadata: cargo.ConfigMetadata{
@@ -70,8 +74,7 @@ func testConfig(t *testing.T, context spec.G, it spec.S) {
 						Group: []cargo.ConfigOrderGroup{
 							{
 								ID:      "some-dependency",
-								Version: "some-version",
-							},
+								Version: "some-version"},
 							{
 								ID:       "other-dependency",
 								Version:  "other-version",
@@ -110,6 +113,10 @@ some-dependency = "1.2.x"
 
 [[stacks]]
   id = "some-stack-id"
+  mixins = ["some-mixin-id"]
+
+[[stacks]]
+  id = "other-stack-id"
 
 [[order]]
   [[order.group]]
@@ -169,6 +176,10 @@ some-dependency = "1.2.x"
 
 [[stacks]]
   id = "some-stack-id"
+  mixins = ["some-mixin-id"]
+
+[[stacks]]
+  id = "other-stack-id"
 
 [[order]]
   [[order.group]]
@@ -193,7 +204,11 @@ some-dependency = "1.2.x"
 				},
 				Stacks: []cargo.ConfigStack{
 					{
-						ID: "some-stack-id",
+						ID:     "some-stack-id",
+						Mixins: []string{"some-mixin-id"},
+					},
+					{
+						ID: "other-stack-id",
 					},
 				},
 				Metadata: cargo.ConfigMetadata{
