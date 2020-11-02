@@ -50,7 +50,6 @@ func NewExitHandler(options ...Option) ExitHandler {
 }
 
 func (h ExitHandler) Error(err error) {
-	fmt.Fprintln(h.stdout, "")
 	fmt.Fprintln(h.stderr, err)
 
 	var code int
