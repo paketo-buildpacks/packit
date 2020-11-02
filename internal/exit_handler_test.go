@@ -3,7 +3,6 @@ package internal_test
 import (
 	"bytes"
 	"errors"
-	"io/ioutil"
 	"testing"
 
 	"github.com/paketo-buildpacks/packit/internal"
@@ -18,15 +17,17 @@ func testExitHandler(t *testing.T, context spec.G, it spec.S) {
 
 		exitCode int
 		stderr   *bytes.Buffer
+		stdout   *bytes.Buffer
 		handler  internal.ExitHandler
 	)
 
 	it.Before(func() {
 		stderr = bytes.NewBuffer([]byte{})
+		stdout = bytes.NewBuffer([]byte{})
 
 		handler = internal.NewExitHandler(
 			internal.WithExitHandlerStderr(stderr),
-			internal.WithExitHandlerStdout(ioutil.Discard),
+			internal.WithExitHandlerStdout(stdout),
 			internal.WithExitHandlerExitFunc(func(c int) { exitCode = c }),
 		)
 	})
@@ -34,6 +35,7 @@ func testExitHandler(t *testing.T, context spec.G, it spec.S) {
 	it("prints the error message and exits with the right error code", func() {
 		handler.Error(errors.New("some-error-message"))
 		Expect(stderr).To(ContainSubstring("some-error-message"))
+		Expect(stdout.String()).To(BeEmpty())
 	})
 
 	context("when the error is nil", func() {
