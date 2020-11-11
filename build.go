@@ -61,6 +61,34 @@ type BuildResult struct {
 	// available to the lifecycle.
 	Layers []Layer
 
+	// Launch is the metadata that will be persisted as launch.toml according to
+	// the buildpack lifecycle specification:
+	// https://github.com/buildpacks/spec/blob/main/buildpack.md#launchtoml-toml
+	Launch LaunchMetadata
+
+	// Processes is a list of processes that will be returned to the lifecycle to
+	// be executed during the launch phase.
+	//
+	// Deprecated: Use Launch.Processes instead.
+	Processes []Process
+
+	// Slices is a list of slices that will be returned to the lifecycle to be
+	// exported as separate layers during the export phase.
+	//
+	// Deprecated: Use Launch.Slices instead.
+	Slices []Slice
+
+	// Labels is a map of key-value pairs that will be returned to the lifecycle to be
+	// added as config label on the image metadata. Keys must be unique.
+	//
+	// Deprecated: Use Launch.Labels instead.
+	Labels map[string]string
+}
+
+// LaunchMetadata represents the launch metadata details persisted in the
+// launch.toml file according to the buildpack lifecycle specification:
+// https://github.com/buildpacks/spec/blob/main/buildpack.md#launchtoml-toml.
+type LaunchMetadata struct {
 	// Processes is a list of processes that will be returned to the lifecycle to
 	// be executed during the launch phase.
 	Processes []Process
@@ -71,7 +99,7 @@ type BuildResult struct {
 
 	// Labels is a map of key-value pairs that will be returned to the lifecycle to be
 	// added as config label on the image metadata. Keys must be unique.
-	Labels map[string]string `toml:"labels"`
+	Labels map[string]string
 }
 
 // Process represents a process to be run during the launch phase as described
@@ -260,9 +288,21 @@ func Build(f BuildFunc, options ...Option) {
 		}
 	}
 
-	if len(result.Processes) > 0 ||
-		len(result.Slices) > 0 ||
-		len(result.Labels) > 0 {
+	if len(result.Launch.Processes) == 0 {
+		result.Launch.Processes = result.Processes
+	}
+
+	if len(result.Launch.Slices) == 0 {
+		result.Launch.Slices = result.Slices
+	}
+
+	if len(result.Launch.Labels) == 0 {
+		result.Launch.Labels = result.Labels
+	}
+
+	if len(result.Launch.Processes) > 0 ||
+		len(result.Launch.Slices) > 0 ||
+		len(result.Launch.Labels) > 0 {
 
 		type label struct {
 			Key   string `toml:"key"`
@@ -275,12 +315,12 @@ func Build(f BuildFunc, options ...Option) {
 			Labels    []label   `toml:"labels"`
 		}
 
-		launch.Processes = result.Processes
-		launch.Slices = result.Slices
+		launch.Processes = result.Launch.Processes
+		launch.Slices = result.Launch.Slices
 
-		if len(result.Labels) > 0 {
+		if len(result.Launch.Labels) > 0 {
 			launch.Labels = []label{}
-			for k, v := range result.Labels {
+			for k, v := range result.Launch.Labels {
 				launch.Labels = append(launch.Labels, label{Key: k, Value: v})
 			}
 

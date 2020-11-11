@@ -257,6 +257,7 @@ some-key = "some-value"
 				}))
 			})
 		})
+
 		context("failures", func() {
 			context("when getting the layer toml list", func() {
 				var unremovableTOMLPath string
@@ -288,12 +289,14 @@ some-key = "some-value"
 		it("persists a launch.toml", func() {
 			packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
 				return packit.BuildResult{
-					Processes: []packit.Process{
-						{
-							Type:    "some-type",
-							Command: "some-command",
-							Args:    []string{"some-arg"},
-							Direct:  true,
+					Launch: packit.LaunchMetadata{
+						Processes: []packit.Process{
+							{
+								Type:    "some-type",
+								Command: "some-command",
+								Args:    []string{"some-arg"},
+								Direct:  true,
+							},
 						},
 					},
 				}, nil
@@ -303,12 +306,40 @@ some-key = "some-value"
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(string(contents)).To(MatchTOML(`
-	[[processes]]
-	type = "some-type"
-	command = "some-command"
-	args = ["some-arg"]
-	direct = true
-	`))
+				[[processes]]
+					type = "some-type"
+					command = "some-command"
+					args = ["some-arg"]
+					direct = true
+			`))
+		})
+
+		context("when using the deprecated api", func() {
+			it("persists a launch.toml", func() {
+				packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
+					return packit.BuildResult{
+						Processes: []packit.Process{
+							{
+								Type:    "some-type",
+								Command: "some-command",
+								Args:    []string{"some-arg"},
+								Direct:  true,
+							},
+						},
+					}, nil
+				}, packit.WithArgs([]string{binaryPath, layersDir, "", planPath}))
+
+				contents, err := ioutil.ReadFile(filepath.Join(layersDir, "launch.toml"))
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(string(contents)).To(MatchTOML(`
+					[[processes]]
+						type = "some-type"
+						command = "some-command"
+						args = ["some-arg"]
+						direct = true
+				`))
+			})
 		})
 	})
 
@@ -316,9 +347,11 @@ some-key = "some-value"
 		it("persists a launch.toml", func() {
 			packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
 				return packit.BuildResult{
-					Slices: []packit.Slice{
-						{
-							Paths: []string{"some-slice"},
+					Launch: packit.LaunchMetadata{
+						Slices: []packit.Slice{
+							{
+								Paths: []string{"some-slice"},
+							},
 						},
 					},
 				}, nil
@@ -328,9 +361,31 @@ some-key = "some-value"
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(string(contents)).To(MatchTOML(`
-	[[slices]]
-	paths = ["some-slice"]
-	`))
+				[[slices]]
+					paths = ["some-slice"]
+			`))
+		})
+
+		context("when using the deprecated api", func() {
+			it("persists a launch.toml", func() {
+				packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
+					return packit.BuildResult{
+						Slices: []packit.Slice{
+							{
+								Paths: []string{"some-slice"},
+							},
+						},
+					}, nil
+				}, packit.WithArgs([]string{binaryPath, layersDir, "", planPath}))
+
+				contents, err := ioutil.ReadFile(filepath.Join(layersDir, "launch.toml"))
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(string(contents)).To(MatchTOML(`
+					[[slices]]
+						paths = ["some-slice"]
+				`))
+			})
 		})
 	})
 
@@ -338,9 +393,11 @@ some-key = "some-value"
 		it("persists a launch.toml", func() {
 			packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
 				return packit.BuildResult{
-					Labels: map[string]string{
-						"some key":       "some value",
-						"some-other-key": "some-other-value",
+					Launch: packit.LaunchMetadata{
+						Labels: map[string]string{
+							"some key":       "some value",
+							"some-other-key": "some-other-value",
+						},
 					},
 				}, nil
 			}, packit.WithArgs([]string{binaryPath, layersDir, "", planPath}))
@@ -349,14 +406,40 @@ some-key = "some-value"
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(string(contents)).To(MatchTOML(`
-	[[labels]]
-	key = "some key"
-	value = "some value"
+				[[labels]]
+					key = "some key"
+					value = "some value"
 
-	[[labels]]
-	key = "some-other-key"
-	value = "some-other-value"
-	`))
+				[[labels]]
+					key = "some-other-key"
+					value = "some-other-value"
+			`))
+		})
+
+		context("when using the deprecated api", func() {
+			it("persists a launch.toml", func() {
+				packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
+					return packit.BuildResult{
+						Labels: map[string]string{
+							"some key":       "some value",
+							"some-other-key": "some-other-value",
+						},
+					}, nil
+				}, packit.WithArgs([]string{binaryPath, layersDir, "", planPath}))
+
+				contents, err := ioutil.ReadFile(filepath.Join(layersDir, "launch.toml"))
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(string(contents)).To(MatchTOML(`
+					[[labels]]
+						key = "some key"
+						value = "some value"
+
+					[[labels]]
+						key = "some-other-key"
+						value = "some-other-value"
+				`))
+			})
 		})
 	})
 
