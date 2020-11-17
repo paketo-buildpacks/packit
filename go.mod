@@ -7,7 +7,7 @@ require (
 	github.com/Masterminds/semver v1.5.0
 	github.com/cheggaaa/pb/v3 v3.0.5
 	github.com/fatih/color v1.9.0 // indirect
-	github.com/gabriel-vasile/mimetype v1.1.1
+	github.com/gabriel-vasile/mimetype v1.1.2
 	github.com/kr/pretty v0.2.0 // indirect
 	github.com/mattn/go-runewidth v0.0.8 // indirect
 	github.com/onsi/gomega v1.10.3
