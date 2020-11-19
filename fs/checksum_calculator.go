@@ -1,10 +1,12 @@
 package fs
 
 import (
+	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -25,6 +27,35 @@ type calculatedFile struct {
 	path     string
 	checksum []byte
 	err      error
+}
+
+// SumMultiple returns a hex-encoded SHA256 checksum value of a set of files or
+// directories given a path.
+func (c ChecksumCalculator) SumMultiple(paths ...string) (shasum string, err error) {
+	tempDir, err := ioutil.TempDir("", "checksum*")
+	if err != nil {
+		return "", fmt.Errorf("failed to create temp directory: %w", err)
+	}
+	// allows checking error of deferred RemoveAll
+	defer func() {
+		if e := os.RemoveAll(tempDir); e != nil {
+			err = e
+		}
+	}()
+
+	for _, path := range paths {
+		randBytes := make([]byte, 16)
+		_, err := rand.Read(randBytes)
+		if err != nil {
+			return "", fmt.Errorf("failed to generate random filename: %w", err)
+		}
+
+		err = Copy(path, filepath.Join(tempDir, hex.EncodeToString(randBytes)))
+		if err != nil {
+			return "", fmt.Errorf("failed to calculate checksum: %w", err)
+		}
+	}
+	return c.Sum(tempDir)
 }
 
 // Sum returns a hex-encoded SHA256 checksum value of a file or directory given a path.
