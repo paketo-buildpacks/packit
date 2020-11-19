@@ -27,6 +27,7 @@ func TestUnitJam(t *testing.T) {
 	suite := spec.New("cargo/jam", spec.Report(report.Terminal{}))
 	suite("pack", testPack)
 	suite("summarize", testSummarize)
+	suite("update-buildpack", testUpdateBuildpack)
 	suite("Errors", testErrors)
 
 	suite.Before(func(t *testing.T) {

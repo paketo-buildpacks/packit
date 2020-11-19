@@ -42,6 +42,9 @@ func main() {
 		formatter := internal.NewFormatter(os.Stdout)
 		command = commands.NewSummarize(inspector, formatter)
 
+	case "update-buildpack":
+		command = commands.NewUpdateBuildpack()
+
 	default:
 		fail("unknown command: %q", os.Args[1])
 	}
