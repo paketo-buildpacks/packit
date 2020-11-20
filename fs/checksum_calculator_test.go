@@ -1,7 +1,9 @@
 package fs_test
 
 import (
+	"fmt"
 	"io/ioutil"
+	"math/rand"
 	"os"
 	"path/filepath"
 	"testing"
@@ -46,97 +48,27 @@ func testChecksumCalculator(t *testing.T, context spec.G, it spec.S) {
 				Expect(err).ToNot(HaveOccurred())
 				Expect(sum).To(Equal("e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"))
 			})
-
-			context("failure cases", func() {
-				context("the file cannot be read", func() {
-					it.Before(func() {
-						Expect(os.Chmod(path, 0222)).To(Succeed())
-					})
-
-					it("returns an error", func() {
-						_, err := calculator.Sum(path)
-						Expect(err).To(MatchError(ContainSubstring("failed to calculate checksum")))
-						Expect(err).To(MatchError(ContainSubstring("permission denied")))
-					})
-				})
-			})
 		})
 
-		context("when given a directory", func() {
+		context("when given an empty directory", func() {
 			var path string
-
 			it.Before(func() {
 				path = filepath.Join(workingDir, "some-dir")
 				Expect(os.MkdirAll(path, os.ModePerm)).To(Succeed())
-
-				Expect(ioutil.WriteFile(filepath.Join(path, "some-file"), []byte{}, os.ModePerm)).To(Succeed())
-				Expect(ioutil.WriteFile(filepath.Join(path, "some-other-file"), []byte{}, os.ModePerm)).To(Succeed())
 			})
 
 			it("generates the SHA256 checksum for that directory", func() {
 				sum, err := calculator.Sum(path)
 				Expect(err).ToNot(HaveOccurred())
-				Expect(sum).To(Equal("2dba5dbc339e7316aea2683faf839c1b7b1ee2313db792112588118df066aa35"))
+				Expect(sum).To(Equal("e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"))
 			})
 
-			context("failure cases", func() {
-				context("when the directory cannot be read", func() {
-					it.Before(func() {
-						Expect(os.Chmod(path, 0222)).To(Succeed())
-					})
-
-					it.After(func() {
-						Expect(os.Chmod(path, os.ModePerm)).To(Succeed())
-					})
-
-					it("returns an error", func() {
-						_, err := calculator.Sum(path)
-						Expect(err).To(MatchError(ContainSubstring("failed to calculate checksum")))
-						Expect(err).To(MatchError(ContainSubstring("permission denied")))
-					})
-				})
-
-				context("when a file in the directory cannot be read", func() {
-					it.Before(func() {
-						Expect(os.Chmod(filepath.Join(path, "some-file"), 0222)).To(Succeed())
-					})
-
-					it("returns an error", func() {
-						_, err := calculator.Sum(path)
-						Expect(err).To(MatchError(ContainSubstring("failed to calculate checksum")))
-						Expect(err).To(MatchError(ContainSubstring("permission denied")))
-					})
-				})
-			})
-		})
-
-		context("failure cases", func() {
-			context("when the given path does not exist", func() {
-				it("returns an error", func() {
-					_, err := calculator.Sum("not a real path")
-					Expect(err).To(MatchError(ContainSubstring("failed to calculate checksum")))
-					Expect(err).To(MatchError(ContainSubstring("no such file or directory")))
-				})
-			})
-		})
-	})
-
-	context("SumMulitple", func() {
-		it.Before(func() {
-			var err error
-			workingDir, err = ioutil.TempDir("", "working-dir")
-			Expect(err).NotTo(HaveOccurred())
-
-			calculator = fs.NewChecksumCalculator()
-		})
-
-		it.After(func() {
-			Expect(os.RemoveAll(workingDir)).To(Succeed())
 		})
 
 		context("when given multiple files", func() {
 			var path1 string
 			var path2 string
+			var paths []string
 
 			it.Before(func() {
 				path1 = filepath.Join(workingDir, "some-file1")
@@ -146,9 +78,34 @@ func testChecksumCalculator(t *testing.T, context spec.G, it spec.S) {
 			})
 
 			it("generates the SHA256 checksum for multiple files", func() {
-				sum, err := calculator.SumMultiple(path1, path2)
+				sum, err := calculator.Sum(path1, path2)
 				Expect(err).ToNot(HaveOccurred())
 				Expect(sum).To(Equal("2dba5dbc339e7316aea2683faf839c1b7b1ee2313db792112588118df066aa35"))
+			})
+
+			context("when the files are different", func() {
+				it.Before(func() {
+					// Generate a bunch of files and shuffle input order to ensure test fails consistently without sorting implemented
+					for i := 0; i < 10; i++ {
+						path := filepath.Join(workingDir, fmt.Sprintf("some-file-%d", i))
+						Expect(ioutil.WriteFile(path, []byte(fmt.Sprintf("some-file-contents-%d", i)), os.ModePerm)).To(Succeed())
+						paths = append(paths, path)
+					}
+				})
+
+				it("generates the same checksum no matter the order of the inputs", func() {
+					var shuffledPaths []string
+					sum1, err := calculator.Sum(paths...)
+					Expect(err).NotTo(HaveOccurred())
+
+					for _, value := range rand.Perm(len(paths)) {
+						shuffledPaths = append(shuffledPaths, paths[value])
+					}
+
+					sum2, err := calculator.Sum(shuffledPaths...)
+					Expect(err).NotTo(HaveOccurred())
+					Expect(sum1).To(Equal(sum2))
+				})
 			})
 
 			context("failure cases", func() {
@@ -158,7 +115,7 @@ func testChecksumCalculator(t *testing.T, context spec.G, it spec.S) {
 					})
 
 					it("returns an error", func() {
-						_, err := calculator.SumMultiple(path1, path2)
+						_, err := calculator.Sum(path1, path2)
 						Expect(err).To(MatchError(ContainSubstring("failed to calculate checksum")))
 						Expect(err).To(MatchError(ContainSubstring("permission denied")))
 					})
@@ -185,7 +142,7 @@ func testChecksumCalculator(t *testing.T, context spec.G, it spec.S) {
 			})
 
 			it("returns the 256 sha sum of a directory containing the directories", func() {
-				sum, err := calculator.SumMultiple(dir1, dir2)
+				sum, err := calculator.Sum(dir1, dir2)
 				Expect(err).ToNot(HaveOccurred())
 				Expect(sum).To(Equal("9fb03d22515ca48e57b578de80bbc1e75d5126dbb2de6db177947c3da3b2276f"))
 			})
@@ -201,7 +158,7 @@ func testChecksumCalculator(t *testing.T, context spec.G, it spec.S) {
 					})
 
 					it("returns an error", func() {
-						_, err := calculator.SumMultiple(dir1, dir2)
+						_, err := calculator.Sum(dir1, dir2)
 						Expect(err).To(MatchError(ContainSubstring("failed to calculate checksum")))
 						Expect(err).To(MatchError(ContainSubstring("permission denied")))
 					})
@@ -213,7 +170,7 @@ func testChecksumCalculator(t *testing.T, context spec.G, it spec.S) {
 					})
 
 					it("returns an error", func() {
-						_, err := calculator.SumMultiple(dir1, dir2)
+						_, err := calculator.Sum(dir1, dir2)
 						Expect(err).To(MatchError(ContainSubstring("failed to calculate checksum")))
 						Expect(err).To(MatchError(ContainSubstring("permission denied")))
 					})
@@ -236,7 +193,7 @@ func testChecksumCalculator(t *testing.T, context spec.G, it spec.S) {
 			})
 
 			it("returns the 256 sha sum of a directory containing the file and directory", func() {
-				sum, err := calculator.SumMultiple(dir, path)
+				sum, err := calculator.Sum(dir, path)
 				Expect(err).ToNot(HaveOccurred())
 				Expect(sum).To(Equal("1a03c02fb531d7e1ce353b2f20711c79af2b66730d6de865fb130734973ccd2c"))
 			})
@@ -258,7 +215,7 @@ func testChecksumCalculator(t *testing.T, context spec.G, it spec.S) {
 			})
 
 			it("returns the 256 sha sum of the items", func() {
-				sum, err := calculator.SumMultiple(dir, path)
+				sum, err := calculator.Sum(dir, path)
 				Expect(err).ToNot(HaveOccurred())
 				Expect(sum).To(Equal("1a03c02fb531d7e1ce353b2f20711c79af2b66730d6de865fb130734973ccd2c"))
 			})
@@ -267,7 +224,7 @@ func testChecksumCalculator(t *testing.T, context spec.G, it spec.S) {
 		context("failure cases", func() {
 			context("when any of the given paths do not exist", func() {
 				it("returns an error", func() {
-					_, err := calculator.SumMultiple("not a real path")
+					_, err := calculator.Sum("not a real path")
 					Expect(err).To(MatchError(ContainSubstring("failed to calculate checksum")))
 					Expect(err).To(MatchError(ContainSubstring("no such file or directory")))
 				})

@@ -1,12 +1,10 @@
 package fs
 
 import (
-	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -29,88 +27,47 @@ type calculatedFile struct {
 	err      error
 }
 
-// SumMultiple returns a hex-encoded SHA256 checksum value of a set of files or
-// directories given a path.
-func (c ChecksumCalculator) SumMultiple(paths ...string) (shasum string, err error) {
-	tempDir, err := ioutil.TempDir("", "checksum*")
-	if err != nil {
-		return "", fmt.Errorf("failed to create temp directory: %w", err)
-	}
-	// allows checking error of deferred RemoveAll
-	defer func() {
-		if e := os.RemoveAll(tempDir); e != nil {
-			err = e
-		}
-	}()
-
-	for _, path := range paths {
-		randBytes := make([]byte, 16)
-		_, err := rand.Read(randBytes)
-		if err != nil {
-			return "", fmt.Errorf("failed to generate random filename: %w", err)
-		}
-
-		err = Copy(path, filepath.Join(tempDir, hex.EncodeToString(randBytes)))
-		if err != nil {
-			return "", fmt.Errorf("failed to calculate checksum: %w", err)
-		}
-	}
-	return c.Sum(tempDir)
-}
-
 // Sum returns a hex-encoded SHA256 checksum value of a file or directory given a path.
-func (c ChecksumCalculator) Sum(path string) (string, error) {
-	info, err := os.Stat(path)
-	if err != nil {
-		return "", fmt.Errorf("failed to calculate checksum: %w", err)
-	}
+func (c ChecksumCalculator) Sum(paths ...string) (string, error) {
+	var files []string
+	for _, path := range paths {
+		err := filepath.Walk(path, func(path string, info os.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
 
-	if !info.IsDir() {
-		file, err := os.Open(path)
+			if info.Mode().IsRegular() {
+				files = append(files, path)
+			}
+
+			return nil
+		})
 		if err != nil {
 			return "", fmt.Errorf("failed to calculate checksum: %w", err)
 		}
-		defer file.Close()
-
-		hash := sha256.New()
-		_, err = io.Copy(hash, file)
-		if err != nil {
-			return "", fmt.Errorf("failed to calculate checksum: %w", err)
-		}
-
-		return hex.EncodeToString(hash.Sum(nil)), nil
 	}
 
-	//Finds all files in directoy
-	var filesFromDir []string
-	err = filepath.Walk(path, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-
-		if info.Mode().IsRegular() {
-			filesFromDir = append(filesFromDir, path)
-		}
-
-		return nil
-	})
-	if err != nil {
-		return "", fmt.Errorf("failed to calculate checksum: %w", err)
-	}
-
-	//Gather all checksums into one byte array and check for checksum calculation errors
-	hash := sha256.New()
-	for _, f := range getParallelChecksums(filesFromDir) {
+	//Gather all checksums
+	var sums [][]byte
+	for _, f := range getParallelChecksums(files) {
 		if f.err != nil {
 			return "", fmt.Errorf("failed to calculate checksum: %w", f.err)
 		}
 
-		_, err := hash.Write(f.checksum)
+		sums = append(sums, f.checksum)
+	}
+
+	if len(sums) == 1 {
+		return hex.EncodeToString(sums[0]), nil
+	}
+
+	hash := sha256.New()
+	for _, sum := range sums {
+		_, err := hash.Write(sum)
 		if err != nil {
 			return "", fmt.Errorf("failed to calculate checksum: %w", err)
 		}
 	}
-
 	return hex.EncodeToString(hash.Sum(nil)), nil
 }
 
