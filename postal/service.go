@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"sort"
+	"strings"
 
 	"github.com/Masterminds/semver"
 	"github.com/paketo-buildpacks/packit/cargo"
@@ -61,6 +62,7 @@ func (s Service) Resolve(path, id, version, stack string) (Dependency, error) {
 		return Dependency{}, err
 	}
 
+	var supportedVersions []string
 	for _, dependency := range dependencies {
 		if dependency.ID != id || !stacksInclude(dependency.Stacks, stack) {
 			continue
@@ -74,10 +76,17 @@ func (s Service) Resolve(path, id, version, stack string) (Dependency, error) {
 		if versionConstraint.Check(sVersion) {
 			compatibleVersions = append(compatibleVersions, dependency)
 		}
+
+		supportedVersions = append(supportedVersions, dependency.Version)
 	}
 
 	if len(compatibleVersions) == 0 {
-		return Dependency{}, fmt.Errorf("failed to satisfy %q dependency version constraint %q: no compatible versions", id, version)
+		return Dependency{}, fmt.Errorf(
+			"failed to satisfy %q dependency version constraint %q: no compatible versions. Supported versions are: [%s]",
+			id,
+			version,
+			strings.Join(supportedVersions, ", "),
+		)
 	}
 
 	sort.Slice(compatibleVersions, func(i, j int) bool {
