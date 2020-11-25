@@ -229,9 +229,9 @@ version = "this is super not semver"
 			})
 
 			context("when the entry version constraint cannot be satisfied", func() {
-				it("return an error", func() {
+				it("returns an error with all the supported versions listed", func() {
 					_, err := service.Resolve(path, "some-entry", "9.9.9", "some-stack")
-					Expect(err).To(MatchError(ContainSubstring("failed to satisfy \"some-entry\" dependency version constraint \"9.9.9\": no compatible versions")))
+					Expect(err).To(MatchError(ContainSubstring("failed to satisfy \"some-entry\" dependency version constraint \"9.9.9\": no compatible versions. Supported versions are: [1.2.3, 4.5.6]")))
 				})
 			})
 		})
