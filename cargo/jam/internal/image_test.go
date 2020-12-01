@@ -76,7 +76,7 @@ func testImage(t *testing.T, context spec.G, it spec.S) {
 				it("returns an error", func() {
 					_, err := internal.FindLatestImage(fmt.Sprintf("%s/some-org/error-repo:latest", strings.TrimPrefix(server.URL, "http://")))
 					Expect(err).To(MatchError(ContainSubstring("failed to list tags:")))
-					Expect(err).To(MatchError(ContainSubstring("unsupported status code 418")))
+					Expect(err).To(MatchError(ContainSubstring("status code 418")))
 				})
 			})
 		})
