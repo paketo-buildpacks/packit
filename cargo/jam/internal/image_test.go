@@ -2,8 +2,11 @@ package internal_test
 
 import (
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -17,12 +20,19 @@ func testImage(t *testing.T, context spec.G, it spec.S) {
 	var (
 		Expect = NewWithT(t).Expect
 
-		server *httptest.Server
+		server       *httptest.Server
+		dockerConfig string
 	)
 
 	context("FindLatestImage", func() {
 		it.Before(func() {
 			server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+				if req.Header.Get("Authorization") != "Basic c29tZS11c2VybmFtZTpzb21lLXBhc3N3b3Jk" {
+					w.Header().Set("WWW-Authenticate", `Basic realm="localhost"`)
+					w.WriteHeader(http.StatusUnauthorized)
+					return
+				}
+
 				switch req.URL.Path {
 				case "/v2/":
 					w.WriteHeader(http.StatusOK)
@@ -45,6 +55,29 @@ func testImage(t *testing.T, context spec.G, it spec.S) {
 					t.Fatal(fmt.Sprintf("unknown path: %s", req.URL.Path))
 				}
 			}))
+
+			var err error
+			dockerConfig, err = ioutil.TempDir("", "docker-config")
+			Expect(err).NotTo(HaveOccurred())
+
+			contents := fmt.Sprintf(`{
+				"auths": {
+					%q: {
+						"username": "some-username",
+						"password": "some-password"
+					}
+				}
+			}`, strings.TrimPrefix(server.URL, "http://"))
+
+			err = ioutil.WriteFile(filepath.Join(dockerConfig, "config.json"), []byte(contents), 0600)
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(os.Setenv("DOCKER_CONFIG", dockerConfig)).To(Succeed())
+		})
+
+		it.After(func() {
+			Expect(os.Unsetenv("DOCKER_CONFIG")).To(Succeed())
+			Expect(os.RemoveAll(dockerConfig)).To(Succeed())
 		})
 
 		it("returns the latest semver tag for the given image uri", func() {
