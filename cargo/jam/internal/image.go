@@ -6,6 +6,7 @@ import (
 
 	"github.com/Masterminds/semver"
 	"github.com/docker/distribution/reference"
+	"github.com/google/go-containerregistry/pkg/authn"
 	"github.com/google/go-containerregistry/pkg/name"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 )
@@ -32,7 +33,7 @@ func FindLatestImage(uri string) (Image, error) {
 		return Image{}, fmt.Errorf("failed to parse image registry: %w", err)
 	}
 
-	tags, err := remote.List(repo)
+	tags, err := remote.List(repo, remote.WithAuthFromKeychain(authn.DefaultKeychain))
 	if err != nil {
 		return Image{}, fmt.Errorf("failed to list tags: %w", err)
 	}
