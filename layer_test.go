@@ -44,14 +44,16 @@ func testLayer(t *testing.T, context spec.G, it spec.S) {
 			})
 
 			it("initializes an empty layer", func() {
-				Expect(layer.Reset()).To(Succeed())
+				var err error
+				layer, err = layer.Reset()
+				Expect(err).NotTo(HaveOccurred())
 
 				Expect(layer).To(Equal(packit.Layer{
 					Name:      "some-layer",
 					Path:      filepath.Join(layersDir, "some-layer"),
-					Launch:    true,
-					Build:     true,
-					Cache:     true,
+					Launch:    false,
+					Build:     false,
+					Cache:     false,
 					SharedEnv: packit.Environment{},
 					BuildEnv:  packit.Environment{},
 					LaunchEnv: packit.Environment{},
@@ -66,25 +68,25 @@ func testLayer(t *testing.T, context spec.G, it spec.S) {
 				sharedEnvDir := filepath.Join(layersDir, "some-layer", "env")
 				Expect(os.MkdirAll(sharedEnvDir, os.ModePerm)).To(Succeed())
 
-				err := ioutil.WriteFile(filepath.Join(sharedEnvDir, "OVERRIDE_VAR.override"), []byte("override-value"), 0644)
+				err := ioutil.WriteFile(filepath.Join(sharedEnvDir, "OVERRIDE_VAR.override"), []byte("override-value"), 0600)
 				Expect(err).NotTo(HaveOccurred())
 
 				buildEnvDir := filepath.Join(layersDir, "some-layer", "env.build")
 				Expect(os.MkdirAll(buildEnvDir, os.ModePerm)).To(Succeed())
 
-				err = ioutil.WriteFile(filepath.Join(buildEnvDir, "DEFAULT_VAR.default"), []byte("default-value"), 0644)
+				err = ioutil.WriteFile(filepath.Join(buildEnvDir, "DEFAULT_VAR.default"), []byte("default-value"), 0600)
 				Expect(err).NotTo(HaveOccurred())
 
-				err = ioutil.WriteFile(filepath.Join(buildEnvDir, "INVALID_VAR.invalid"), []byte("invalid-value"), 0644)
+				err = ioutil.WriteFile(filepath.Join(buildEnvDir, "INVALID_VAR.invalid"), []byte("invalid-value"), 0600)
 				Expect(err).NotTo(HaveOccurred())
 
 				launchEnvDir := filepath.Join(layersDir, "some-layer", "env.launch")
 				Expect(os.MkdirAll(launchEnvDir, os.ModePerm)).To(Succeed())
 
-				err = ioutil.WriteFile(filepath.Join(launchEnvDir, "APPEND_VAR.append"), []byte("append-value"), 0644)
+				err = ioutil.WriteFile(filepath.Join(launchEnvDir, "APPEND_VAR.append"), []byte("append-value"), 0600)
 				Expect(err).NotTo(HaveOccurred())
 
-				err = ioutil.WriteFile(filepath.Join(launchEnvDir, "APPEND_VAR.delim"), []byte("!"), 0644)
+				err = ioutil.WriteFile(filepath.Join(launchEnvDir, "APPEND_VAR.delim"), []byte("!"), 0600)
 				Expect(err).NotTo(HaveOccurred())
 
 				layer = packit.Layer{
@@ -111,15 +113,16 @@ func testLayer(t *testing.T, context spec.G, it spec.S) {
 
 			context("when Reset is called on a layer", func() {
 				it("resets all of the layer data and clears the directory", func() {
-					err := layer.Reset()
+					var err error
+					layer, err = layer.Reset()
 					Expect(err).NotTo(HaveOccurred())
 
 					Expect(layer).To(Equal(packit.Layer{
 						Name:      "some-layer",
 						Path:      filepath.Join(layersDir, "some-layer"),
-						Launch:    true,
-						Build:     true,
-						Cache:     true,
+						Launch:    false,
+						Build:     false,
+						Cache:     false,
 						SharedEnv: packit.Environment{},
 						BuildEnv:  packit.Environment{},
 						LaunchEnv: packit.Environment{},
@@ -151,7 +154,7 @@ func testLayer(t *testing.T, context spec.G, it spec.S) {
 						Path: filepath.Join(layersDir, "some-layer"),
 					}
 
-					err := layer.Reset()
+					_, err := layer.Reset()
 					Expect(err).To(MatchError(ContainSubstring("error could not remove file: ")))
 					Expect(err).To(MatchError(ContainSubstring("permission denied")))
 				})

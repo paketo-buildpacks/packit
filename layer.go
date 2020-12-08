@@ -80,21 +80,26 @@ type Layer struct {
 // Reset clears the state of a layer such that the layer can be replaced with
 // new content and metadata. It clears all environment variables, and removes
 // the content of the layer directory on disk.
-func (l *Layer) Reset() error {
+func (l Layer) Reset() (Layer, error) {
+	l.Build = false
+	l.Launch = false
+	l.Cache = false
+
 	l.SharedEnv = Environment{}
 	l.BuildEnv = Environment{}
 	l.LaunchEnv = Environment{}
+
 	l.Metadata = nil
 
 	err := os.RemoveAll(l.Path)
 	if err != nil {
-		return fmt.Errorf("error could not remove file: %s", err)
+		return Layer{}, fmt.Errorf("error could not remove file: %s", err)
 	}
 
 	err = os.MkdirAll(l.Path, os.ModePerm)
 	if err != nil {
-		return fmt.Errorf("error could not create directory: %s", err)
+		return Layer{}, fmt.Errorf("error could not create directory: %s", err)
 	}
 
-	return nil
+	return l, nil
 }
