@@ -1,4 +1,4 @@
-package judge
+package draft
 
 import (
 	"sort"
@@ -17,17 +17,17 @@ type Emitter interface {
 	Candidates([]packit.BuildpackPlanEntry)
 }
 
-type PlanEntryHandler struct {
+type Planner struct {
 	logger Logger
 }
 
-func NewPlanEntryHandler(logger Logger) PlanEntryHandler {
-	return PlanEntryHandler{
+func NewPlanner(logger Logger) Planner {
+	return Planner{
 		logger: logger,
 	}
 }
 
-func (p PlanEntryHandler) ResolveEntries(name string, entries []packit.BuildpackPlanEntry, priorities map[string]int) (packit.BuildpackPlanEntry, bool) {
+func (p Planner) Resolve(name string, entries []packit.BuildpackPlanEntry, priorities map[string]int) (packit.BuildpackPlanEntry, bool) {
 	var filteredEntries []packit.BuildpackPlanEntry
 	for _, e := range entries {
 		if e.Name == name {
@@ -59,7 +59,7 @@ func (p PlanEntryHandler) ResolveEntries(name string, entries []packit.Buildpack
 	return filteredEntries[0], true
 }
 
-func (p PlanEntryHandler) MergeLayerTypes(name string, entries []packit.BuildpackPlanEntry) []packit.LayerType {
+func (p Planner) MergeLayerTypes(name string, entries []packit.BuildpackPlanEntry) []packit.LayerType {
 	layerTypeCollector := map[packit.LayerType]interface{}{}
 	for _, e := range entries {
 		if e.Name == name {
@@ -85,7 +85,7 @@ func (p PlanEntryHandler) MergeLayerTypes(name string, entries []packit.Buildpac
 	return layerTypes
 }
 
-func (p PlanEntryHandler) candidates(entries []packit.BuildpackPlanEntry) {
+func (p Planner) candidates(entries []packit.BuildpackPlanEntry) {
 	p.logger.Subprocess("Candidate version sources (in priority order):")
 
 	var (

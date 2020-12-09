@@ -1,22 +1,22 @@
-package judge_test
+package draft_test
 
 import (
 	"bytes"
 	"testing"
 
 	"github.com/paketo-buildpacks/packit"
-	"github.com/paketo-buildpacks/packit/judge"
+	"github.com/paketo-buildpacks/packit/draft"
 	"github.com/paketo-buildpacks/packit/scribe"
 	"github.com/sclevine/spec"
 
 	. "github.com/onsi/gomega"
 )
 
-func testPlanEntryHandler(t *testing.T, context spec.G, it spec.S) {
+func testPlanner(t *testing.T, context spec.G, it spec.S) {
 	var (
 		Expect = NewWithT(t).Expect
 
-		resolver judge.PlanEntryHandler
+		planner draft.Planner
 
 		buffer *bytes.Buffer
 
@@ -32,12 +32,12 @@ func testPlanEntryHandler(t *testing.T, context spec.G, it spec.S) {
 
 		buffer = bytes.NewBuffer(nil)
 
-		resolver = judge.NewPlanEntryHandler(scribe.NewLogger(buffer))
+		planner = draft.NewPlanner(scribe.NewLogger(buffer))
 	})
 
 	context("ResolveEntries", func() {
 		it("resolves the best plan entry", func() {
-			entry, ok := resolver.ResolveEntries("node", []packit.BuildpackPlanEntry{
+			entry, ok := planner.Resolve("node", []packit.BuildpackPlanEntry{
 				{
 					Name: "node",
 					Metadata: map[string]interface{}{
@@ -84,7 +84,7 @@ func testPlanEntryHandler(t *testing.T, context spec.G, it spec.S) {
 
 		context("the priorities are nil", func() {
 			it("returns the first entry in the filtered map", func() {
-				entry, ok := resolver.ResolveEntries("node", []packit.BuildpackPlanEntry{
+				entry, ok := planner.Resolve("node", []packit.BuildpackPlanEntry{
 					{
 						Name: "node",
 						Metadata: map[string]interface{}{
@@ -127,7 +127,7 @@ func testPlanEntryHandler(t *testing.T, context spec.G, it spec.S) {
 
 		context("there are no enties matching the given name", func() {
 			it("returns the first entry in the filtered map", func() {
-				_, ok := resolver.ResolveEntries("some-name", []packit.BuildpackPlanEntry{
+				_, ok := planner.Resolve("some-name", []packit.BuildpackPlanEntry{
 					{
 						Name: "node",
 						Metadata: map[string]interface{}{
@@ -164,7 +164,7 @@ func testPlanEntryHandler(t *testing.T, context spec.G, it spec.S) {
 
 	context("MergeLayerTypes", func() {
 		it("resolves the layer types from plan metadata", func() {
-			layerTypes := resolver.MergeLayerTypes("node", []packit.BuildpackPlanEntry{
+			layerTypes := planner.MergeLayerTypes("node", []packit.BuildpackPlanEntry{
 				{
 					Name: "node",
 					Metadata: map[string]interface{}{
@@ -203,7 +203,7 @@ func testPlanEntryHandler(t *testing.T, context spec.G, it spec.S) {
 
 		context("if there are flags set in irrelevant entries", func() {
 			it("resolves the layer types from plan metadata and ignores the irrelevant", func() {
-				layerTypes := resolver.MergeLayerTypes("node", []packit.BuildpackPlanEntry{
+				layerTypes := planner.MergeLayerTypes("node", []packit.BuildpackPlanEntry{
 					{
 						Name: "node",
 						Metadata: map[string]interface{}{
