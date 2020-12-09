@@ -18,7 +18,7 @@ type Layers struct {
 // Get will either create a new layer with the given name and layer types. If a
 // layer already exists on disk, then the layer metadata will be retrieved from
 // disk and returned instead.
-func (l Layers) Get(name string, layerTypes ...LayerType) (Layer, error) {
+func (l Layers) Get(name string) (Layer, error) {
 	layer := Layer{
 		Path:      filepath.Join(l.Path, name),
 		Name:      name,
@@ -47,17 +47,6 @@ func (l Layers) Get(name string, layerTypes ...LayerType) (Layer, error) {
 	layer.LaunchEnv, err = newEnvironmentFromPath(filepath.Join(l.Path, name, "env.launch"))
 	if err != nil {
 		return Layer{}, err
-	}
-
-	for _, layerType := range layerTypes {
-		switch layerType {
-		case BuildLayer:
-			layer.Build = true
-		case CacheLayer:
-			layer.Cache = true
-		case LaunchLayer:
-			layer.Launch = true
-		}
 	}
 
 	return layer, nil
