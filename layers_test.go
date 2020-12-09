@@ -47,23 +47,6 @@ func testLayers(t *testing.T, context spec.G, it spec.S) {
 			}))
 		})
 
-		context("when given flags", func() {
-			it("applies those flags to the layer", func() {
-				layer, err := layers.Get("some-layer", packit.LaunchLayer, packit.BuildLayer, packit.CacheLayer)
-				Expect(err).NotTo(HaveOccurred())
-				Expect(layer).To(Equal(packit.Layer{
-					Name:      "some-layer",
-					Path:      filepath.Join(layersDir, "some-layer"),
-					Launch:    true,
-					Build:     true,
-					Cache:     true,
-					SharedEnv: packit.Environment{},
-					BuildEnv:  packit.Environment{},
-					LaunchEnv: packit.Environment{},
-				}))
-			})
-		})
-
 		context("when the layer already exists on disk", func() {
 			it.Before(func() {
 				err := ioutil.WriteFile(filepath.Join(layersDir, "some-layer.toml"), []byte(`
@@ -77,7 +60,7 @@ some-key = "some-value"`), 0644)
 			})
 
 			it("returns a layer with the existing metadata", func() {
-				layer, err := layers.Get("some-layer", packit.LaunchLayer, packit.BuildLayer, packit.CacheLayer)
+				layer, err := layers.Get("some-layer")
 				Expect(err).NotTo(HaveOccurred())
 				Expect(layer).To(Equal(packit.Layer{
 					Name:      "some-layer",
@@ -128,7 +111,7 @@ some-key = "some-value"`), 0644)
 				})
 
 				it("returns a layer with the existing metadata", func() {
-					layer, err := layers.Get("some-layer", packit.LaunchLayer, packit.BuildLayer, packit.CacheLayer)
+					layer, err := layers.Get("some-layer")
 					Expect(err).NotTo(HaveOccurred())
 					Expect(layer).To(Equal(packit.Layer{
 						Name:   "some-layer",
@@ -178,7 +161,7 @@ some-key = "some-value"`), 0644)
 				})
 
 				it("returns a layer with the existing metadata", func() {
-					_, err := layers.Get("some-layer", packit.LaunchLayer, packit.BuildLayer, packit.CacheLayer)
+					_, err := layers.Get("some-layer")
 					Expect(err).To(MatchError(ContainSubstring("permission denied")))
 				})
 			})
@@ -191,7 +174,7 @@ some-key = "some-value"`), 0644)
 				})
 
 				it("returns a layer with the existing metadata", func() {
-					_, err := layers.Get("some-layer", packit.LaunchLayer, packit.BuildLayer, packit.CacheLayer)
+					_, err := layers.Get("some-layer")
 					Expect(err).To(MatchError(ContainSubstring("permission denied")))
 				})
 			})
@@ -204,7 +187,7 @@ some-key = "some-value"`), 0644)
 				})
 
 				it("returns a layer with the existing metadata", func() {
-					_, err := layers.Get("some-layer", packit.LaunchLayer, packit.BuildLayer, packit.CacheLayer)
+					_, err := layers.Get("some-layer")
 					Expect(err).To(MatchError(ContainSubstring("permission denied")))
 				})
 			})

@@ -5,25 +5,6 @@ import (
 	"os"
 )
 
-// LayerType defines the set of layer types that can be declared according to
-// the specification:
-// https://github.com/buildpacks/spec/blob/main/buildpack.md#layer-types.
-type LayerType uint8
-
-const (
-	// BuildLayer indicates that the layer will be made available during the
-	// build phase.
-	BuildLayer LayerType = iota
-
-	// LaunchLayer indicates that the layer will be made available during the
-	// launch phase.
-	LaunchLayer
-
-	// CacheLayer indicates that the layer will be cached and made available to
-	// the buildpack on subsequent rebuilds.
-	CacheLayer
-)
-
 // Layer provides a representation of a layer managed by a buildpack as
 // described by the specification:
 // https://github.com/buildpacks/spec/blob/main/buildpack.md#layers.
