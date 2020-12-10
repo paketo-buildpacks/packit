@@ -343,40 +343,6 @@ func testPack(t *testing.T, context spec.G, it spec.S) {
 					Expect(session.Err).To(gbytes.Say("missing required flag --buildpack"))
 				})
 			})
-
-			context("when the buildpack is built to run offline", func() {
-
-				it.Before(func() {
-					err := ioutil.WriteFile(filepath.Join(buildpackDir, "buildpack.toml"), []byte(`api = "0.2"
-
-[buildpack]
-  id = "some-buildpack-id"
-  name = "some-buildpack-name"
-  version = "some-version"
-  homepage = "some-homepage-link"
-
-[metadata]
-  include_files = ["bin/build", "bin/detect", "bin/link", "buildpack.toml", "generated-file"]
-  pre_package = "./scripts/build.sh"
-					`), 0644)
-					Expect(err).NotTo(HaveOccurred())
-
-				})
-
-				it("creates an offline packaged buildpack", func() {
-					command := exec.Command(
-						path, "pack",
-						"--buildpack", filepath.Join(buildpackDir, "buildpack.toml"),
-						"--output", filepath.Join(tmpDir, "output.tgz"),
-						"--version", "some-version",
-					)
-					session, err := gexec.Start(command, buffer, buffer)
-					Expect(err).NotTo(HaveOccurred())
-					Eventually(session).Should(gexec.Exit(1), func() string { return buffer.String() })
-
-					Expect(session.Err).To(gbytes.Say("the include_files and pre_package fields in the metadata section of the buildpack.toml have been changed to include-files and pre-package respectively: please update the buildpack.toml to reflect this change"))
-				})
-			})
 		})
 	})
 }

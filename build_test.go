@@ -52,11 +52,11 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 
 		_, err = file.WriteString(`
 [[entries]]
-name = "some-entry"
-version = "some-version"
+  name = "some-entry"
 
 [entries.metadata]
-some-key = "some-value"
+  version = "some-version"
+  some-key = "some-value"
 `)
 		Expect(err).NotTo(HaveOccurred())
 
@@ -70,13 +70,13 @@ some-key = "some-value"
 
 		bpTOML := []byte(`
 [buildpack]
-id = "some-id"
-name = "some-name"
-version = "some-version"
-clear-env = false
+  id = "some-id"
+  name = "some-name"
+  version = "some-version"
+  clear-env = false
 `)
-		Expect(ioutil.WriteFile(filepath.Join(cnbDir, "buildpack.toml"), bpTOML, 0644)).To(Succeed())
-		Expect(ioutil.WriteFile(filepath.Join(envCnbDir, "buildpack.toml"), bpTOML, 0644)).To(Succeed())
+		Expect(ioutil.WriteFile(filepath.Join(cnbDir, "buildpack.toml"), bpTOML, 0600)).To(Succeed())
+		Expect(ioutil.WriteFile(filepath.Join(envCnbDir, "buildpack.toml"), bpTOML, 0600)).To(Succeed())
 
 		binaryPath = filepath.Join(cnbDir, "bin", "build")
 
@@ -109,9 +109,9 @@ clear-env = false
 			Plan: packit.BuildpackPlan{
 				Entries: []packit.BuildpackPlanEntry{
 					{
-						Name:    "some-entry",
-						Version: "some-version",
+						Name: "some-entry",
 						Metadata: map[string]interface{}{
+							"version":  "some-version",
 							"some-key": "some-value",
 						},
 					},
@@ -142,12 +142,12 @@ clear-env = false
 
 		Expect(string(contents)).To(MatchTOML(`
 [[entries]]
-name = "some-entry"
-version = "some-version"
+  name = "some-entry"
 
 [entries.metadata]
-some-key = "some-value"
-other-key = "other-value"
+  version = "some-version"
+  some-key = "some-value"
+  other-key = "other-value"
 `))
 	})
 
@@ -181,7 +181,7 @@ build = true
 cache = true
 
 [metadata]
-some-key = "some-value"
+  some-key = "some-value"
 `))
 	})
 
@@ -192,10 +192,10 @@ some-key = "some-value"
 			it.Before(func() {
 				obsoleteLayerPath = filepath.Join(layersDir, "obsolete-layer")
 				Expect(os.MkdirAll(obsoleteLayerPath, os.ModePerm)).To(Succeed())
-				Expect(ioutil.WriteFile(obsoleteLayerPath+".toml", []byte{}, 0755)).To(Succeed())
+				Expect(ioutil.WriteFile(obsoleteLayerPath+".toml", []byte{}, 0600)).To(Succeed())
 
-				Expect(ioutil.WriteFile(filepath.Join(layersDir, "launch.toml"), []byte{}, 0755)).To(Succeed())
-				Expect(ioutil.WriteFile(filepath.Join(layersDir, "store.toml"), []byte{}, 0755)).To(Succeed())
+				Expect(ioutil.WriteFile(filepath.Join(layersDir, "launch.toml"), []byte{}, 0600)).To(Succeed())
+				Expect(ioutil.WriteFile(filepath.Join(layersDir, "store.toml"), []byte{}, 0600)).To(Succeed())
 			})
 
 			it("removes them", func() {
@@ -238,9 +238,9 @@ some-key = "some-value"
 					Plan: packit.BuildpackPlan{
 						Entries: []packit.BuildpackPlanEntry{
 							{
-								Name:    "some-entry",
-								Version: "some-version",
+								Name: "some-entry",
 								Metadata: map[string]interface{}{
+									"version":  "some-version",
 									"some-key": "some-value",
 								},
 							},
@@ -318,12 +318,14 @@ some-key = "some-value"
 			it("persists a launch.toml", func() {
 				packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
 					return packit.BuildResult{
-						Processes: []packit.Process{
-							{
-								Type:    "some-type",
-								Command: "some-command",
-								Args:    []string{"some-arg"},
-								Direct:  true,
+						Launch: packit.LaunchMetadata{
+							Processes: []packit.Process{
+								{
+									Type:    "some-type",
+									Command: "some-command",
+									Args:    []string{"some-arg"},
+									Direct:  true,
+								},
 							},
 						},
 					}, nil
@@ -370,9 +372,11 @@ some-key = "some-value"
 			it("persists a launch.toml", func() {
 				packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
 					return packit.BuildResult{
-						Slices: []packit.Slice{
-							{
-								Paths: []string{"some-slice"},
+						Launch: packit.LaunchMetadata{
+							Slices: []packit.Slice{
+								{
+									Paths: []string{"some-slice"},
+								},
 							},
 						},
 					}, nil
@@ -420,9 +424,11 @@ some-key = "some-value"
 			it("persists a launch.toml", func() {
 				packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
 					return packit.BuildResult{
-						Labels: map[string]string{
-							"some key":       "some value",
-							"some-other-key": "some-other-value",
+						Launch: packit.LaunchMetadata{
+							Labels: map[string]string{
+								"some key":       "some value",
+								"some-other-key": "some-other-value",
+							},
 						},
 					}, nil
 				}, packit.WithArgs([]string{binaryPath, layersDir, "", planPath}))
@@ -539,7 +545,7 @@ some-key = "some-value"
 	context("failure cases", func() {
 		context("when the buildpack plan.toml is malformed", func() {
 			it.Before(func() {
-				err := ioutil.WriteFile(planPath, []byte("%%%"), 0644)
+				err := ioutil.WriteFile(planPath, []byte("%%%"), 0600)
 				Expect(err).NotTo(HaveOccurred())
 			})
 
@@ -564,7 +570,7 @@ some-key = "some-value"
 
 		context("when the buildpack.toml is malformed", func() {
 			it.Before(func() {
-				err := ioutil.WriteFile(filepath.Join(cnbDir, "buildpack.toml"), []byte("%%%"), 0644)
+				err := ioutil.WriteFile(filepath.Join(cnbDir, "buildpack.toml"), []byte("%%%"), 0600)
 				Expect(err).NotTo(HaveOccurred())
 			})
 
@@ -629,7 +635,9 @@ some-key = "some-value"
 			it("calls the exit handler", func() {
 				packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
 					return packit.BuildResult{
-						Processes: []packit.Process{{}},
+						Launch: packit.LaunchMetadata{
+							Processes: []packit.Process{{}},
+						},
 					}, nil
 				}, packit.WithArgs([]string{binaryPath, layersDir, "", planPath}), packit.WithExitHandler(exitHandler))
 
