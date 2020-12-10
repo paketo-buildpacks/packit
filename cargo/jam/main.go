@@ -34,8 +34,7 @@ func main() {
 		tarBuilder := cargo.NewTarBuilder(logger)
 		prePackager := cargo.NewPrePackager(bash, logger, scribe.NewWriter(os.Stdout, scribe.WithIndent(2)))
 		dependencyCacher := cargo.NewDependencyCacher(transport, logger)
-		deprecationWarning := cargo.NewDeprecationWarning()
-		command = commands.NewPack(directoryDuplicator, buildpackParser, prePackager, dependencyCacher, fileBundler, tarBuilder, deprecationWarning, os.Stdout)
+		command = commands.NewPack(directoryDuplicator, buildpackParser, prePackager, dependencyCacher, fileBundler, tarBuilder, os.Stdout)
 
 	case "summarize":
 		inspector := internal.NewBuildpackInspector()
