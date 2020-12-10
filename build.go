@@ -65,24 +65,6 @@ type BuildResult struct {
 	// the buildpack lifecycle specification:
 	// https://github.com/buildpacks/spec/blob/main/buildpack.md#launchtoml-toml
 	Launch LaunchMetadata
-
-	// Processes is a list of processes that will be returned to the lifecycle to
-	// be executed during the launch phase.
-	//
-	// Deprecated: Use Launch.Processes instead.
-	Processes []Process
-
-	// Slices is a list of slices that will be returned to the lifecycle to be
-	// exported as separate layers during the export phase.
-	//
-	// Deprecated: Use Launch.Slices instead.
-	Slices []Slice
-
-	// Labels is a map of key-value pairs that will be returned to the lifecycle to be
-	// added as config label on the image metadata. Keys must be unique.
-	//
-	// Deprecated: Use Launch.Labels instead.
-	Labels map[string]string
 }
 
 // LaunchMetadata represents the launch metadata details persisted in the
@@ -164,12 +146,6 @@ type BuildpackPlan struct {
 type BuildpackPlanEntry struct {
 	// Name is the name of the dependency the the buildpack should provide.
 	Name string `toml:"name"`
-
-	// Version if the version contraint that defines what would be an acceptable
-	// dependency provided by the buildpack.
-	//
-	// Deprecated: Retrieve version information from Metadata instead.
-	Version string `toml:"version"`
 
 	// Metadata is an unspecified field allowing buildpacks to communicate extra
 	// details about their requirement. Examples of this type of metadata might
@@ -286,18 +262,6 @@ func Build(f BuildFunc, options ...Option) {
 			config.exitHandler.Error(err)
 			return
 		}
-	}
-
-	if len(result.Launch.Processes) == 0 {
-		result.Launch.Processes = result.Processes
-	}
-
-	if len(result.Launch.Slices) == 0 {
-		result.Launch.Slices = result.Slices
-	}
-
-	if len(result.Launch.Labels) == 0 {
-		result.Launch.Labels = result.Labels
 	}
 
 	if len(result.Launch.Processes) > 0 ||

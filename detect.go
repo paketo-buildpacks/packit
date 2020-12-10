@@ -78,12 +78,6 @@ type BuildPlanRequirement struct {
 	// is provided or required.
 	Name string `toml:"name"`
 
-	// Version allows a requirement to include a constraint describing what
-	// versions of the dependency are considered acceptable.
-	//
-	// Deprecated: Store version information in Metadata instead.
-	Version string `toml:"version"`
-
 	// Metadata is an unspecified field allowing buildpacks to communicate extra
 	// details about their requirement. Examples of this type of metadata might
 	// include details about what source was used to decide the version

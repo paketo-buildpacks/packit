@@ -19,7 +19,6 @@ func TestUnitCargo(t *testing.T) {
 	suite("BuildpackParser", testBuildpackParser)
 	suite("Config", testConfig)
 	suite("DependencyCacher", testDependencyCacher)
-	suite("DeprecationWarning", testDeprecationWarning)
 	suite("DirectoryDuplicator", testDirectoryDuplicator)
 	suite("FileBundler", testFileBundler)
 	suite("PrePackager", testPrePackager)

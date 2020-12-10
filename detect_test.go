@@ -57,13 +57,13 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 
 		bpTOMLContent := []byte(`
 [buildpack]
-id = "some-id"
-name = "some-name"
-version = "some-version"
-clear-env = false
+  id = "some-id"
+  name = "some-name"
+  version = "some-version"
+  clear-env = false
 `)
-		Expect(ioutil.WriteFile(filepath.Join(cnbDir, "buildpack.toml"), bpTOMLContent, 0644)).To(Succeed())
-		Expect(ioutil.WriteFile(filepath.Join(cnbEnvDir, "buildpack.toml"), bpTOMLContent, 0644)).To(Succeed())
+		Expect(ioutil.WriteFile(filepath.Join(cnbDir, "buildpack.toml"), bpTOMLContent, 0600)).To(Succeed())
+		Expect(ioutil.WriteFile(filepath.Join(cnbEnvDir, "buildpack.toml"), bpTOMLContent, 0600)).To(Succeed())
 
 		exitHandler = &fakes.ExitHandler{}
 	})
@@ -115,9 +115,9 @@ clear-env = false
 					},
 					Requires: []packit.BuildPlanRequirement{
 						{
-							Name:    "some-requirement",
-							Version: "some-version",
+							Name: "some-requirement",
 							Metadata: map[string]string{
+								"version":  "some-version",
 								"some-key": "some-value",
 							},
 						},
@@ -131,14 +131,14 @@ clear-env = false
 
 		Expect(string(contents)).To(MatchTOML(`
 [[provides]]
-name = "some-provision"
+  name = "some-provision"
 
 [[requires]]
-name = "some-requirement"
-version = "some-version"
+  name = "some-requirement"
 
 [requires.metadata]
-some-key = "some-value"
+  version = "some-version"
+  some-key = "some-value"
 `))
 	})
 
@@ -153,9 +153,9 @@ some-key = "some-value"
 					},
 					Requires: []packit.BuildPlanRequirement{
 						{
-							Name:    "some-requirement",
-							Version: "some-version",
+							Name: "some-requirement",
 							Metadata: map[string]string{
+								"version":  "some-version",
 								"some-key": "some-value",
 							},
 						},
@@ -167,9 +167,9 @@ some-key = "some-value"
 							},
 							Requires: []packit.BuildPlanRequirement{
 								{
-									Name:    "some-other-requirement",
-									Version: "some-other-version",
+									Name: "some-other-requirement",
 									Metadata: map[string]string{
+										"version":        "some-other-version",
 										"some-other-key": "some-other-value",
 									},
 								},
@@ -181,9 +181,9 @@ some-key = "some-value"
 							},
 							Requires: []packit.BuildPlanRequirement{
 								{
-									Name:    "some-another-requirement",
-									Version: "some-another-version",
+									Name: "some-another-requirement",
 									Metadata: map[string]string{
+										"version":          "some-another-version",
 										"some-another-key": "some-another-value",
 									},
 								},
@@ -203,8 +203,9 @@ some-key = "some-value"
 
 [[requires]]
   name = "some-requirement"
-  version = "some-version"
+
   [requires.metadata]
+  version = "some-version"
 	some-key = "some-value"
 
 [[or]]
@@ -214,9 +215,10 @@ some-key = "some-value"
 
   [[or.requires]]
 	name = "some-other-requirement"
-	version = "some-other-version"
+
 	[or.requires.metadata]
-	  some-other-key = "some-other-value"
+		version = "some-other-version"
+		some-other-key = "some-other-value"
 
 [[or]]
 
@@ -225,8 +227,8 @@ some-key = "some-value"
 
   [[or.requires]]
 	name = "some-another-requirement"
-	version = "some-another-version"
 	[or.requires.metadata]
+		version = "some-another-version"
 	  some-another-key = "some-another-value"
 `))
 	})
@@ -326,9 +328,9 @@ some-key = "some-value"
 							},
 							Requires: []packit.BuildPlanRequirement{
 								{
-									Name:    "some-requirement",
-									Version: "some-version",
+									Name: "some-requirement",
 									Metadata: map[string]string{
+										"version":  "some-version",
 										"some-key": "some-value",
 									},
 								},
@@ -354,7 +356,6 @@ some-key = "some-value"
 							Requires: []packit.BuildPlanRequirement{
 								{
 									Name:     "some-requirement",
-									Version:  "some-version",
 									Metadata: map[int]int{},
 								},
 							},

@@ -22,16 +22,15 @@ func testPack(t *testing.T, context spec.G, it spec.S) {
 	var (
 		Expect = NewWithT(t).Expect
 
-		buffer                   *bytes.Buffer
-		directoryDuplicator      *fakes.DirectoryDuplicator
-		configParser             *fakes.ConfigParser
-		tarBuilder               *fakes.TarBuilder
-		prePackager              *fakes.PrePackager
-		fileBundler              *fakes.FileBundler
-		dependencyCacher         *fakes.DependencyCacher
-		buildpackTOMLDeprecation *fakes.BuildpackTOMLDeprecation
-		tempDir                  string
-		tempCopyDir              string
+		buffer              *bytes.Buffer
+		directoryDuplicator *fakes.DirectoryDuplicator
+		configParser        *fakes.ConfigParser
+		tarBuilder          *fakes.TarBuilder
+		prePackager         *fakes.PrePackager
+		fileBundler         *fakes.FileBundler
+		dependencyCacher    *fakes.DependencyCacher
+		tempDir             string
+		tempCopyDir         string
 
 		command commands.Pack
 	)
@@ -98,9 +97,7 @@ func testPack(t *testing.T, context spec.G, it spec.S) {
 
 		buffer = bytes.NewBuffer(nil)
 
-		buildpackTOMLDeprecation = &fakes.BuildpackTOMLDeprecation{}
-
-		command = commands.NewPack(directoryDuplicator, configParser, prePackager, dependencyCacher, fileBundler, tarBuilder, buildpackTOMLDeprecation, buffer)
+		command = commands.NewPack(directoryDuplicator, configParser, prePackager, dependencyCacher, fileBundler, tarBuilder, buffer)
 
 		var err error
 		tempDir, err = ioutil.TempDir("", "buildpack")
@@ -130,8 +127,6 @@ func testPack(t *testing.T, context spec.G, it spec.S) {
 			Expect(directoryDuplicator.DuplicateCall.Receives.DestPath).To(HavePrefix(os.TempDir()))
 
 			buildpackRoot := directoryDuplicator.DuplicateCall.Receives.DestPath
-
-			Expect(buildpackTOMLDeprecation.WarnDeprecatedFieldsCall.Receives.Path).To(Equal(filepath.Join(buildpackRoot, "some-buildpack.toml")))
 
 			Expect(configParser.ParseCall.Receives.Path).To(Equal(filepath.Join(buildpackRoot, "some-buildpack.toml")))
 
@@ -201,8 +196,6 @@ func testPack(t *testing.T, context spec.G, it spec.S) {
 				Expect(directoryDuplicator.DuplicateCall.Receives.DestPath).To(HavePrefix(os.TempDir()))
 
 				buildpackRoot := directoryDuplicator.DuplicateCall.Receives.DestPath
-
-				Expect(buildpackTOMLDeprecation.WarnDeprecatedFieldsCall.Receives.Path).To(Equal(filepath.Join(buildpackRoot, "some-buildpack.toml")))
 
 				Expect(configParser.ParseCall.Receives.Path).To(Equal(filepath.Join(buildpackRoot, "some-buildpack.toml")))
 
@@ -321,21 +314,6 @@ func testPack(t *testing.T, context spec.G, it spec.S) {
 				})
 				Expect(err).To(MatchError(ContainSubstring("failed to parse buildpack.toml:")))
 				Expect(err).To(MatchError(ContainSubstring("failed to parse")))
-			})
-		})
-
-		context("when the buildpack toml deprecation fails", func() {
-			it.Before(func() {
-				buildpackTOMLDeprecation.WarnDeprecatedFieldsCall.Returns.Error = errors.New("there is a deprecated field in the buildpack.toml")
-			})
-
-			it("returns an error", func() {
-				err := command.Execute([]string{
-					"--buildpack", "no-such-buildpack.toml",
-					"--output", filepath.Join(tempDir, "tempBuildpack.tar.gz"),
-					"--version", "some-buildpack-version",
-				})
-				Expect(err).To(MatchError("there is a deprecated field in the buildpack.toml"))
 			})
 		})
 
