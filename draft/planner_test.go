@@ -1,12 +1,10 @@
 package draft_test
 
 import (
-	"bytes"
 	"testing"
 
 	"github.com/paketo-buildpacks/packit"
 	"github.com/paketo-buildpacks/packit/draft"
-	"github.com/paketo-buildpacks/packit/scribe"
 	"github.com/sclevine/spec"
 
 	. "github.com/onsi/gomega"
@@ -18,8 +16,6 @@ func testPlanner(t *testing.T, context spec.G, it spec.S) {
 
 		planner draft.Planner
 
-		buffer *bytes.Buffer
-
 		priorities map[string]int
 	)
 
@@ -30,14 +26,12 @@ func testPlanner(t *testing.T, context spec.G, it spec.S) {
 			"":        -1,
 		}
 
-		buffer = bytes.NewBuffer(nil)
-
-		planner = draft.NewPlanner(scribe.NewLogger(buffer))
+		planner = draft.NewPlanner()
 	})
 
 	context("ResolveEntries", func() {
 		it("resolves the best plan entry", func() {
-			entry, ok := planner.Resolve("node", []packit.BuildpackPlanEntry{
+			entry, entries := planner.Resolve("node", []packit.BuildpackPlanEntry{
 				{
 					Name: "node",
 					Metadata: map[string]interface{}{
@@ -67,7 +61,6 @@ func testPlanner(t *testing.T, context spec.G, it spec.S) {
 				},
 			}, priorities)
 
-			Expect(ok).To(BeTrue())
 			Expect(entry).To(Equal(packit.BuildpackPlanEntry{
 				Name: "node",
 				Metadata: map[string]interface{}{
@@ -76,15 +69,33 @@ func testPlanner(t *testing.T, context spec.G, it spec.S) {
 				},
 			}))
 
-			Expect(buffer.String()).To(ContainSubstring("    Candidate version sources (in priority order):"))
-			Expect(buffer.String()).To(ContainSubstring("      highest   -> \"some-version\""))
-			Expect(buffer.String()).To(ContainSubstring("      lowest    -> \"another-version\""))
-			Expect(buffer.String()).To(ContainSubstring("      <unknown> -> \"other-version\""))
+			Expect(entries).To(Equal([]packit.BuildpackPlanEntry{
+				{
+					Name: "node",
+					Metadata: map[string]interface{}{
+						"version":        "some-version",
+						"version-source": "highest",
+					},
+				},
+				{
+					Name: "node",
+					Metadata: map[string]interface{}{
+						"version":        "another-version",
+						"version-source": "lowest",
+					},
+				},
+				{
+					Name: "node",
+					Metadata: map[string]interface{}{
+						"version": "other-version",
+					},
+				},
+			}))
 		})
 
 		context("the priorities are nil", func() {
 			it("returns the first entry in the filtered map", func() {
-				entry, ok := planner.Resolve("node", []packit.BuildpackPlanEntry{
+				entry, entries := planner.Resolve("node", []packit.BuildpackPlanEntry{
 					{
 						Name: "node",
 						Metadata: map[string]interface{}{
@@ -114,7 +125,6 @@ func testPlanner(t *testing.T, context spec.G, it spec.S) {
 					},
 				}, nil)
 
-				Expect(ok).To(BeTrue())
 				Expect(entry).To(Equal(packit.BuildpackPlanEntry{
 					Name: "node",
 					Metadata: map[string]interface{}{
@@ -122,12 +132,35 @@ func testPlanner(t *testing.T, context spec.G, it spec.S) {
 						"version-source": "lowest",
 					},
 				}))
+
+				Expect(entries).To(Equal([]packit.BuildpackPlanEntry{
+					{
+						Name: "node",
+						Metadata: map[string]interface{}{
+							"version":        "another-version",
+							"version-source": "lowest",
+						},
+					},
+					{
+						Name: "node",
+						Metadata: map[string]interface{}{
+							"version": "other-version",
+						},
+					},
+					{
+						Name: "node",
+						Metadata: map[string]interface{}{
+							"version":        "some-version",
+							"version-source": "highest",
+						},
+					},
+				}))
 			})
 		})
 
 		context("there are no enties matching the given name", func() {
 			it("returns the first entry in the filtered map", func() {
-				_, ok := planner.Resolve("some-name", []packit.BuildpackPlanEntry{
+				_, entries := planner.Resolve("some-name", []packit.BuildpackPlanEntry{
 					{
 						Name: "node",
 						Metadata: map[string]interface{}{
@@ -157,14 +190,14 @@ func testPlanner(t *testing.T, context spec.G, it spec.S) {
 					},
 				}, priorities)
 
-				Expect(ok).To(BeFalse())
+				Expect(entries).To(BeNil())
 			})
 		})
 	})
 
 	context("MergeLayerTypes", func() {
 		it("resolves the layer types from plan metadata", func() {
-			layerTypes := planner.MergeLayerTypes("node", []packit.BuildpackPlanEntry{
+			launch, build := planner.MergeLayerTypes("node", []packit.BuildpackPlanEntry{
 				{
 					Name: "node",
 					Metadata: map[string]interface{}{
@@ -194,16 +227,13 @@ func testPlanner(t *testing.T, context spec.G, it spec.S) {
 				},
 			})
 
-			Expect(layerTypes).To(ConsistOf([]packit.LayerType{
-				packit.LaunchLayer,
-				packit.BuildLayer,
-				packit.CacheLayer,
-			}))
+			Expect(launch).To(BeTrue())
+			Expect(build).To(BeTrue())
 		})
 
 		context("if there are flags set in irrelevant entries", func() {
 			it("resolves the layer types from plan metadata and ignores the irrelevant", func() {
-				layerTypes := planner.MergeLayerTypes("node", []packit.BuildpackPlanEntry{
+				launch, build := planner.MergeLayerTypes("node", []packit.BuildpackPlanEntry{
 					{
 						Name: "node",
 						Metadata: map[string]interface{}{
@@ -233,7 +263,8 @@ func testPlanner(t *testing.T, context spec.G, it spec.S) {
 					},
 				})
 
-				Expect(layerTypes).NotTo(ConsistOf([]packit.LayerType{packit.LaunchLayer}))
+				Expect(launch).To(BeFalse())
+				Expect(build).To(BeTrue())
 			})
 		})
 	})

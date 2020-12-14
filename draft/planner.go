@@ -2,32 +2,18 @@ package draft
 
 import (
 	"sort"
-	"strconv"
 
 	"github.com/paketo-buildpacks/packit"
 )
 
-type Logger interface {
-	Subprocess(string, ...interface{})
-	Action(string, ...interface{})
-	Break()
-}
-
-type Emitter interface {
-	Candidates([]packit.BuildpackPlanEntry)
-}
-
 type Planner struct {
-	logger Logger
 }
 
-func NewPlanner(logger Logger) Planner {
-	return Planner{
-		logger: logger,
-	}
+func NewPlanner() Planner {
+	return Planner{}
 }
 
-func (p Planner) Resolve(name string, entries []packit.BuildpackPlanEntry, priorities map[string]int) (packit.BuildpackPlanEntry, bool) {
+func (p Planner) Resolve(name string, entries []packit.BuildpackPlanEntry, priorities map[string]int) (packit.BuildpackPlanEntry, []packit.BuildpackPlanEntry) {
 	var filteredEntries []packit.BuildpackPlanEntry
 	for _, e := range entries {
 		if e.Name == name {
@@ -36,7 +22,7 @@ func (p Planner) Resolve(name string, entries []packit.BuildpackPlanEntry, prior
 	}
 
 	if len(filteredEntries) == 0 {
-		return packit.BuildpackPlanEntry{}, false
+		return packit.BuildpackPlanEntry{}, nil
 	}
 
 	sort.Slice(filteredEntries, func(i, j int) bool {
@@ -49,71 +35,25 @@ func (p Planner) Resolve(name string, entries []packit.BuildpackPlanEntry, prior
 		return priorities[left] > priorities[right]
 	})
 
-	emitter, ok := p.logger.(Emitter)
-	if ok {
-		emitter.Candidates(filteredEntries)
-	} else {
-		p.candidates(filteredEntries)
-	}
-
-	return filteredEntries[0], true
+	return filteredEntries[0], filteredEntries
 }
 
-func (p Planner) MergeLayerTypes(name string, entries []packit.BuildpackPlanEntry) []packit.LayerType {
-	layerTypeCollector := map[packit.LayerType]interface{}{}
+func (p Planner) MergeLayerTypes(name string, entries []packit.BuildpackPlanEntry) (bool, bool) {
+	var launch, build bool
 	for _, e := range entries {
 		if e.Name == name {
 			for _, phase := range []string{"build", "launch"} {
 				if e.Metadata[phase] == true {
 					switch phase {
 					case "build":
-						layerTypeCollector[packit.BuildLayer] = nil
-						layerTypeCollector[packit.CacheLayer] = nil
+						build = true
 					case "launch":
-						layerTypeCollector[packit.LaunchLayer] = nil
+						launch = true
 					}
 				}
 			}
 		}
 	}
 
-	var layerTypes []packit.LayerType
-	for layerType := range layerTypeCollector {
-		layerTypes = append(layerTypes, layerType)
-	}
-
-	return layerTypes
-}
-
-func (p Planner) candidates(entries []packit.BuildpackPlanEntry) {
-	p.logger.Subprocess("Candidate version sources (in priority order):")
-
-	var (
-		sources [][2]string
-		maxLen  int
-	)
-
-	for _, entry := range entries {
-		versionSource, ok := entry.Metadata["version-source"].(string)
-		if !ok {
-			versionSource = "<unknown>"
-		}
-
-		version, ok := entry.Metadata["version"].(string)
-		if !ok {
-			version = "*"
-		}
-
-		if len(versionSource) > maxLen {
-			maxLen = len(versionSource)
-		}
-
-		sources = append(sources, [2]string{versionSource, version})
-	}
-
-	for _, source := range sources {
-		p.logger.Action(("%-" + strconv.Itoa(maxLen) + "s -> %q"), source[0], source[1])
-	}
-
-	p.logger.Break()
+	return launch, build
 }
