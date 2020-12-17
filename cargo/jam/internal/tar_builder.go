@@ -1,4 +1,4 @@
-package cargo
+package internal
 
 import (
 	"archive/tar"

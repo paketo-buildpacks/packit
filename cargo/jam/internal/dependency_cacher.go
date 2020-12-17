@@ -1,4 +1,4 @@
-package cargo
+package internal
 
 import (
 	"fmt"
@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/paketo-buildpacks/packit/cargo"
 	"github.com/paketo-buildpacks/packit/scribe"
 )
 
@@ -27,7 +28,7 @@ func NewDependencyCacher(downloader Downloader, logger scribe.Logger) Dependency
 	}
 }
 
-func (dc DependencyCacher) Cache(root string, deps []ConfigMetadataDependency) ([]ConfigMetadataDependency, error) {
+func (dc DependencyCacher) Cache(root string, deps []cargo.ConfigMetadataDependency) ([]cargo.ConfigMetadataDependency, error) {
 	dc.logger.Process("Downloading dependencies...")
 	dir := filepath.Join(root, "dependencies")
 	err := os.MkdirAll(dir, os.ModePerm)
@@ -35,7 +36,7 @@ func (dc DependencyCacher) Cache(root string, deps []ConfigMetadataDependency) (
 		return nil, fmt.Errorf("failed to create dependencies directory: %s", err)
 	}
 
-	var dependencies []ConfigMetadataDependency
+	var dependencies []cargo.ConfigMetadataDependency
 	for _, dep := range deps {
 		dc.logger.Subprocess("%s (%s) [%s]", dep.ID, dep.Version, strings.Join(dep.Stacks, ", "))
 		dc.logger.Action("↳  dependencies/%s", dep.SHA256)
@@ -45,7 +46,7 @@ func (dc DependencyCacher) Cache(root string, deps []ConfigMetadataDependency) (
 			return nil, fmt.Errorf("failed to download dependency: %s", err)
 		}
 
-		validatedSource := NewValidatedReader(source, dep.SHA256)
+		validatedSource := cargo.NewValidatedReader(source, dep.SHA256)
 
 		destination, err := os.Create(filepath.Join(dir, dep.SHA256))
 		if err != nil {

@@ -1,4 +1,4 @@
-package cargo
+package internal
 
 import (
 	"bytes"
@@ -9,6 +9,8 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/paketo-buildpacks/packit/cargo"
 )
 
 type File struct {
@@ -65,7 +67,7 @@ func NewFileBundler() FileBundler {
 	return FileBundler{}
 }
 
-func (b FileBundler) Bundle(root string, paths []string, config Config) ([]File, error) {
+func (b FileBundler) Bundle(root string, paths []string, config cargo.Config) ([]File, error) {
 	var files []File
 
 	for _, path := range paths {
@@ -74,7 +76,7 @@ func (b FileBundler) Bundle(root string, paths []string, config Config) ([]File,
 		switch path {
 		case "buildpack.toml":
 			buf := bytes.NewBuffer(nil)
-			err := EncodeConfig(buf, config)
+			err := cargo.EncodeConfig(buf, config)
 			if err != nil {
 				return nil, fmt.Errorf("error encoding buildpack.toml: %s", err)
 			}

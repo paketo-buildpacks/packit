@@ -3,7 +3,7 @@ package fakes
 import (
 	"sync"
 
-	"github.com/paketo-buildpacks/packit/cargo"
+	"github.com/paketo-buildpacks/packit/cargo/jam/internal"
 )
 
 type TarBuilder struct {
@@ -12,16 +12,16 @@ type TarBuilder struct {
 		CallCount int
 		Receives  struct {
 			Path  string
-			Files []cargo.File
+			Files []internal.File
 		}
 		Returns struct {
 			Error error
 		}
-		Stub func(string, []cargo.File) error
+		Stub func(string, []internal.File) error
 	}
 }
 
-func (f *TarBuilder) Build(param1 string, param2 []cargo.File) error {
+func (f *TarBuilder) Build(param1 string, param2 []internal.File) error {
 	f.BuildCall.Lock()
 	defer f.BuildCall.Unlock()
 	f.BuildCall.CallCount++

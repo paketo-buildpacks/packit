@@ -1,4 +1,4 @@
-package cargo_test
+package internal_test
 
 import (
 	"archive/tar"
@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/paketo-buildpacks/packit/cargo"
+	"github.com/paketo-buildpacks/packit/cargo/jam/internal"
 	"github.com/paketo-buildpacks/packit/scribe"
 	"github.com/sclevine/spec"
 
@@ -25,7 +25,7 @@ func testTarBuilder(t *testing.T, context spec.G, it spec.S) {
 		tempFile string
 		tempDir  string
 		output   *bytes.Buffer
-		builder  cargo.TarBuilder
+		builder  internal.TarBuilder
 	)
 
 	it.Before(func() {
@@ -36,7 +36,7 @@ func testTarBuilder(t *testing.T, context spec.G, it spec.S) {
 		tempFile = filepath.Join(tempDir, "buildpack.tgz")
 
 		output = bytes.NewBuffer(nil)
-		builder = cargo.NewTarBuilder(scribe.NewLogger(output))
+		builder = internal.NewTarBuilder(scribe.NewLogger(output))
 	})
 
 	it.After(func() {
@@ -46,25 +46,25 @@ func testTarBuilder(t *testing.T, context spec.G, it spec.S) {
 	context("Build", func() {
 		context("given a destination and a list of files", func() {
 			it("constructs a tarball", func() {
-				err := builder.Build(tempFile, []cargo.File{
+				err := builder.Build(tempFile, []internal.File{
 					{
 						Name:       "buildpack.toml",
-						Info:       cargo.NewFileInfo("buildpack.toml", len("buildpack-toml-contents"), 0644, time.Now()),
+						Info:       internal.NewFileInfo("buildpack.toml", len("buildpack-toml-contents"), 0644, time.Now()),
 						ReadCloser: ioutil.NopCloser(strings.NewReader("buildpack-toml-contents")),
 					},
 					{
 						Name:       "bin/build",
-						Info:       cargo.NewFileInfo("build", len("build-contents"), 0755, time.Now()),
+						Info:       internal.NewFileInfo("build", len("build-contents"), 0755, time.Now()),
 						ReadCloser: ioutil.NopCloser(strings.NewReader("build-contents")),
 					},
 					{
 						Name:       "bin/detect",
-						Info:       cargo.NewFileInfo("detect", len("detect-contents"), 0755, time.Now()),
+						Info:       internal.NewFileInfo("detect", len("detect-contents"), 0755, time.Now()),
 						ReadCloser: ioutil.NopCloser(strings.NewReader("detect-contents")),
 					},
 					{
 						Name: "bin/link",
-						Info: cargo.NewFileInfo("link", len("./build"), os.ModeSymlink|0755, time.Now()),
+						Info: internal.NewFileInfo("link", len("./build"), os.ModeSymlink|0755, time.Now()),
 						Link: "./build",
 					},
 				})
@@ -119,10 +119,10 @@ func testTarBuilder(t *testing.T, context spec.G, it spec.S) {
 				})
 
 				it("returns an error", func() {
-					err := builder.Build(tempFile, []cargo.File{
+					err := builder.Build(tempFile, []internal.File{
 						{
 							Name:       "bin/build",
-							Info:       cargo.NewFileInfo("build", len("build-contents"), 0755, time.Now()),
+							Info:       internal.NewFileInfo("build", len("build-contents"), 0755, time.Now()),
 							ReadCloser: ioutil.NopCloser(strings.NewReader("build-contents")),
 						},
 					})
@@ -133,10 +133,10 @@ func testTarBuilder(t *testing.T, context spec.G, it spec.S) {
 
 			context("when one of the files cannot be written", func() {
 				it("returns an error", func() {
-					err := builder.Build(tempFile, []cargo.File{
+					err := builder.Build(tempFile, []internal.File{
 						{
 							Name:       "bin/build",
-							Info:       cargo.NewFileInfo("build", 1, 0755, time.Now()),
+							Info:       internal.NewFileInfo("build", 1, 0755, time.Now()),
 							ReadCloser: ioutil.NopCloser(strings.NewReader("build-contents")),
 						},
 					})
@@ -147,7 +147,7 @@ func testTarBuilder(t *testing.T, context spec.G, it spec.S) {
 
 			context("when one of the files cannot have its header created", func() {
 				it("returns an error", func() {
-					err := builder.Build(tempFile, []cargo.File{
+					err := builder.Build(tempFile, []internal.File{
 						{
 							Name:       "bin/build",
 							ReadCloser: ioutil.NopCloser(strings.NewReader("build-contents")),

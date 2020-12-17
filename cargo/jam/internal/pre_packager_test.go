@@ -1,12 +1,12 @@
-package cargo_test
+package internal_test
 
 import (
 	"bytes"
 	"fmt"
 	"testing"
 
-	"github.com/paketo-buildpacks/packit/cargo"
-	"github.com/paketo-buildpacks/packit/cargo/fakes"
+	"github.com/paketo-buildpacks/packit/cargo/jam/internal"
+	"github.com/paketo-buildpacks/packit/cargo/jam/internal/fakes"
 	"github.com/paketo-buildpacks/packit/pexec"
 	"github.com/paketo-buildpacks/packit/scribe"
 	"github.com/sclevine/spec"
@@ -21,7 +21,7 @@ func testPrePackager(t *testing.T, context spec.G, it spec.S) {
 		bash        *fakes.Executable
 		logger      scribe.Logger
 		output      *bytes.Buffer
-		prePackager cargo.PrePackager
+		prePackager internal.PrePackager
 	)
 
 	it.Before(func() {
@@ -40,7 +40,7 @@ func testPrePackager(t *testing.T, context spec.G, it spec.S) {
 
 		output = bytes.NewBuffer(nil)
 		logger = scribe.NewLogger(output)
-		prePackager = cargo.NewPrePackager(bash, logger, output)
+		prePackager = internal.NewPrePackager(bash, logger, output)
 	})
 
 	context("Execute", func() {

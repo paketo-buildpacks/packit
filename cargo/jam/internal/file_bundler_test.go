@@ -1,4 +1,4 @@
-package cargo_test
+package internal_test
 
 import (
 	"io/ioutil"
@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/paketo-buildpacks/packit/cargo"
+	"github.com/paketo-buildpacks/packit/cargo/jam/internal"
 	"github.com/sclevine/spec"
 
 	. "github.com/onsi/gomega"
@@ -17,16 +18,16 @@ func testFileBundler(t *testing.T, context spec.G, it spec.S) {
 	var (
 		Expect = NewWithT(t).Expect
 
-		fileBundler cargo.FileBundler
+		fileBundler internal.FileBundler
 	)
 
 	it.Before(func() {
-		fileBundler = cargo.NewFileBundler()
+		fileBundler = internal.NewFileBundler()
 	})
 
 	context("Bundle", func() {
 		it("returns a list of cargo files", func() {
-			files, err := fileBundler.Bundle(filepath.Join("jam", "testdata", "example-cnb"), []string{"bin/build", "bin/detect", "bin/link", "buildpack.toml"}, cargo.Config{
+			files, err := fileBundler.Bundle(filepath.Join("..", "testdata", "example-cnb"), []string{"bin/build", "bin/detect", "bin/link", "buildpack.toml"}, cargo.Config{
 				API: "0.2",
 				Buildpack: cargo.ConfigBuildpack{
 					ID:      "other-buildpack-id",
