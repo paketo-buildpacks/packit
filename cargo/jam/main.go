@@ -30,10 +30,10 @@ func main() {
 		transport := cargo.NewTransport()
 		directoryDuplicator := cargo.NewDirectoryDuplicator()
 		buildpackParser := cargo.NewBuildpackParser()
-		fileBundler := cargo.NewFileBundler()
-		tarBuilder := cargo.NewTarBuilder(logger)
-		prePackager := cargo.NewPrePackager(bash, logger, scribe.NewWriter(os.Stdout, scribe.WithIndent(2)))
-		dependencyCacher := cargo.NewDependencyCacher(transport, logger)
+		fileBundler := internal.NewFileBundler()
+		tarBuilder := internal.NewTarBuilder(logger)
+		prePackager := internal.NewPrePackager(bash, logger, scribe.NewWriter(os.Stdout, scribe.WithIndent(2)))
+		dependencyCacher := internal.NewDependencyCacher(transport, logger)
 		command = commands.NewPack(directoryDuplicator, buildpackParser, prePackager, dependencyCacher, fileBundler, tarBuilder, os.Stdout)
 
 	case "summarize":

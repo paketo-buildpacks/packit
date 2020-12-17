@@ -4,6 +4,7 @@ import (
 	"sync"
 
 	"github.com/paketo-buildpacks/packit/cargo"
+	"github.com/paketo-buildpacks/packit/cargo/jam/internal"
 )
 
 type FileBundler struct {
@@ -16,14 +17,14 @@ type FileBundler struct {
 			Config cargo.Config
 		}
 		Returns struct {
-			FileSlice []cargo.File
+			FileSlice []internal.File
 			Error     error
 		}
-		Stub func(string, []string, cargo.Config) ([]cargo.File, error)
+		Stub func(string, []string, cargo.Config) ([]internal.File, error)
 	}
 }
 
-func (f *FileBundler) Bundle(param1 string, param2 []string, param3 cargo.Config) ([]cargo.File, error) {
+func (f *FileBundler) Bundle(param1 string, param2 []string, param3 cargo.Config) ([]internal.File, error) {
 	f.BundleCall.Lock()
 	defer f.BundleCall.Unlock()
 	f.BundleCall.CallCount++

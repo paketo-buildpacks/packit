@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/paketo-buildpacks/packit/cargo"
+	"github.com/paketo-buildpacks/packit/cargo/jam/internal"
 )
 
 //go:generate faux --interface ConfigParser --output fakes/config_parser.go
@@ -20,12 +21,12 @@ type ConfigParser interface {
 
 //go:generate faux --interface FileBundler --output fakes/file_bundler.go
 type FileBundler interface {
-	Bundle(path string, files []string, config cargo.Config) ([]cargo.File, error)
+	Bundle(path string, files []string, config cargo.Config) ([]internal.File, error)
 }
 
 //go:generate faux --interface TarBuilder --output fakes/tar_builder.go
 type TarBuilder interface {
-	Build(path string, files []cargo.File) error
+	Build(path string, files []internal.File) error
 }
 
 //go:generate faux --interface PrePackager --output fakes/prepackager.go

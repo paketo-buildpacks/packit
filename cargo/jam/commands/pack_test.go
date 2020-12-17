@@ -13,6 +13,7 @@ import (
 	"github.com/paketo-buildpacks/packit/cargo"
 	"github.com/paketo-buildpacks/packit/cargo/jam/commands"
 	"github.com/paketo-buildpacks/packit/cargo/jam/commands/fakes"
+	"github.com/paketo-buildpacks/packit/cargo/jam/internal"
 	"github.com/sclevine/spec"
 
 	. "github.com/onsi/gomega"
@@ -72,10 +73,10 @@ func testPack(t *testing.T, context spec.G, it spec.S) {
 		}
 
 		fileBundler = &fakes.FileBundler{}
-		fileBundler.BundleCall.Returns.FileSlice = []cargo.File{
+		fileBundler.BundleCall.Returns.FileSlice = []internal.File{
 			{
 				Name:       "buildpack.toml",
-				Info:       cargo.NewFileInfo("buildpack.toml", len("buildpack-toml-contents"), 0644, time.Now()),
+				Info:       internal.NewFileInfo("buildpack.toml", len("buildpack-toml-contents"), 0644, time.Now()),
 				ReadCloser: ioutil.NopCloser(strings.NewReader("buildpack-toml-contents")),
 			},
 		}

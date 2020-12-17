@@ -1,4 +1,4 @@
-package cargo_test
+package internal_test
 
 import (
 	"bytes"
@@ -11,7 +11,8 @@ import (
 	"testing"
 
 	"github.com/paketo-buildpacks/packit/cargo"
-	"github.com/paketo-buildpacks/packit/cargo/fakes"
+	"github.com/paketo-buildpacks/packit/cargo/jam/internal"
+	"github.com/paketo-buildpacks/packit/cargo/jam/internal/fakes"
 	"github.com/paketo-buildpacks/packit/scribe"
 	"github.com/sclevine/spec"
 
@@ -24,7 +25,7 @@ func testDependencyCacher(t *testing.T, context spec.G, it spec.S) {
 
 		tmpDir     string
 		downloader *fakes.Downloader
-		cacher     cargo.DependencyCacher
+		cacher     internal.DependencyCacher
 		output     *bytes.Buffer
 	)
 
@@ -51,7 +52,7 @@ func testDependencyCacher(t *testing.T, context spec.G, it spec.S) {
 		}
 
 		output = bytes.NewBuffer(nil)
-		cacher = cargo.NewDependencyCacher(downloader, scribe.NewLogger(output))
+		cacher = internal.NewDependencyCacher(downloader, scribe.NewLogger(output))
 	})
 
 	context("Cache", func() {
