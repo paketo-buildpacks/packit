@@ -125,8 +125,9 @@ func main() {
 		if err != nil {
 			return packit.BuildResult{}, err
 		}
-    layer.Build = true
-    layer.Launch = true
+
+		layer.Build = true
+		layer.Launch = true
 
 		// At this point we are performing the process of installing the yarn cli.
 		// As those details are not important to the explanation of the packit API,
