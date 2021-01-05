@@ -121,10 +121,13 @@ func main() {
 		// The BuildContext also provides a mechanism whereby a layer can be
 		// created to store the results of a given portion of the build process.
 		// This example creates a layer called "yarn" that will hold the yarn cli.
-		layer, err := context.Layers.Get("yarn", packit.BuildLayer, packit.LaunchLayer)
+		layer, err := context.Layers.Get("yarn")
 		if err != nil {
 			return packit.BuildResult{}, err
 		}
+
+		layer.Build = true
+		layer.Launch = true
 
 		// At this point we are performing the process of installing the yarn cli.
 		// As those details are not important to the explanation of the packit API,
