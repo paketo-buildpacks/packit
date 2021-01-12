@@ -3,6 +3,7 @@ package postal
 import (
 	"fmt"
 	"io"
+	"regexp"
 	"sort"
 	"strings"
 
@@ -53,6 +54,18 @@ func (s Service) Resolve(path, id, version, stack string) (Dependency, error) {
 		version = "*"
 		if defaultVersion != "" {
 			version = defaultVersion
+		}
+	}
+
+	var re = regexp.MustCompile(`~>`)
+	if re.MatchString(version) {
+		res := re.ReplaceAllString(version, "")
+		parts := strings.Split(res, ".")
+
+		if len(parts) == 3 {
+			version = "~" + res
+		} else {
+			version = "^" + res
 		}
 	}
 

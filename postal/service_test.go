@@ -60,6 +60,20 @@ uri = "some-uri"
 version = "1.2.5"
 
 [[metadata.dependencies]]
+id = "some-random-entry"
+sha256 = "some-random-sha"
+stacks = ["other-random-stack"]
+uri = "some-uri"
+version = "1.3.0"
+
+[[metadata.dependencies]]
+id = "some-random-other-entry"
+sha256 = "some-random-other-sha"
+stacks = ["some-other-random-stack"]
+uri = "some-uri"
+version = "2.0.0"
+
+[[metadata.dependencies]]
 id = "some-entry"
 sha256 = "some-sha"
 stacks = ["some-stack"]
@@ -117,6 +131,60 @@ version = "4.5.6"
 						URI:     "some-uri",
 						SHA256:  "some-sha",
 						Version: "4.5.6",
+					}))
+				})
+			})
+
+			context("when there is a version with a major, minor, patch, and pessimistic operator (~>)", func() {
+				it("picks the dependency >= version and < major.minor+1", func() {
+					deprecationDate, err := time.Parse(time.RFC3339, "2022-04-01T00:00:00Z")
+					Expect(err).NotTo(HaveOccurred())
+
+					dependency, err := service.Resolve(path, "some-entry", "~> 1.2.3", "some-stack")
+					Expect(err).NotTo(HaveOccurred())
+					Expect(dependency).To(Equal(postal.Dependency{
+						DeprecationDate: deprecationDate,
+						ID:              "some-entry",
+						Stacks:          []string{"some-stack"},
+						URI:             "some-uri",
+						SHA256:          "some-sha",
+						Version:         "1.2.3",
+					}))
+				})
+			})
+
+			context("when there is a version with a major, minor, and pessimistic operator (~>)", func() {
+				it("picks the dependency >= version and < major+1", func() {
+					deprecationDate, err := time.Parse(time.RFC3339, "2022-04-01T00:00:00Z")
+					Expect(err).NotTo(HaveOccurred())
+
+					dependency, err := service.Resolve(path, "some-entry", "~> 1.1", "some-stack")
+					Expect(err).NotTo(HaveOccurred())
+					Expect(dependency).To(Equal(postal.Dependency{
+						DeprecationDate: deprecationDate,
+						ID:              "some-entry",
+						Stacks:          []string{"some-stack"},
+						URI:             "some-uri",
+						SHA256:          "some-sha",
+						Version:         "1.2.3",
+					}))
+				})
+			})
+
+			context("when there is a version with a major line and pessimistic operator (~>)", func() {
+				it("picks the dependency >= version.0.0 and < major+1.0.0", func() {
+					deprecationDate, err := time.Parse(time.RFC3339, "2022-04-01T00:00:00Z")
+					Expect(err).NotTo(HaveOccurred())
+
+					dependency, err := service.Resolve(path, "some-entry", "~> 1", "some-stack")
+					Expect(err).NotTo(HaveOccurred())
+					Expect(dependency).To(Equal(postal.Dependency{
+						DeprecationDate: deprecationDate,
+						ID:              "some-entry",
+						Stacks:          []string{"some-stack"},
+						URI:             "some-uri",
+						SHA256:          "some-sha",
+						Version:         "1.2.3",
 					}))
 				})
 			})
