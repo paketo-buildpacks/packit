@@ -140,7 +140,7 @@ version = "4.5.6"
 					deprecationDate, err := time.Parse(time.RFC3339, "2022-04-01T00:00:00Z")
 					Expect(err).NotTo(HaveOccurred())
 
-					dependency, err := service.Resolve(path, "some-entry", "~> 1.2.3", "some-stack")
+					dependency, err := service.Resolve(path, "some-entry", "~> 1.2.0", "some-stack")
 					Expect(err).NotTo(HaveOccurred())
 					Expect(dependency).To(Equal(postal.Dependency{
 						DeprecationDate: deprecationDate,
@@ -171,7 +171,7 @@ version = "4.5.6"
 				})
 			})
 
-			context("when there is a version with a major line and pessimistic operator (~>)", func() {
+			context("when there is a version with a major line only and pessimistic operator (~>)", func() {
 				it("picks the dependency >= version.0.0 and < major+1.0.0", func() {
 					deprecationDate, err := time.Parse(time.RFC3339, "2022-04-01T00:00:00Z")
 					Expect(err).NotTo(HaveOccurred())
