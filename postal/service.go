@@ -57,11 +57,14 @@ func (s Service) Resolve(path, id, version, stack string) (Dependency, error) {
 		}
 	}
 
+	// Handle the pessmistic operator (~>)
 	var re = regexp.MustCompile(`~>`)
 	if re.MatchString(version) {
 		res := re.ReplaceAllString(version, "")
 		parts := strings.Split(res, ".")
 
+		// if the version contains a major, minor, and patch use "~" Tilde Range Comparison
+		// if the version contains a major and minor only, or a major version only use "^" Caret Range Comparison
 		if len(parts) == 3 {
 			version = "~" + res
 		} else {
