@@ -121,6 +121,18 @@ func (s Service) Resolve(path, id, version, stack string) (Dependency, error) {
 // Dependency and will error if there are inconsistencies in the fetched
 // result.
 func (s Service) Install(dependency Dependency, cnbPath, layerPath string) error {
+	// check if there is a dependency mapping binding available
+	// if there is, use this URI instead of the buildpack.toml provided URI?
+	// bindingURI, err := checkBindings(dependency)
+
+	dependencyMappingURI, err := dependency.FindDependencyMapping("/platform/bindings")
+	if err != nil {
+		return fmt.Errorf("failure checking out the bindings")
+	}
+	if dependencyMappingURI != ""
+		dependency.URI = dependencyMappingURI
+	}
+
 	bundle, err := s.transport.Drop(cnbPath, dependency.URI)
 	if err != nil {
 		return fmt.Errorf("failed to fetch dependency: %s", err)

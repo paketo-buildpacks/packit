@@ -384,6 +384,43 @@ version = "this is super not semver"
 			Expect(info.Mode()).To(Equal(os.FileMode(0755)))
 		})
 
+		context("when there is a dependency mapping via binding", func() {
+			it.Before(func() {
+				Expect(os.MkdirAll("/platform/bindings/some-binding", 0700)).To(Succeed())
+				Expect(ioutil.WriteFile(filepath.Join("platform/bindings/some-binding", "type"), []byte("dependency-mapping"), 0600)).To(Succeed())
+				Expect(ioutil.WriteFile(filepath.Join("platform/bindings/some-binding", dependencySHA), []byte("dependency-mapping-entry.tgz"), 0600)).To(Succeed())
+			})
+
+			it("looks up the dependency from the platform binding and downloads that instead", func() {
+				err := service.Install(postal.Dependency{
+					ID:      "some-entry",
+					Stacks:  []string{"some-stack"},
+					URI:     "some-entry.tgz",
+					SHA256:  dependencySHA,
+					Version: "1.2.3",
+				}, "some-cnb-path", tmpDir)
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(transport.DropCall.Receives.Root).To(Equal("some-cnb-path"))
+				Expect(transport.DropCall.Receives.Uri).To(Equal("dependency-mapping-entry.tgz"))
+
+				files, err := filepath.Glob(fmt.Sprintf("%s/*", tmpDir))
+				Expect(err).NotTo(HaveOccurred())
+				Expect(files).To(ConsistOf([]string{
+					filepath.Join(tmpDir, "first"),
+					filepath.Join(tmpDir, "second"),
+					filepath.Join(tmpDir, "third"),
+					filepath.Join(tmpDir, "some-dir"),
+					filepath.Join(tmpDir, "symlink"),
+				}))
+
+				info, err := os.Stat(filepath.Join(tmpDir, "first"))
+				Expect(err).NotTo(HaveOccurred())
+				Expect(info.Mode()).To(Equal(os.FileMode(0755)))
+			})
+
+		})
+
 		context("failure cases", func() {
 			context("when the transport cannot fetch a dependency", func() {
 				it.Before(func() {
