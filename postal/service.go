@@ -125,15 +125,17 @@ func (s Service) Install(dependency Dependency, cnbPath, layerPath string) error
 	// if there is, use this URI instead of the buildpack.toml provided URI?
 	// bindingURI, err := checkBindings(dependency)
 
-	dependencyMappingURI, err := dependency.FindDependencyMapping("/platform/bindings")
+	dependencyMapping, err := dependency.FindDependencyMapping("/platform/bindings")
 	if err != nil {
 		return fmt.Errorf("failure checking out the bindings")
 	}
-	if dependencyMappingURI != ""
-		dependency.URI = dependencyMappingURI
+
+	uriToUse := dependency.URI
+	if dependencyMapping.URI != "" {
+		uriToUse = dependencyMapping.URI
 	}
 
-	bundle, err := s.transport.Drop(cnbPath, dependency.URI)
+	bundle, err := s.transport.Drop(cnbPath, uriToUse)
 	if err != nil {
 		return fmt.Errorf("failed to fetch dependency: %s", err)
 	}
