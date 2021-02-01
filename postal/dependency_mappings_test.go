@@ -16,20 +16,13 @@ func testDependencyMappings(t *testing.T, context spec.G, it spec.S) {
 	var (
 		Expect      = NewWithT(t).Expect
 		path        string
-		dependency  postal.Dependency
+		resolver    postal.DependencyMappingResolver
 		bindingPath string
 		err         error
 	)
 
 	it.Before(func() {
-		dependency = postal.Dependency{
-			ID:      "some-entry",
-			Stacks:  []string{"some-stack"},
-			URI:     "some-uri",
-			SHA256:  "some-sha",
-			Version: "1.2.3",
-		}
-
+		resolver = postal.NewDependencyMappingResolver()
 		bindingPath, err = ioutil.TempDir("", "bindings")
 		Expect(err).NotTo(HaveOccurred())
 	})
@@ -55,26 +48,17 @@ func testDependencyMappings(t *testing.T, context spec.G, it spec.S) {
 
 		context("given a set of bindings and a dependency", func() {
 			it("finds a matching dependency mappings in the platform bindings if there is one", func() {
-				boundDependency, err := dependency.FindDependencyMapping(bindingPath)
+				boundDependency, err := resolver.FindDependencyMapping("some-sha", bindingPath)
 				Expect(err).ToNot(HaveOccurred())
-				Expect(boundDependency).To(Equal(postal.DependencyMapping{
-					SHA256: "some-sha",
-					URI:    "dependency-mapping-entry.tgz",
-				}))
+				Expect(boundDependency).To(Equal("dependency-mapping-entry.tgz"))
 			})
 		})
 
 		context("given a set of bindings and a dependency", func() {
-			it.Before(func() {
-				dependency.SHA256 = "unmatched-sha"
-			})
 			it("returns an empty DependencyMapping if there is no match", func() {
-				boundDependency, err := dependency.FindDependencyMapping(bindingPath)
+				boundDependency, err := resolver.FindDependencyMapping("unmatched-sha", bindingPath)
 				Expect(err).ToNot(HaveOccurred())
-				Expect(boundDependency).To(Equal(postal.DependencyMapping{
-					SHA256: "",
-					URI:    "",
-				}))
+				Expect(boundDependency).To(Equal(""))
 			})
 		})
 	})
@@ -82,7 +66,7 @@ func testDependencyMappings(t *testing.T, context spec.G, it spec.S) {
 	context("failure cases", func() {
 		context("when the binding path is a bad pattern", func() {
 			it("errors", func() {
-				_, err := dependency.FindDependencyMapping("///")
+				_, err := resolver.FindDependencyMapping("some-sha", "///")
 				Expect(err).To(HaveOccurred())
 			})
 		})
@@ -94,7 +78,7 @@ func testDependencyMappings(t *testing.T, context spec.G, it spec.S) {
 				Expect(ioutil.WriteFile(filepath.Join(bindingPath, "some-binding", "some-sha"), []byte("dependency-mapping-entry.tgz"), 0600)).To(Succeed())
 			})
 			it("errors", func() {
-				_, err := dependency.FindDependencyMapping(bindingPath)
+				_, err := resolver.FindDependencyMapping("some-sha", bindingPath)
 				Expect(err).To(HaveOccurred())
 				Expect(err).To(MatchError(ContainSubstring("couldn't read binding type")))
 			})
@@ -108,7 +92,7 @@ func testDependencyMappings(t *testing.T, context spec.G, it spec.S) {
 				Expect(os.Chmod(filepath.Join(bindingPath, "new-binding", "some-sha"), 0000)).To(Succeed())
 			})
 			it("errors", func() {
-				_, err := dependency.FindDependencyMapping(bindingPath)
+				_, err := resolver.FindDependencyMapping("some-sha", bindingPath)
 				Expect(err).To(HaveOccurred())
 			})
 		})
@@ -120,7 +104,7 @@ func testDependencyMappings(t *testing.T, context spec.G, it spec.S) {
 				Expect(ioutil.WriteFile(filepath.Join(bindingPath, "some-binding", "some-sha"), []byte("dependency-mapping-entry.tgz"), 0000)).To(Succeed())
 			})
 			it("errors", func() {
-				_, err := dependency.FindDependencyMapping(bindingPath)
+				_, err := resolver.FindDependencyMapping("some-sha", bindingPath)
 				Expect(err).To(HaveOccurred())
 			})
 		})
