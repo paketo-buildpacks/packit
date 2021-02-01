@@ -33,6 +33,13 @@ func NewService(transport Transport) Service {
 	}
 }
 
+//go:generate faux --interface MappingResolver --output fakes/mapping_resolver.go
+// MappingResolver serves as the interface that looks up platform binding provided
+// dependency mappings given a  SHA256 and a path to search for bindings
+type MappingResolver interface {
+	FindDependencyMappings(SHA256, bindingPath string) (string, error)
+}
+
 // Resolve will pick the best matching dependency given a path to a
 // buildpack.toml file, and the id, version, and stack value of a dependency.
 // The version value is treated as a SemVer constraint and will pick the
@@ -120,19 +127,17 @@ func (s Service) Resolve(path, id, version, stack string) (Dependency, error) {
 // dependency is validated against the checksum value provided on the
 // Dependency and will error if there are inconsistencies in the fetched
 // result.
-func (s Service) Install(dependency Dependency, cnbPath, layerPath string) error {
+func (s Service) Install(dependency Dependency, cnbPath, layerPath string, dependencyMappings MappingResolver) error {
 	// check if there is a dependency mapping binding available
 	// if there is, use this URI instead of the buildpack.toml provided URI?
 	// bindingURI, err := checkBindings(dependency)
-
-	dependencyMapping, err := dependency.FindDependencyMapping("/platform/bindings")
+	dependencyMappingURI, err := dependencyMappings.FindDependencyMappings(dependency.SHA256, "/platform/bindings")
 	if err != nil {
 		return fmt.Errorf("failure checking out the bindings")
 	}
-
 	uriToUse := dependency.URI
-	if dependencyMapping.URI != "" {
-		uriToUse = dependencyMapping.URI
+	if dependencyMappingURI != "" {
+		uriToUse = dependencyMappingURI
 	}
 
 	bundle, err := s.transport.Drop(cnbPath, uriToUse)
