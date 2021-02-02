@@ -25,10 +25,11 @@ func TestUnitJam(t *testing.T) {
 	SetDefaultEventuallyTimeout(10 * time.Second)
 
 	suite := spec.New("cargo/jam", spec.Report(report.Terminal{}))
+	suite("Errors", testErrors)
 	suite("pack", testPack)
 	suite("summarize", testSummarize)
+	suite("update-builder", testUpdateBuilder)
 	suite("update-buildpack", testUpdateBuildpack)
-	suite("Errors", testErrors)
 
 	suite.Before(func(t *testing.T) {
 		var (

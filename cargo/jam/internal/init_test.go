@@ -20,6 +20,7 @@ func TestUnitCargo(t *testing.T) {
 	gomega.SetDefaultEventuallyTimeout(10 * time.Second)
 
 	suite := spec.New("cargo/jam/internal", spec.Report(report.Terminal{}))
+	suite("BuilderConfig", testBuilderConfig)
 	suite("BuildpackConfig", testBuildpackConfig)
 	suite("BuildpackInspector", testBuildpackInspector)
 	suite("DependencyCacher", testDependencyCacher)
