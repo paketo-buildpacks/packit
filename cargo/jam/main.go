@@ -44,6 +44,9 @@ func main() {
 	case "update-buildpack":
 		command = commands.NewUpdateBuildpack()
 
+	case "update-builder":
+		command = commands.NewUpdateBuilder()
+
 	default:
 		fail("unknown command: %q", os.Args[1])
 	}
