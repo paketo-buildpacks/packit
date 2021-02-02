@@ -159,7 +159,7 @@ func testPlanner(t *testing.T, context spec.G, it spec.S) {
 		})
 
 		context("there are no enties matching the given name", func() {
-			it("returns the first entry in the filtered map", func() {
+			it("returns no entries", func() {
 				_, entries := planner.Resolve("some-name", []packit.BuildpackPlanEntry{
 					{
 						Name: "node",
