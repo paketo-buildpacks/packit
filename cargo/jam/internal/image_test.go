@@ -44,6 +44,7 @@ func testImage(t *testing.T, context spec.G, it spec.S) {
 								"0.0.10",
 								"0.20.1",
 								"0.20.12",
+								"999999",
 								"latest"
 							]
 					}`)
@@ -136,6 +137,7 @@ func testImage(t *testing.T, context spec.G, it spec.S) {
 								"0.20.1",
 								"0.20.12-some-cnb",
 								"0.20.12-other-cnb",
+								"999999-some-cnb",
 								"latest"
 							]
 					}`)

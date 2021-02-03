@@ -5,7 +5,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/Masterminds/semver"
+	"github.com/Masterminds/semver/v3"
 	"github.com/docker/distribution/reference"
 	"github.com/google/go-containerregistry/pkg/authn"
 	"github.com/google/go-containerregistry/pkg/name"
@@ -41,7 +41,7 @@ func FindLatestImage(uri string) (Image, error) {
 
 	var versions []*semver.Version
 	for _, tag := range tags {
-		version, err := semver.NewVersion(tag)
+		version, err := semver.StrictNewVersion(tag)
 		if err != nil {
 			continue
 		}
@@ -97,7 +97,7 @@ func FindLatestBuildImage(runURI, buildURI string) (Image, error) {
 			continue
 		}
 
-		version, err := semver.NewVersion(strings.TrimSuffix(tag, suffix))
+		version, err := semver.StrictNewVersion(strings.TrimSuffix(tag, suffix))
 		if err != nil {
 			continue
 		}
