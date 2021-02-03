@@ -1,10 +1,9 @@
 package commands
 
 import (
+	"errors"
 	"flag"
 	"fmt"
-	"net/url"
-	"strings"
 
 	"github.com/paketo-buildpacks/packit/cargo/jam/internal"
 )
@@ -26,24 +25,22 @@ func (ub UpdateBuilder) Execute(args []string) error {
 	fset.StringVar(&options.LifecycleURI, "lifecycle-uri", "index.docker.io/buildpacksio/lifecycle", "URI for lifecycle image (optional: default=index.docker.io/buildpacksio/lifecycle)")
 	err := fset.Parse(args)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	if options.BuilderFile == "" {
-		panic("no builder-file flag")
-		// return errors.New("--builder-file is a required flag")
+		return errors.New("--builder-file is a required flag")
 	}
 
 	builder, err := internal.ParseBuilderConfig(options.BuilderFile)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	for i, buildpack := range builder.Buildpacks {
 		image, err := internal.FindLatestImage(buildpack.URI)
 		if err != nil {
-			panic(err)
-			// return err
+			return err
 		}
 
 		builder.Buildpacks[i].Version = image.Version
@@ -58,27 +55,23 @@ func (ub UpdateBuilder) Execute(args []string) error {
 		}
 	}
 
-	uri, err := url.Parse(options.LifecycleURI)
+	lifecycleImage, err := internal.FindLatestImage(options.LifecycleURI)
 	if err != nil {
-		panic(err)
-		// return err
+		return err
 	}
 
-	uri.Scheme = ""
+	builder.Lifecycle.Version = lifecycleImage.Version
 
-	lifecycleURI := strings.TrimPrefix(uri.String(), "//")
-
-	image, err := internal.FindLatestImage(lifecycleURI)
+	buildImage, err := internal.FindLatestBuildImage(builder.Stack.RunImage, builder.Stack.BuildImage)
 	if err != nil {
-		panic(err)
-		// return err
+		return err
 	}
 
-	builder.Lifecycle.Version = image.Version
+	builder.Stack.BuildImage = fmt.Sprintf("%s:%s", buildImage.Name, buildImage.Version)
 
 	err = internal.OverwriteBuilderConfig(options.BuilderFile, builder)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	return nil

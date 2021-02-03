@@ -3,6 +3,7 @@ package internal
 import (
 	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/Masterminds/semver"
 	"github.com/docker/distribution/reference"
@@ -54,5 +55,61 @@ func FindLatestImage(uri string) (Image, error) {
 		Name:    named.Name(),
 		Path:    reference.Path(named),
 		Version: versions[len(versions)-1].String(),
+	}, nil
+}
+
+func FindLatestBuildImage(runURI, buildURI string) (Image, error) {
+	runNamed, err := reference.ParseNormalizedNamed(runURI)
+	if err != nil {
+		return Image{}, fmt.Errorf("failed to parse run image reference %q: %w", runURI, err)
+	}
+
+	tagged, ok := runNamed.(reference.Tagged)
+	if !ok {
+		return Image{}, fmt.Errorf("expected the run image to be tagged but it was not")
+	}
+
+	suffix := fmt.Sprintf("-%s", tagged.Tag())
+
+	buildNamed, err := reference.ParseNormalizedNamed(buildURI)
+	if err != nil {
+		return Image{}, fmt.Errorf("failed to parse build image reference %q: %w", buildURI, err)
+	}
+
+	repo, err := name.NewRepository(reference.Path(buildNamed))
+	if err != nil {
+		return Image{}, fmt.Errorf("failed to parse build image repository: %w", err)
+	}
+
+	repo.Registry, err = name.NewRegistry(reference.Domain(buildNamed))
+	if err != nil {
+		return Image{}, fmt.Errorf("failed to parse build image registry: %w", err)
+	}
+
+	tags, err := remote.List(repo, remote.WithAuthFromKeychain(authn.DefaultKeychain))
+	if err != nil {
+		return Image{}, fmt.Errorf("failed to list tags: %w", err)
+	}
+
+	var versions []*semver.Version
+	for _, tag := range tags {
+		if !strings.HasSuffix(tag, suffix) {
+			continue
+		}
+
+		version, err := semver.NewVersion(strings.TrimSuffix(tag, suffix))
+		if err != nil {
+			continue
+		}
+
+		versions = append(versions, version)
+	}
+
+	sort.Sort(semver.Collection(versions))
+
+	return Image{
+		Name:    buildNamed.Name(),
+		Path:    reference.Path(buildNamed),
+		Version: fmt.Sprintf("%s%s", versions[len(versions)-1].String(), suffix),
 	}, nil
 }
