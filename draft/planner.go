@@ -1,6 +1,7 @@
 package draft
 
 import (
+	"regexp"
 	"sort"
 
 	"github.com/paketo-buildpacks/packit"
@@ -13,7 +14,7 @@ func NewPlanner() Planner {
 	return Planner{}
 }
 
-func (p Planner) Resolve(name string, entries []packit.BuildpackPlanEntry, priorities map[string]int) (packit.BuildpackPlanEntry, []packit.BuildpackPlanEntry) {
+func (p Planner) Resolve(name string, entries []packit.BuildpackPlanEntry, priorities []string) (packit.BuildpackPlanEntry, []packit.BuildpackPlanEntry) {
 	var filteredEntries []packit.BuildpackPlanEntry
 	for _, e := range entries {
 		if e.Name == name {
@@ -28,11 +29,23 @@ func (p Planner) Resolve(name string, entries []packit.BuildpackPlanEntry, prior
 	sort.Slice(filteredEntries, func(i, j int) bool {
 		leftSource := filteredEntries[i].Metadata["version-source"]
 		left, _ := leftSource.(string)
+		leftPriority := -1
 
 		rightSource := filteredEntries[j].Metadata["version-source"]
 		right, _ := rightSource.(string)
+		rightPriority := -1
 
-		return priorities[left] > priorities[right]
+		for index, match := range priorities {
+			if regexp.MustCompile(match).MatchString(left) {
+				leftPriority = len(priorities) - index - 1
+			}
+
+			if regexp.MustCompile(match).MatchString(right) {
+				rightPriority = len(priorities) - index - 1
+			}
+		}
+
+		return leftPriority > rightPriority
 	})
 
 	return filteredEntries[0], filteredEntries
