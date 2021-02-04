@@ -16,14 +16,13 @@ func testPlanner(t *testing.T, context spec.G, it spec.S) {
 
 		planner draft.Planner
 
-		priorities map[string]int
+		priorities []string
 	)
 
 	it.Before(func() {
-		priorities = map[string]int{
-			"highest": 2,
-			"lowest":  1,
-			"":        -1,
+		priorities = []string{
+			"^highest$",
+			"^lowest$",
 		}
 
 		planner = draft.NewPlanner()
@@ -158,7 +157,7 @@ func testPlanner(t *testing.T, context spec.G, it spec.S) {
 			})
 		})
 
-		context("there are no enties matching the given name", func() {
+		context("there are no entries matching the given name", func() {
 			it("returns no entries", func() {
 				_, entries := planner.Resolve("some-name", []packit.BuildpackPlanEntry{
 					{
@@ -191,6 +190,63 @@ func testPlanner(t *testing.T, context spec.G, it spec.S) {
 				}, priorities)
 
 				Expect(entries).To(BeNil())
+			})
+		})
+
+		context("there are entries matching a regexp", func() {
+			it("returns no entries", func() {
+				entry, entries := planner.Resolve("dotnet-runtime", []packit.BuildpackPlanEntry{
+					{
+						Name: "dotnet-runtime",
+						Metadata: map[string]interface{}{
+							"version": "other-version",
+						},
+					},
+					{
+						Name: "dotnet-runtime",
+						Metadata: map[string]interface{}{
+							"version":        "some-version",
+							"version-source": "myapp.runtimeconfig.json",
+						},
+					},
+					{
+						Name: "dotnet-runtime",
+						Metadata: map[string]interface{}{
+							"version":        "another-version",
+							"version-source": "myapp.vbproj",
+						},
+					},
+				}, []string{`^buildpack\.yml$`, `^.*\.(cs)|(fs)|(vb)proj$`, `^.*\.runtimeconfig\.json$`})
+
+				Expect(entry).To(Equal(packit.BuildpackPlanEntry{
+					Name: "dotnet-runtime",
+					Metadata: map[string]interface{}{
+						"version":        "another-version",
+						"version-source": "myapp.vbproj",
+					},
+				}))
+				Expect(entries).To(Equal([]packit.BuildpackPlanEntry{
+					{
+						Name: "dotnet-runtime",
+						Metadata: map[string]interface{}{
+							"version":        "another-version",
+							"version-source": "myapp.vbproj",
+						},
+					},
+					{
+						Name: "dotnet-runtime",
+						Metadata: map[string]interface{}{
+							"version":        "some-version",
+							"version-source": "myapp.runtimeconfig.json",
+						},
+					},
+					{
+						Name: "dotnet-runtime",
+						Metadata: map[string]interface{}{
+							"version": "other-version",
+						},
+					},
+				}))
 			})
 		})
 	})
