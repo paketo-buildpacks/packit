@@ -118,4 +118,75 @@ func testEmitter(t *testing.T, context spec.G, it spec.S) {
 			})
 		})
 	})
+
+	context("Candidates", func() {
+		it("logs the candidate entries", func() {
+			emitter.Candidates([]packit.BuildpackPlanEntry{
+				{
+					Metadata: map[string]interface{}{
+						"version-source": "some-source",
+						"version":        "some-version",
+					},
+				},
+				{
+					Metadata: map[string]interface{}{
+						"version": "other-version",
+					},
+				},
+			})
+			Expect(buffer.String()).To(Equal(`    Candidate version sources (in priority order):
+      some-source -> "some-version"
+      <unknown>   -> "other-version"
+
+`))
+		})
+
+		context("when there are deuplicate version sources with the same version", func() {
+			it("logs the candidate entries and removes duplicates", func() {
+				emitter.Candidates([]packit.BuildpackPlanEntry{
+					{
+						Metadata: map[string]interface{}{
+							"version-source": "some-source",
+							"version":        "some-version",
+						},
+					},
+					{
+						Metadata: map[string]interface{}{
+							"version-source": "some-source",
+							"version":        "other-version",
+						},
+					},
+					{
+						Metadata: map[string]interface{}{
+							"version-source": "other-source",
+							"version":        "some-version",
+						},
+					},
+					{
+						Metadata: map[string]interface{}{
+							"version": "other-version",
+						},
+					},
+					{
+						Metadata: map[string]interface{}{
+							"version": "other-version",
+						},
+					},
+					{
+						Metadata: map[string]interface{}{
+							"version-source": "some-source",
+							"version":        "some-version",
+						},
+					},
+				})
+				Expect(buffer.String()).To(Equal(`    Candidate version sources (in priority order):
+      some-source  -> "some-version"
+      some-source  -> "other-version"
+      other-source -> "some-version"
+      <unknown>    -> "other-version"
+
+`), buffer.String())
+			})
+		})
+	})
 }
