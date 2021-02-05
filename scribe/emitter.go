@@ -2,6 +2,7 @@ package scribe
 
 import (
 	"io"
+	"strconv"
 	"time"
 
 	"github.com/paketo-buildpacks/packit"
@@ -39,5 +40,46 @@ func (e Emitter) SelectedDependency(entry packit.BuildpackPlanEntry, dependency 
 			e.Action("Migrate your application to a supported version of %s.", dependency.Name)
 		}
 	}
+	e.Break()
+}
+
+func (e Emitter) Candidates(entries []packit.BuildpackPlanEntry) {
+	e.Subprocess("Candidate version sources (in priority order):")
+
+	var (
+		sources [][2]string
+		maxLen  int
+	)
+
+Entries:
+	for _, entry := range entries {
+		versionSource, ok := entry.Metadata["version-source"].(string)
+		if !ok {
+			versionSource = "<unknown>"
+		}
+
+		if len(versionSource) > maxLen {
+			maxLen = len(versionSource)
+		}
+
+		version, ok := entry.Metadata["version"].(string)
+		if !ok {
+			version = ""
+		}
+
+		source := [2]string{versionSource, version}
+		for _, s := range sources {
+			if s == source {
+				continue Entries
+			}
+		}
+
+		sources = append(sources, source)
+	}
+
+	for _, source := range sources {
+		e.Action(("%-" + strconv.Itoa(maxLen) + "s -> %q"), source[0], source[1])
+	}
+
 	e.Break()
 }
