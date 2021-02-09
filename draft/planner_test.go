@@ -1,6 +1,7 @@
 package draft_test
 
 import (
+	"regexp"
 	"testing"
 
 	"github.com/paketo-buildpacks/packit"
@@ -16,13 +17,13 @@ func testPlanner(t *testing.T, context spec.G, it spec.S) {
 
 		planner draft.Planner
 
-		priorities []string
+		priorities []interface{}
 	)
 
 	it.Before(func() {
-		priorities = []string{
-			"^highest$",
-			"^lowest$",
+		priorities = []interface{}{
+			"highest",
+			"lowest",
 		}
 
 		planner = draft.NewPlanner()
@@ -194,6 +195,14 @@ func testPlanner(t *testing.T, context spec.G, it spec.S) {
 		})
 
 		context("there are entries matching a regexp", func() {
+			it.Before(func() {
+				priorities = []interface{}{
+					"buildpack.yml",
+					regexp.MustCompile(`^.*\.(cs)|(fs)|(vb)proj$`),
+					regexp.MustCompile(`^.*\.runtimeconfig\.json$`),
+				}
+			})
+
 			it("returns no entries", func() {
 				entry, entries := planner.Resolve("dotnet-runtime", []packit.BuildpackPlanEntry{
 					{
@@ -216,7 +225,7 @@ func testPlanner(t *testing.T, context spec.G, it spec.S) {
 							"version-source": "myapp.vbproj",
 						},
 					},
-				}, []string{`^buildpack\.yml$`, `^.*\.(cs)|(fs)|(vb)proj$`, `^.*\.runtimeconfig\.json$`})
+				}, priorities)
 
 				Expect(entry).To(Equal(packit.BuildpackPlanEntry{
 					Name: "dotnet-runtime",
