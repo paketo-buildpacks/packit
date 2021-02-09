@@ -1,6 +1,7 @@
 package draft
 
 import (
+	"reflect"
 	"regexp"
 	"sort"
 
@@ -14,7 +15,7 @@ func NewPlanner() Planner {
 	return Planner{}
 }
 
-func (p Planner) Resolve(name string, entries []packit.BuildpackPlanEntry, priorities []string) (packit.BuildpackPlanEntry, []packit.BuildpackPlanEntry) {
+func (p Planner) Resolve(name string, entries []packit.BuildpackPlanEntry, priorities []interface{}) (packit.BuildpackPlanEntry, []packit.BuildpackPlanEntry) {
 	var filteredEntries []packit.BuildpackPlanEntry
 	for _, e := range entries {
 		if e.Name == name {
@@ -36,12 +37,24 @@ func (p Planner) Resolve(name string, entries []packit.BuildpackPlanEntry, prior
 		rightPriority := -1
 
 		for index, match := range priorities {
-			if regexp.MustCompile(match).MatchString(left) {
-				leftPriority = len(priorities) - index - 1
+			if r, ok := match.(*regexp.Regexp); ok {
+				if r.MatchString(left) {
+					leftPriority = len(priorities) - index - 1
+				}
+			} else {
+				if reflect.DeepEqual(match, left) {
+					leftPriority = len(priorities) - index - 1
+				}
 			}
 
-			if regexp.MustCompile(match).MatchString(right) {
-				rightPriority = len(priorities) - index - 1
+			if r, ok := match.(*regexp.Regexp); ok {
+				if r.MatchString(right) {
+					rightPriority = len(priorities) - index - 1
+				}
+			} else {
+				if reflect.DeepEqual(match, right) {
+					rightPriority = len(priorities) - index - 1
+				}
 			}
 		}
 
