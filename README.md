@@ -206,6 +206,8 @@ the types and functions declared herein.
 
 * [chronos](./chronos): Package chronos provides clock functionality that can be useful when developing and testing Cloud Native Buildpacks.
 
+* [draft](./draft): Package draft provides a mechanism for combining Buildpack Plan entries for a dependency into an entry whose version and layer metadata meet all of the entries' specifications. Useful during the build phase. See [the CNB Buildpacks specification](https://github.com/buildpacks/spec/blob/main/buildpack.md#purpose-2) for context.
+
 * [fakes](./fakes)
 
 * [fs](./fs): Package fs provides a set of filesystem helpers that can be useful when developing Cloud Native Buildpacks.
