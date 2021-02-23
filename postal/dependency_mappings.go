@@ -46,7 +46,6 @@ func (d DependencyMappingResolver) FindDependencyMapping(sha256, bindingPath str
 			if err != nil {
 				return "", err
 			}
-			fmt.Println("got the good uri")
 			return strings.TrimSuffix(string(uri), "\n"), nil
 		}
 	}
