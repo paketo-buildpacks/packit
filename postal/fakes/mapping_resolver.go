@@ -3,7 +3,7 @@ package fakes
 import "sync"
 
 type MappingResolver struct {
-	FindDependencyMappingsCall struct {
+	FindDependencyMappingCall struct {
 		sync.Mutex
 		CallCount int
 		Receives  struct {
@@ -18,14 +18,14 @@ type MappingResolver struct {
 	}
 }
 
-func (f *MappingResolver) FindDependencyMappings(param1 string, param2 string) (string, error) {
-	f.FindDependencyMappingsCall.Lock()
-	defer f.FindDependencyMappingsCall.Unlock()
-	f.FindDependencyMappingsCall.CallCount++
-	f.FindDependencyMappingsCall.Receives.SHA256 = param1
-	f.FindDependencyMappingsCall.Receives.BindingPath = param2
-	if f.FindDependencyMappingsCall.Stub != nil {
-		return f.FindDependencyMappingsCall.Stub(param1, param2)
+func (f *MappingResolver) FindDependencyMapping(param1 string, param2 string) (string, error) {
+	f.FindDependencyMappingCall.Lock()
+	defer f.FindDependencyMappingCall.Unlock()
+	f.FindDependencyMappingCall.CallCount++
+	f.FindDependencyMappingCall.Receives.SHA256 = param1
+	f.FindDependencyMappingCall.Receives.BindingPath = param2
+	if f.FindDependencyMappingCall.Stub != nil {
+		return f.FindDependencyMappingCall.Stub(param1, param2)
 	}
-	return f.FindDependencyMappingsCall.Returns.String, f.FindDependencyMappingsCall.Returns.Error
+	return f.FindDependencyMappingCall.Returns.String, f.FindDependencyMappingCall.Returns.Error
 }

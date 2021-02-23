@@ -20,24 +20,31 @@ type Transport interface {
 	Drop(root, uri string) (io.ReadCloser, error)
 }
 
+//go:generate faux --interface MappingResolver --output fakes/mapping_resolver.go
+// MappingResolver serves as the interface that looks up platform binding provided
+// dependency mappings given a  SHA256 and a path to search for bindings
+type MappingResolver interface {
+	FindDependencyMapping(SHA256, bindingPath string) (string, error)
+}
+
 // Service provides a mechanism for resolving and installing dependencies given
 // a Transport.
 type Service struct {
-	transport Transport
+	transport       Transport
+	mappingResolver MappingResolver
 }
 
 // NewService creates an instance of a Servicel given a Transport.
 func NewService(transport Transport) Service {
 	return Service{
-		transport: transport,
+		transport:       transport,
+		mappingResolver: NewDependencyMappingResolver(),
 	}
 }
 
-//go:generate faux --interface MappingResolver --output fakes/mapping_resolver.go
-// MappingResolver serves as the interface that looks up platform binding provided
-// dependency mappings given a  SHA256 and a path to search for bindings
-type MappingResolver interface {
-	FindDependencyMappings(SHA256, bindingPath string) (string, error)
+func (s Service) WithDependencyMappingResolver(mappingResolver MappingResolver) Service {
+	s.mappingResolver = mappingResolver
+	return s
 }
 
 // Resolve will pick the best matching dependency given a path to a
@@ -127,8 +134,8 @@ func (s Service) Resolve(path, id, version, stack string) (Dependency, error) {
 // dependency is validated against the checksum value provided on the
 // Dependency and will error if there are inconsistencies in the fetched
 // result.
-func (s Service) Install(dependency Dependency, cnbPath, layerPath, bindingsPath string, mappingResolver MappingResolver) error {
-	dependencyMappingURI, err := mappingResolver.FindDependencyMappings(dependency.SHA256, bindingsPath)
+func (s Service) Install(dependency Dependency, cnbPath, layerPath string) error {
+	dependencyMappingURI, err := s.mappingResolver.FindDependencyMapping(dependency.SHA256, "/platform/bindings")
 	if err != nil {
 		return fmt.Errorf("failure checking out the bindings")
 	}
