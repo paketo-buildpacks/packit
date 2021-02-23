@@ -25,10 +25,12 @@ func testService(t *testing.T, context spec.G, it spec.S) {
 	var (
 		Expect = NewWithT(t).Expect
 
-		path            string
+		path string
+
 		transport       *fakes.Transport
 		mappingResolver *fakes.MappingResolver
-		service         postal.Service
+
+		service postal.Service
 	)
 
 	it.Before(func() {
@@ -90,6 +92,8 @@ version = "4.5.6"
 		mappingResolver = &fakes.MappingResolver{}
 
 		service = postal.NewService(transport)
+
+		service = service.WithDependencyMappingResolver(mappingResolver)
 	})
 
 	context("Resolve", func() {
@@ -364,11 +368,8 @@ version = "this is super not semver"
 					Version: "1.2.3",
 				}, "some-cnb-path",
 					layerPath,
-					"some-bindings-path",
-					mappingResolver,
 				)
 			}
-
 		})
 
 		it.After(func() {
@@ -400,7 +401,7 @@ version = "this is super not semver"
 
 		context("when there is a dependency mapping via binding", func() {
 			it.Before(func() {
-				mappingResolver.FindDependencyMappingsCall.Returns.String = "dependency-mapping-entry.tgz"
+				mappingResolver.FindDependencyMappingCall.Returns.String = "dependency-mapping-entry.tgz"
 			})
 
 			it("looks up the dependency from the platform binding and downloads that instead", func() {
@@ -408,8 +409,8 @@ version = "this is super not semver"
 
 				Expect(err).NotTo(HaveOccurred())
 
-				Expect(mappingResolver.FindDependencyMappingsCall.Receives.SHA256).To(Equal(dependencySHA))
-				Expect(mappingResolver.FindDependencyMappingsCall.Receives.BindingPath).To(Equal("some-bindings-path"))
+				Expect(mappingResolver.FindDependencyMappingCall.Receives.SHA256).To(Equal(dependencySHA))
+				Expect(mappingResolver.FindDependencyMappingCall.Receives.BindingPath).To(Equal("/platform/bindings"))
 				Expect(transport.DropCall.Receives.Root).To(Equal("some-cnb-path"))
 				Expect(transport.DropCall.Receives.Uri).To(Equal("dependency-mapping-entry.tgz"))
 
@@ -492,8 +493,6 @@ version = "this is super not semver"
 						Version: "1.2.3",
 					}, "some-cnb-path",
 						layerPath,
-						"some-bindings-path",
-						mappingResolver,
 					)
 
 					Expect(err).To(MatchError(ContainSubstring("checksum does not match")))
