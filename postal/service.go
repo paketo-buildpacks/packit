@@ -127,20 +127,16 @@ func (s Service) Resolve(path, id, version, stack string) (Dependency, error) {
 // dependency is validated against the checksum value provided on the
 // Dependency and will error if there are inconsistencies in the fetched
 // result.
-func (s Service) Install(dependency Dependency, cnbPath, layerPath string, dependencyMappings MappingResolver) error {
-	// check if there is a dependency mapping binding available
-	// if there is, use this URI instead of the buildpack.toml provided URI?
-	// bindingURI, err := checkBindings(dependency)
-	dependencyMappingURI, err := dependencyMappings.FindDependencyMappings(dependency.SHA256, "/platform/bindings")
+func (s Service) Install(dependency Dependency, cnbPath, layerPath, bindingsPath string, mappingResolver MappingResolver) error {
+	dependencyMappingURI, err := mappingResolver.FindDependencyMappings(dependency.SHA256, bindingsPath)
 	if err != nil {
 		return fmt.Errorf("failure checking out the bindings")
 	}
-	uriToUse := dependency.URI
 	if dependencyMappingURI != "" {
-		uriToUse = dependencyMappingURI
+		dependency.URI = dependencyMappingURI
 	}
 
-	bundle, err := s.transport.Drop(cnbPath, uriToUse)
+	bundle, err := s.transport.Drop(cnbPath, dependency.URI)
 	if err != nil {
 		return fmt.Errorf("failed to fetch dependency: %s", err)
 	}
