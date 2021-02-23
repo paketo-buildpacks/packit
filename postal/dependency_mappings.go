@@ -14,9 +14,15 @@ func NewDependencyMappingResolver() DependencyMappingResolver {
 	return DependencyMappingResolver{}
 }
 
+// Reference file structure for bindings directory
+// - bindings
+//    - some-binding
+//       - type -> dependency-mapping
+// 			 - some-sha -> some-uri
+//       - other-sha -> other-uri
+
 // Given a target dependency, look up if there is a matching dependency mapping at the given binding path
 func (d DependencyMappingResolver) FindDependencyMapping(sha256, bindingPath string) (string, error) {
-	fmt.Println(bindingPath)
 	allBindings, err := filepath.Glob(filepath.Join(bindingPath, "*"))
 	if err != nil {
 		return "", err

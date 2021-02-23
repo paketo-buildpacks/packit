@@ -311,12 +311,13 @@ version = "this is super not semver"
 	context("Install", func() {
 		var (
 			dependencySHA string
-			tmpDir        string
+			layerPath     string
+			install       func() error
 		)
 
 		it.Before(func() {
 			var err error
-			tmpDir, err = ioutil.TempDir("", "path")
+			layerPath, err = ioutil.TempDir("", "path")
 			Expect(err).NotTo(HaveOccurred())
 
 			buffer := bytes.NewBuffer(nil)
@@ -353,85 +354,76 @@ version = "this is super not semver"
 			dependencySHA = hex.EncodeToString(sum[:])
 
 			transport.DropCall.Returns.ReadCloser = ioutil.NopCloser(buffer)
-		})
 
-		it.After(func() {
-			Expect(os.RemoveAll(tmpDir)).To(Succeed())
-		})
-
-		it("downloads the dependency and unpackages it into the path", func() {
-			err := service.Install(postal.Dependency{
-				ID:      "some-entry",
-				Stacks:  []string{"some-stack"},
-				URI:     "some-entry.tgz",
-				SHA256:  dependencySHA,
-				Version: "1.2.3",
-			}, "some-cnb-path",
-				tmpDir,
-				mappingResolver,
-			)
-			Expect(err).NotTo(HaveOccurred())
-
-			Expect(transport.DropCall.Receives.Root).To(Equal("some-cnb-path"))
-			Expect(transport.DropCall.Receives.Uri).To(Equal("some-entry.tgz"))
-
-			files, err := filepath.Glob(fmt.Sprintf("%s/*", tmpDir))
-			Expect(err).NotTo(HaveOccurred())
-			Expect(files).To(ConsistOf([]string{
-				filepath.Join(tmpDir, "first"),
-				filepath.Join(tmpDir, "second"),
-				filepath.Join(tmpDir, "third"),
-				filepath.Join(tmpDir, "some-dir"),
-				filepath.Join(tmpDir, "symlink"),
-			}))
-
-			info, err := os.Stat(filepath.Join(tmpDir, "first"))
-			Expect(err).NotTo(HaveOccurred())
-			Expect(info.Mode()).To(Equal(os.FileMode(0755)))
-		})
-
-		context.Pend("when there is a dependency mapping via binding", func() {
-			it.Before(func() {
-				bindingPath, err := ioutil.TempDir("", "platform-bindings")
-				Expect(err).NotTo(HaveOccurred())
-
-				mappingResolver.FindDependencyMappingsCall.Receives.SHA256 = dependencySHA
-				mappingResolver.FindDependencyMappingsCall.Receives.BindingPath = bindingPath
-
-				Expect(os.MkdirAll(filepath.Join(bindingPath, "some-binding"), 0700)).To(Succeed())
-				Expect(ioutil.WriteFile(filepath.Join(bindingPath, "some-binding", "type"), []byte("dependency-mapping"), 0600)).To(Succeed())
-				Expect(ioutil.WriteFile(filepath.Join(bindingPath, "some-binding", dependencySHA), []byte("dependency-mapping-entry.tgz"), 0600)).To(Succeed())
-			})
-
-			it("looks up the dependency from the platform binding and downloads that instead", func() {
-				err := service.Install(postal.Dependency{
+			install = func() error {
+				return service.Install(postal.Dependency{
 					ID:      "some-entry",
 					Stacks:  []string{"some-stack"},
 					URI:     "some-entry.tgz",
 					SHA256:  dependencySHA,
 					Version: "1.2.3",
 				}, "some-cnb-path",
-					tmpDir,
-					mappingResolver)
+					layerPath,
+					"some-bindings-path",
+					mappingResolver,
+				)
+			}
+
+		})
+
+		it.After(func() {
+			Expect(os.RemoveAll(layerPath)).To(Succeed())
+		})
+
+		it("downloads the dependency and unpackages it into the path", func() {
+			err := install()
+
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(transport.DropCall.Receives.Root).To(Equal("some-cnb-path"))
+			Expect(transport.DropCall.Receives.Uri).To(Equal("some-entry.tgz"))
+
+			files, err := filepath.Glob(fmt.Sprintf("%s/*", layerPath))
+			Expect(err).NotTo(HaveOccurred())
+			Expect(files).To(ConsistOf([]string{
+				filepath.Join(layerPath, "first"),
+				filepath.Join(layerPath, "second"),
+				filepath.Join(layerPath, "third"),
+				filepath.Join(layerPath, "some-dir"),
+				filepath.Join(layerPath, "symlink"),
+			}))
+
+			info, err := os.Stat(filepath.Join(layerPath, "first"))
+			Expect(err).NotTo(HaveOccurred())
+			Expect(info.Mode()).To(Equal(os.FileMode(0755)))
+		})
+
+		context("when there is a dependency mapping via binding", func() {
+			it.Before(func() {
+				mappingResolver.FindDependencyMappingsCall.Returns.String = "dependency-mapping-entry.tgz"
+			})
+
+			it("looks up the dependency from the platform binding and downloads that instead", func() {
+				err := install()
+
 				Expect(err).NotTo(HaveOccurred())
 
-				Expect(mappingResolver.FindDependencyMappingsCall.Returns.Error).To(Equal(nil))
-				Expect(mappingResolver.FindDependencyMappingsCall.Returns.String).To(Equal("dependency-mapping-entry.tgz"))
-
+				Expect(mappingResolver.FindDependencyMappingsCall.Receives.SHA256).To(Equal(dependencySHA))
+				Expect(mappingResolver.FindDependencyMappingsCall.Receives.BindingPath).To(Equal("some-bindings-path"))
 				Expect(transport.DropCall.Receives.Root).To(Equal("some-cnb-path"))
 				Expect(transport.DropCall.Receives.Uri).To(Equal("dependency-mapping-entry.tgz"))
 
-				files, err := filepath.Glob(fmt.Sprintf("%s/*", tmpDir))
+				files, err := filepath.Glob(fmt.Sprintf("%s/*", layerPath))
 				Expect(err).NotTo(HaveOccurred())
 				Expect(files).To(ConsistOf([]string{
-					filepath.Join(tmpDir, "first"),
-					filepath.Join(tmpDir, "second"),
-					filepath.Join(tmpDir, "third"),
-					filepath.Join(tmpDir, "some-dir"),
-					filepath.Join(tmpDir, "symlink"),
+					filepath.Join(layerPath, "first"),
+					filepath.Join(layerPath, "second"),
+					filepath.Join(layerPath, "third"),
+					filepath.Join(layerPath, "some-dir"),
+					filepath.Join(layerPath, "symlink"),
 				}))
 
-				info, err := os.Stat(filepath.Join(tmpDir, "first"))
+				info, err := os.Stat(filepath.Join(layerPath, "first"))
 				Expect(err).NotTo(HaveOccurred())
 				Expect(info.Mode()).To(Equal(os.FileMode(0755)))
 			})
@@ -441,21 +433,12 @@ version = "this is super not semver"
 		context("failure cases", func() {
 			context("when the transport cannot fetch a dependency", func() {
 				it.Before(func() {
-					mappingResolver.FindDependencyMappingsCall.Returns.String = ""
 					transport.DropCall.Returns.Error = errors.New("there was an error")
 				})
 
 				it("returns an error", func() {
-					err := service.Install(postal.Dependency{
-						ID:      "some-entry",
-						Stacks:  []string{"some-stack"},
-						URI:     "some-entry.tgz",
-						SHA256:  dependencySHA,
-						Version: "1.2.3",
-					}, "some-cnb-path",
-						tmpDir,
-						mappingResolver,
-					)
+					err := install()
+
 					Expect(err).To(MatchError("failed to fetch dependency: there was an error"))
 				})
 			})
@@ -467,20 +450,10 @@ version = "this is super not semver"
 
 					sum := sha256.Sum256(buffer.Bytes())
 					dependencySHA = hex.EncodeToString(sum[:])
-					mappingResolver.FindDependencyMappingsCall.Returns.String = ""
 				})
 
 				it("fails to create a gzip reader", func() {
-					err := service.Install(postal.Dependency{
-						ID:      "some-entry",
-						Stacks:  []string{"some-stack"},
-						URI:     "some-entry.tgz",
-						SHA256:  dependencySHA,
-						Version: "1.2.3",
-					}, "some-cnb-path",
-						tmpDir,
-						mappingResolver,
-					)
+					err := install()
 
 					Expect(err).To(MatchError(ContainSubstring("unsupported archive type")))
 				})
@@ -500,29 +473,16 @@ version = "this is super not semver"
 
 					sum := sha256.Sum256(buffer.Bytes())
 					dependencySHA = hex.EncodeToString(sum[:])
-					mappingResolver.FindDependencyMappingsCall.Returns.String = ""
 				})
 
 				it("fails to create a tar reader", func() {
-					err := service.Install(postal.Dependency{
-						ID:      "some-entry",
-						Stacks:  []string{"some-stack"},
-						URI:     "some-entry.tgz",
-						SHA256:  dependencySHA,
-						Version: "1.2.3",
-					}, "some-cnb-path",
-						tmpDir,
-						mappingResolver,
-					)
+					err := install()
 
 					Expect(err).To(MatchError(ContainSubstring("failed to read tar response")))
 				})
 			})
 
 			context("when the file checksum does not match", func() {
-				it.Before(func() {
-					mappingResolver.FindDependencyMappingsCall.Returns.String = ""
-				})
 				it("fails to create a tar reader", func() {
 					err := service.Install(postal.Dependency{
 						ID:      "some-entry",
@@ -531,7 +491,8 @@ version = "this is super not semver"
 						SHA256:  "this is not a valid checksum",
 						Version: "1.2.3",
 					}, "some-cnb-path",
-						tmpDir,
+						layerPath,
+						"some-bindings-path",
 						mappingResolver,
 					)
 
@@ -541,25 +502,15 @@ version = "this is super not semver"
 
 			context("when it does not have permission to write into directory on container", func() {
 				it.Before(func() {
-					Expect(os.Chmod(tmpDir, 0000)).To(Succeed())
-					mappingResolver.FindDependencyMappingsCall.Returns.String = ""
+					Expect(os.Chmod(layerPath, 0000)).To(Succeed())
 				})
 
 				it.After(func() {
-					Expect(os.Chmod(tmpDir, 0755)).To(Succeed())
+					Expect(os.Chmod(layerPath, 0755)).To(Succeed())
 				})
 
 				it("fails to make a dir", func() {
-					err := service.Install(postal.Dependency{
-						ID:      "some-entry",
-						Stacks:  []string{"some-stack"},
-						URI:     "some-entry.tgz",
-						SHA256:  dependencySHA,
-						Version: "1.2.3",
-					}, "some-cnb-path",
-						tmpDir,
-						mappingResolver,
-					)
+					err := install()
 
 					Expect(err).To(MatchError(ContainSubstring("failed to create archived directory")))
 				})
@@ -568,10 +519,9 @@ version = "this is super not semver"
 			context("when it does not have permission to write into directory that it decompressed", func() {
 				var testDir string
 				it.Before(func() {
-					testDir = filepath.Join(tmpDir, "some-dir")
+					testDir = filepath.Join(layerPath, "some-dir")
 					Expect(os.MkdirAll(testDir, os.ModePerm)).To(Succeed())
 					Expect(os.Chmod(testDir, 0000)).To(Succeed())
-					mappingResolver.FindDependencyMappingsCall.Returns.String = ""
 				})
 
 				it.After(func() {
@@ -579,16 +529,7 @@ version = "this is super not semver"
 				})
 
 				it("fails to make a file", func() {
-					err := service.Install(postal.Dependency{
-						ID:      "some-entry",
-						Stacks:  []string{"some-stack"},
-						URI:     "some-entry.tgz",
-						SHA256:  dependencySHA,
-						Version: "1.2.3",
-					}, "some-cnb-path",
-						tmpDir,
-						mappingResolver,
-					)
+					err := install()
 
 					Expect(err).To(MatchError(ContainSubstring("failed to create archived file")))
 				})
@@ -614,20 +555,11 @@ version = "this is super not semver"
 					dependencySHA = hex.EncodeToString(sum[:])
 
 					transport.DropCall.Returns.ReadCloser = ioutil.NopCloser(buffer)
-					mappingResolver.FindDependencyMappingsCall.Returns.String = ""
 				})
 
 				it("fails to extract the symlink", func() {
-					err := service.Install(postal.Dependency{
-						ID:      "some-entry",
-						Stacks:  []string{"some-stack"},
-						URI:     "some-entry.tgz",
-						SHA256:  dependencySHA,
-						Version: "1.2.3",
-					}, "some-cnb-path",
-						tmpDir,
-						mappingResolver,
-					)
+					err := install()
+
 					Expect(err).To(MatchError(ContainSubstring("failed to extract symlink")))
 				})
 			})
