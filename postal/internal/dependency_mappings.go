@@ -34,7 +34,7 @@ func (d DependencyMappingResolver) FindDependencyMapping(sha256, bindingPath str
 			return "", fmt.Errorf("couldn't read binding type: %w", err)
 		}
 
-		if strings.Contains(string(bindType), "dependency-mapping") {
+		if strings.TrimSpace(string(bindType)) == "dependency-mapping" {
 			if _, err := os.Stat(filepath.Join(binding, sha256)); err != nil {
 				if !os.IsNotExist(err) {
 					return "", err
@@ -46,7 +46,7 @@ func (d DependencyMappingResolver) FindDependencyMapping(sha256, bindingPath str
 			if err != nil {
 				return "", err
 			}
-			return strings.TrimSuffix(string(uri), "\n"), nil
+			return strings.TrimSpace(string(uri)), nil
 		}
 	}
 	return "", nil
