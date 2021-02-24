@@ -1,4 +1,4 @@
-package postal_test
+package internal_test
 
 import (
 	"io/ioutil"
@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/paketo-buildpacks/packit/postal"
+	"github.com/paketo-buildpacks/packit/postal/internal"
 	"github.com/sclevine/spec"
 
 	. "github.com/onsi/gomega"
@@ -16,13 +16,13 @@ func testDependencyMappings(t *testing.T, context spec.G, it spec.S) {
 	var (
 		Expect      = NewWithT(t).Expect
 		path        string
-		resolver    postal.DependencyMappingResolver
+		resolver    internal.DependencyMappingResolver
 		bindingPath string
 		err         error
 	)
 
 	it.Before(func() {
-		resolver = postal.NewDependencyMappingResolver()
+		resolver = internal.NewDependencyMappingResolver()
 		bindingPath, err = ioutil.TempDir("", "bindings")
 		Expect(err).NotTo(HaveOccurred())
 	})

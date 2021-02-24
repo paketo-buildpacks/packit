@@ -10,7 +10,6 @@ import (
 func TestUnitPostal(t *testing.T) {
 	suite := spec.New("packit/postal", spec.Report(report.Terminal{}))
 	suite("Service", testService)
-	suite("DependencyMappings", testDependencyMappings)
 
 	suite.Run(t)
 }
