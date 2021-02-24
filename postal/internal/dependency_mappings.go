@@ -1,4 +1,4 @@
-package postal
+package internal
 
 import (
 	"fmt"

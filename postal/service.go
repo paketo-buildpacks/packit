@@ -9,6 +9,7 @@ import (
 
 	"github.com/Masterminds/semver/v3"
 	"github.com/paketo-buildpacks/packit/cargo"
+	"github.com/paketo-buildpacks/packit/postal/internal"
 	"github.com/paketo-buildpacks/packit/vacation"
 )
 
@@ -38,7 +39,7 @@ type Service struct {
 func NewService(transport Transport) Service {
 	return Service{
 		transport:       transport,
-		mappingResolver: NewDependencyMappingResolver(),
+		mappingResolver: internal.NewDependencyMappingResolver(),
 	}
 }
 
