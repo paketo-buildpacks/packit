@@ -208,7 +208,7 @@ description = "Some description"
 				Expect(err).NotTo(HaveOccurred())
 
 				Eventually(session).Should(gexec.Exit(1), func() string { return string(buffer.Contents()) })
-				Expect(string(buffer.Contents())).To(Equal("failed to execute: --builder-file is a required flag"))
+				Expect(string(buffer.Contents())).To(ContainSubstring("Error: required flag(s) \"builder-file\" not set"))
 			})
 		})
 
@@ -226,7 +226,7 @@ description = "Some description"
 				Expect(err).NotTo(HaveOccurred())
 
 				Eventually(session).Should(gexec.Exit(1), func() string { return string(buffer.Contents()) })
-				Expect(string(buffer.Contents())).To(Equal("failed to execute: failed to open builder config file: open /no/such/file: no such file or directory"))
+				Expect(string(buffer.Contents())).To(ContainSubstring("failed to execute: failed to open builder config file: open /no/such/file: no such file or directory"))
 			})
 		})
 

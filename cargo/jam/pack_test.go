@@ -340,7 +340,7 @@ func testPack(t *testing.T, context spec.G, it spec.S) {
 					Expect(err).NotTo(HaveOccurred())
 					Eventually(session).Should(gexec.Exit(1), func() string { return buffer.String() })
 
-					Expect(session.Err).To(gbytes.Say("missing required flag --buildpack"))
+					Expect(session.Err.Contents()).To(ContainSubstring("Error: required flag(s) \"buildpack\", \"version\" not set"))
 				})
 			})
 		})
