@@ -24,7 +24,10 @@ func summarize() *cobra.Command {
 	cmd.Flags().StringVar(&flags.buildpackTarballPath, "buildpack", "", "path to a buildpackage tarball (required)")
 	cmd.Flags().StringVar(&flags.format, "format", "markdown", "format of output options are (markdown, json)")
 
-	cmd.MarkFlagRequired("buildpack")
+	err := cmd.MarkFlagRequired("buildpack")
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Unable to mark buildpack flag as required")
+	}
 	return cmd
 }
 

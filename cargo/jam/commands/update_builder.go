@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/paketo-buildpacks/packit/cargo/jam/internal"
 	"github.com/spf13/cobra"
+	"os"
 )
 
 type updateBuilderFlags struct {
@@ -23,7 +24,10 @@ func updateBuilder() *cobra.Command {
 	cmd.Flags().StringVar(&flags.builderFile, "builder-file", "", "path to the builder.toml file (required)")
 	cmd.Flags().StringVar(&flags.lifecycleURI, "lifecycle-uri", "index.docker.io/buildpacksio/lifecycle", "URI for lifecycle image (optional: default=index.docker.io/buildpacksio/lifecycle)")
 
-	cmd.MarkFlagRequired("builder-file")
+	err := cmd.MarkFlagRequired("builder-file")
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Unable to mark builder-file flag as required")
+	}
 	return cmd
 }
 
