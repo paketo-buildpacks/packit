@@ -31,9 +31,11 @@ func testErrors(t *testing.T, context spec.G, it spec.S) {
 				command := exec.Command(path)
 				session, err := gexec.Start(command, buffer, buffer)
 				Expect(err).NotTo(HaveOccurred())
-				Eventually(session).Should(gexec.Exit(1), func() string { return buffer.String() })
+				Eventually(session).Should(gexec.Exit(0), func() string { return buffer.String() })
 
-				Expect(session.Err).To(gbytes.Say("missing command"))
+				Expect(session.Out).To(gbytes.Say("Usage"))
+				Expect(session.Out).To(gbytes.Say("Available Commands"))
+				Expect(session.Out).To(gbytes.Say("for more information about a command"))
 			})
 		})
 
@@ -44,7 +46,7 @@ func testErrors(t *testing.T, context spec.G, it spec.S) {
 				Expect(err).NotTo(HaveOccurred())
 				Eventually(session).Should(gexec.Exit(1), func() string { return buffer.String() })
 
-				Expect(session.Err).To(gbytes.Say("unknown command: \"some-unknown-command\""))
+				Expect(string(session.Err.Contents())).To(ContainSubstring("Error: unknown command \"some-unknown-command\" for \"jam\""))
 			})
 		})
 	})
