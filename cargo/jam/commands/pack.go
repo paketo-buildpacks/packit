@@ -36,8 +36,14 @@ func pack() *cobra.Command {
 	cmd.Flags().BoolVar(&flags.offline, "offline", false, "enable offline caching of dependencies")
 	cmd.Flags().StringVar(&flags.stack, "stack", "", "restricts dependencies to given stack")
 
-	cmd.MarkFlagRequired("buildpack")
-	cmd.MarkFlagRequired("version")
+	err := cmd.MarkFlagRequired("buildpack")
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Unable to mark buildpack flag as required")
+	}
+	err = cmd.MarkFlagRequired("version")
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Unable to mark version flag as required")
+	}
 	return cmd
 }
 

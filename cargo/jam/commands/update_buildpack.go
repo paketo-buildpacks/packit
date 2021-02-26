@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/paketo-buildpacks/packit/cargo/jam/internal"
 	"github.com/spf13/cobra"
+	"os"
 )
 
 type updateBuildpackFlags struct {
@@ -23,8 +24,14 @@ func updateBuildpack() *cobra.Command {
 	cmd.Flags().StringVar(&flags.buildpackFile, "buildpack-file", "", "path to the buildpack.toml file (required)")
 	cmd.Flags().StringVar(&flags.packageFile, "package-file", "", "path to the package.toml file (required)")
 
-	cmd.MarkFlagRequired("buildpack-file")
-	cmd.MarkFlagRequired("package-file")
+	err := cmd.MarkFlagRequired("buildpack-file")
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Unable to mark buildpack-file flag as required")
+	}
+	err = cmd.MarkFlagRequired("package-file")
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Unable to mark package-file flag as required")
+	}
 	return cmd
 }
 
