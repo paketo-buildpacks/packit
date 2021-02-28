@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/BurntSushi/toml"
+	"github.com/Masterminds/semver/v3"
 	"github.com/paketo-buildpacks/packit/internal"
 )
 
@@ -54,6 +55,9 @@ type BuildFunc func(BuildContext) (BuildResult, error)
 type BuildResult struct {
 	// Plan is the set of refinements to the Buildpack Plan that were performed
 	// during the build phase.
+	//
+	// Deprecated: Use LaunchMetadata or BuildMetadata instead. For more information
+	// see https://buildpacks.io/docs/reference/spec/migration/buildpack-api-0.4-0.5/
 	Plan BuildpackPlan
 
 	// Layers is a list of layers that will be persisted by the lifecycle at the
@@ -65,6 +69,26 @@ type BuildResult struct {
 	// the buildpack lifecycle specification:
 	// https://github.com/buildpacks/spec/blob/main/buildpack.md#launchtoml-toml
 	Launch LaunchMetadata
+
+	// Build is the metadata that will be persisted as build.toml according to
+	// the buildpack lifecycle specification:
+	// https://github.com/buildpacks/spec/blob/main/buildpack.md#buildtoml-toml
+	Build BuildMetadata
+}
+
+// BOMEntry contains a bill of materials entry.
+type BOMEntry struct {
+	// Name represents the name of the entry.
+	Name string `toml:"name"`
+
+	// Metadata is the metadata of the entry.  Optional.
+	Metadata map[string]interface{} `toml:"metadata,omitempty"`
+}
+
+// UnmetEntry contains the name of an unmet dependency from the build process
+type UnmetEntry struct {
+	// Name represents the name of the entry.
+	Name string `toml:"name"`
 }
 
 // LaunchMetadata represents the launch metadata details persisted in the
@@ -82,6 +106,35 @@ type LaunchMetadata struct {
 	// Labels is a map of key-value pairs that will be returned to the lifecycle to be
 	// added as config label on the image metadata. Keys must be unique.
 	Labels map[string]string
+
+	// BOM is the Bill-of-Material entries containing information about the
+	// dependencies provided to the launch environment.
+	BOM []BOMEntry
+}
+
+func (l LaunchMetadata) isEmpty() bool {
+	return (len(l.Processes) == 0 &&
+		len(l.Slices) == 0 &&
+		len(l.Labels) == 0 &&
+		len(l.BOM) == 0)
+}
+
+func (b BuildMetadata) isEmpty() bool {
+	return (len(b.BOM) == 0 &&
+		len(b.Unmet) == 0)
+}
+
+// BuildMetadata represents the build metadata details persisted in the
+// build.toml file according to the buildpack lifecycle specification:
+// https://github.com/buildpacks/spec/blob/main/buildpack.md#buildtoml-toml.
+type BuildMetadata struct {
+	// BOM is the Bill-of-Material entries containing information about the
+	// dependencies provided to the build environment.
+	BOM []BOMEntry `toml:"bom"`
+
+	// Unmet is a list of unmet entries from the build process that it was unable
+	// to provide.
+	Unmet []UnmetEntry `toml:"unmet"`
 }
 
 // Process represents a process to be run during the launch phase as described
@@ -193,9 +246,18 @@ func Build(f BuildFunc, options ...Option) {
 	}
 
 	var buildpackInfo struct {
-		Buildpack BuildpackInfo `toml:"buildpack"`
+		APIVersion string        `toml:"api"`
+		Buildpack  BuildpackInfo `toml:"buildpack"`
 	}
+
 	_, err = toml.DecodeFile(filepath.Join(cnbPath, "buildpack.toml"), &buildpackInfo)
+	if err != nil {
+		config.exitHandler.Error(err)
+		return
+	}
+
+	apiV05, _ := semver.NewVersion("0.5")
+	apiVersion, err := semver.NewVersion(buildpackInfo.APIVersion)
 	if err != nil {
 		config.exitHandler.Error(err)
 		return
@@ -216,10 +278,17 @@ func Build(f BuildFunc, options ...Option) {
 		return
 	}
 
-	err = config.tomlWriter.Write(planPath, result.Plan)
-	if err != nil {
-		config.exitHandler.Error(err)
-		return
+	if len(result.Plan.Entries) > 0 {
+		if apiVersion.GreaterThan(apiV05) || apiVersion.Equal(apiV05) {
+			config.exitHandler.Error(fmt.Errorf(`buildpack plan is read only since BuildPack API v0.5`))
+			return
+		}
+
+		err = config.tomlWriter.Write(planPath, result.Plan)
+		if err != nil {
+			config.exitHandler.Error(err)
+			return
+		}
 	}
 
 	layerTomls, err := filepath.Glob(filepath.Join(layersPath, "*.toml"))
@@ -229,7 +298,7 @@ func Build(f BuildFunc, options ...Option) {
 	}
 
 	for _, file := range layerTomls {
-		if filepath.Base(file) != "launch.toml" && filepath.Base(file) != "store.toml" {
+		if filepath.Base(file) != "launch.toml" && filepath.Base(file) != "store.toml" && filepath.Base(file) != "build.toml" {
 			err = os.Remove(file)
 			if err != nil {
 				config.exitHandler.Error(fmt.Errorf("failed to remove layer toml: %w", err))
@@ -264,9 +333,11 @@ func Build(f BuildFunc, options ...Option) {
 		}
 	}
 
-	if len(result.Launch.Processes) > 0 ||
-		len(result.Launch.Slices) > 0 ||
-		len(result.Launch.Labels) > 0 {
+	if !result.Launch.isEmpty() {
+		if apiVersion.LessThan(apiV05) && len(result.Launch.BOM) > 0 {
+			config.exitHandler.Error(fmt.Errorf("BOM entries in launch.toml is only supported with Buildpack API v0.5 or higher"))
+			return
+		}
 
 		type label struct {
 			Key   string `toml:"key"`
@@ -274,14 +345,15 @@ func Build(f BuildFunc, options ...Option) {
 		}
 
 		var launch struct {
-			Processes []Process `toml:"processes"`
-			Slices    []Slice   `toml:"slices"`
-			Labels    []label   `toml:"labels"`
+			Processes []Process  `toml:"processes"`
+			Slices    []Slice    `toml:"slices"`
+			Labels    []label    `toml:"labels"`
+			BOM       []BOMEntry `toml:"bom"`
 		}
 
 		launch.Processes = result.Launch.Processes
 		launch.Slices = result.Launch.Slices
-
+		launch.BOM = result.Launch.BOM
 		if len(result.Launch.Labels) > 0 {
 			launch.Labels = []label{}
 			for k, v := range result.Launch.Labels {
@@ -294,6 +366,19 @@ func Build(f BuildFunc, options ...Option) {
 		}
 
 		err = config.tomlWriter.Write(filepath.Join(layersPath, "launch.toml"), launch)
+		if err != nil {
+			config.exitHandler.Error(err)
+			return
+		}
+	}
+
+	if !result.Build.isEmpty() {
+		if apiVersion.LessThan(apiV05) {
+			config.exitHandler.Error(fmt.Errorf("build.toml is only supported with Buildpack API v0.5 or higher"))
+			return
+
+		}
+		err = config.tomlWriter.Write(filepath.Join(layersPath, "build.toml"), result.Build)
 		if err != nil {
 			config.exitHandler.Error(err)
 			return
