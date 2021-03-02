@@ -431,4 +431,20 @@ version = "3.4.5"
 			}`))
 		})
 	})
+
+	context.Focus("failure cases", func() {
+		context("when the required buildpack flag is not set", func() {
+			it("prints an error message", func() {
+				command := exec.Command(
+					path, "summarize",
+					"--format", "markdown",
+				)
+				session, err := gexec.Start(command, buffer, buffer)
+				Expect(err).NotTo(HaveOccurred())
+				Eventually(session).Should(gexec.Exit(1), func() string { return buffer.String() })
+
+				Expect(session.Err.Contents()).To(ContainSubstring("Error: required flag(s) \"buildpack\" not set"))
+			})
+		})
+	})
 }

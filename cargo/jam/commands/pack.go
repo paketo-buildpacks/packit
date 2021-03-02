@@ -22,7 +22,7 @@ type packFlags struct {
 }
 
 func pack() *cobra.Command {
-	flags :=&packFlags{}
+	flags := &packFlags{}
 	cmd := &cobra.Command{
 		Use:   "pack",
 		Short: "package buildpack",
@@ -39,6 +39,10 @@ func pack() *cobra.Command {
 	err := cmd.MarkFlagRequired("buildpack")
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Unable to mark buildpack flag as required")
+	}
+	err = cmd.MarkFlagRequired("output")
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Unable to mark output flag as required")
 	}
 	err = cmd.MarkFlagRequired("version")
 	if err != nil {
