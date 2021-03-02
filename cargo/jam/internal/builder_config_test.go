@@ -50,6 +50,7 @@ description = "Some description"
   [[order.group]]
     id = "some-repository/some-buildpack-id"
     version = "0.0.10"
+		optional = true
 
 [stack]
   id = "io.paketo.stacks.some-stack"
@@ -96,8 +97,9 @@ description = "Some description"
 					{
 						Group: []internal.BuilderConfigOrderGroup{
 							{
-								ID:      "some-repository/some-buildpack-id",
-								Version: "0.0.10",
+								ID:       "some-repository/some-buildpack-id",
+								Version:  "0.0.10",
+								Optional: true,
 							},
 						},
 					},
