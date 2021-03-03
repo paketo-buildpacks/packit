@@ -331,6 +331,14 @@ func Build(f BuildFunc, options ...Option) {
 			config.exitHandler.Error(err)
 			return
 		}
+
+		for process, processEnv := range layer.ProcessLaunchEnv {
+			err = config.envWriter.Write(filepath.Join(layer.Path, "env.launch", process), processEnv)
+			if err != nil {
+				config.exitHandler.Error(err)
+				return
+			}
+		}
 	}
 
 	if !result.Launch.isEmpty() {
