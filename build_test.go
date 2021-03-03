@@ -69,6 +69,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 		Expect(err).NotTo(HaveOccurred())
 
 		bpTOML := []byte(`
+api = "0.5"
 [buildpack]
   id = "some-id"
   name = "some-name"
@@ -127,20 +128,36 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 			},
 		}))
 	})
+	context("when there are updates to the build plan", func() {
+		context("when the api version is less than 0.5", func() {
 
-	it("updates the buildpack plan.toml with any changes", func() {
-		packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
-			ctx.Plan.Entries[0].Metadata["other-key"] = "other-value"
+			it.Before(func() {
+				bpTOML := []byte(`
+api = "0.4"
+[buildpack]
+  id = "some-id"
+  name = "some-name"
+  version = "some-version"
+  clear-env = false
+`)
+				Expect(ioutil.WriteFile(filepath.Join(cnbDir, "buildpack.toml"), bpTOML, 0600)).To(Succeed())
+				Expect(ioutil.WriteFile(filepath.Join(envCnbDir, "buildpack.toml"), bpTOML, 0600)).To(Succeed())
 
-			return packit.BuildResult{
-				Plan: ctx.Plan,
-			}, nil
-		}, packit.WithArgs([]string{binaryPath, "", "", planPath}))
+			})
 
-		contents, err := ioutil.ReadFile(planPath)
-		Expect(err).NotTo(HaveOccurred())
+			it("updates the buildpack plan.toml with any changes", func() {
+				packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
+					ctx.Plan.Entries[0].Metadata["other-key"] = "other-value"
 
-		Expect(string(contents)).To(MatchTOML(`
+					return packit.BuildResult{
+						Plan: ctx.Plan,
+					}, nil
+				}, packit.WithArgs([]string{binaryPath, "", "", planPath}))
+
+				contents, err := ioutil.ReadFile(planPath)
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(string(contents)).To(MatchTOML(`
 [[entries]]
   name = "some-entry"
 
@@ -149,6 +166,19 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
   some-key = "some-value"
   other-key = "other-value"
 `))
+			})
+		})
+		context("when the api version is greater or equal to 0.5", func() {
+			it("throws an error", func() {
+				packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
+					return packit.BuildResult{
+						Plan: ctx.Plan,
+					}, nil
+				}, packit.WithArgs([]string{binaryPath, "", "", planPath}), packit.WithExitHandler(exitHandler))
+
+				Expect(exitHandler.ErrorCall.Receives.Error).To(MatchError(ContainSubstring("buildpack plan is read only")))
+			})
+		})
 	})
 
 	it("persists layer metadata", func() {
@@ -282,6 +312,175 @@ cache = true
 					Expect(exitHandler.ErrorCall.Receives.Error).To(MatchError(ContainSubstring("failed to remove layer toml:")))
 				})
 			})
+		})
+	})
+
+	context("when there are bom entries in the build metadata", func() {
+		it("persists a build.toml", func() {
+			packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
+				return packit.BuildResult{
+					Build: packit.BuildMetadata{
+						BOM: []packit.BOMEntry{
+							{
+								Name: "example",
+							},
+							{
+								Name: "another-example",
+								Metadata: map[string]interface{}{
+									"version": "0.5",
+								},
+							},
+						},
+					},
+				}, nil
+			}, packit.WithArgs([]string{binaryPath, layersDir, "", planPath}))
+
+			contents, err := ioutil.ReadFile(filepath.Join(layersDir, "build.toml"))
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(string(contents)).To(MatchTOML(`
+				[[bom]]
+					name = "example"
+				[[bom]]
+					name = "another-example"
+				[bom.metadata]
+					version = "0.5"
+			`))
+		})
+
+		context("when the api version is less than 0.5", func() {
+			it.Before(func() {
+				bpTOML := []byte(`
+api = "0.4"
+[buildpack]
+  id = "some-id"
+  name = "some-name"
+  version = "some-version"
+  clear-env = false
+`)
+				Expect(ioutil.WriteFile(filepath.Join(cnbDir, "buildpack.toml"), bpTOML, 0600)).To(Succeed())
+				Expect(ioutil.WriteFile(filepath.Join(envCnbDir, "buildpack.toml"), bpTOML, 0600)).To(Succeed())
+
+			})
+			it("throws an error", func() {
+				packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
+					return packit.BuildResult{
+						Build: packit.BuildMetadata{
+							BOM: []packit.BOMEntry{
+								{
+									Name: "example",
+								},
+								{
+									Name: "another-example",
+									Metadata: map[string]interface{}{
+										"version": "0.5",
+									},
+								},
+							},
+						},
+					}, nil
+				}, packit.WithArgs([]string{binaryPath, layersDir, "", planPath}), packit.WithExitHandler(exitHandler))
+				Expect(exitHandler.ErrorCall.Receives.Error).To(MatchError(ContainSubstring("build.toml is only supported with Buildpack API v0.5 or higher")))
+
+			})
+		})
+	})
+
+	context("when there are unmet entries in the build metadata", func() {
+		it("persists a build.toml", func() {
+			packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
+				return packit.BuildResult{
+					Build: packit.BuildMetadata{
+						Unmet: []packit.UnmetEntry{
+							{
+								Name: "example",
+							},
+							{
+								Name: "another-example",
+							},
+						},
+					},
+				}, nil
+			}, packit.WithArgs([]string{binaryPath, layersDir, "", planPath}))
+
+			contents, err := ioutil.ReadFile(filepath.Join(layersDir, "build.toml"))
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(string(contents)).To(MatchTOML(`
+				[[unmet]]
+					name = "example"
+				[[unmet]]
+					name = "another-example"
+			`))
+		})
+		context("when the api version is less than 0.5", func() {
+			it.Before(func() {
+				bpTOML := []byte(`
+api = "0.4"
+[buildpack]
+  id = "some-id"
+  name = "some-name"
+  version = "some-version"
+  clear-env = false
+`)
+				Expect(ioutil.WriteFile(filepath.Join(cnbDir, "buildpack.toml"), bpTOML, 0600)).To(Succeed())
+				Expect(ioutil.WriteFile(filepath.Join(envCnbDir, "buildpack.toml"), bpTOML, 0600)).To(Succeed())
+
+			})
+
+			it("throws an error", func() {
+				packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
+					return packit.BuildResult{
+						Build: packit.BuildMetadata{
+							Unmet: []packit.UnmetEntry{
+								{
+									Name: "example",
+								},
+								{
+									Name: "another-example",
+								},
+							},
+						},
+					}, nil
+				}, packit.WithArgs([]string{binaryPath, layersDir, "", planPath}), packit.WithExitHandler(exitHandler))
+				Expect(exitHandler.ErrorCall.Receives.Error).To(MatchError(ContainSubstring("build.toml is only supported with Buildpack API v0.5 or higher")))
+
+			})
+		})
+
+	})
+
+	context("when there are bom entries in the launch metadata", func() {
+		it("persists a launch.toml", func() {
+			packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
+				return packit.BuildResult{
+					Launch: packit.LaunchMetadata{
+						BOM: []packit.BOMEntry{
+							{
+								Name: "example",
+							},
+							{
+								Name: "another-example",
+								Metadata: map[string]interface{}{
+									"version": "0.5",
+								},
+							},
+						},
+					},
+				}, nil
+			}, packit.WithArgs([]string{binaryPath, layersDir, "", planPath}))
+
+			contents, err := ioutil.ReadFile(filepath.Join(layersDir, "launch.toml"))
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(string(contents)).To(MatchTOML(`
+				[[bom]]
+					name = "example"
+				[[bom]]
+					name = "another-example"
+				[bom.metadata]
+					version = "0.5"
+			`))
 		})
 	})
 
@@ -449,7 +648,7 @@ cache = true
 		})
 	})
 
-	context("when there are no processes, slices or labels in the result", func() {
+	context("when there are no processes, slices, bom or labels in the result", func() {
 		it("does not persist a launch.toml", func() {
 			packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
 				return packit.BuildResult{}, nil
@@ -585,12 +784,22 @@ cache = true
 
 		context("when the buildpack plan.toml cannot be written", func() {
 			it.Before(func() {
+				bpTOML := []byte(`
+api = "0.4"
+[buildpack]
+  id = "some-id"
+  name = "some-name"
+  version = "some-version"
+  clear-env = false
+				`)
+				Expect(ioutil.WriteFile(filepath.Join(cnbDir, "buildpack.toml"), bpTOML, 0600)).To(Succeed())
+				Expect(ioutil.WriteFile(filepath.Join(envCnbDir, "buildpack.toml"), bpTOML, 0600)).To(Succeed())
 				Expect(os.Chmod(planPath, 0444)).To(Succeed())
 			})
 
 			it("calls the exit handler", func() {
 				packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
-					return packit.BuildResult{}, nil
+					return packit.BuildResult{Plan: ctx.Plan}, nil
 				}, packit.WithArgs([]string{binaryPath, "", "", planPath}), packit.WithExitHandler(exitHandler))
 
 				Expect(exitHandler.ErrorCall.Receives.Error).To(MatchError(ContainSubstring("permission denied")))

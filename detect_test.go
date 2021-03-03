@@ -56,6 +56,7 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 		binaryPath = filepath.Join(cnbDir, "bin", "detect")
 
 		bpTOMLContent := []byte(`
+api = "0.5"
 [buildpack]
   id = "some-id"
   name = "some-name"
