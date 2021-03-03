@@ -432,7 +432,7 @@ version = "3.4.5"
 		})
 	})
 
-	context.Focus("failure cases", func() {
+	context("failure cases", func() {
 		context("when the required buildpack flag is not set", func() {
 			it("prints an error message", func() {
 				command := exec.Command(
