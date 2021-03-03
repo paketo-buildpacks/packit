@@ -20,7 +20,7 @@ type BuildpackConfigOrder struct {
 
 type BuildpackConfigOrderGroup struct {
 	ID       string `toml:"id"`
-	Version  string `toml:"version"`
+	Version  string `toml:"version,omitempty"`
 	Optional bool   `toml:"optional,omitempty"`
 }
 

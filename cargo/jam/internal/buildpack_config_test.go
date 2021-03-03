@@ -43,7 +43,6 @@ func testBuildpackConfig(t *testing.T, context spec.G, it spec.S) {
 
 					[[order.group]]
 						id = "some-repository/last-buildpack-id"
-						version = "0.2.0"
 
 				[[order]]
 					[[order.group]]
@@ -81,8 +80,7 @@ func testBuildpackConfig(t *testing.T, context spec.G, it spec.S) {
 								Version: "0.20.1",
 							},
 							{
-								ID:      "some-repository/last-buildpack-id",
-								Version: "0.2.0",
+								ID: "some-repository/last-buildpack-id",
 							},
 						},
 					},

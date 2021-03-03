@@ -43,7 +43,6 @@ description = "Some description"
 
   [[order.group]]
     id = "some-repository/other-buildpack-id"
-    version = "0.20.22"
 
 [[order]]
 
@@ -89,8 +88,7 @@ description = "Some description"
 					{
 						Group: []internal.BuilderConfigOrderGroup{
 							{
-								ID:      "some-repository/other-buildpack-id",
-								Version: "0.20.22",
+								ID: "some-repository/other-buildpack-id",
 							},
 						},
 					},

@@ -49,7 +49,9 @@ func (ub UpdateBuilder) Execute(args []string) error {
 		for j, order := range builder.Order {
 			for k, group := range order.Group {
 				if group.ID == image.Path {
-					builder.Order[j].Group[k].Version = image.Version
+					if builder.Order[j].Group[k].Version != "" {
+						builder.Order[j].Group[k].Version = image.Version
+					}
 				}
 			}
 		}
