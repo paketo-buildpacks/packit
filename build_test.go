@@ -711,6 +711,41 @@ api = "0.4"
 					Expect(string(contents)).To(Equal(fmt.Sprintf("%s-value", modifier)))
 				}
 			})
+			it("writes env vars into env.launch/<process> directory", func() {
+				packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
+					return packit.BuildResult{
+						Layers: []packit.Layer{
+							{
+								Path: filepath.Join(ctx.Layers.Path, "some-layer"),
+								ProcessLaunchEnv: map[string]packit.Environment{
+									"process-name": {
+										"SOME_VAR.append":   "append-value",
+										"SOME_VAR.default":  "default-value",
+										"SOME_VAR.delim":    "delim-value",
+										"SOME_VAR.prepend":  "prepend-value",
+										"SOME_VAR.override": "override-value",
+									},
+									"another-process-name": {
+										"SOME_VAR.append":   "append-value",
+										"SOME_VAR.default":  "default-value",
+										"SOME_VAR.delim":    "delim-value",
+										"SOME_VAR.prepend":  "prepend-value",
+										"SOME_VAR.override": "override-value",
+									},
+								},
+							},
+						},
+					}, nil
+				}, packit.WithArgs([]string{binaryPath, layersDir, "", planPath}))
+
+				for _, process := range []string{"process-name", "another-process-name"} {
+					for _, modifier := range []string{"append", "default", "delim", "prepend", "override"} {
+						contents, err := ioutil.ReadFile(filepath.Join(layersDir, "some-layer", "env.launch", process, fmt.Sprintf("SOME_VAR.%s", modifier)))
+						Expect(err).NotTo(HaveOccurred())
+						Expect(string(contents)).To(Equal(fmt.Sprintf("%s-value", modifier)))
+					}
+				}
+			})
 		})
 
 		context("writes to build folder", func() {
