@@ -123,7 +123,6 @@ description = "Some description"
 
   [[order.group]]
     id = "some-repository/other-buildpack-id"
-    version = "0.20.22"
 
 [[order]]
 
@@ -179,7 +178,6 @@ description = "Some description"
 
   [[order.group]]
     id = "some-repository/other-buildpack-id"
-    version = "0.20.22"
 
 [[order]]
 
