@@ -11,7 +11,7 @@ require (
 	github.com/gabriel-vasile/mimetype v1.1.2
 	github.com/google/go-containerregistry v0.4.1
 	github.com/mattn/go-runewidth v0.0.8 // indirect
-	github.com/onsi/gomega v1.10.5
+	github.com/onsi/gomega v1.11.0
 	github.com/pelletier/go-toml v1.8.1
 	github.com/sclevine/spec v1.4.0
 	github.com/spf13/cobra v1.1.3
