@@ -39,11 +39,12 @@ func testLayers(t *testing.T, context spec.G, it spec.S) {
 			layer, err := layers.Get("some-layer")
 			Expect(err).NotTo(HaveOccurred())
 			Expect(layer).To(Equal(packit.Layer{
-				Name:      "some-layer",
-				Path:      filepath.Join(layersDir, "some-layer"),
-				SharedEnv: packit.Environment{},
-				BuildEnv:  packit.Environment{},
-				LaunchEnv: packit.Environment{},
+				Name:             "some-layer",
+				Path:             filepath.Join(layersDir, "some-layer"),
+				SharedEnv:        packit.Environment{},
+				BuildEnv:         packit.Environment{},
+				LaunchEnv:        packit.Environment{},
+				ProcessLaunchEnv: map[string]packit.Environment{},
 			}))
 		})
 
@@ -63,14 +64,15 @@ some-key = "some-value"`), 0644)
 				layer, err := layers.Get("some-layer")
 				Expect(err).NotTo(HaveOccurred())
 				Expect(layer).To(Equal(packit.Layer{
-					Name:      "some-layer",
-					Path:      filepath.Join(layersDir, "some-layer"),
-					Launch:    true,
-					Build:     true,
-					Cache:     true,
-					SharedEnv: packit.Environment{},
-					BuildEnv:  packit.Environment{},
-					LaunchEnv: packit.Environment{},
+					Name:             "some-layer",
+					Path:             filepath.Join(layersDir, "some-layer"),
+					Launch:           true,
+					Build:            true,
+					Cache:            true,
+					SharedEnv:        packit.Environment{},
+					BuildEnv:         packit.Environment{},
+					LaunchEnv:        packit.Environment{},
+					ProcessLaunchEnv: map[string]packit.Environment{},
 					Metadata: map[string]interface{}{
 						"some-key": "some-value",
 					},
@@ -108,6 +110,35 @@ some-key = "some-value"`), 0644)
 
 					err = ioutil.WriteFile(filepath.Join(launchEnvDir, "PREPEND_VAR.delim"), []byte("#"), 0644)
 					Expect(err).NotTo(HaveOccurred())
+
+					processLaunchEnvDir := filepath.Join(layersDir, "some-layer", "env.launch", "process")
+					Expect(os.MkdirAll(processLaunchEnvDir, os.ModePerm)).To(Succeed())
+
+					err = ioutil.WriteFile(filepath.Join(processLaunchEnvDir, "APPEND_VAR.append"), []byte("append-value"), 0644)
+					Expect(err).NotTo(HaveOccurred())
+
+					err = ioutil.WriteFile(filepath.Join(processLaunchEnvDir, "APPEND_VAR.delim"), []byte("!"), 0644)
+					Expect(err).NotTo(HaveOccurred())
+
+					err = ioutil.WriteFile(filepath.Join(processLaunchEnvDir, "PREPEND_VAR.prepend"), []byte("prepend-value"), 0644)
+					Expect(err).NotTo(HaveOccurred())
+
+					err = ioutil.WriteFile(filepath.Join(processLaunchEnvDir, "PREPEND_VAR.delim"), []byte("#"), 0644)
+					Expect(err).NotTo(HaveOccurred())
+					anotherProcessLaunchEnvDir := filepath.Join(layersDir, "some-layer", "env.launch", "another-process")
+					Expect(os.MkdirAll(anotherProcessLaunchEnvDir, os.ModePerm)).To(Succeed())
+
+					err = ioutil.WriteFile(filepath.Join(anotherProcessLaunchEnvDir, "APPEND_VAR.append"), []byte("append-value"), 0644)
+					Expect(err).NotTo(HaveOccurred())
+
+					err = ioutil.WriteFile(filepath.Join(anotherProcessLaunchEnvDir, "APPEND_VAR.delim"), []byte("!"), 0644)
+					Expect(err).NotTo(HaveOccurred())
+
+					err = ioutil.WriteFile(filepath.Join(anotherProcessLaunchEnvDir, "PREPEND_VAR.prepend"), []byte("prepend-value"), 0644)
+					Expect(err).NotTo(HaveOccurred())
+
+					err = ioutil.WriteFile(filepath.Join(anotherProcessLaunchEnvDir, "PREPEND_VAR.delim"), []byte("#"), 0644)
+					Expect(err).NotTo(HaveOccurred())
 				})
 
 				it("returns a layer with the existing metadata", func() {
@@ -119,6 +150,20 @@ some-key = "some-value"`), 0644)
 						Launch: true,
 						Build:  true,
 						Cache:  true,
+						ProcessLaunchEnv: map[string]packit.Environment{
+							"process": {
+								"APPEND_VAR.append":   "append-value",
+								"APPEND_VAR.delim":    "!",
+								"PREPEND_VAR.prepend": "prepend-value",
+								"PREPEND_VAR.delim":   "#",
+							},
+							"another-process": {
+								"APPEND_VAR.append":   "append-value",
+								"APPEND_VAR.delim":    "!",
+								"PREPEND_VAR.prepend": "prepend-value",
+								"PREPEND_VAR.delim":   "#",
+							},
+						},
 						SharedEnv: packit.Environment{
 							"OVERRIDE_VAR.override": "override-value",
 						},

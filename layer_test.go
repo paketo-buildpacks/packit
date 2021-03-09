@@ -49,14 +49,15 @@ func testLayer(t *testing.T, context spec.G, it spec.S) {
 				Expect(err).NotTo(HaveOccurred())
 
 				Expect(layer).To(Equal(packit.Layer{
-					Name:      "some-layer",
-					Path:      filepath.Join(layersDir, "some-layer"),
-					Launch:    false,
-					Build:     false,
-					Cache:     false,
-					SharedEnv: packit.Environment{},
-					BuildEnv:  packit.Environment{},
-					LaunchEnv: packit.Environment{},
+					Name:             "some-layer",
+					Path:             filepath.Join(layersDir, "some-layer"),
+					Launch:           false,
+					Build:            false,
+					Cache:            false,
+					SharedEnv:        packit.Environment{},
+					BuildEnv:         packit.Environment{},
+					LaunchEnv:        packit.Environment{},
+					ProcessLaunchEnv: map[string]packit.Environment{},
 				}))
 
 				Expect(filepath.Join(layersDir, "some-layer")).To(BeADirectory())
@@ -118,14 +119,15 @@ func testLayer(t *testing.T, context spec.G, it spec.S) {
 					Expect(err).NotTo(HaveOccurred())
 
 					Expect(layer).To(Equal(packit.Layer{
-						Name:      "some-layer",
-						Path:      filepath.Join(layersDir, "some-layer"),
-						Launch:    false,
-						Build:     false,
-						Cache:     false,
-						SharedEnv: packit.Environment{},
-						BuildEnv:  packit.Environment{},
-						LaunchEnv: packit.Environment{},
+						Name:             "some-layer",
+						Path:             filepath.Join(layersDir, "some-layer"),
+						Launch:           false,
+						Build:            false,
+						Cache:            false,
+						SharedEnv:        packit.Environment{},
+						BuildEnv:         packit.Environment{},
+						LaunchEnv:        packit.Environment{},
+						ProcessLaunchEnv: map[string]packit.Environment{},
 					}))
 
 					Expect(filepath.Join(layersDir, "some-layer")).To(BeADirectory())

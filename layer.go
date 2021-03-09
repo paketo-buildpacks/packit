@@ -48,6 +48,11 @@ type Layer struct {
 	// https://github.com/buildpacks/spec/blob/main/buildpack.md#provided-by-the-buildpacks.
 	LaunchEnv Environment `toml:"-"`
 
+	// ProcessLaunchEnv is a map of environment variables attached to the layer and
+	// made available to specified proccesses in the launch phase accoring to the specification:
+	// https://github.com/buildpacks/spec/blob/main/buildpack.md#provided-by-the-buildpacks
+	ProcessLaunchEnv map[string]Environment `toml:"-"`
+
 	// Metadata is an unspecified field allowing buildpacks to communicate extra
 	// details about the layer. Examples of this type of metadata might include
 	// details about what versions of software are included in the layer such
@@ -69,7 +74,7 @@ func (l Layer) Reset() (Layer, error) {
 	l.SharedEnv = Environment{}
 	l.BuildEnv = Environment{}
 	l.LaunchEnv = Environment{}
-
+	l.ProcessLaunchEnv = make(map[string]Environment)
 	l.Metadata = nil
 
 	err := os.RemoveAll(l.Path)
