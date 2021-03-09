@@ -23,10 +23,12 @@ func NewPlanner() Planner {
 
 // Resolve takes the name of buildpack plan entries that you want to sort, the
 // buildpack plan entries that you want to be sorted, and a priority list of
-// version-sources where the 0th index is the highest priority. It returns the
-// highest priority entry as well as the sorted and filtered list of buildpack
-// plan entries that were given. Entries with no given version-source are the
-// lowest priority.
+// version-sources where the 0th index is the highest priority. Priorities can
+// either be a string, in which case an exact string match with the
+// version-source wil be required, or it can be a regular expression. It
+// returns the highest priority entry as well as the sorted and filtered list
+// of buildpack plan entries that were given. Entries with no given
+// version-source are the lowest priority.
 func (p Planner) Resolve(name string, entries []packit.BuildpackPlanEntry, priorities []interface{}) (packit.BuildpackPlanEntry, []packit.BuildpackPlanEntry) {
 	var filteredEntries []packit.BuildpackPlanEntry
 	for _, e := range entries {
