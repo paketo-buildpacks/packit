@@ -2,18 +2,19 @@ package commands
 
 import (
 	"fmt"
+	"os"
+
 	"github.com/paketo-buildpacks/packit/cargo/jam/internal"
 	"github.com/spf13/cobra"
-	"os"
 )
 
 type updateBuildpackFlags struct {
-	buildpackFile  string
-	packageFile string
+	buildpackFile string
+	packageFile   string
 }
 
 func updateBuildpack() *cobra.Command {
-	flags :=&updateBuildpackFlags{}
+	flags := &updateBuildpackFlags{}
 	cmd := &cobra.Command{
 		Use:   "update-buildpack",
 		Short: "update buildpack",

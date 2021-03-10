@@ -5,7 +5,6 @@ import (
 	"archive/zip"
 	"bytes"
 	"compress/gzip"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -31,7 +30,7 @@ func testVacationArchive(t *testing.T, context spec.G, it spec.S) {
 
 			it.Before(func() {
 				var err error
-				tempDir, err = ioutil.TempDir("", "vacation")
+				tempDir, err = os.MkdirTemp("", "vacation")
 				Expect(err).NotTo(HaveOccurred())
 
 				buffer := bytes.NewBuffer(nil)
@@ -91,7 +90,7 @@ func testVacationArchive(t *testing.T, context spec.G, it spec.S) {
 
 			it.Before(func() {
 				var err error
-				tempDir, err = ioutil.TempDir("", "vacation")
+				tempDir, err = os.MkdirTemp("", "vacation")
 				Expect(err).NotTo(HaveOccurred())
 
 				buffer := bytes.NewBuffer(nil)
@@ -153,7 +152,7 @@ func testVacationArchive(t *testing.T, context spec.G, it spec.S) {
 
 			it.Before(func() {
 				var err error
-				tempDir, err = ioutil.TempDir("", "vacation")
+				tempDir, err = os.MkdirTemp("", "vacation")
 				Expect(err).NotTo(HaveOccurred())
 
 				buffer := bytes.NewBuffer(nil)
@@ -217,7 +216,7 @@ func testVacationArchive(t *testing.T, context spec.G, it spec.S) {
 
 			it.Before(func() {
 				var err error
-				tempDir, err = ioutil.TempDir("", "vacation")
+				tempDir, err = os.MkdirTemp("", "vacation")
 				Expect(err).NotTo(HaveOccurred())
 
 				buffer := bytes.NewBuffer(nil)
@@ -262,7 +261,7 @@ func testVacationArchive(t *testing.T, context spec.G, it spec.S) {
 
 				it.Before(func() {
 					var err error
-					tempDir, err = ioutil.TempDir("", "vacation")
+					tempDir, err = os.MkdirTemp("", "vacation")
 					Expect(err).NotTo(HaveOccurred())
 
 					buffer := bytes.NewBuffer([]byte(`some contents`))

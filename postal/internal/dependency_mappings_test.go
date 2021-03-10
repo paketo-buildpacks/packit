@@ -1,7 +1,6 @@
 package internal_test
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -23,7 +22,7 @@ func testDependencyMappings(t *testing.T, context spec.G, it spec.S) {
 
 	it.Before(func() {
 		resolver = internal.NewDependencyMappingResolver()
-		bindingPath, err = ioutil.TempDir("", "bindings")
+		bindingPath, err = os.MkdirTemp("", "bindings")
 		Expect(err).NotTo(HaveOccurred())
 	})
 
@@ -34,16 +33,16 @@ func testDependencyMappings(t *testing.T, context spec.G, it spec.S) {
 	context("FindDependencyMapping", func() {
 		it.Before(func() {
 			Expect(os.MkdirAll(filepath.Join(bindingPath, "some-binding"), 0700)).To(Succeed())
-			Expect(ioutil.WriteFile(filepath.Join(bindingPath, "some-binding", "type"), []byte("dependency-mapping"), 0600)).To(Succeed())
-			Expect(ioutil.WriteFile(filepath.Join(bindingPath, "some-binding", "some-sha"), []byte("dependency-mapping-entry.tgz"), 0600)).To(Succeed())
+			Expect(os.WriteFile(filepath.Join(bindingPath, "some-binding", "type"), []byte("dependency-mapping"), 0600)).To(Succeed())
+			Expect(os.WriteFile(filepath.Join(bindingPath, "some-binding", "some-sha"), []byte("dependency-mapping-entry.tgz"), 0600)).To(Succeed())
 
 			Expect(os.MkdirAll(filepath.Join(bindingPath, "other-binding"), 0700)).To(Succeed())
-			Expect(ioutil.WriteFile(filepath.Join(bindingPath, "other-binding", "type"), []byte("dependency-mapping"), 0600)).To(Succeed())
-			Expect(ioutil.WriteFile(filepath.Join(bindingPath, "other-binding", "other-sha"), []byte("dependency-mapping-entry.tgz"), 0600)).To(Succeed())
+			Expect(os.WriteFile(filepath.Join(bindingPath, "other-binding", "type"), []byte("dependency-mapping"), 0600)).To(Succeed())
+			Expect(os.WriteFile(filepath.Join(bindingPath, "other-binding", "other-sha"), []byte("dependency-mapping-entry.tgz"), 0600)).To(Succeed())
 
 			Expect(os.MkdirAll(filepath.Join(bindingPath, "another-binding"), 0700)).To(Succeed())
-			Expect(ioutil.WriteFile(filepath.Join(bindingPath, "another-binding", "type"), []byte("another type"), 0600)).To(Succeed())
-			Expect(ioutil.WriteFile(filepath.Join(bindingPath, "another-binding", "some-sha"), []byte("entry.tgz"), 0600)).To(Succeed())
+			Expect(os.WriteFile(filepath.Join(bindingPath, "another-binding", "type"), []byte("another type"), 0600)).To(Succeed())
+			Expect(os.WriteFile(filepath.Join(bindingPath, "another-binding", "some-sha"), []byte("entry.tgz"), 0600)).To(Succeed())
 		})
 
 		context("given a set of bindings and a dependency", func() {
@@ -74,8 +73,8 @@ func testDependencyMappings(t *testing.T, context spec.G, it spec.S) {
 		context("when type file cannot be opened", func() {
 			it.Before(func() {
 				Expect(os.MkdirAll(filepath.Join(bindingPath, "some-binding"), 0700)).To(Succeed())
-				Expect(ioutil.WriteFile(filepath.Join(bindingPath, "some-binding", "type"), []byte("dependency-mapping"), 0000)).To(Succeed())
-				Expect(ioutil.WriteFile(filepath.Join(bindingPath, "some-binding", "some-sha"), []byte("dependency-mapping-entry.tgz"), 0600)).To(Succeed())
+				Expect(os.WriteFile(filepath.Join(bindingPath, "some-binding", "type"), []byte("dependency-mapping"), 0000)).To(Succeed())
+				Expect(os.WriteFile(filepath.Join(bindingPath, "some-binding", "some-sha"), []byte("dependency-mapping-entry.tgz"), 0600)).To(Succeed())
 			})
 			it("errors", func() {
 				_, err := resolver.FindDependencyMapping("some-sha", bindingPath)
@@ -87,8 +86,8 @@ func testDependencyMappings(t *testing.T, context spec.G, it spec.S) {
 		context("when SHA256 file cannot be stat", func() {
 			it.Before(func() {
 				Expect(os.MkdirAll(filepath.Join(bindingPath, "new-binding"), 0700)).To(Succeed())
-				Expect(ioutil.WriteFile(filepath.Join(bindingPath, "new-binding", "type"), []byte("dependency-mapping"), 0644)).To(Succeed())
-				Expect(ioutil.WriteFile(filepath.Join(bindingPath, "new-binding", "some-sha"), []byte("dependency-mapping-entry.tgz"), 0644)).To(Succeed())
+				Expect(os.WriteFile(filepath.Join(bindingPath, "new-binding", "type"), []byte("dependency-mapping"), 0644)).To(Succeed())
+				Expect(os.WriteFile(filepath.Join(bindingPath, "new-binding", "some-sha"), []byte("dependency-mapping-entry.tgz"), 0644)).To(Succeed())
 				Expect(os.Chmod(filepath.Join(bindingPath, "new-binding", "some-sha"), 0000)).To(Succeed())
 			})
 			it("errors", func() {
@@ -100,8 +99,8 @@ func testDependencyMappings(t *testing.T, context spec.G, it spec.S) {
 		context("when SHA256 contents cannot be opened", func() {
 			it.Before(func() {
 				Expect(os.MkdirAll(filepath.Join(bindingPath, "some-binding"), 0700)).To(Succeed())
-				Expect(ioutil.WriteFile(filepath.Join(bindingPath, "some-binding", "type"), []byte("dependency-mapping"), 0600)).To(Succeed())
-				Expect(ioutil.WriteFile(filepath.Join(bindingPath, "some-binding", "some-sha"), []byte("dependency-mapping-entry.tgz"), 0000)).To(Succeed())
+				Expect(os.WriteFile(filepath.Join(bindingPath, "some-binding", "type"), []byte("dependency-mapping"), 0600)).To(Succeed())
+				Expect(os.WriteFile(filepath.Join(bindingPath, "some-binding", "some-sha"), []byte("dependency-mapping-entry.tgz"), 0000)).To(Succeed())
 			})
 			it("errors", func() {
 				_, err := resolver.FindDependencyMapping("some-sha", bindingPath)

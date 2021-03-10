@@ -2,9 +2,10 @@ package commands
 
 import (
 	"fmt"
+	"os"
+
 	"github.com/paketo-buildpacks/packit/cargo/jam/internal"
 	"github.com/spf13/cobra"
-	"os"
 )
 
 type summarizeFlags struct {
@@ -13,7 +14,7 @@ type summarizeFlags struct {
 }
 
 func summarize() *cobra.Command {
-	flags :=&summarizeFlags{}
+	flags := &summarizeFlags{}
 	cmd := &cobra.Command{
 		Use:   "summarize",
 		Short: "summarize buildpackage",
@@ -42,7 +43,6 @@ func summarizeRun(flags summarizeFlags) error {
 	if err != nil {
 		return fmt.Errorf("failed to inspect buildpack dependencies: %w", err)
 	}
-
 
 	switch flags.format {
 	case "markdown":

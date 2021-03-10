@@ -1,7 +1,6 @@
 package fs_test
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -21,7 +20,7 @@ func testIsEmptyDir(t *testing.T, context spec.G, it spec.S) {
 
 	it.Before(func() {
 		var err error
-		path, err = ioutil.TempDir("", "dir")
+		path, err = os.MkdirTemp("", "dir")
 		Expect(err).NotTo(HaveOccurred())
 	})
 
@@ -37,7 +36,7 @@ func testIsEmptyDir(t *testing.T, context spec.G, it spec.S) {
 
 	context("when the directory is not empty", func() {
 		it.Before(func() {
-			Expect(ioutil.WriteFile(filepath.Join(path, "some-file"), []byte{}, 0644)).To(Succeed())
+			Expect(os.WriteFile(filepath.Join(path, "some-file"), []byte{}, 0644)).To(Succeed())
 		})
 
 		it("returns false", func() {

@@ -4,7 +4,6 @@ import (
 	"archive/tar"
 	"bytes"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -28,7 +27,7 @@ func testVacationTar(t *testing.T, context spec.G, it spec.S) {
 
 		it.Before(func() {
 			var err error
-			tempDir, err = ioutil.TempDir("", "vacation")
+			tempDir, err = os.MkdirTemp("", "vacation")
 			Expect(err).NotTo(HaveOccurred())
 
 			buffer := bytes.NewBuffer(nil)
@@ -88,7 +87,7 @@ func testVacationTar(t *testing.T, context spec.G, it spec.S) {
 			Expect(filepath.Join(tempDir, "some-dir", "some-other-dir")).To(BeADirectory())
 			Expect(filepath.Join(tempDir, "some-dir", "some-other-dir", "some-file")).To(BeARegularFile())
 
-			data, err := ioutil.ReadFile(filepath.Join(tempDir, "symlink"))
+			data, err := os.ReadFile(filepath.Join(tempDir, "symlink"))
 			Expect(err).NotTo(HaveOccurred())
 			Expect(data).To(Equal([]byte(`first`)))
 		})
@@ -137,7 +136,7 @@ func testVacationTar(t *testing.T, context spec.G, it spec.S) {
 				Expect(filepath.Join(tempDir, "some-dir", "some-other-dir")).To(BeADirectory())
 				Expect(filepath.Join(tempDir, "some-dir", "some-other-dir", "some-file")).To(BeARegularFile())
 
-				data, err := ioutil.ReadFile(filepath.Join(tempDir, "sym-dir", "symlink"))
+				data, err := os.ReadFile(filepath.Join(tempDir, "sym-dir", "symlink"))
 				Expect(err).NotTo(HaveOccurred())
 				Expect(data).To(Equal([]byte(filepath.Join("some-dir", "some-other-dir", "some-file"))))
 			})

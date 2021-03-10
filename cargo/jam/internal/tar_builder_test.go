@@ -4,7 +4,7 @@ import (
 	"archive/tar"
 	"bytes"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -30,7 +30,7 @@ func testTarBuilder(t *testing.T, context spec.G, it spec.S) {
 
 	it.Before(func() {
 		var err error
-		tempDir, err = ioutil.TempDir("", "output")
+		tempDir, err = os.MkdirTemp("", "output")
 		Expect(err).NotTo(HaveOccurred())
 
 		tempFile = filepath.Join(tempDir, "buildpack.tgz")
@@ -50,17 +50,17 @@ func testTarBuilder(t *testing.T, context spec.G, it spec.S) {
 					{
 						Name:       "buildpack.toml",
 						Info:       internal.NewFileInfo("buildpack.toml", len("buildpack-toml-contents"), 0644, time.Now()),
-						ReadCloser: ioutil.NopCloser(strings.NewReader("buildpack-toml-contents")),
+						ReadCloser: io.NopCloser(strings.NewReader("buildpack-toml-contents")),
 					},
 					{
 						Name:       "bin/build",
 						Info:       internal.NewFileInfo("build", len("build-contents"), 0755, time.Now()),
-						ReadCloser: ioutil.NopCloser(strings.NewReader("build-contents")),
+						ReadCloser: io.NopCloser(strings.NewReader("build-contents")),
 					},
 					{
 						Name:       "bin/detect",
 						Info:       internal.NewFileInfo("detect", len("detect-contents"), 0755, time.Now()),
-						ReadCloser: ioutil.NopCloser(strings.NewReader("detect-contents")),
+						ReadCloser: io.NopCloser(strings.NewReader("detect-contents")),
 					},
 					{
 						Name: "bin/link",
@@ -123,7 +123,7 @@ func testTarBuilder(t *testing.T, context spec.G, it spec.S) {
 						{
 							Name:       "bin/build",
 							Info:       internal.NewFileInfo("build", len("build-contents"), 0755, time.Now()),
-							ReadCloser: ioutil.NopCloser(strings.NewReader("build-contents")),
+							ReadCloser: io.NopCloser(strings.NewReader("build-contents")),
 						},
 					})
 					Expect(err).To(MatchError(ContainSubstring("failed to create tarball")))
@@ -137,7 +137,7 @@ func testTarBuilder(t *testing.T, context spec.G, it spec.S) {
 						{
 							Name:       "bin/build",
 							Info:       internal.NewFileInfo("build", 1, 0755, time.Now()),
-							ReadCloser: ioutil.NopCloser(strings.NewReader("build-contents")),
+							ReadCloser: io.NopCloser(strings.NewReader("build-contents")),
 						},
 					})
 					Expect(err).To(MatchError(ContainSubstring("failed to write file to tarball")))
@@ -150,7 +150,7 @@ func testTarBuilder(t *testing.T, context spec.G, it spec.S) {
 					err := builder.Build(tempFile, []internal.File{
 						{
 							Name:       "bin/build",
-							ReadCloser: ioutil.NopCloser(strings.NewReader("build-contents")),
+							ReadCloser: io.NopCloser(strings.NewReader("build-contents")),
 						},
 					})
 					Expect(err).To(MatchError(ContainSubstring("failed to create header for file \"bin/build\":")))

@@ -1,7 +1,6 @@
 package fs_test
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -23,10 +22,10 @@ func testCopy(t *testing.T, context spec.G, it spec.S) {
 
 		it.Before(func() {
 			var err error
-			sourceDir, err = ioutil.TempDir("", "source")
+			sourceDir, err = os.MkdirTemp("", "source")
 			Expect(err).NotTo(HaveOccurred())
 
-			destinationDir, err = ioutil.TempDir("", "destination")
+			destinationDir, err = os.MkdirTemp("", "destination")
 			Expect(err).NotTo(HaveOccurred())
 		})
 
@@ -42,7 +41,7 @@ func testCopy(t *testing.T, context spec.G, it spec.S) {
 				source = filepath.Join(sourceDir, "source")
 				destination = filepath.Join(destinationDir, "destination")
 
-				err := ioutil.WriteFile(source, []byte("some-content"), 0644)
+				err := os.WriteFile(source, []byte("some-content"), 0644)
 				Expect(err).NotTo(HaveOccurred())
 			})
 
@@ -50,7 +49,7 @@ func testCopy(t *testing.T, context spec.G, it spec.S) {
 				err := fs.Copy(source, destination)
 				Expect(err).NotTo(HaveOccurred())
 
-				content, err := ioutil.ReadFile(destination)
+				content, err := os.ReadFile(destination)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(string(content)).To(Equal("some-content"))
 
@@ -92,10 +91,10 @@ func testCopy(t *testing.T, context spec.G, it spec.S) {
 
 			it.Before(func() {
 				var err error
-				external, err = ioutil.TempDir("", "external")
+				external, err = os.MkdirTemp("", "external")
 				Expect(err).NotTo(HaveOccurred())
 
-				err = ioutil.WriteFile(filepath.Join(external, "some-file"), []byte("some-content"), 0644)
+				err = os.WriteFile(filepath.Join(external, "some-file"), []byte("some-content"), 0644)
 				Expect(err).NotTo(HaveOccurred())
 
 				source = filepath.Join(sourceDir, "source")
@@ -103,10 +102,10 @@ func testCopy(t *testing.T, context spec.G, it spec.S) {
 
 				Expect(os.MkdirAll(filepath.Join(source, "some-dir"), os.ModePerm)).To(Succeed())
 
-				err = ioutil.WriteFile(filepath.Join(source, "some-dir", "some-file"), []byte("some-content"), 0644)
+				err = os.WriteFile(filepath.Join(source, "some-dir", "some-file"), []byte("some-content"), 0644)
 				Expect(err).NotTo(HaveOccurred())
 
-				err = ioutil.WriteFile(filepath.Join(source, "some-dir", "readonly-file"), []byte("some-content"), 0444)
+				err = os.WriteFile(filepath.Join(source, "some-dir", "readonly-file"), []byte("some-content"), 0444)
 				Expect(err).NotTo(HaveOccurred())
 
 				err = os.Symlink("some-file", filepath.Join(source, "some-dir", "some-symlink"))
@@ -123,7 +122,7 @@ func testCopy(t *testing.T, context spec.G, it spec.S) {
 
 					Expect(destination).To(BeADirectory())
 
-					content, err := ioutil.ReadFile(filepath.Join(destination, "some-dir", "some-file"))
+					content, err := os.ReadFile(filepath.Join(destination, "some-dir", "some-file"))
 					Expect(err).NotTo(HaveOccurred())
 					Expect(string(content)).To(Equal("some-content"))
 
@@ -150,7 +149,7 @@ func testCopy(t *testing.T, context spec.G, it spec.S) {
 			context("when the destination is a file", func() {
 				it.Before(func() {
 					Expect(os.RemoveAll(destination))
-					Expect(ioutil.WriteFile(destination, []byte{}, os.ModePerm)).To(Succeed())
+					Expect(os.WriteFile(destination, []byte{}, os.ModePerm)).To(Succeed())
 				})
 
 				it("copies the source directory to the destination", func() {
@@ -159,7 +158,7 @@ func testCopy(t *testing.T, context spec.G, it spec.S) {
 
 					Expect(destination).To(BeADirectory())
 
-					content, err := ioutil.ReadFile(filepath.Join(destination, "some-dir", "some-file"))
+					content, err := os.ReadFile(filepath.Join(destination, "some-dir", "some-file"))
 					Expect(err).NotTo(HaveOccurred())
 					Expect(string(content)).To(Equal("some-content"))
 

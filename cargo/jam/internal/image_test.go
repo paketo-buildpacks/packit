@@ -2,7 +2,6 @@ package internal_test
 
 import (
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -58,7 +57,7 @@ func testImage(t *testing.T, context spec.G, it spec.S) {
 			}))
 
 			var err error
-			dockerConfig, err = ioutil.TempDir("", "docker-config")
+			dockerConfig, err = os.MkdirTemp("", "docker-config")
 			Expect(err).NotTo(HaveOccurred())
 
 			contents := fmt.Sprintf(`{
@@ -70,7 +69,7 @@ func testImage(t *testing.T, context spec.G, it spec.S) {
 				}
 			}`, strings.TrimPrefix(server.URL, "http://"))
 
-			err = ioutil.WriteFile(filepath.Join(dockerConfig, "config.json"), []byte(contents), 0600)
+			err = os.WriteFile(filepath.Join(dockerConfig, "config.json"), []byte(contents), 0600)
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(os.Setenv("DOCKER_CONFIG", dockerConfig)).To(Succeed())
@@ -151,7 +150,7 @@ func testImage(t *testing.T, context spec.G, it spec.S) {
 			}))
 
 			var err error
-			dockerConfig, err = ioutil.TempDir("", "docker-config")
+			dockerConfig, err = os.MkdirTemp("", "docker-config")
 			Expect(err).NotTo(HaveOccurred())
 
 			contents := fmt.Sprintf(`{
@@ -163,7 +162,7 @@ func testImage(t *testing.T, context spec.G, it spec.S) {
 				}
 			}`, strings.TrimPrefix(server.URL, "http://"))
 
-			err = ioutil.WriteFile(filepath.Join(dockerConfig, "config.json"), []byte(contents), 0600)
+			err = os.WriteFile(filepath.Join(dockerConfig, "config.json"), []byte(contents), 0600)
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(os.Setenv("DOCKER_CONFIG", dockerConfig)).To(Succeed())

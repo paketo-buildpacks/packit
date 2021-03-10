@@ -2,8 +2,9 @@ package main
 
 import (
 	"fmt"
-	"github.com/paketo-buildpacks/packit/cargo/jam/commands"
 	"os"
+
+	"github.com/paketo-buildpacks/packit/cargo/jam/commands"
 )
 
 func main() {

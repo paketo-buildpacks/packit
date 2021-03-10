@@ -2,15 +2,15 @@ package commands
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
+	"strings"
+
 	"github.com/paketo-buildpacks/packit/cargo"
 	"github.com/paketo-buildpacks/packit/cargo/jam/internal"
 	"github.com/paketo-buildpacks/packit/pexec"
 	"github.com/paketo-buildpacks/packit/scribe"
 	"github.com/spf13/cobra"
-	"io/ioutil"
-	"os"
-	"path/filepath"
-	"strings"
 )
 
 type packFlags struct {
@@ -56,7 +56,7 @@ func init() {
 }
 
 func packRun(flags packFlags) error {
-	buildpackDir, err := ioutil.TempDir("", "dup-dest")
+	buildpackDir, err := os.MkdirTemp("", "dup-dest")
 	if err != nil {
 		return fmt.Errorf("unable to create temporary directory: %s", err)
 	}

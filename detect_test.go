@@ -3,7 +3,6 @@ package packit_test
 import (
 	"bytes"
 	"errors"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -35,7 +34,7 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 		workingDir, err = os.Getwd()
 		Expect(err).NotTo(HaveOccurred())
 
-		tmpDir, err = ioutil.TempDir("", "")
+		tmpDir, err = os.MkdirTemp("", "")
 		Expect(err).NotTo(HaveOccurred())
 
 		tmpDir, err = filepath.EvalSymlinks(tmpDir)
@@ -43,14 +42,14 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 
 		Expect(os.Chdir(tmpDir)).To(Succeed())
 
-		cnbDir, err = ioutil.TempDir("", "cnb")
+		cnbDir, err = os.MkdirTemp("", "cnb")
 		Expect(err).NotTo(HaveOccurred())
 
 		stackID = "io.packit.test.stack"
 		Expect(os.Setenv("CNB_STACK_ID", stackID)).To(Succeed())
 
 		//Separate, but valid CNB dir for testing env parsing
-		cnbEnvDir, err = ioutil.TempDir("", "cnbEnv")
+		cnbEnvDir, err = os.MkdirTemp("", "cnbEnv")
 		Expect(err).NotTo(HaveOccurred())
 
 		binaryPath = filepath.Join(cnbDir, "bin", "detect")
@@ -63,8 +62,8 @@ api = "0.5"
   version = "some-version"
   clear-env = false
 `)
-		Expect(ioutil.WriteFile(filepath.Join(cnbDir, "buildpack.toml"), bpTOMLContent, 0600)).To(Succeed())
-		Expect(ioutil.WriteFile(filepath.Join(cnbEnvDir, "buildpack.toml"), bpTOMLContent, 0600)).To(Succeed())
+		Expect(os.WriteFile(filepath.Join(cnbDir, "buildpack.toml"), bpTOMLContent, 0600)).To(Succeed())
+		Expect(os.WriteFile(filepath.Join(cnbEnvDir, "buildpack.toml"), bpTOMLContent, 0600)).To(Succeed())
 
 		exitHandler = &fakes.ExitHandler{}
 	})
@@ -127,7 +126,7 @@ api = "0.5"
 			}, nil
 		}, packit.WithArgs([]string{binaryPath, "", path}))
 
-		contents, err := ioutil.ReadFile(path)
+		contents, err := os.ReadFile(path)
 		Expect(err).NotTo(HaveOccurred())
 
 		Expect(string(contents)).To(MatchTOML(`
@@ -195,7 +194,7 @@ api = "0.5"
 			}, nil
 		}, packit.WithArgs([]string{binaryPath, "", path}))
 
-		contents, err := ioutil.ReadFile(path)
+		contents, err := os.ReadFile(path)
 		Expect(err).NotTo(HaveOccurred())
 
 		Expect(string(contents)).To(MatchTOML(`

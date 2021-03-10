@@ -2,7 +2,6 @@ package main_test
 
 import (
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -33,10 +32,10 @@ func testPack(t *testing.T, context spec.G, it spec.S) {
 
 	it.Before(func() {
 		var err error
-		tmpDir, err = ioutil.TempDir("", "output")
+		tmpDir, err = os.MkdirTemp("", "output")
 		Expect(err).NotTo(HaveOccurred())
 
-		buildpackDir, err = ioutil.TempDir("", "buildpack")
+		buildpackDir, err = os.MkdirTemp("", "buildpack")
 		Expect(err).NotTo(HaveOccurred())
 
 		buffer = &Buffer{}

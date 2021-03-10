@@ -2,7 +2,6 @@ package internal
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -29,7 +28,7 @@ func (d DependencyMappingResolver) FindDependencyMapping(sha256, bindingPath str
 	}
 
 	for _, binding := range allBindings {
-		bindType, err := ioutil.ReadFile(filepath.Join(binding, "type"))
+		bindType, err := os.ReadFile(filepath.Join(binding, "type"))
 		if err != nil {
 			return "", fmt.Errorf("couldn't read binding type: %w", err)
 		}
@@ -42,7 +41,7 @@ func (d DependencyMappingResolver) FindDependencyMapping(sha256, bindingPath str
 				continue
 			}
 
-			uri, err := ioutil.ReadFile(filepath.Join(binding, sha256))
+			uri, err := os.ReadFile(filepath.Join(binding, sha256))
 			if err != nil {
 				return "", err
 			}

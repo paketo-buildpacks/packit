@@ -1,7 +1,7 @@
 package cargo_test
 
 import (
-	"io/ioutil"
+	"io"
 	"os"
 	"path/filepath"
 	"testing"
@@ -23,16 +23,16 @@ func testDirectoryDuplicator(t *testing.T, context spec.G, it spec.S) {
 	it.Before(func() {
 		var err error
 
-		sourceDir, err = ioutil.TempDir("", "source")
+		sourceDir, err = os.MkdirTemp("", "source")
 		Expect(err).NotTo(HaveOccurred())
 
-		Expect(ioutil.WriteFile(filepath.Join(sourceDir, "some-file"), []byte("some content"), 0644)).To(Succeed())
+		Expect(os.WriteFile(filepath.Join(sourceDir, "some-file"), []byte("some content"), 0644)).To(Succeed())
 
 		Expect(os.MkdirAll(filepath.Join(sourceDir, "some-dir"), os.ModePerm)).To(Succeed())
-		Expect(ioutil.WriteFile(filepath.Join(sourceDir, "some-dir", "other-file"), []byte("other content"), 0755)).To(Succeed())
+		Expect(os.WriteFile(filepath.Join(sourceDir, "some-dir", "other-file"), []byte("other content"), 0755)).To(Succeed())
 		Expect(os.Symlink("other-file", filepath.Join(sourceDir, "some-dir", "link"))).To(Succeed())
 
-		destDir, err = ioutil.TempDir("", "dest")
+		destDir, err = os.MkdirTemp("", "dest")
 		Expect(err).NotTo(HaveOccurred())
 
 		directoryDup = cargo.NewDirectoryDuplicator()
@@ -50,7 +50,7 @@ func testDirectoryDuplicator(t *testing.T, context spec.G, it spec.S) {
 			file, err := os.Open(filepath.Join(destDir, "some-file"))
 			Expect(err).NotTo(HaveOccurred())
 
-			content, err := ioutil.ReadAll(file)
+			content, err := io.ReadAll(file)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(string(content)).To(Equal("some content"))
 
@@ -67,7 +67,7 @@ func testDirectoryDuplicator(t *testing.T, context spec.G, it spec.S) {
 			file, err = os.Open(filepath.Join(destDir, "some-dir", "other-file"))
 			Expect(err).NotTo(HaveOccurred())
 
-			content, err = ioutil.ReadAll(file)
+			content, err = io.ReadAll(file)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(string(content)).To(Equal("other content"))
 

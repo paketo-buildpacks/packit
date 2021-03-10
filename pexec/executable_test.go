@@ -3,7 +3,6 @@ package pexec_test
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -28,7 +27,7 @@ func testPexec(t *testing.T, context spec.G, it spec.S) {
 
 	it.Before(func() {
 		var err error
-		tmpDir, err = ioutil.TempDir("", "executable")
+		tmpDir, err = os.MkdirTemp("", "executable")
 		Expect(err).NotTo(HaveOccurred())
 
 		tmpDir, err = filepath.EvalSymlinks(tmpDir)
