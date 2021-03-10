@@ -12,6 +12,11 @@ import (
 	"github.com/paketo-buildpacks/packit/internal"
 )
 
+// BuildFunc is the definition of a callback that can be invoked when the Build
+// function is executed. Buildpack authors should implement a BuildFunc that
+// performs the specific build phase operations for a buildpack.
+type BuildFunc func(BuildContext) (BuildResult, error)
+
 // BuildContext provides the contextual details that are made available by the
 // buildpack lifecycle during the build phase. This context is populated by the
 // Build function and passed to BuildFunc during execution.
@@ -24,6 +29,10 @@ type BuildContext struct {
 	// This path is useful for finding the buildpack.toml or any other
 	// files included in the buildpack.
 	CNBPath string
+
+	// Platform includes the platform context according to the specification:
+	// https://github.com/buildpacks/spec/blob/main/buildpack.md#build
+	Platform Platform
 
 	// Layers provides access to layers managed by the buildpack. It can be used
 	// to create new layers or retrieve cached layers from previous builds.
@@ -42,11 +51,6 @@ type BuildContext struct {
 	// the lifecycle.
 	WorkingDir string
 }
-
-// BuildFunc is the definition of a callback that can be invoked when the Build
-// function is executed. Buildpack authors should implement a BuildFunc that
-// performs the specific build phase operations for a buildpack.
-type BuildFunc func(BuildContext) (BuildResult, error)
 
 // BuildResult allows buildpack authors to indicate the result of the build
 // phase for a given buildpack. This result, returned in a BuildFunc callback,
@@ -76,137 +80,6 @@ type BuildResult struct {
 	Build BuildMetadata
 }
 
-// BOMEntry contains a bill of materials entry.
-type BOMEntry struct {
-	// Name represents the name of the entry.
-	Name string `toml:"name"`
-
-	// Metadata is the metadata of the entry.  Optional.
-	Metadata map[string]interface{} `toml:"metadata,omitempty"`
-}
-
-// UnmetEntry contains the name of an unmet dependency from the build process
-type UnmetEntry struct {
-	// Name represents the name of the entry.
-	Name string `toml:"name"`
-}
-
-// LaunchMetadata represents the launch metadata details persisted in the
-// launch.toml file according to the buildpack lifecycle specification:
-// https://github.com/buildpacks/spec/blob/main/buildpack.md#launchtoml-toml.
-type LaunchMetadata struct {
-	// Processes is a list of processes that will be returned to the lifecycle to
-	// be executed during the launch phase.
-	Processes []Process
-
-	// Slices is a list of slices that will be returned to the lifecycle to be
-	// exported as separate layers during the export phase.
-	Slices []Slice
-
-	// Labels is a map of key-value pairs that will be returned to the lifecycle to be
-	// added as config label on the image metadata. Keys must be unique.
-	Labels map[string]string
-
-	// BOM is the Bill-of-Material entries containing information about the
-	// dependencies provided to the launch environment.
-	BOM []BOMEntry
-}
-
-func (l LaunchMetadata) isEmpty() bool {
-	return (len(l.Processes) == 0 &&
-		len(l.Slices) == 0 &&
-		len(l.Labels) == 0 &&
-		len(l.BOM) == 0)
-}
-
-func (b BuildMetadata) isEmpty() bool {
-	return (len(b.BOM) == 0 &&
-		len(b.Unmet) == 0)
-}
-
-// BuildMetadata represents the build metadata details persisted in the
-// build.toml file according to the buildpack lifecycle specification:
-// https://github.com/buildpacks/spec/blob/main/buildpack.md#buildtoml-toml.
-type BuildMetadata struct {
-	// BOM is the Bill-of-Material entries containing information about the
-	// dependencies provided to the build environment.
-	BOM []BOMEntry `toml:"bom"`
-
-	// Unmet is a list of unmet entries from the build process that it was unable
-	// to provide.
-	Unmet []UnmetEntry `toml:"unmet"`
-}
-
-// Process represents a process to be run during the launch phase as described
-// in the specification:
-// https://github.com/buildpacks/spec/blob/main/buildpack.md#launch. The
-// fields of the process are describe in the specification of the launch.toml
-// file:
-// https://github.com/buildpacks/spec/blob/main/buildpack.md#launchtoml-toml.
-type Process struct {
-	// Type is an identifier to describe the type of process to be executed, eg.
-	// "web".
-	Type string `toml:"type"`
-
-	// Command is the start command to be executed at launch.
-	Command string `toml:"command"`
-
-	// Args is a list of arguments to be passed to the command at launch.
-	Args []string `toml:"args"`
-
-	// Direct indicates whether the process should bypass the shell when invoked.
-	Direct bool `toml:"direct"`
-}
-
-// Slice represents a layer of the working directory to be exported during the
-// export phase. These slices help to optimize data transfer for files that are
-// commonly shared across applications.  Slices are described in the layers
-// section of the buildpack spec:
-// https://github.com/buildpacks/spec/blob/main/buildpack.md#layers.  The slice
-// fields are described in the specification of the launch.toml file:
-// https://github.com/buildpacks/spec/blob/main/buildpack.md#launchtoml-toml.
-type Slice struct {
-	Paths []string `toml:"paths"`
-}
-
-// BuildpackInfo is a representation of the basic information for a buildpack
-// provided in its buildpack.toml file as described in the specification:
-// https://github.com/buildpacks/spec/blob/main/buildpack.md#buildpacktoml-toml.
-type BuildpackInfo struct {
-	// ID is the identifier specified in the `buildpack.id` field of the buildpack.toml.
-	ID string `toml:"id"`
-
-	// Name is the identifier specified in the `buildpack.name` field of the buildpack.toml.
-	Name string `toml:"name"`
-
-	// Version is the identifier specified in the `buildpack.version` field of the buildpack.toml.
-	Version string `toml:"version"`
-}
-
-// BuildpackPlan is a representation of the buildpack plan provided by the
-// lifecycle and defined in the specification:
-// https://github.com/buildpacks/spec/blob/main/buildpack.md#buildpack-plan-toml.
-// It is also used to return a set of refinements to the plan at the end of the
-// build phase.
-type BuildpackPlan struct {
-	// Entries is a list of BuildpackPlanEntry fields that are declared in the
-	// buildpack plan TOML file.
-	Entries []BuildpackPlanEntry `toml:"entries"`
-}
-
-// BuildpackPlanEntry is a representation of a single buildpack plan entry
-// specified by the lifecycle.
-type BuildpackPlanEntry struct {
-	// Name is the name of the dependency the the buildpack should provide.
-	Name string `toml:"name"`
-
-	// Metadata is an unspecified field allowing buildpacks to communicate extra
-	// details about their requirement. Examples of this type of metadata might
-	// include details about what source was used to decide the version
-	// constraint for a requirement.
-	Metadata map[string]interface{} `toml:"metadata"`
-}
-
 // Build is an implementation of the build phase according to the Cloud Native
 // Buildpacks specification. Calling this function with a BuildFunc will
 // perform the build phase process.
@@ -223,8 +96,9 @@ func Build(f BuildFunc, options ...Option) {
 	}
 
 	var (
-		layersPath = config.args[1]
-		planPath   = config.args[3]
+		layersPath   = config.args[1]
+		platformPath = config.args[2]
+		planPath     = config.args[3]
 	)
 
 	pwd, err := os.Getwd()
@@ -264,7 +138,10 @@ func Build(f BuildFunc, options ...Option) {
 	}
 
 	result, err := f(BuildContext{
-		CNBPath:    cnbPath,
+		CNBPath: cnbPath,
+		Platform: Platform{
+			Path: platformPath,
+		},
 		Stack:      os.Getenv("CNB_STACK_ID"),
 		WorkingDir: pwd,
 		Plan:       plan,
