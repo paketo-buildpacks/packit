@@ -1,7 +1,6 @@
 package packit_test
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -22,7 +21,7 @@ func testLayers(t *testing.T, context spec.G, it spec.S) {
 
 	it.Before(func() {
 		var err error
-		layersDir, err = ioutil.TempDir("", "layers")
+		layersDir, err = os.MkdirTemp("", "layers")
 		Expect(err).NotTo(HaveOccurred())
 
 		layers = packit.Layers{
@@ -50,7 +49,7 @@ func testLayers(t *testing.T, context spec.G, it spec.S) {
 
 		context("when the layer already exists on disk", func() {
 			it.Before(func() {
-				err := ioutil.WriteFile(filepath.Join(layersDir, "some-layer.toml"), []byte(`
+				err := os.WriteFile(filepath.Join(layersDir, "some-layer.toml"), []byte(`
 build = true
 launch = true
 cache = true
@@ -84,60 +83,60 @@ some-key = "some-value"`), 0644)
 					sharedEnvDir := filepath.Join(layersDir, "some-layer", "env")
 					Expect(os.MkdirAll(sharedEnvDir, os.ModePerm)).To(Succeed())
 
-					err := ioutil.WriteFile(filepath.Join(sharedEnvDir, "OVERRIDE_VAR.override"), []byte("override-value"), 0644)
+					err := os.WriteFile(filepath.Join(sharedEnvDir, "OVERRIDE_VAR.override"), []byte("override-value"), 0644)
 					Expect(err).NotTo(HaveOccurred())
 
 					buildEnvDir := filepath.Join(layersDir, "some-layer", "env.build")
 					Expect(os.MkdirAll(buildEnvDir, os.ModePerm)).To(Succeed())
 
-					err = ioutil.WriteFile(filepath.Join(buildEnvDir, "DEFAULT_VAR.default"), []byte("default-value"), 0644)
+					err = os.WriteFile(filepath.Join(buildEnvDir, "DEFAULT_VAR.default"), []byte("default-value"), 0644)
 					Expect(err).NotTo(HaveOccurred())
 
-					err = ioutil.WriteFile(filepath.Join(buildEnvDir, "INVALID_VAR.invalid"), []byte("invalid-value"), 0644)
+					err = os.WriteFile(filepath.Join(buildEnvDir, "INVALID_VAR.invalid"), []byte("invalid-value"), 0644)
 					Expect(err).NotTo(HaveOccurred())
 
 					launchEnvDir := filepath.Join(layersDir, "some-layer", "env.launch")
 					Expect(os.MkdirAll(launchEnvDir, os.ModePerm)).To(Succeed())
 
-					err = ioutil.WriteFile(filepath.Join(launchEnvDir, "APPEND_VAR.append"), []byte("append-value"), 0644)
+					err = os.WriteFile(filepath.Join(launchEnvDir, "APPEND_VAR.append"), []byte("append-value"), 0644)
 					Expect(err).NotTo(HaveOccurred())
 
-					err = ioutil.WriteFile(filepath.Join(launchEnvDir, "APPEND_VAR.delim"), []byte("!"), 0644)
+					err = os.WriteFile(filepath.Join(launchEnvDir, "APPEND_VAR.delim"), []byte("!"), 0644)
 					Expect(err).NotTo(HaveOccurred())
 
-					err = ioutil.WriteFile(filepath.Join(launchEnvDir, "PREPEND_VAR.prepend"), []byte("prepend-value"), 0644)
+					err = os.WriteFile(filepath.Join(launchEnvDir, "PREPEND_VAR.prepend"), []byte("prepend-value"), 0644)
 					Expect(err).NotTo(HaveOccurred())
 
-					err = ioutil.WriteFile(filepath.Join(launchEnvDir, "PREPEND_VAR.delim"), []byte("#"), 0644)
+					err = os.WriteFile(filepath.Join(launchEnvDir, "PREPEND_VAR.delim"), []byte("#"), 0644)
 					Expect(err).NotTo(HaveOccurred())
 
 					processLaunchEnvDir := filepath.Join(layersDir, "some-layer", "env.launch", "process")
 					Expect(os.MkdirAll(processLaunchEnvDir, os.ModePerm)).To(Succeed())
 
-					err = ioutil.WriteFile(filepath.Join(processLaunchEnvDir, "APPEND_VAR.append"), []byte("append-value"), 0644)
+					err = os.WriteFile(filepath.Join(processLaunchEnvDir, "APPEND_VAR.append"), []byte("append-value"), 0644)
 					Expect(err).NotTo(HaveOccurred())
 
-					err = ioutil.WriteFile(filepath.Join(processLaunchEnvDir, "APPEND_VAR.delim"), []byte("!"), 0644)
+					err = os.WriteFile(filepath.Join(processLaunchEnvDir, "APPEND_VAR.delim"), []byte("!"), 0644)
 					Expect(err).NotTo(HaveOccurred())
 
-					err = ioutil.WriteFile(filepath.Join(processLaunchEnvDir, "PREPEND_VAR.prepend"), []byte("prepend-value"), 0644)
+					err = os.WriteFile(filepath.Join(processLaunchEnvDir, "PREPEND_VAR.prepend"), []byte("prepend-value"), 0644)
 					Expect(err).NotTo(HaveOccurred())
 
-					err = ioutil.WriteFile(filepath.Join(processLaunchEnvDir, "PREPEND_VAR.delim"), []byte("#"), 0644)
+					err = os.WriteFile(filepath.Join(processLaunchEnvDir, "PREPEND_VAR.delim"), []byte("#"), 0644)
 					Expect(err).NotTo(HaveOccurred())
 					anotherProcessLaunchEnvDir := filepath.Join(layersDir, "some-layer", "env.launch", "another-process")
 					Expect(os.MkdirAll(anotherProcessLaunchEnvDir, os.ModePerm)).To(Succeed())
 
-					err = ioutil.WriteFile(filepath.Join(anotherProcessLaunchEnvDir, "APPEND_VAR.append"), []byte("append-value"), 0644)
+					err = os.WriteFile(filepath.Join(anotherProcessLaunchEnvDir, "APPEND_VAR.append"), []byte("append-value"), 0644)
 					Expect(err).NotTo(HaveOccurred())
 
-					err = ioutil.WriteFile(filepath.Join(anotherProcessLaunchEnvDir, "APPEND_VAR.delim"), []byte("!"), 0644)
+					err = os.WriteFile(filepath.Join(anotherProcessLaunchEnvDir, "APPEND_VAR.delim"), []byte("!"), 0644)
 					Expect(err).NotTo(HaveOccurred())
 
-					err = ioutil.WriteFile(filepath.Join(anotherProcessLaunchEnvDir, "PREPEND_VAR.prepend"), []byte("prepend-value"), 0644)
+					err = os.WriteFile(filepath.Join(anotherProcessLaunchEnvDir, "PREPEND_VAR.prepend"), []byte("prepend-value"), 0644)
 					Expect(err).NotTo(HaveOccurred())
 
-					err = ioutil.WriteFile(filepath.Join(anotherProcessLaunchEnvDir, "PREPEND_VAR.delim"), []byte("#"), 0644)
+					err = os.WriteFile(filepath.Join(anotherProcessLaunchEnvDir, "PREPEND_VAR.delim"), []byte("#"), 0644)
 					Expect(err).NotTo(HaveOccurred())
 				})
 
@@ -187,7 +186,7 @@ some-key = "some-value"`), 0644)
 		context("failure cases", func() {
 			context("when the layers directory contains a malformed layer toml", func() {
 				it.Before(func() {
-					err := ioutil.WriteFile(filepath.Join(layersDir, "some-layer.toml"), []byte("%%%"), 0644)
+					err := os.WriteFile(filepath.Join(layersDir, "some-layer.toml"), []byte("%%%"), 0644)
 					Expect(err).NotTo(HaveOccurred())
 				})
 
@@ -202,7 +201,7 @@ some-key = "some-value"`), 0644)
 				it.Before(func() {
 					sharedEnvDir := filepath.Join(layersDir, "some-layer", "env")
 					Expect(os.MkdirAll(sharedEnvDir, os.ModePerm)).To(Succeed())
-					Expect(ioutil.WriteFile(filepath.Join(sharedEnvDir, "DEFAULT_VAR.default"), []byte("default-value"), 0000)).To(Succeed())
+					Expect(os.WriteFile(filepath.Join(sharedEnvDir, "DEFAULT_VAR.default"), []byte("default-value"), 0000)).To(Succeed())
 				})
 
 				it("returns a layer with the existing metadata", func() {
@@ -215,7 +214,7 @@ some-key = "some-value"`), 0644)
 				it.Before(func() {
 					buildEnvDir := filepath.Join(layersDir, "some-layer", "env.build")
 					Expect(os.MkdirAll(buildEnvDir, os.ModePerm)).To(Succeed())
-					Expect(ioutil.WriteFile(filepath.Join(buildEnvDir, "DEFAULT_VAR.default"), []byte("default-value"), 0000)).To(Succeed())
+					Expect(os.WriteFile(filepath.Join(buildEnvDir, "DEFAULT_VAR.default"), []byte("default-value"), 0000)).To(Succeed())
 				})
 
 				it("returns a layer with the existing metadata", func() {
@@ -228,7 +227,7 @@ some-key = "some-value"`), 0644)
 				it.Before(func() {
 					launchEnvDir := filepath.Join(layersDir, "some-layer", "env.launch")
 					Expect(os.MkdirAll(launchEnvDir, os.ModePerm)).To(Succeed())
-					Expect(ioutil.WriteFile(filepath.Join(launchEnvDir, "DEFAULT_VAR.default"), []byte("default-value"), 0000)).To(Succeed())
+					Expect(os.WriteFile(filepath.Join(launchEnvDir, "DEFAULT_VAR.default"), []byte("default-value"), 0000)).To(Succeed())
 				})
 
 				it("returns a layer with the existing metadata", func() {

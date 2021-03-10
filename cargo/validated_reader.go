@@ -7,7 +7,6 @@ import (
 	"errors"
 	"hash"
 	"io"
-	"io/ioutil"
 )
 
 var ChecksumValidationError = errors.New("validation error: checksum does not match")
@@ -56,7 +55,7 @@ func (vr ValidatedReader) Read(p []byte) (int, error) {
 }
 
 func (vr ValidatedReader) Valid() (bool, error) {
-	_, err := io.Copy(ioutil.Discard, vr)
+	_, err := io.Copy(io.Discard, vr)
 	if err != nil {
 		if err == ChecksumValidationError {
 			return false, nil

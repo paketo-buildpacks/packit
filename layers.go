@@ -2,7 +2,6 @@ package packit
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -52,7 +51,7 @@ func (l Layers) Get(name string) (Layer, error) {
 	}
 
 	if _, err := os.Stat(filepath.Join(l.Path, name, "env.launch")); !os.IsNotExist(err) {
-		paths, err := ioutil.ReadDir(filepath.Join(l.Path, name, "env.launch"))
+		paths, err := os.ReadDir(filepath.Join(l.Path, name, "env.launch"))
 		if err != nil {
 			return Layer{}, err
 		}

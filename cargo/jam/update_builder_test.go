@@ -3,7 +3,6 @@ package main_test
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -102,10 +101,10 @@ func testUpdateBuilder(t *testing.T, context spec.G, it spec.S) {
 		}))
 
 		var err error
-		builderDir, err = ioutil.TempDir("", "")
+		builderDir, err = os.MkdirTemp("", "")
 		Expect(err).NotTo(HaveOccurred())
 
-		err = ioutil.WriteFile(filepath.Join(builderDir, "builder.toml"), bytes.ReplaceAll([]byte(`
+		err = os.WriteFile(filepath.Join(builderDir, "builder.toml"), bytes.ReplaceAll([]byte(`
 description = "Some description"
 
 [[buildpacks]]
@@ -158,7 +157,7 @@ description = "Some description"
 
 		Eventually(session).Should(gexec.Exit(0), func() string { return string(buffer.Contents()) })
 
-		builderContents, err := ioutil.ReadFile(filepath.Join(builderDir, "builder.toml"))
+		builderContents, err := os.ReadFile(filepath.Join(builderDir, "builder.toml"))
 		Expect(err).NotTo(HaveOccurred())
 		Expect(string(builderContents)).To(MatchTOML(strings.ReplaceAll(`
 description = "Some description"
@@ -232,7 +231,7 @@ description = "Some description"
 
 		context("when the latest buildpack image cannot be found", func() {
 			it.Before(func() {
-				err := ioutil.WriteFile(filepath.Join(builderDir, "builder.toml"), bytes.ReplaceAll([]byte(`
+				err := os.WriteFile(filepath.Join(builderDir, "builder.toml"), bytes.ReplaceAll([]byte(`
 [[buildpacks]]
 	uri = "docker://REGISTRY-URI/some-repository/error-buildpack-id:0.0.10"
   version = "0.0.10"
@@ -277,7 +276,7 @@ description = "Some description"
 
 		context("when the latest build image cannot be found", func() {
 			it.Before(func() {
-				err := ioutil.WriteFile(filepath.Join(builderDir, "builder.toml"), bytes.ReplaceAll([]byte(`
+				err := os.WriteFile(filepath.Join(builderDir, "builder.toml"), bytes.ReplaceAll([]byte(`
 description = "Some description"
 
 [[buildpacks]]

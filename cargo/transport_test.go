@@ -2,7 +2,7 @@ package cargo_test
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -47,7 +47,7 @@ func testTransport(t *testing.T, context spec.G, it spec.S) {
 				bundle, err := transport.Drop("", fmt.Sprintf("%s/some-bundle", server.URL))
 				Expect(err).NotTo(HaveOccurred())
 
-				contents, err := ioutil.ReadAll(bundle)
+				contents, err := io.ReadAll(bundle)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(string(contents)).To(Equal("some-bundle-contents"))
 
@@ -85,12 +85,12 @@ func testTransport(t *testing.T, context spec.G, it spec.S) {
 
 			it.Before(func() {
 				var err error
-				dir, err = ioutil.TempDir("", "bundle")
+				dir, err = os.MkdirTemp("", "bundle")
 				Expect(err).NotTo(HaveOccurred())
 
 				path = "some-file"
 
-				err = ioutil.WriteFile(filepath.Join(dir, path), []byte("some-bundle-contents"), 0644)
+				err = os.WriteFile(filepath.Join(dir, path), []byte("some-bundle-contents"), 0644)
 				Expect(err).NotTo(HaveOccurred())
 			})
 
@@ -102,7 +102,7 @@ func testTransport(t *testing.T, context spec.G, it spec.S) {
 				bundle, err := transport.Drop(dir, fmt.Sprintf("file://%s", path))
 				Expect(err).NotTo(HaveOccurred())
 
-				contents, err := ioutil.ReadAll(bundle)
+				contents, err := io.ReadAll(bundle)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(string(contents)).To(Equal("some-bundle-contents"))
 

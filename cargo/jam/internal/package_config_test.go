@@ -1,7 +1,6 @@
 package internal_test
 
 import (
-	"io/ioutil"
 	"os"
 	"testing"
 
@@ -21,7 +20,7 @@ func testPackageConfig(t *testing.T, context spec.G, it spec.S) {
 
 	context("ParsePackageConfig", func() {
 		it.Before(func() {
-			file, err := ioutil.TempFile("", "package.toml")
+			file, err := os.CreateTemp("", "package.toml")
 			Expect(err).NotTo(HaveOccurred())
 			defer file.Close()
 
@@ -77,7 +76,7 @@ func testPackageConfig(t *testing.T, context spec.G, it spec.S) {
 
 			context("when the file contents cannot be parsed", func() {
 				it.Before(func() {
-					Expect(ioutil.WriteFile(path, []byte("%%%"), 0600)).To(Succeed())
+					Expect(os.WriteFile(path, []byte("%%%"), 0600)).To(Succeed())
 				})
 
 				it("returns an error", func() {
@@ -89,7 +88,7 @@ func testPackageConfig(t *testing.T, context spec.G, it spec.S) {
 
 			context("when a dependency uri is not valid", func() {
 				it.Before(func() {
-					Expect(ioutil.WriteFile(path, []byte(`
+					Expect(os.WriteFile(path, []byte(`
 						[buildpack]
 						uri = "build/buildpack.tgz"
 
@@ -115,7 +114,7 @@ func testPackageConfig(t *testing.T, context spec.G, it spec.S) {
 
 	context("OverwritePackageConfig", func() {
 		it.Before(func() {
-			file, err := ioutil.TempFile("", "package.toml")
+			file, err := os.CreateTemp("", "package.toml")
 			Expect(err).NotTo(HaveOccurred())
 			defer file.Close()
 
@@ -142,7 +141,7 @@ func testPackageConfig(t *testing.T, context spec.G, it spec.S) {
 			})
 			Expect(err).NotTo(HaveOccurred())
 
-			contents, err := ioutil.ReadFile(path)
+			contents, err := os.ReadFile(path)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(string(contents)).To(MatchTOML(`
 				[buildpack]

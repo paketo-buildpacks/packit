@@ -1,7 +1,6 @@
 package cargo_test
 
 import (
-	"io/ioutil"
 	"os"
 	"testing"
 	"time"
@@ -21,7 +20,7 @@ func testBuildpackParser(t *testing.T, context spec.G, it spec.S) {
 	)
 
 	it.Before(func() {
-		file, err := ioutil.TempFile("", "buildpack.toml")
+		file, err := os.CreateTemp("", "buildpack.toml")
 		Expect(err).NotTo(HaveOccurred())
 
 		_, err = file.WriteString(`api = "0.2"
@@ -103,7 +102,7 @@ pre-package = "some-pre-package-script.sh"
 
 		context("when the buildpack.toml is malformed", func() {
 			it.Before(func() {
-				Expect(ioutil.WriteFile(path, []byte("%%%"), 0644)).To(Succeed())
+				Expect(os.WriteFile(path, []byte("%%%"), 0644)).To(Succeed())
 			})
 
 			it("returns an error", func() {

@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"testing"
 	"time"
@@ -59,7 +58,7 @@ func ExtractFile(file *os.File, name string) ([]byte, *tar.Header, error) {
 		}
 
 		if hdr.Name == name {
-			contents, err := ioutil.ReadAll(tr)
+			contents, err := io.ReadAll(tr)
 			if err != nil {
 				return nil, nil, err
 			}

@@ -8,7 +8,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"path/filepath"
 	"testing"
@@ -34,7 +34,7 @@ func testService(t *testing.T, context spec.G, it spec.S) {
 	)
 
 	it.Before(func() {
-		file, err := ioutil.TempFile("", "buildpack.toml")
+		file, err := os.CreateTemp("", "buildpack.toml")
 		Expect(err).NotTo(HaveOccurred())
 
 		path = file.Name()
@@ -199,7 +199,7 @@ version = "4.5.6"
 
 		context("when there is a default version", func() {
 			it.Before(func() {
-				err := ioutil.WriteFile(path, []byte(`
+				err := os.WriteFile(path, []byte(`
 [metadata]
 [metadata.default-versions]
 some-entry = "1.2.x"
@@ -267,7 +267,7 @@ version = "4.5.6"
 		context("failure cases", func() {
 			context("when the buildpack.toml is malformed", func() {
 				it.Before(func() {
-					err := ioutil.WriteFile(path, []byte("this is not toml"), 0644)
+					err := os.WriteFile(path, []byte("this is not toml"), 0644)
 					Expect(err).NotTo(HaveOccurred())
 				})
 
@@ -286,7 +286,7 @@ version = "4.5.6"
 
 			context("when the dependency version is not valid", func() {
 				it.Before(func() {
-					err := ioutil.WriteFile(path, []byte(`
+					err := os.WriteFile(path, []byte(`
 [[metadata.dependencies]]
 id = "some-entry"
 sha256 = "some-sha"
@@ -321,7 +321,7 @@ version = "this is super not semver"
 
 		it.Before(func() {
 			var err error
-			layerPath, err = ioutil.TempDir("", "path")
+			layerPath, err = os.MkdirTemp("", "path")
 			Expect(err).NotTo(HaveOccurred())
 
 			buffer := bytes.NewBuffer(nil)
@@ -357,7 +357,7 @@ version = "this is super not semver"
 			sum := sha256.Sum256(buffer.Bytes())
 			dependencySHA = hex.EncodeToString(sum[:])
 
-			transport.DropCall.Returns.ReadCloser = ioutil.NopCloser(buffer)
+			transport.DropCall.Returns.ReadCloser = io.NopCloser(buffer)
 
 			install = func() error {
 				return service.Install(postal.Dependency{
@@ -447,7 +447,7 @@ version = "this is super not semver"
 			context("when the file contents are empty", func() {
 				it.Before(func() {
 					buffer := bytes.NewBuffer(nil)
-					transport.DropCall.Returns.ReadCloser = ioutil.NopCloser(buffer)
+					transport.DropCall.Returns.ReadCloser = io.NopCloser(buffer)
 
 					sum := sha256.Sum256(buffer.Bytes())
 					dependencySHA = hex.EncodeToString(sum[:])
@@ -470,7 +470,7 @@ version = "this is super not semver"
 
 					Expect(gzipWriter.Close()).To(Succeed())
 
-					transport.DropCall.Returns.ReadCloser = ioutil.NopCloser(buffer)
+					transport.DropCall.Returns.ReadCloser = io.NopCloser(buffer)
 
 					sum := sha256.Sum256(buffer.Bytes())
 					dependencySHA = hex.EncodeToString(sum[:])
@@ -553,7 +553,7 @@ version = "this is super not semver"
 					sum := sha256.Sum256(buffer.Bytes())
 					dependencySHA = hex.EncodeToString(sum[:])
 
-					transport.DropCall.Returns.ReadCloser = ioutil.NopCloser(buffer)
+					transport.DropCall.Returns.ReadCloser = io.NopCloser(buffer)
 				})
 
 				it("fails to extract the symlink", func() {

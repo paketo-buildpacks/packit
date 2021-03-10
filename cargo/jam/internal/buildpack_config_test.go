@@ -1,7 +1,6 @@
 package internal_test
 
 import (
-	"io/ioutil"
 	"os"
 	"testing"
 
@@ -21,7 +20,7 @@ func testBuildpackConfig(t *testing.T, context spec.G, it spec.S) {
 
 	context("ParseBuildpackConfig", func() {
 		it.Before(func() {
-			file, err := ioutil.TempFile("", "buildpack.toml")
+			file, err := os.CreateTemp("", "buildpack.toml")
 			Expect(err).NotTo(HaveOccurred())
 			defer file.Close()
 
@@ -114,7 +113,7 @@ func testBuildpackConfig(t *testing.T, context spec.G, it spec.S) {
 
 			context("when the file contents cannot be parsed", func() {
 				it.Before(func() {
-					Expect(ioutil.WriteFile(path, []byte("%%%"), 0600)).To(Succeed())
+					Expect(os.WriteFile(path, []byte("%%%"), 0600)).To(Succeed())
 				})
 
 				it("returns an error", func() {
@@ -128,7 +127,7 @@ func testBuildpackConfig(t *testing.T, context spec.G, it spec.S) {
 
 	context("OverwriteBuildpackConfig", func() {
 		it.Before(func() {
-			file, err := ioutil.TempFile("", "buildpack.toml")
+			file, err := os.CreateTemp("", "buildpack.toml")
 			Expect(err).NotTo(HaveOccurred())
 			defer file.Close()
 
@@ -179,7 +178,7 @@ func testBuildpackConfig(t *testing.T, context spec.G, it spec.S) {
 			})
 			Expect(err).NotTo(HaveOccurred())
 
-			contents, err := ioutil.ReadFile(path)
+			contents, err := os.ReadFile(path)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(string(contents)).To(MatchTOML(`
 				api = "0.2"

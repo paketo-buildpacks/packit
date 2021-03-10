@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"compress/gzip"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -29,7 +28,7 @@ func testVacationTarGzip(t *testing.T, context spec.G, it spec.S) {
 
 		it.Before(func() {
 			var err error
-			tempDir, err = ioutil.TempDir("", "vacation")
+			tempDir, err = os.MkdirTemp("", "vacation")
 			Expect(err).NotTo(HaveOccurred())
 
 			buffer := bytes.NewBuffer(nil)
@@ -92,7 +91,7 @@ func testVacationTarGzip(t *testing.T, context spec.G, it spec.S) {
 			Expect(filepath.Join(tempDir, "some-dir", "some-other-dir")).To(BeADirectory())
 			Expect(filepath.Join(tempDir, "some-dir", "some-other-dir", "some-file")).To(BeARegularFile())
 
-			data, err := ioutil.ReadFile(filepath.Join(tempDir, "symlink"))
+			data, err := os.ReadFile(filepath.Join(tempDir, "symlink"))
 			Expect(err).NotTo(HaveOccurred())
 			Expect(data).To(Equal([]byte(`first`)))
 		})

@@ -6,7 +6,6 @@ import (
 	"bytes"
 	"compress/gzip"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -69,7 +68,7 @@ func ExampleArchive() {
 
 	zw.Close()
 
-	destination, err := ioutil.TempDir("", "destination")
+	destination, err := os.MkdirTemp("", "destination")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -157,7 +156,7 @@ func ExampleArchive_StripComponents() {
 
 	zw.Close()
 
-	destination, err := ioutil.TempDir("", "destination")
+	destination, err := os.MkdirTemp("", "destination")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -222,7 +221,7 @@ func ExampleTarArchive() {
 
 	tw.Close()
 
-	destination, err := ioutil.TempDir("", "destination")
+	destination, err := os.MkdirTemp("", "destination")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -283,7 +282,7 @@ func ExampleTarArchive_StripComponents() {
 
 	tw.Close()
 
-	destination, err := ioutil.TempDir("", "destination")
+	destination, err := os.MkdirTemp("", "destination")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -343,7 +342,7 @@ func ExampleTarGzipArchive() {
 	tw.Close()
 	gw.Close()
 
-	destination, err := ioutil.TempDir("", "destination")
+	destination, err := os.MkdirTemp("", "destination")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -406,7 +405,7 @@ func ExampleTarGzipArchive_StripComponents() {
 	tw.Close()
 	gw.Close()
 
-	destination, err := ioutil.TempDir("", "destination")
+	destination, err := os.MkdirTemp("", "destination")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -470,7 +469,7 @@ func ExampleTarXZArchive() {
 	tw.Close()
 	xw.Close()
 
-	destination, err := ioutil.TempDir("", "destination")
+	destination, err := os.MkdirTemp("", "destination")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -537,7 +536,7 @@ func ExampleTarXZArchive_StripComponents() {
 	tw.Close()
 	xw.Close()
 
-	destination, err := ioutil.TempDir("", "destination")
+	destination, err := os.MkdirTemp("", "destination")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -597,7 +596,7 @@ func ExampleZipArchive() {
 
 	zw.Close()
 
-	destination, err := ioutil.TempDir("", "destination")
+	destination, err := os.MkdirTemp("", "destination")
 	if err != nil {
 		log.Fatal(err)
 	}
