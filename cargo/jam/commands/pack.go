@@ -1,138 +1,89 @@
 package commands
 
 import (
-	"errors"
-	"flag"
 	"fmt"
-	"io"
+	"github.com/paketo-buildpacks/packit/cargo"
+	"github.com/paketo-buildpacks/packit/cargo/jam/internal"
+	"github.com/paketo-buildpacks/packit/pexec"
+	"github.com/paketo-buildpacks/packit/scribe"
+	"github.com/spf13/cobra"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
-
-	"github.com/paketo-buildpacks/packit/cargo"
-	"github.com/paketo-buildpacks/packit/cargo/jam/internal"
 )
 
-//go:generate faux --interface ConfigParser --output fakes/config_parser.go
-type ConfigParser interface {
-	Parse(path string) (cargo.Config, error)
+type packFlags struct {
+	buildpackTOMLPath string
+	output            string
+	version           string
+	offline           bool
+	stack             string
 }
 
-//go:generate faux --interface FileBundler --output fakes/file_bundler.go
-type FileBundler interface {
-	Bundle(path string, files []string, config cargo.Config) ([]internal.File, error)
-}
-
-//go:generate faux --interface TarBuilder --output fakes/tar_builder.go
-type TarBuilder interface {
-	Build(path string, files []internal.File) error
-}
-
-//go:generate faux --interface PrePackager --output fakes/prepackager.go
-type PrePackager interface {
-	Execute(path, rootDir string) error
-}
-
-//go:generate faux --interface DirectoryDuplicator --output fakes/directory_duplicator.go
-type DirectoryDuplicator interface {
-	Duplicate(sourcePath, destPath string) error
-}
-
-//go:generate faux --interface DependencyCacher --output fakes/dependency_cacher.go
-type DependencyCacher interface {
-	Cache(root string, dependencies []cargo.ConfigMetadataDependency) ([]cargo.ConfigMetadataDependency, error)
-}
-
-type Pack struct {
-	directoryDuplicator DirectoryDuplicator
-	configParser        ConfigParser
-	prePackager         PrePackager
-	dependencyCacher    DependencyCacher
-	tarBuilder          TarBuilder
-	fileBundler         FileBundler
-	stdout              io.Writer
-}
-
-func NewPack(
-	directoryDuplicator DirectoryDuplicator,
-	configParser ConfigParser,
-	prePackager PrePackager,
-	dependencyCacher DependencyCacher,
-	fileBundler FileBundler,
-	tarBuilder TarBuilder,
-	stdout io.Writer,
-) Pack {
-
-	return Pack{
-		directoryDuplicator: directoryDuplicator,
-		configParser:        configParser,
-		prePackager:         prePackager,
-		dependencyCacher:    dependencyCacher,
-		tarBuilder:          tarBuilder,
-		fileBundler:         fileBundler,
-		stdout:              stdout,
+func pack() *cobra.Command {
+	flags := &packFlags{}
+	cmd := &cobra.Command{
+		Use:   "pack",
+		Short: "package buildpack",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return packRun(*flags)
+		},
 	}
-}
+	cmd.Flags().StringVar(&flags.buildpackTOMLPath, "buildpack", "", "path to buildpack.toml")
+	cmd.Flags().StringVar(&flags.output, "output", "", "path to location of output tarball")
+	cmd.Flags().StringVar(&flags.version, "version", "", "version of the buildpack")
+	cmd.Flags().BoolVar(&flags.offline, "offline", false, "enable offline caching of dependencies")
+	cmd.Flags().StringVar(&flags.stack, "stack", "", "restricts dependencies to given stack")
 
-func (p Pack) Execute(args []string) error {
-	var (
-		buildpackTOMLPath string
-		output            string
-		version           string
-		offline           bool
-		stack             string
-	)
-
-	fset := flag.NewFlagSet("pack", flag.ContinueOnError)
-	fset.StringVar(&buildpackTOMLPath, "buildpack", "", "path to buildpack.toml")
-	fset.StringVar(&output, "output", "", "path to location of output tarball")
-	fset.StringVar(&version, "version", "", "version of the buildpack")
-	fset.BoolVar(&offline, "offline", false, "enable offline caching of dependencies")
-	fset.StringVar(&stack, "stack", "", "restricts dependencies to given stack")
-	err := fset.Parse(args)
+	err := cmd.MarkFlagRequired("buildpack")
 	if err != nil {
-		return err
+		fmt.Fprintf(os.Stderr, "Unable to mark buildpack flag as required")
 	}
-
-	if buildpackTOMLPath == "" {
-		return errors.New("missing required flag --buildpack")
+	err = cmd.MarkFlagRequired("output")
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Unable to mark output flag as required")
 	}
-
-	if output == "" {
-		return errors.New("missing required flag --output")
+	err = cmd.MarkFlagRequired("version")
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Unable to mark version flag as required")
 	}
+	return cmd
+}
 
-	if version == "" {
-		return errors.New("missing required flag --version")
-	}
+func init() {
+	rootCmd.AddCommand(pack())
+}
 
+func packRun(flags packFlags) error {
 	buildpackDir, err := ioutil.TempDir("", "dup-dest")
 	if err != nil {
 		return fmt.Errorf("unable to create temporary directory: %s", err)
 	}
 	defer os.RemoveAll(buildpackDir)
 
-	err = p.directoryDuplicator.Duplicate(filepath.Dir(buildpackTOMLPath), buildpackDir)
+	directoryDuplicator := cargo.NewDirectoryDuplicator()
+	err = directoryDuplicator.Duplicate(filepath.Dir(flags.buildpackTOMLPath), buildpackDir)
 	if err != nil {
 		return fmt.Errorf("failed to duplicate directory: %s", err)
 	}
 
-	buildpackTOMLPath = filepath.Join(buildpackDir, filepath.Base(buildpackTOMLPath))
+	flags.buildpackTOMLPath = filepath.Join(buildpackDir, filepath.Base(flags.buildpackTOMLPath))
 
-	config, err := p.configParser.Parse(buildpackTOMLPath)
+	configParser := cargo.NewBuildpackParser()
+	config, err := configParser.Parse(flags.buildpackTOMLPath)
 	if err != nil {
 		return fmt.Errorf("failed to parse buildpack.toml: %s", err)
 	}
 
-	config.Buildpack.Version = version
+	config.Buildpack.Version = flags.version
 
-	fmt.Fprintf(p.stdout, "Packing %s %s...\n", config.Buildpack.Name, version)
+	fmt.Fprintf(os.Stdout, "Packing %s %s...\n", config.Buildpack.Name, flags.version)
 
-	if stack != "" {
+	if flags.stack != "" {
 		var filteredDependencies []cargo.ConfigMetadataDependency
 		for _, dep := range config.Metadata.Dependencies {
-			if dep.HasStack(stack) {
+			if dep.HasStack(flags.stack) {
 				filteredDependencies = append(filteredDependencies, dep)
 			}
 		}
@@ -140,13 +91,18 @@ func (p Pack) Execute(args []string) error {
 		config.Metadata.Dependencies = filteredDependencies
 	}
 
-	err = p.prePackager.Execute(config.Metadata.PrePackage, buildpackDir)
+	logger := scribe.NewLogger(os.Stdout)
+	bash := pexec.NewExecutable("bash")
+	prePackager := internal.NewPrePackager(bash, logger, scribe.NewWriter(os.Stdout, scribe.WithIndent(2)))
+	err = prePackager.Execute(config.Metadata.PrePackage, buildpackDir)
 	if err != nil {
 		return fmt.Errorf("failed to execute pre-packaging script %q: %s", config.Metadata.PrePackage, err)
 	}
 
-	if offline {
-		config.Metadata.Dependencies, err = p.dependencyCacher.Cache(buildpackDir, config.Metadata.Dependencies)
+	if flags.offline {
+		transport := cargo.NewTransport()
+		dependencyCacher := internal.NewDependencyCacher(transport, logger)
+		config.Metadata.Dependencies, err = dependencyCacher.Cache(buildpackDir, config.Metadata.Dependencies)
 		if err != nil {
 			return fmt.Errorf("failed to cache dependencies: %s", err)
 		}
@@ -156,12 +112,14 @@ func (p Pack) Execute(args []string) error {
 		}
 	}
 
-	files, err := p.fileBundler.Bundle(buildpackDir, config.Metadata.IncludeFiles, config)
+	fileBundler := internal.NewFileBundler()
+	files, err := fileBundler.Bundle(buildpackDir, config.Metadata.IncludeFiles, config)
 	if err != nil {
 		return fmt.Errorf("failed to bundle files: %s", err)
 	}
 
-	err = p.tarBuilder.Build(output, files)
+	tarBuilder := internal.NewTarBuilder(logger)
+	err = tarBuilder.Build(flags.output, files)
 	if err != nil {
 		return fmt.Errorf("failed to create output: %s", err)
 	}

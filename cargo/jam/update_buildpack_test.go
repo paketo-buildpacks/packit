@@ -217,7 +217,7 @@ func testUpdateBuildpack(t *testing.T, context spec.G, it spec.S) {
 				Expect(err).NotTo(HaveOccurred())
 
 				Eventually(session).Should(gexec.Exit(1), func() string { return string(buffer.Contents()) })
-				Expect(string(buffer.Contents())).To(Equal("failed to execute: --buildpack-file is a required flag"))
+				Expect(string(buffer.Contents())).To(ContainSubstring("Error: required flag(s) \"buildpack-file\" not set"))
 			})
 		})
 
@@ -234,7 +234,7 @@ func testUpdateBuildpack(t *testing.T, context spec.G, it spec.S) {
 				Expect(err).NotTo(HaveOccurred())
 
 				Eventually(session).Should(gexec.Exit(1), func() string { return string(buffer.Contents()) })
-				Expect(string(buffer.Contents())).To(Equal("failed to execute: --package-file is a required flag"))
+				Expect(string(buffer.Contents())).To(ContainSubstring("Error: required flag(s) \"package-file\" not set"))
 			})
 		})
 
@@ -252,7 +252,7 @@ func testUpdateBuildpack(t *testing.T, context spec.G, it spec.S) {
 				Expect(err).NotTo(HaveOccurred())
 
 				Eventually(session).Should(gexec.Exit(1), func() string { return string(buffer.Contents()) })
-				Expect(string(buffer.Contents())).To(Equal("failed to execute: failed to open buildpack config file: open /no/such/file: no such file or directory"))
+				Expect(string(buffer.Contents())).To(ContainSubstring("failed to execute: failed to open buildpack config file: open /no/such/file: no such file or directory"))
 			})
 		})
 
@@ -270,7 +270,7 @@ func testUpdateBuildpack(t *testing.T, context spec.G, it spec.S) {
 				Expect(err).NotTo(HaveOccurred())
 
 				Eventually(session).Should(gexec.Exit(1), func() string { return string(buffer.Contents()) })
-				Expect(string(buffer.Contents())).To(Equal("failed to execute: failed to open package config file: open /no/such/file: no such file or directory"))
+				Expect(string(buffer.Contents())).To(ContainSubstring("failed to execute: failed to open package config file: open /no/such/file: no such file or directory"))
 			})
 		})
 

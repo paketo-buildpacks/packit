@@ -20,8 +20,6 @@ func testPexec(t *testing.T, context spec.G, it spec.S) {
 	var (
 		Expect = NewWithT(t).Expect
 
-		fakeCLI        string
-		existingPath   string
 		tmpDir         string
 		stdout, stderr *bytes.Buffer
 
@@ -39,18 +37,10 @@ func testPexec(t *testing.T, context spec.G, it spec.S) {
 		stdout = bytes.NewBuffer(nil)
 		stderr = bytes.NewBuffer(nil)
 
-		executable = pexec.NewExecutable("some-executable")
-
-		fakeCLI, err = gexec.Build("github.com/paketo-buildpacks/packit/fakes/some-executable")
-		Expect(err).NotTo(HaveOccurred())
-
-		existingPath = os.Getenv("PATH")
-		os.Setenv("PATH", filepath.Dir(fakeCLI))
+		executable = pexec.NewExecutable(filepath.Base(fakeCLI))
 	})
 
 	it.After(func() {
-		os.Setenv("PATH", existingPath)
-		gexec.CleanupBuildArtifacts()
 		Expect(os.RemoveAll(tmpDir)).To(Succeed())
 	})
 
@@ -119,12 +109,12 @@ func testPexec(t *testing.T, context spec.G, it spec.S) {
 		context("failure cases", func() {
 			context("when the executable cannot be found on the path", func() {
 				it.Before(func() {
-					Expect(os.Unsetenv("PATH")).To(Succeed())
+					executable = pexec.NewExecutable("unknown-executable")
 				})
 
 				it("returns an error", func() {
 					err := executable.Execute(pexec.Execution{})
-					Expect(err).To(MatchError("exec: \"some-executable\": executable file not found in $PATH"))
+					Expect(err).To(MatchError("exec: \"unknown-executable\": executable file not found in $PATH"))
 				})
 			})
 
