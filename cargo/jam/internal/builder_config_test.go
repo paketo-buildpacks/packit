@@ -42,13 +42,13 @@ description = "Some description"
 
   [[order.group]]
     id = "some-repository/other-buildpack-id"
-    version = "0.20.22"
 
 [[order]]
 
   [[order.group]]
     id = "some-repository/some-buildpack-id"
     version = "0.0.10"
+		optional = true
 
 [stack]
   id = "io.paketo.stacks.some-stack"
@@ -87,16 +87,16 @@ description = "Some description"
 					{
 						Group: []internal.BuilderConfigOrderGroup{
 							{
-								ID:      "some-repository/other-buildpack-id",
-								Version: "0.20.22",
+								ID: "some-repository/other-buildpack-id",
 							},
 						},
 					},
 					{
 						Group: []internal.BuilderConfigOrderGroup{
 							{
-								ID:      "some-repository/some-buildpack-id",
-								Version: "0.0.10",
+								ID:       "some-repository/some-buildpack-id",
+								Version:  "0.0.10",
+								Optional: true,
 							},
 						},
 					},

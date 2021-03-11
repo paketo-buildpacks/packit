@@ -122,13 +122,13 @@ description = "Some description"
 
   [[order.group]]
     id = "some-repository/other-buildpack-id"
-    version = "0.20.22"
 
 [[order]]
 
   [[order.group]]
     id = "some-repository/some-buildpack-id"
     version = "0.0.10"
+		optional = true
 
 [stack]
   id = "io.paketo.stacks.some-stack"
@@ -177,13 +177,13 @@ description = "Some description"
 
   [[order.group]]
     id = "some-repository/other-buildpack-id"
-    version = "0.20.22"
 
 [[order]]
 
   [[order.group]]
     id = "some-repository/some-buildpack-id"
     version = "0.20.12"
+		optional = true
 
 [stack]
   id = "io.paketo.stacks.some-stack"
