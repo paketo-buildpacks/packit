@@ -8,7 +8,7 @@ require (
 	github.com/cheggaaa/pb/v3 v3.0.6
 	github.com/docker/distribution v2.7.1+incompatible
 	github.com/fatih/color v1.9.0 // indirect
-	github.com/gabriel-vasile/mimetype v1.1.2
+	github.com/gabriel-vasile/mimetype v1.2.0
 	github.com/google/go-containerregistry v0.4.1
 	github.com/mattn/go-runewidth v0.0.8 // indirect
 	github.com/onsi/gomega v1.11.0
