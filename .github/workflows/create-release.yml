@@ -24,6 +24,10 @@ jobs:
     runs-on: ubuntu-latest
     needs: unit
     steps:
+    - name: Setup Go
+      uses: actions/setup-go@v1
+      with:
+        go-version: 1.16
     - name: Reset Draft Release
       uses: paketo-buildpacks/github-config/actions/release/reset-draft@main
       with:
