@@ -8,7 +8,7 @@ according to the specification:
 
 ## Buildpack Interface
 
-According to the specification, the buildpack interface is composed of both
+According to the CNB specification, the buildpack interface is composed of both
 a detect and build phase. Each of these phases has a corresponding set of
 packit primitives enable developers to easily implement a buildpack.
 
