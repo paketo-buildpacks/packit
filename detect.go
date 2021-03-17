@@ -9,6 +9,11 @@ import (
 	"github.com/paketo-buildpacks/packit/internal"
 )
 
+// DetectFunc is the definition of a callback that can be invoked when the
+// Detect function is executed. Buildpack authors should implement a DetectFunc
+// that performs the specific detect phase operations for a buildpack.
+type DetectFunc func(DetectContext) (DetectResult, error)
+
 // DetectContext provides the contextual details that are made available by the
 // buildpack lifecycle during the detect phase. This context is populated by
 // the Detect function and passed to the DetectFunc during execution.
@@ -22,6 +27,10 @@ type DetectContext struct {
 	// files included in the buildpack.
 	CNBPath string
 
+	// Platform includes the platform context according to the specification:
+	// https://github.com/buildpacks/spec/blob/main/buildpack.md#detection
+	Platform Platform
+
 	// BuildpackInfo includes the details of the buildpack parsed from the
 	// buildpack.toml included in the buildpack contents.
 	BuildpackInfo BuildpackInfo
@@ -31,11 +40,6 @@ type DetectContext struct {
 	Stack string
 }
 
-// DetectFunc is the definition of a callback that can be invoked when the
-// Detect function is executed. Buildpack authors should implement a DetectFunc
-// that performs the specific detect phase operations for a buildpack.
-type DetectFunc func(DetectContext) (DetectResult, error)
-
 // DetectResult allows buildpack authors to indicate the result of the detect
 // phase for a given buildpack. This result, returned in a DetectFunc callback,
 // will be parsed and persisted by the Detect function and returned to the
@@ -44,45 +48,6 @@ type DetectResult struct {
 	// Plan is the set of Build Plan provisions and requirements that are
 	// detected during the detect phase of the lifecycle.
 	Plan BuildPlan
-}
-
-// BuildPlan is a representation of the Build Plan as specified in the
-// specification:
-// https://github.com/buildpacks/spec/blob/main/buildpack.md#build-plan-toml.
-// The BuildPlan allows buildpacks to indicate what dependencies they provide
-// or require.
-type BuildPlan struct {
-	// Provides is a list of BuildPlanProvisions that are provided by this
-	// buildpack.
-	Provides []BuildPlanProvision `toml:"provides"`
-
-	// Requires is a list of BuildPlanRequirements that are required by this
-	// buildpack.
-	Requires []BuildPlanRequirement `toml:"requires"`
-
-	// Or is a list of additional BuildPlans that may be selected by the
-	// lifecycle
-	Or []BuildPlan `toml:"or,omitempty"`
-}
-
-// BuildPlanProvision is a representation of a dependency that can be provided
-// by a buildpack.
-type BuildPlanProvision struct {
-	// Name is the identifier whereby buildpacks can coordinate that a dependency
-	// is provided or required.
-	Name string `toml:"name"`
-}
-
-type BuildPlanRequirement struct {
-	// Name is the identifier whereby buildpacks can coordinate that a dependency
-	// is provided or required.
-	Name string `toml:"name"`
-
-	// Metadata is an unspecified field allowing buildpacks to communicate extra
-	// details about their requirement. Examples of this type of metadata might
-	// include details about what source was used to decide the version
-	// constraint for a requirement.
-	Metadata interface{} `toml:"metadata"`
 }
 
 // Detect is an implementation of the detect phase according to the Cloud
@@ -119,7 +84,10 @@ func Detect(f DetectFunc, options ...Option) {
 	}
 
 	result, err := f(DetectContext{
-		WorkingDir:    dir,
+		WorkingDir: dir,
+		Platform: Platform{
+			Path: config.args[1],
+		},
 		CNBPath:       cnbPath,
 		BuildpackInfo: buildpackInfo.Buildpack,
 		Stack:         os.Getenv("CNB_STACK_ID"),

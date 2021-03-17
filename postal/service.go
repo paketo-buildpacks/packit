@@ -3,6 +3,7 @@ package postal
 import (
 	"fmt"
 	"io"
+	"path/filepath"
 	"regexp"
 	"sort"
 	"strings"
@@ -129,14 +130,15 @@ func (s Service) Resolve(path, id, version, stack string) (Dependency, error) {
 	return compatibleVersions[0], nil
 }
 
-// Install will fetch and expand a dependency into a layer path location. The
+// Deliver will fetch and expand a dependency into a layer path location. The
 // location of the CNBPath is given so that dependencies that may be included
-// in a buildpack when packaged for offline consumption can be retrieved. The
-// dependency is validated against the checksum value provided on the
-// Dependency and will error if there are inconsistencies in the fetched
-// result.
-func (s Service) Install(dependency Dependency, cnbPath, layerPath string) error {
-	dependencyMappingURI, err := s.mappingResolver.FindDependencyMapping(dependency.SHA256, "/platform/bindings")
+// in a buildpack when packaged for offline consumption can be retrieved. If
+// there is a dependency mapping for the specified dependency, Deliver will use
+// the given dependency mapping URI to fetch the dependency. The dependency is
+// validated against the checksum value provided on the Dependency and will
+// error if there are inconsistencies in the fetched result.
+func (s Service) Deliver(dependency Dependency, cnbPath, layerPath, platformPath string) error {
+	dependencyMappingURI, err := s.mappingResolver.FindDependencyMapping(dependency.SHA256, filepath.Join(platformPath, "bindings"))
 	if err != nil {
 		return fmt.Errorf("failure checking out the bindings")
 	}
@@ -167,4 +169,11 @@ func (s Service) Install(dependency Dependency, cnbPath, layerPath string) error
 	}
 
 	return nil
+}
+
+// Install will invoke Deliver with a hardcoded value of /platform for the platform path.
+//
+// Deprecated: Use Deliver instead.
+func (s Service) Install(dependency Dependency, cnbPath, layerPath string) error {
+	return s.Deliver(dependency, cnbPath, layerPath, "/platform")
 }
