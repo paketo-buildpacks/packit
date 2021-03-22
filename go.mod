@@ -5,7 +5,7 @@ go 1.13
 require (
 	github.com/BurntSushi/toml v0.3.1
 	github.com/Masterminds/semver/v3 v3.1.1
-	github.com/cheggaaa/pb/v3 v3.0.6
+	github.com/cheggaaa/pb/v3 v3.0.7
 	github.com/docker/distribution v2.7.1+incompatible
 	github.com/fatih/color v1.9.0 // indirect
 	github.com/gabriel-vasile/mimetype v1.2.0
