@@ -3,7 +3,6 @@ package packit_test
 import (
 	"bytes"
 	"errors"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -23,10 +22,14 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 
 		workingDir  string
 		tmpDir      string
+		platformDir string
 		cnbDir      string
 		cnbEnvDir   string
 		binaryPath  string
 		stackID     string
+		planDir     string
+		planPath    string
+
 		exitHandler *fakes.ExitHandler
 	)
 
@@ -35,7 +38,7 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 		workingDir, err = os.Getwd()
 		Expect(err).NotTo(HaveOccurred())
 
-		tmpDir, err = ioutil.TempDir("", "")
+		tmpDir, err = os.MkdirTemp("", "")
 		Expect(err).NotTo(HaveOccurred())
 
 		tmpDir, err = filepath.EvalSymlinks(tmpDir)
@@ -43,27 +46,36 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 
 		Expect(os.Chdir(tmpDir)).To(Succeed())
 
-		cnbDir, err = ioutil.TempDir("", "cnb")
+		platformDir, err = os.MkdirTemp("", "platform")
+		Expect(err).NotTo(HaveOccurred())
+
+		cnbDir, err = os.MkdirTemp("", "cnb")
 		Expect(err).NotTo(HaveOccurred())
 
 		stackID = "io.packit.test.stack"
 		Expect(os.Setenv("CNB_STACK_ID", stackID)).To(Succeed())
 
 		//Separate, but valid CNB dir for testing env parsing
-		cnbEnvDir, err = ioutil.TempDir("", "cnbEnv")
+		cnbEnvDir, err = os.MkdirTemp("", "cnbEnv")
 		Expect(err).NotTo(HaveOccurred())
 
 		binaryPath = filepath.Join(cnbDir, "bin", "detect")
 
 		bpTOMLContent := []byte(`
+api = "0.5"
 [buildpack]
   id = "some-id"
   name = "some-name"
   version = "some-version"
   clear-env = false
 `)
-		Expect(ioutil.WriteFile(filepath.Join(cnbDir, "buildpack.toml"), bpTOMLContent, 0600)).To(Succeed())
-		Expect(ioutil.WriteFile(filepath.Join(cnbEnvDir, "buildpack.toml"), bpTOMLContent, 0600)).To(Succeed())
+		Expect(os.WriteFile(filepath.Join(cnbDir, "buildpack.toml"), bpTOMLContent, 0600)).To(Succeed())
+		Expect(os.WriteFile(filepath.Join(cnbEnvDir, "buildpack.toml"), bpTOMLContent, 0600)).To(Succeed())
+
+		planDir, err = os.MkdirTemp("", "buildplan.toml")
+		Expect(err).NotTo(HaveOccurred())
+
+		planPath = filepath.Join(planDir, "buildplan.toml")
 
 		exitHandler = &fakes.ExitHandler{}
 	})
@@ -72,16 +84,12 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 		Expect(os.Chdir(workingDir)).To(Succeed())
 		Expect(os.RemoveAll(tmpDir)).To(Succeed())
 		Expect(os.RemoveAll(cnbDir)).To(Succeed())
+		Expect(os.RemoveAll(planDir)).To(Succeed())
+		Expect(os.RemoveAll(platformDir)).To(Succeed())
 		Expect(os.Unsetenv("CNB_STACK_ID")).To(Succeed())
 	})
 
 	context("when providing the detect context to the given DetectFunc", func() {
-		var filePath string
-
-		it.Before(func() {
-			filePath = filepath.Join(os.TempDir(), "buildplan.toml")
-		})
-
 		it("succeeds", func() {
 			var context packit.DetectContext
 
@@ -89,11 +97,14 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 				context = ctx
 
 				return packit.DetectResult{}, nil
-			}, packit.WithArgs([]string{binaryPath, "", filePath}))
+			}, packit.WithArgs([]string{binaryPath, platformDir, planPath}))
 
 			Expect(context).To(Equal(packit.DetectContext{
 				WorkingDir: tmpDir,
 				CNBPath:    cnbDir,
+				Platform: packit.Platform{
+					Path: platformDir,
+				},
 				BuildpackInfo: packit.BuildpackInfo{
 					ID:      "some-id",
 					Name:    "some-name",
@@ -105,8 +116,6 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 	})
 
 	it("writes out the buildplan.toml", func() {
-		path := filepath.Join(tmpDir, "buildplan.toml")
-
 		packit.Detect(func(packit.DetectContext) (packit.DetectResult, error) {
 			return packit.DetectResult{
 				Plan: packit.BuildPlan{
@@ -124,9 +133,9 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 					},
 				},
 			}, nil
-		}, packit.WithArgs([]string{binaryPath, "", path}))
+		}, packit.WithArgs([]string{binaryPath, platformDir, planPath}))
 
-		contents, err := ioutil.ReadFile(path)
+		contents, err := os.ReadFile(planPath)
 		Expect(err).NotTo(HaveOccurred())
 
 		Expect(string(contents)).To(MatchTOML(`
@@ -143,8 +152,6 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 	})
 
 	it("writes out the buildplan.toml with multiple plans", func() {
-		path := filepath.Join(tmpDir, "buildplan.toml")
-
 		packit.Detect(func(packit.DetectContext) (packit.DetectResult, error) {
 			return packit.DetectResult{
 				Plan: packit.BuildPlan{
@@ -192,9 +199,9 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 					},
 				},
 			}, nil
-		}, packit.WithArgs([]string{binaryPath, "", path}))
+		}, packit.WithArgs([]string{binaryPath, platformDir, planPath}))
 
-		contents, err := ioutil.ReadFile(path)
+		contents, err := os.ReadFile(planPath)
 		Expect(err).NotTo(HaveOccurred())
 
 		Expect(string(contents)).To(MatchTOML(`
@@ -234,10 +241,7 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 	})
 
 	context("when CNB_BUILDPACK_DIR is set", func() {
-		var filePath string
-
 		it.Before(func() {
-			filePath = filepath.Join(os.TempDir(), "buildplan.toml")
 			Expect(os.Setenv("CNB_BUILDPACK_DIR", cnbEnvDir)).To(Succeed())
 		})
 
@@ -252,11 +256,14 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 				context = ctx
 
 				return packit.DetectResult{}, nil
-			}, packit.WithArgs([]string{binaryPath, "", filePath}))
+			}, packit.WithArgs([]string{binaryPath, platformDir, planPath}))
 
 			Expect(context).To(Equal(packit.DetectContext{
 				WorkingDir: tmpDir,
 				CNBPath:    cnbEnvDir,
+				Platform: packit.Platform{
+					Path: platformDir,
+				},
 				BuildpackInfo: packit.BuildpackInfo{
 					ID:      "some-id",
 					Name:    "some-name",
@@ -271,7 +278,7 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 		it("calls the ExitHandler with that error", func() {
 			packit.Detect(func(ctx packit.DetectContext) (packit.DetectResult, error) {
 				return packit.DetectResult{}, errors.New("failed to detect")
-			}, packit.WithArgs([]string{binaryPath, "", ""}), packit.WithExitHandler(exitHandler))
+			}, packit.WithArgs([]string{binaryPath, platformDir, planPath}), packit.WithExitHandler(exitHandler))
 
 			Expect(exitHandler.ErrorCall.Receives.Error).To(MatchError("failed to detect"))
 		})
@@ -285,7 +292,7 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 			packit.Detect(func(ctx packit.DetectContext) (packit.DetectResult, error) {
 				return packit.DetectResult{}, packit.Fail.WithMessage("failure message")
 			},
-				packit.WithArgs([]string{binaryPath, "", ""}),
+				packit.WithArgs([]string{binaryPath, platformDir, planPath}),
 				packit.WithExitHandler(
 					internal.NewExitHandler(
 						internal.WithExitHandlerExitFunc(func(code int) {
@@ -304,22 +311,21 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 	context("failure cases", func() {
 		context("when the buildpack.toml cannot be read", func() {
 			it("returns an error", func() {
-				path := filepath.Join(tmpDir, "buildplan.toml")
-
 				packit.Detect(func(packit.DetectContext) (packit.DetectResult, error) {
 					return packit.DetectResult{}, nil
-				}, packit.WithArgs([]string{"", "", path}), packit.WithExitHandler(exitHandler))
+				}, packit.WithArgs([]string{binaryPath, platformDir, "/no/such/plan/path"}), packit.WithExitHandler(exitHandler))
 
 				Expect(exitHandler.ErrorCall.Receives.Error).To(MatchError(ContainSubstring("no such file or directory")))
 			})
 		})
 
 		context("when the buildplan.toml cannot be opened", func() {
-			it("returns an error", func() {
-				path := filepath.Join(tmpDir, "buildplan.toml")
-				_, err := os.OpenFile(path, os.O_CREATE|os.O_RDWR, 0000)
+			it.Before(func() {
+				_, err := os.OpenFile(planPath, os.O_CREATE|os.O_RDWR, 0000)
 				Expect(err).NotTo(HaveOccurred())
+			})
 
+			it("returns an error", func() {
 				packit.Detect(func(packit.DetectContext) (packit.DetectResult, error) {
 					return packit.DetectResult{
 						Plan: packit.BuildPlan{
@@ -337,7 +343,7 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 							},
 						},
 					}, nil
-				}, packit.WithArgs([]string{binaryPath, "", path}), packit.WithExitHandler(exitHandler))
+				}, packit.WithArgs([]string{binaryPath, platformDir, planPath}), packit.WithExitHandler(exitHandler))
 
 				Expect(exitHandler.ErrorCall.Receives.Error).To(MatchError(ContainSubstring("permission denied")))
 			})
@@ -345,8 +351,6 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 
 		context("when the buildplan.toml cannot be encoded", func() {
 			it("returns an error", func() {
-				path := filepath.Join(tmpDir, "buildplan.toml")
-
 				packit.Detect(func(packit.DetectContext) (packit.DetectResult, error) {
 					return packit.DetectResult{
 						Plan: packit.BuildPlan{
@@ -361,7 +365,7 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 							},
 						},
 					}, nil
-				}, packit.WithArgs([]string{binaryPath, "", path}), packit.WithExitHandler(exitHandler))
+				}, packit.WithArgs([]string{binaryPath, platformDir, planPath}), packit.WithExitHandler(exitHandler))
 
 				Expect(exitHandler.ErrorCall.Receives.Error).To(MatchError(ContainSubstring("cannot encode a map with non-string key type")))
 			})

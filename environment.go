@@ -2,7 +2,7 @@ package packit
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 )
 
@@ -57,7 +57,7 @@ func newEnvironmentFromPath(path string) (Environment, error) {
 	for _, file := range envFiles {
 		switch filepath.Ext(file) {
 		case ".delim", ".prepend", ".append", ".default", ".override":
-			contents, err := ioutil.ReadFile(file)
+			contents, err := os.ReadFile(file)
 			if err != nil {
 				return Environment{}, fmt.Errorf("failed to load environment variable: %s", err)
 			}

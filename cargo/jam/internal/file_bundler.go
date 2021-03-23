@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -81,7 +80,7 @@ func (b FileBundler) Bundle(root string, paths []string, config cargo.Config) ([
 				return nil, fmt.Errorf("error encoding buildpack.toml: %s", err)
 			}
 
-			file.ReadCloser = ioutil.NopCloser(buf)
+			file.ReadCloser = io.NopCloser(buf)
 			file.Info = NewFileInfo("buildpack.toml", buf.Len(), 0644, time.Now())
 
 		default:

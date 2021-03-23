@@ -1,7 +1,6 @@
 package internal
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 )
@@ -23,7 +22,7 @@ func (w EnvironmentWriter) Write(dir string, env map[string]string) error {
 	}
 
 	for key, value := range env {
-		err := ioutil.WriteFile(filepath.Join(dir, key), []byte(value), 0644)
+		err := os.WriteFile(filepath.Join(dir, key), []byte(value), 0644)
 		if err != nil {
 			return err
 		}

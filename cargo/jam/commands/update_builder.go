@@ -1,38 +1,43 @@
 package commands
 
 import (
-	"errors"
-	"flag"
 	"fmt"
+	"os"
 
 	"github.com/paketo-buildpacks/packit/cargo/jam/internal"
+	"github.com/spf13/cobra"
 )
 
-type UpdateBuilder struct{}
-
-func NewUpdateBuilder() UpdateBuilder {
-	return UpdateBuilder{}
+type updateBuilderFlags struct {
+	builderFile  string
+	lifecycleURI string
 }
 
-func (ub UpdateBuilder) Execute(args []string) error {
-	var options struct {
-		BuilderFile  string
-		LifecycleURI string
+func updateBuilder() *cobra.Command {
+	flags := &updateBuilderFlags{}
+	cmd := &cobra.Command{
+		Use:   "update-builder",
+		Short: "update builder",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return updateBuilderRun(*flags)
+		},
 	}
+	cmd.Flags().StringVar(&flags.builderFile, "builder-file", "", "path to the builder.toml file (required)")
+	cmd.Flags().StringVar(&flags.lifecycleURI, "lifecycle-uri", "index.docker.io/buildpacksio/lifecycle", "URI for lifecycle image (optional: default=index.docker.io/buildpacksio/lifecycle)")
 
-	fset := flag.NewFlagSet("update-builder", flag.ContinueOnError)
-	fset.StringVar(&options.BuilderFile, "builder-file", "", "path to the builder.toml file (required)")
-	fset.StringVar(&options.LifecycleURI, "lifecycle-uri", "index.docker.io/buildpacksio/lifecycle", "URI for lifecycle image (optional: default=index.docker.io/buildpacksio/lifecycle)")
-	err := fset.Parse(args)
+	err := cmd.MarkFlagRequired("builder-file")
 	if err != nil {
-		return err
+		fmt.Fprintf(os.Stderr, "Unable to mark builder-file flag as required")
 	}
+	return cmd
+}
 
-	if options.BuilderFile == "" {
-		return errors.New("--builder-file is a required flag")
-	}
+func init() {
+	rootCmd.AddCommand(updateBuilder())
+}
 
-	builder, err := internal.ParseBuilderConfig(options.BuilderFile)
+func updateBuilderRun(flags updateBuilderFlags) error {
+	builder, err := internal.ParseBuilderConfig(flags.builderFile)
 	if err != nil {
 		return err
 	}
@@ -49,13 +54,15 @@ func (ub UpdateBuilder) Execute(args []string) error {
 		for j, order := range builder.Order {
 			for k, group := range order.Group {
 				if group.ID == image.Path {
-					builder.Order[j].Group[k].Version = image.Version
+					if builder.Order[j].Group[k].Version != "" {
+						builder.Order[j].Group[k].Version = image.Version
+					}
 				}
 			}
 		}
 	}
 
-	lifecycleImage, err := internal.FindLatestImage(options.LifecycleURI)
+	lifecycleImage, err := internal.FindLatestImage(flags.lifecycleURI)
 	if err != nil {
 		return err
 	}
@@ -69,7 +76,7 @@ func (ub UpdateBuilder) Execute(args []string) error {
 
 	builder.Stack.BuildImage = fmt.Sprintf("%s:%s", buildImage.Name, buildImage.Version)
 
-	err = internal.OverwriteBuilderConfig(options.BuilderFile, builder)
+	err = internal.OverwriteBuilderConfig(flags.builderFile, builder)
 	if err != nil {
 		return err
 	}

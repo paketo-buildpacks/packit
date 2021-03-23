@@ -8,8 +8,14 @@ import (
 	"strings"
 
 	"github.com/BurntSushi/toml"
+	"github.com/Masterminds/semver/v3"
 	"github.com/paketo-buildpacks/packit/internal"
 )
+
+// BuildFunc is the definition of a callback that can be invoked when the Build
+// function is executed. Buildpack authors should implement a BuildFunc that
+// performs the specific build phase operations for a buildpack.
+type BuildFunc func(BuildContext) (BuildResult, error)
 
 // BuildContext provides the contextual details that are made available by the
 // buildpack lifecycle during the build phase. This context is populated by the
@@ -23,6 +29,10 @@ type BuildContext struct {
 	// This path is useful for finding the buildpack.toml or any other
 	// files included in the buildpack.
 	CNBPath string
+
+	// Platform includes the platform context according to the specification:
+	// https://github.com/buildpacks/spec/blob/main/buildpack.md#build
+	Platform Platform
 
 	// Layers provides access to layers managed by the buildpack. It can be used
 	// to create new layers or retrieve cached layers from previous builds.
@@ -42,11 +52,6 @@ type BuildContext struct {
 	WorkingDir string
 }
 
-// BuildFunc is the definition of a callback that can be invoked when the Build
-// function is executed. Buildpack authors should implement a BuildFunc that
-// performs the specific build phase operations for a buildpack.
-type BuildFunc func(BuildContext) (BuildResult, error)
-
 // BuildResult allows buildpack authors to indicate the result of the build
 // phase for a given buildpack. This result, returned in a BuildFunc callback,
 // will be parsed and persisted by the Build function and returned to the
@@ -54,6 +59,9 @@ type BuildFunc func(BuildContext) (BuildResult, error)
 type BuildResult struct {
 	// Plan is the set of refinements to the Buildpack Plan that were performed
 	// during the build phase.
+	//
+	// Deprecated: Use LaunchMetadata or BuildMetadata instead. For more information
+	// see https://buildpacks.io/docs/reference/spec/migration/buildpack-api-0.4-0.5/
 	Plan BuildpackPlan
 
 	// Layers is a list of layers that will be persisted by the lifecycle at the
@@ -65,93 +73,11 @@ type BuildResult struct {
 	// the buildpack lifecycle specification:
 	// https://github.com/buildpacks/spec/blob/main/buildpack.md#launchtoml-toml
 	Launch LaunchMetadata
-}
 
-// LaunchMetadata represents the launch metadata details persisted in the
-// launch.toml file according to the buildpack lifecycle specification:
-// https://github.com/buildpacks/spec/blob/main/buildpack.md#launchtoml-toml.
-type LaunchMetadata struct {
-	// Processes is a list of processes that will be returned to the lifecycle to
-	// be executed during the launch phase.
-	Processes []Process
-
-	// Slices is a list of slices that will be returned to the lifecycle to be
-	// exported as separate layers during the export phase.
-	Slices []Slice
-
-	// Labels is a map of key-value pairs that will be returned to the lifecycle to be
-	// added as config label on the image metadata. Keys must be unique.
-	Labels map[string]string
-}
-
-// Process represents a process to be run during the launch phase as described
-// in the specification:
-// https://github.com/buildpacks/spec/blob/main/buildpack.md#launch. The
-// fields of the process are describe in the specification of the launch.toml
-// file:
-// https://github.com/buildpacks/spec/blob/main/buildpack.md#launchtoml-toml.
-type Process struct {
-	// Type is an identifier to describe the type of process to be executed, eg.
-	// "web".
-	Type string `toml:"type"`
-
-	// Command is the start command to be executed at launch.
-	Command string `toml:"command"`
-
-	// Args is a list of arguments to be passed to the command at launch.
-	Args []string `toml:"args"`
-
-	// Direct indicates whether the process should bypass the shell when invoked.
-	Direct bool `toml:"direct"`
-}
-
-// Slice represents a layer of the working directory to be exported during the
-// export phase. These slices help to optimize data transfer for files that are
-// commonly shared across applications.  Slices are described in the layers
-// section of the buildpack spec:
-// https://github.com/buildpacks/spec/blob/main/buildpack.md#layers.  The slice
-// fields are described in the specification of the launch.toml file:
-// https://github.com/buildpacks/spec/blob/main/buildpack.md#launchtoml-toml.
-type Slice struct {
-	Paths []string `toml:"paths"`
-}
-
-// BuildpackInfo is a representation of the basic information for a buildpack
-// provided in its buildpack.toml file as described in the specification:
-// https://github.com/buildpacks/spec/blob/main/buildpack.md#buildpacktoml-toml.
-type BuildpackInfo struct {
-	// ID is the identifier specified in the `buildpack.id` field of the buildpack.toml.
-	ID string `toml:"id"`
-
-	// Name is the identifier specified in the `buildpack.name` field of the buildpack.toml.
-	Name string `toml:"name"`
-
-	// Version is the identifier specified in the `buildpack.version` field of the buildpack.toml.
-	Version string `toml:"version"`
-}
-
-// BuildpackPlan is a representation of the buildpack plan provided by the
-// lifecycle and defined in the specification:
-// https://github.com/buildpacks/spec/blob/main/buildpack.md#buildpack-plan-toml.
-// It is also used to return a set of refinements to the plan at the end of the
-// build phase.
-type BuildpackPlan struct {
-	// Entries is a list of BuildpackPlanEntry fields that are declared in the
-	// buildpack plan TOML file.
-	Entries []BuildpackPlanEntry `toml:"entries"`
-}
-
-// BuildpackPlanEntry is a representation of a single buildpack plan entry
-// specified by the lifecycle.
-type BuildpackPlanEntry struct {
-	// Name is the name of the dependency the the buildpack should provide.
-	Name string `toml:"name"`
-
-	// Metadata is an unspecified field allowing buildpacks to communicate extra
-	// details about their requirement. Examples of this type of metadata might
-	// include details about what source was used to decide the version
-	// constraint for a requirement.
-	Metadata map[string]interface{} `toml:"metadata"`
+	// Build is the metadata that will be persisted as build.toml according to
+	// the buildpack lifecycle specification:
+	// https://github.com/buildpacks/spec/blob/main/buildpack.md#buildtoml-toml
+	Build BuildMetadata
 }
 
 // Build is an implementation of the build phase according to the Cloud Native
@@ -170,8 +96,9 @@ func Build(f BuildFunc, options ...Option) {
 	}
 
 	var (
-		layersPath = config.args[1]
-		planPath   = config.args[3]
+		layersPath   = config.args[1]
+		platformPath = config.args[2]
+		planPath     = config.args[3]
 	)
 
 	pwd, err := os.Getwd()
@@ -193,16 +120,28 @@ func Build(f BuildFunc, options ...Option) {
 	}
 
 	var buildpackInfo struct {
-		Buildpack BuildpackInfo `toml:"buildpack"`
+		APIVersion string        `toml:"api"`
+		Buildpack  BuildpackInfo `toml:"buildpack"`
 	}
+
 	_, err = toml.DecodeFile(filepath.Join(cnbPath, "buildpack.toml"), &buildpackInfo)
 	if err != nil {
 		config.exitHandler.Error(err)
 		return
 	}
 
+	apiV05, _ := semver.NewVersion("0.5")
+	apiVersion, err := semver.NewVersion(buildpackInfo.APIVersion)
+	if err != nil {
+		config.exitHandler.Error(err)
+		return
+	}
+
 	result, err := f(BuildContext{
-		CNBPath:    cnbPath,
+		CNBPath: cnbPath,
+		Platform: Platform{
+			Path: platformPath,
+		},
 		Stack:      os.Getenv("CNB_STACK_ID"),
 		WorkingDir: pwd,
 		Plan:       plan,
@@ -216,10 +155,17 @@ func Build(f BuildFunc, options ...Option) {
 		return
 	}
 
-	err = config.tomlWriter.Write(planPath, result.Plan)
-	if err != nil {
-		config.exitHandler.Error(err)
-		return
+	if len(result.Plan.Entries) > 0 {
+		if apiVersion.GreaterThan(apiV05) || apiVersion.Equal(apiV05) {
+			config.exitHandler.Error(fmt.Errorf(`buildpack plan is read only since BuildPack API v0.5`))
+			return
+		}
+
+		err = config.tomlWriter.Write(planPath, result.Plan)
+		if err != nil {
+			config.exitHandler.Error(err)
+			return
+		}
 	}
 
 	layerTomls, err := filepath.Glob(filepath.Join(layersPath, "*.toml"))
@@ -229,7 +175,7 @@ func Build(f BuildFunc, options ...Option) {
 	}
 
 	for _, file := range layerTomls {
-		if filepath.Base(file) != "launch.toml" && filepath.Base(file) != "store.toml" {
+		if filepath.Base(file) != "launch.toml" && filepath.Base(file) != "store.toml" && filepath.Base(file) != "build.toml" {
 			err = os.Remove(file)
 			if err != nil {
 				config.exitHandler.Error(fmt.Errorf("failed to remove layer toml: %w", err))
@@ -262,11 +208,21 @@ func Build(f BuildFunc, options ...Option) {
 			config.exitHandler.Error(err)
 			return
 		}
+
+		for process, processEnv := range layer.ProcessLaunchEnv {
+			err = config.envWriter.Write(filepath.Join(layer.Path, "env.launch", process), processEnv)
+			if err != nil {
+				config.exitHandler.Error(err)
+				return
+			}
+		}
 	}
 
-	if len(result.Launch.Processes) > 0 ||
-		len(result.Launch.Slices) > 0 ||
-		len(result.Launch.Labels) > 0 {
+	if !result.Launch.isEmpty() {
+		if apiVersion.LessThan(apiV05) && len(result.Launch.BOM) > 0 {
+			config.exitHandler.Error(fmt.Errorf("BOM entries in launch.toml is only supported with Buildpack API v0.5 or higher"))
+			return
+		}
 
 		type label struct {
 			Key   string `toml:"key"`
@@ -274,14 +230,15 @@ func Build(f BuildFunc, options ...Option) {
 		}
 
 		var launch struct {
-			Processes []Process `toml:"processes"`
-			Slices    []Slice   `toml:"slices"`
-			Labels    []label   `toml:"labels"`
+			Processes []Process  `toml:"processes"`
+			Slices    []Slice    `toml:"slices"`
+			Labels    []label    `toml:"labels"`
+			BOM       []BOMEntry `toml:"bom"`
 		}
 
 		launch.Processes = result.Launch.Processes
 		launch.Slices = result.Launch.Slices
-
+		launch.BOM = result.Launch.BOM
 		if len(result.Launch.Labels) > 0 {
 			launch.Labels = []label{}
 			for k, v := range result.Launch.Labels {
@@ -294,6 +251,19 @@ func Build(f BuildFunc, options ...Option) {
 		}
 
 		err = config.tomlWriter.Write(filepath.Join(layersPath, "launch.toml"), launch)
+		if err != nil {
+			config.exitHandler.Error(err)
+			return
+		}
+	}
+
+	if !result.Build.isEmpty() {
+		if apiVersion.LessThan(apiV05) {
+			config.exitHandler.Error(fmt.Errorf("build.toml is only supported with Buildpack API v0.5 or higher"))
+			return
+
+		}
+		err = config.tomlWriter.Write(filepath.Join(layersPath, "build.toml"), result.Build)
 		if err != nil {
 			config.exitHandler.Error(err)
 			return

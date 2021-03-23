@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"compress/gzip"
 	"encoding/json"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"testing"
@@ -27,7 +26,7 @@ func testSummarize(t *testing.T, context spec.G, it spec.S) {
 	)
 
 	it.Before(func() {
-		file, err := ioutil.TempFile("", "buildpackage")
+		file, err := os.CreateTemp("", "buildpackage")
 		Expect(err).NotTo(HaveOccurred())
 
 		tw := tar.NewWriter(file)
@@ -429,6 +428,22 @@ version = "3.4.5"
 					}
 				]
 			}`))
+		})
+	})
+
+	context("failure cases", func() {
+		context("when the required buildpack flag is not set", func() {
+			it("prints an error message", func() {
+				command := exec.Command(
+					path, "summarize",
+					"--format", "markdown",
+				)
+				session, err := gexec.Start(command, buffer, buffer)
+				Expect(err).NotTo(HaveOccurred())
+				Eventually(session).Should(gexec.Exit(1), func() string { return buffer.String() })
+
+				Expect(session.Err.Contents()).To(ContainSubstring("Error: required flag(s) \"buildpack\" not set"))
+			})
 		})
 	})
 }

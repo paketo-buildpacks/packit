@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -31,20 +30,20 @@ func testDependencyCacher(t *testing.T, context spec.G, it spec.S) {
 
 	it.Before(func() {
 		var err error
-		tmpDir, err = ioutil.TempDir("", "cacher-test")
+		tmpDir, err = os.MkdirTemp("", "cacher-test")
 		Expect(err).NotTo(HaveOccurred())
 
 		downloader = &fakes.Downloader{}
 		downloader.DropCall.Stub = func(root, uri string) (io.ReadCloser, error) {
 			switch uri {
 			case "http://dep1-uri":
-				return ioutil.NopCloser(strings.NewReader("dep1-contents")), nil
+				return io.NopCloser(strings.NewReader("dep1-contents")), nil
 
 			case "http://dep2-uri":
-				return ioutil.NopCloser(strings.NewReader("dep2-contents")), nil
+				return io.NopCloser(strings.NewReader("dep2-contents")), nil
 
 			case "http://error-dep":
-				return ioutil.NopCloser(errorReader{}), nil
+				return io.NopCloser(errorReader{}), nil
 
 			default:
 				return nil, fmt.Errorf("no such dependency: %s", uri)
@@ -93,11 +92,11 @@ func testDependencyCacher(t *testing.T, context spec.G, it spec.S) {
 
 			Expect(downloader.DropCall.Receives.Root).To(Equal(""))
 
-			contents, err := ioutil.ReadFile(filepath.Join(tmpDir, "dependencies", "3c9de6683673f3e8039599d5200d533807c6c35fd9e35d6b6d77009122868f0f"))
+			contents, err := os.ReadFile(filepath.Join(tmpDir, "dependencies", "3c9de6683673f3e8039599d5200d533807c6c35fd9e35d6b6d77009122868f0f"))
 			Expect(err).NotTo(HaveOccurred())
 			Expect(string(contents)).To(Equal("dep1-contents"))
 
-			contents, err = ioutil.ReadFile(filepath.Join(tmpDir, "dependencies", "bfc72d62682f4a2edc3218d70b1f7052e4f336c179a8f19ef12ee721d4ea29b7"))
+			contents, err = os.ReadFile(filepath.Join(tmpDir, "dependencies", "bfc72d62682f4a2edc3218d70b1f7052e4f336c179a8f19ef12ee721d4ea29b7"))
 			Expect(err).NotTo(HaveOccurred())
 			Expect(string(contents)).To(Equal("dep2-contents"))
 

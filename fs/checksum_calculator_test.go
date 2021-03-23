@@ -2,7 +2,6 @@ package fs_test
 
 import (
 	"fmt"
-	"io/ioutil"
 	"math/rand"
 	"os"
 	"path/filepath"
@@ -25,7 +24,7 @@ func testChecksumCalculator(t *testing.T, context spec.G, it spec.S) {
 	context("Sum", func() {
 		it.Before(func() {
 			var err error
-			workingDir, err = ioutil.TempDir("", "working-dir")
+			workingDir, err = os.MkdirTemp("", "working-dir")
 			Expect(err).NotTo(HaveOccurred())
 
 			calculator = fs.NewChecksumCalculator()
@@ -40,7 +39,7 @@ func testChecksumCalculator(t *testing.T, context spec.G, it spec.S) {
 
 			it.Before(func() {
 				path = filepath.Join(workingDir, "some-file")
-				Expect(ioutil.WriteFile(path, []byte{}, os.ModePerm)).To(Succeed())
+				Expect(os.WriteFile(path, []byte{}, os.ModePerm)).To(Succeed())
 			})
 
 			it("generates the SHA256 checksum for that file", func() {
@@ -72,9 +71,9 @@ func testChecksumCalculator(t *testing.T, context spec.G, it spec.S) {
 
 			it.Before(func() {
 				path1 = filepath.Join(workingDir, "some-file1")
-				Expect(ioutil.WriteFile(path1, []byte{}, os.ModePerm)).To(Succeed())
+				Expect(os.WriteFile(path1, []byte{}, os.ModePerm)).To(Succeed())
 				path2 = filepath.Join(workingDir, "some-file2")
-				Expect(ioutil.WriteFile(path2, []byte{}, os.ModePerm)).To(Succeed())
+				Expect(os.WriteFile(path2, []byte{}, os.ModePerm)).To(Succeed())
 			})
 
 			it("generates the SHA256 checksum for multiple files", func() {
@@ -88,7 +87,7 @@ func testChecksumCalculator(t *testing.T, context spec.G, it spec.S) {
 					// Generate a bunch of files and shuffle input order to ensure test fails consistently without sorting implemented
 					for i := 0; i < 10; i++ {
 						path := filepath.Join(workingDir, fmt.Sprintf("some-file-%d", i))
-						Expect(ioutil.WriteFile(path, []byte(fmt.Sprintf("some-file-contents-%d", i)), os.ModePerm)).To(Succeed())
+						Expect(os.WriteFile(path, []byte(fmt.Sprintf("some-file-contents-%d", i)), os.ModePerm)).To(Succeed())
 						paths = append(paths, path)
 					}
 				})
@@ -134,11 +133,11 @@ func testChecksumCalculator(t *testing.T, context spec.G, it spec.S) {
 				dir2 = filepath.Join(workingDir, "some-other-dir")
 				Expect(os.MkdirAll(dir2, os.ModePerm)).To(Succeed())
 
-				Expect(ioutil.WriteFile(filepath.Join(dir1, "some-file"), []byte{}, os.ModePerm)).To(Succeed())
-				Expect(ioutil.WriteFile(filepath.Join(dir1, "some-other-file"), []byte{}, os.ModePerm)).To(Succeed())
+				Expect(os.WriteFile(filepath.Join(dir1, "some-file"), []byte{}, os.ModePerm)).To(Succeed())
+				Expect(os.WriteFile(filepath.Join(dir1, "some-other-file"), []byte{}, os.ModePerm)).To(Succeed())
 
-				Expect(ioutil.WriteFile(filepath.Join(dir2, "some-file"), []byte{}, os.ModePerm)).To(Succeed())
-				Expect(ioutil.WriteFile(filepath.Join(dir2, "some-other-file"), []byte{}, os.ModePerm)).To(Succeed())
+				Expect(os.WriteFile(filepath.Join(dir2, "some-file"), []byte{}, os.ModePerm)).To(Succeed())
+				Expect(os.WriteFile(filepath.Join(dir2, "some-other-file"), []byte{}, os.ModePerm)).To(Succeed())
 			})
 
 			it("returns the 256 sha sum of a directory containing the directories", func() {
@@ -187,9 +186,9 @@ func testChecksumCalculator(t *testing.T, context spec.G, it spec.S) {
 				path = filepath.Join(workingDir, "some-filepath")
 				Expect(os.MkdirAll(dir, os.ModePerm)).To(Succeed())
 
-				Expect(ioutil.WriteFile(filepath.Join(dir, "some-file"), []byte{}, os.ModePerm)).To(Succeed())
-				Expect(ioutil.WriteFile(filepath.Join(dir, "some-other-file"), []byte{}, os.ModePerm)).To(Succeed())
-				Expect(ioutil.WriteFile(path, []byte{}, os.ModePerm)).To(Succeed())
+				Expect(os.WriteFile(filepath.Join(dir, "some-file"), []byte{}, os.ModePerm)).To(Succeed())
+				Expect(os.WriteFile(filepath.Join(dir, "some-other-file"), []byte{}, os.ModePerm)).To(Succeed())
+				Expect(os.WriteFile(path, []byte{}, os.ModePerm)).To(Succeed())
 			})
 
 			it("returns the 256 sha sum of a directory containing the file and directory", func() {
@@ -208,9 +207,9 @@ func testChecksumCalculator(t *testing.T, context spec.G, it spec.S) {
 				path = filepath.Join(workingDir, "the-item")
 				Expect(os.MkdirAll(dir, os.ModePerm)).To(Succeed())
 
-				Expect(ioutil.WriteFile(filepath.Join(dir, "some-file"), []byte{}, os.ModePerm)).To(Succeed())
-				Expect(ioutil.WriteFile(filepath.Join(dir, "some-other-file"), []byte{}, os.ModePerm)).To(Succeed())
-				Expect(ioutil.WriteFile(path, []byte{}, os.ModePerm)).To(Succeed())
+				Expect(os.WriteFile(filepath.Join(dir, "some-file"), []byte{}, os.ModePerm)).To(Succeed())
+				Expect(os.WriteFile(filepath.Join(dir, "some-other-file"), []byte{}, os.ModePerm)).To(Succeed())
+				Expect(os.WriteFile(path, []byte{}, os.ModePerm)).To(Succeed())
 
 			})
 

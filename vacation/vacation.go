@@ -12,7 +12,6 @@ import (
 	"compress/gzip"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -278,7 +277,7 @@ func (z ZipArchive) Decompress(destination string) error {
 				return err
 			}
 
-			content, err := ioutil.ReadAll(fd)
+			content, err := io.ReadAll(fd)
 			if err != nil {
 				return err
 			}

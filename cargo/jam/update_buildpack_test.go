@@ -3,7 +3,6 @@ package main_test
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -84,10 +83,10 @@ func testUpdateBuildpack(t *testing.T, context spec.G, it spec.S) {
 		}))
 
 		var err error
-		buildpackDir, err = ioutil.TempDir("", "")
+		buildpackDir, err = os.MkdirTemp("", "")
 		Expect(err).NotTo(HaveOccurred())
 
-		err = ioutil.WriteFile(filepath.Join(buildpackDir, "buildpack.toml"), []byte(`
+		err = os.WriteFile(filepath.Join(buildpackDir, "buildpack.toml"), []byte(`
 				api = "0.2"
 
 				[buildpack]
@@ -119,7 +118,7 @@ func testUpdateBuildpack(t *testing.T, context spec.G, it spec.S) {
 			`), 0600)
 		Expect(err).NotTo(HaveOccurred())
 
-		err = ioutil.WriteFile(filepath.Join(buildpackDir, "package.toml"), bytes.ReplaceAll([]byte(`
+		err = os.WriteFile(filepath.Join(buildpackDir, "package.toml"), bytes.ReplaceAll([]byte(`
 				[buildpack]
 				uri = "build/buildpack.tgz"
 
@@ -153,7 +152,7 @@ func testUpdateBuildpack(t *testing.T, context spec.G, it spec.S) {
 
 		Eventually(session).Should(gexec.Exit(0), func() string { return string(buffer.Contents()) })
 
-		buildpackContents, err := ioutil.ReadFile(filepath.Join(buildpackDir, "buildpack.toml"))
+		buildpackContents, err := os.ReadFile(filepath.Join(buildpackDir, "buildpack.toml"))
 		Expect(err).NotTo(HaveOccurred())
 		Expect(string(buildpackContents)).To(MatchTOML(`
 				api = "0.2"
@@ -186,7 +185,7 @@ func testUpdateBuildpack(t *testing.T, context spec.G, it spec.S) {
 						version = "0.20.12"
 			`))
 
-		packageContents, err := ioutil.ReadFile(filepath.Join(buildpackDir, "package.toml"))
+		packageContents, err := os.ReadFile(filepath.Join(buildpackDir, "package.toml"))
 		Expect(err).NotTo(HaveOccurred())
 		Expect(string(packageContents)).To(MatchTOML(strings.ReplaceAll(`
 				[buildpack]
@@ -217,7 +216,7 @@ func testUpdateBuildpack(t *testing.T, context spec.G, it spec.S) {
 				Expect(err).NotTo(HaveOccurred())
 
 				Eventually(session).Should(gexec.Exit(1), func() string { return string(buffer.Contents()) })
-				Expect(string(buffer.Contents())).To(Equal("failed to execute: --buildpack-file is a required flag"))
+				Expect(string(buffer.Contents())).To(ContainSubstring("Error: required flag(s) \"buildpack-file\" not set"))
 			})
 		})
 
@@ -234,7 +233,7 @@ func testUpdateBuildpack(t *testing.T, context spec.G, it spec.S) {
 				Expect(err).NotTo(HaveOccurred())
 
 				Eventually(session).Should(gexec.Exit(1), func() string { return string(buffer.Contents()) })
-				Expect(string(buffer.Contents())).To(Equal("failed to execute: --package-file is a required flag"))
+				Expect(string(buffer.Contents())).To(ContainSubstring("Error: required flag(s) \"package-file\" not set"))
 			})
 		})
 
@@ -252,7 +251,7 @@ func testUpdateBuildpack(t *testing.T, context spec.G, it spec.S) {
 				Expect(err).NotTo(HaveOccurred())
 
 				Eventually(session).Should(gexec.Exit(1), func() string { return string(buffer.Contents()) })
-				Expect(string(buffer.Contents())).To(Equal("failed to execute: failed to open buildpack config file: open /no/such/file: no such file or directory"))
+				Expect(string(buffer.Contents())).To(ContainSubstring("failed to execute: failed to open buildpack config file: open /no/such/file: no such file or directory"))
 			})
 		})
 
@@ -270,13 +269,13 @@ func testUpdateBuildpack(t *testing.T, context spec.G, it spec.S) {
 				Expect(err).NotTo(HaveOccurred())
 
 				Eventually(session).Should(gexec.Exit(1), func() string { return string(buffer.Contents()) })
-				Expect(string(buffer.Contents())).To(Equal("failed to execute: failed to open package config file: open /no/such/file: no such file or directory"))
+				Expect(string(buffer.Contents())).To(ContainSubstring("failed to execute: failed to open package config file: open /no/such/file: no such file or directory"))
 			})
 		})
 
 		context("when the latest image reference cannot be found", func() {
 			it.Before(func() {
-				err := ioutil.WriteFile(filepath.Join(buildpackDir, "buildpack.toml"), []byte(`
+				err := os.WriteFile(filepath.Join(buildpackDir, "buildpack.toml"), []byte(`
 						api = "0.2"
 
 						[buildpack]
@@ -294,7 +293,7 @@ func testUpdateBuildpack(t *testing.T, context spec.G, it spec.S) {
 					`), 0600)
 				Expect(err).NotTo(HaveOccurred())
 
-				err = ioutil.WriteFile(filepath.Join(buildpackDir, "package.toml"), bytes.ReplaceAll([]byte(`
+				err = os.WriteFile(filepath.Join(buildpackDir, "package.toml"), bytes.ReplaceAll([]byte(`
 						[buildpack]
 						uri = "build/buildpack.tgz"
 

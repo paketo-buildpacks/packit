@@ -1,7 +1,6 @@
 package packit_test
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -21,7 +20,7 @@ func testLayer(t *testing.T, context spec.G, it spec.S) {
 
 	it.Before(func() {
 		var err error
-		layersDir, err = ioutil.TempDir("", "layers")
+		layersDir, err = os.MkdirTemp("", "layers")
 		Expect(err).NotTo(HaveOccurred())
 	})
 
@@ -49,14 +48,15 @@ func testLayer(t *testing.T, context spec.G, it spec.S) {
 				Expect(err).NotTo(HaveOccurred())
 
 				Expect(layer).To(Equal(packit.Layer{
-					Name:      "some-layer",
-					Path:      filepath.Join(layersDir, "some-layer"),
-					Launch:    false,
-					Build:     false,
-					Cache:     false,
-					SharedEnv: packit.Environment{},
-					BuildEnv:  packit.Environment{},
-					LaunchEnv: packit.Environment{},
+					Name:             "some-layer",
+					Path:             filepath.Join(layersDir, "some-layer"),
+					Launch:           false,
+					Build:            false,
+					Cache:            false,
+					SharedEnv:        packit.Environment{},
+					BuildEnv:         packit.Environment{},
+					LaunchEnv:        packit.Environment{},
+					ProcessLaunchEnv: map[string]packit.Environment{},
 				}))
 
 				Expect(filepath.Join(layersDir, "some-layer")).To(BeADirectory())
@@ -68,25 +68,25 @@ func testLayer(t *testing.T, context spec.G, it spec.S) {
 				sharedEnvDir := filepath.Join(layersDir, "some-layer", "env")
 				Expect(os.MkdirAll(sharedEnvDir, os.ModePerm)).To(Succeed())
 
-				err := ioutil.WriteFile(filepath.Join(sharedEnvDir, "OVERRIDE_VAR.override"), []byte("override-value"), 0600)
+				err := os.WriteFile(filepath.Join(sharedEnvDir, "OVERRIDE_VAR.override"), []byte("override-value"), 0600)
 				Expect(err).NotTo(HaveOccurred())
 
 				buildEnvDir := filepath.Join(layersDir, "some-layer", "env.build")
 				Expect(os.MkdirAll(buildEnvDir, os.ModePerm)).To(Succeed())
 
-				err = ioutil.WriteFile(filepath.Join(buildEnvDir, "DEFAULT_VAR.default"), []byte("default-value"), 0600)
+				err = os.WriteFile(filepath.Join(buildEnvDir, "DEFAULT_VAR.default"), []byte("default-value"), 0600)
 				Expect(err).NotTo(HaveOccurred())
 
-				err = ioutil.WriteFile(filepath.Join(buildEnvDir, "INVALID_VAR.invalid"), []byte("invalid-value"), 0600)
+				err = os.WriteFile(filepath.Join(buildEnvDir, "INVALID_VAR.invalid"), []byte("invalid-value"), 0600)
 				Expect(err).NotTo(HaveOccurred())
 
 				launchEnvDir := filepath.Join(layersDir, "some-layer", "env.launch")
 				Expect(os.MkdirAll(launchEnvDir, os.ModePerm)).To(Succeed())
 
-				err = ioutil.WriteFile(filepath.Join(launchEnvDir, "APPEND_VAR.append"), []byte("append-value"), 0600)
+				err = os.WriteFile(filepath.Join(launchEnvDir, "APPEND_VAR.append"), []byte("append-value"), 0600)
 				Expect(err).NotTo(HaveOccurred())
 
-				err = ioutil.WriteFile(filepath.Join(launchEnvDir, "APPEND_VAR.delim"), []byte("!"), 0600)
+				err = os.WriteFile(filepath.Join(launchEnvDir, "APPEND_VAR.delim"), []byte("!"), 0600)
 				Expect(err).NotTo(HaveOccurred())
 
 				layer = packit.Layer{
@@ -118,14 +118,15 @@ func testLayer(t *testing.T, context spec.G, it spec.S) {
 					Expect(err).NotTo(HaveOccurred())
 
 					Expect(layer).To(Equal(packit.Layer{
-						Name:      "some-layer",
-						Path:      filepath.Join(layersDir, "some-layer"),
-						Launch:    false,
-						Build:     false,
-						Cache:     false,
-						SharedEnv: packit.Environment{},
-						BuildEnv:  packit.Environment{},
-						LaunchEnv: packit.Environment{},
+						Name:             "some-layer",
+						Path:             filepath.Join(layersDir, "some-layer"),
+						Launch:           false,
+						Build:            false,
+						Cache:            false,
+						SharedEnv:        packit.Environment{},
+						BuildEnv:         packit.Environment{},
+						LaunchEnv:        packit.Environment{},
+						ProcessLaunchEnv: map[string]packit.Environment{},
 					}))
 
 					Expect(filepath.Join(layersDir, "some-layer")).To(BeADirectory())

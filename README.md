@@ -8,7 +8,7 @@ according to the specification:
 
 ## Buildpack Interface
 
-According to the specification, the buildpack interface is composed of both
+According to the CNB specification, the buildpack interface is composed of both
 a detect and build phase. Each of these phases has a corresponding set of
 packit primitives enable developers to easily implement a buildpack.
 
@@ -205,6 +205,8 @@ the types and functions declared herein.
 * [cargo](./cargo)
 
 * [chronos](./chronos): Package chronos provides clock functionality that can be useful when developing and testing Cloud Native Buildpacks.
+
+* [draft](./draft): Package draft provides a mechanism for combining Buildpack Plan entries for a dependency into an single entry. The entry has layer metadata that meets all of the entries' specifications. Its version constraint is based on a user-provided prioritized list of version sources. Useful during the build phase. See [the CNB Buildpacks specification](https://github.com/buildpacks/spec/blob/main/buildpack.md#purpose-2) for context.
 
 * [fakes](./fakes)
 

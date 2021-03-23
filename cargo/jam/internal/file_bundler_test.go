@@ -1,7 +1,7 @@
 package internal_test
 
 import (
-	"io/ioutil"
+	"io"
 	"os"
 	"path/filepath"
 	"testing"
@@ -53,7 +53,7 @@ func testFileBundler(t *testing.T, context spec.G, it spec.S) {
 			Expect(files[0].Info.Mode()).To(Equal(os.FileMode(0755)))
 			Expect(files[0].Link).To(Equal(""))
 
-			content, err := ioutil.ReadAll(files[0])
+			content, err := io.ReadAll(files[0])
 			Expect(err).NotTo(HaveOccurred())
 			Expect(string(content)).To(Equal("build-contents"))
 
@@ -62,7 +62,7 @@ func testFileBundler(t *testing.T, context spec.G, it spec.S) {
 			Expect(files[1].Info.Mode()).To(Equal(os.FileMode(0755)))
 			Expect(files[1].Link).To(Equal(""))
 
-			content, err = ioutil.ReadAll(files[1])
+			content, err = io.ReadAll(files[1])
 			Expect(err).NotTo(HaveOccurred())
 			Expect(string(content)).To(Equal("detect-contents"))
 
@@ -77,7 +77,7 @@ func testFileBundler(t *testing.T, context spec.G, it spec.S) {
 			Expect(files[3].Info.Mode()).To(Equal(os.FileMode(0644)))
 			Expect(files[3].Link).To(Equal(""))
 
-			content, err = ioutil.ReadAll(files[3])
+			content, err = io.ReadAll(files[3])
 			Expect(err).NotTo(HaveOccurred())
 			Expect(string(content)).To(MatchTOML(`api = "0.2"
 [buildpack]

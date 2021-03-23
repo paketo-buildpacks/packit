@@ -4,60 +4,13 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/paketo-buildpacks/packit/cargo"
 	"github.com/paketo-buildpacks/packit/cargo/jam/commands"
-	"github.com/paketo-buildpacks/packit/cargo/jam/internal"
-	"github.com/paketo-buildpacks/packit/pexec"
-	"github.com/paketo-buildpacks/packit/scribe"
 )
 
-type Command interface {
-	Execute(args []string) error
-}
-
 func main() {
-	if len(os.Args) < 2 {
-		fail("missing command")
+	err := commands.Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "failed to execute: %s", err)
+		os.Exit(1)
 	}
-
-	var command Command
-
-	switch os.Args[1] {
-	case "pack":
-		logger := scribe.NewLogger(os.Stdout)
-		bash := pexec.NewExecutable("bash")
-
-		transport := cargo.NewTransport()
-		directoryDuplicator := cargo.NewDirectoryDuplicator()
-		buildpackParser := cargo.NewBuildpackParser()
-		fileBundler := internal.NewFileBundler()
-		tarBuilder := internal.NewTarBuilder(logger)
-		prePackager := internal.NewPrePackager(bash, logger, scribe.NewWriter(os.Stdout, scribe.WithIndent(2)))
-		dependencyCacher := internal.NewDependencyCacher(transport, logger)
-		command = commands.NewPack(directoryDuplicator, buildpackParser, prePackager, dependencyCacher, fileBundler, tarBuilder, os.Stdout)
-
-	case "summarize":
-		inspector := internal.NewBuildpackInspector()
-		formatter := internal.NewFormatter(os.Stdout)
-		command = commands.NewSummarize(inspector, formatter)
-
-	case "update-buildpack":
-		command = commands.NewUpdateBuildpack()
-
-	case "update-builder":
-		command = commands.NewUpdateBuilder()
-
-	default:
-		fail("unknown command: %q", os.Args[1])
-	}
-
-	if err := command.Execute(os.Args[2:]); err != nil {
-		fail("failed to execute: %s", err)
-	}
-
-}
-
-func fail(format string, v ...interface{}) {
-	fmt.Fprintf(os.Stderr, format, v...)
-	os.Exit(1)
 }

@@ -1,47 +1,52 @@
 package commands
 
 import (
-	"errors"
-	"flag"
 	"fmt"
+	"os"
 
 	"github.com/paketo-buildpacks/packit/cargo/jam/internal"
+	"github.com/spf13/cobra"
 )
 
-type UpdateBuildpack struct{}
-
-func NewUpdateBuildpack() UpdateBuildpack {
-	return UpdateBuildpack{}
+type updateBuildpackFlags struct {
+	buildpackFile string
+	packageFile   string
 }
 
-func (ub UpdateBuildpack) Execute(args []string) error {
-	var options struct {
-		BuildpackFile string
-		PackageFile   string
+func updateBuildpack() *cobra.Command {
+	flags := &updateBuildpackFlags{}
+	cmd := &cobra.Command{
+		Use:   "update-buildpack",
+		Short: "update buildpack",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return updateBuildpackRun(*flags)
+		},
 	}
+	cmd.Flags().StringVar(&flags.buildpackFile, "buildpack-file", "", "path to the buildpack.toml file (required)")
+	cmd.Flags().StringVar(&flags.packageFile, "package-file", "", "path to the package.toml file (required)")
 
-	fset := flag.NewFlagSet("update-buildpack", flag.ContinueOnError)
-	fset.StringVar(&options.BuildpackFile, "buildpack-file", "", "path to the buildpack.toml file (required)")
-	fset.StringVar(&options.PackageFile, "package-file", "", "path to the package.toml file (required)")
-	err := fset.Parse(args)
+	err := cmd.MarkFlagRequired("buildpack-file")
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Unable to mark buildpack-file flag as required")
+	}
+	err = cmd.MarkFlagRequired("package-file")
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Unable to mark package-file flag as required")
+	}
+	return cmd
+}
+
+func init() {
+	rootCmd.AddCommand(updateBuildpack())
+}
+
+func updateBuildpackRun(flags updateBuildpackFlags) error {
+	bp, err := internal.ParseBuildpackConfig(flags.buildpackFile)
 	if err != nil {
 		return err
 	}
 
-	if options.BuildpackFile == "" {
-		return errors.New("--buildpack-file is a required flag")
-	}
-
-	if options.PackageFile == "" {
-		return errors.New("--package-file is a required flag")
-	}
-
-	bp, err := internal.ParseBuildpackConfig(options.BuildpackFile)
-	if err != nil {
-		return err
-	}
-
-	pkg, err := internal.ParsePackageConfig(options.PackageFile)
+	pkg, err := internal.ParsePackageConfig(flags.packageFile)
 	if err != nil {
 		return err
 	}
@@ -63,12 +68,12 @@ func (ub UpdateBuildpack) Execute(args []string) error {
 		}
 	}
 
-	err = internal.OverwriteBuildpackConfig(options.BuildpackFile, bp)
+	err = internal.OverwriteBuildpackConfig(flags.buildpackFile, bp)
 	if err != nil {
 		return err
 	}
 
-	err = internal.OverwritePackageConfig(options.PackageFile, pkg)
+	err = internal.OverwritePackageConfig(flags.packageFile, pkg)
 	if err != nil {
 		return err
 	}

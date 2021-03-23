@@ -1,7 +1,6 @@
 package packit_test
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -28,7 +27,7 @@ func testRun(t *testing.T, context spec.G, it spec.S) {
 		workingDir, err = os.Getwd()
 		Expect(err).NotTo(HaveOccurred())
 
-		tmpDir, err = ioutil.TempDir("", "")
+		tmpDir, err = os.MkdirTemp("", "")
 		Expect(err).NotTo(HaveOccurred())
 
 		tmpDir, err = filepath.EvalSymlinks(tmpDir)
@@ -36,10 +35,11 @@ func testRun(t *testing.T, context spec.G, it spec.S) {
 
 		Expect(os.Chdir(tmpDir)).To(Succeed())
 
-		cnbDir, err = ioutil.TempDir("", "cnb")
+		cnbDir, err = os.MkdirTemp("", "cnb")
 		Expect(err).NotTo(HaveOccurred())
 
-		Expect(ioutil.WriteFile(filepath.Join(cnbDir, "buildpack.toml"), []byte(`
+		Expect(os.WriteFile(filepath.Join(cnbDir, "buildpack.toml"), []byte(`
+api = "0.5"
 [buildpack]
 id = "some-id"
 name = "some-name"
@@ -95,7 +95,7 @@ clear-env = false
 		)
 
 		it.Before(func() {
-			file, err := ioutil.TempFile("", "plan.toml")
+			file, err := os.CreateTemp("", "plan.toml")
 			Expect(err).NotTo(HaveOccurred())
 			defer file.Close()
 
@@ -111,7 +111,7 @@ some-key = "some-value"
 
 			planPath = file.Name()
 
-			layersDir, err = ioutil.TempDir("", "layers")
+			layersDir, err = os.MkdirTemp("", "layers")
 			Expect(err).NotTo(HaveOccurred())
 
 			args = []string{filepath.Join(cnbDir, "bin", "build"), layersDir, "", planPath}

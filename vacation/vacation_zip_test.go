@@ -4,7 +4,6 @@ import (
 	"archive/zip"
 	"bytes"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -28,7 +27,7 @@ func testVacationZip(t *testing.T, context spec.G, it spec.S) {
 
 		it.Before(func() {
 			var err error
-			tempDir, err = ioutil.TempDir("", "vacation")
+			tempDir, err = os.MkdirTemp("", "vacation")
 			Expect(err).NotTo(HaveOccurred())
 
 			buffer := bytes.NewBuffer(nil)
@@ -104,7 +103,7 @@ func testVacationZip(t *testing.T, context spec.G, it spec.S) {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(link).To(Equal("some-dir/some-other-dir/some-file"))
 
-			data, err := ioutil.ReadFile(filepath.Join(tempDir, "symlink"))
+			data, err := os.ReadFile(filepath.Join(tempDir, "symlink"))
 			Expect(err).NotTo(HaveOccurred())
 			Expect(data).To(Equal([]byte("nested file")))
 		})

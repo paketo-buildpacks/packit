@@ -31,8 +31,9 @@ type BuilderConfigOrder struct {
 }
 
 type BuilderConfigOrderGroup struct {
-	ID      string `toml:"id"`
-	Version string `toml:"version"`
+	ID       string `toml:"id"`
+	Version  string `toml:"version,omitempty"`
+	Optional bool   `toml:"optional,omitempty"`
 }
 type BuilderConfigStack struct {
 	ID              string   `toml:"id"`

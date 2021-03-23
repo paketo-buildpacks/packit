@@ -20,11 +20,12 @@ type Layers struct {
 // disk and returned instead.
 func (l Layers) Get(name string) (Layer, error) {
 	layer := Layer{
-		Path:      filepath.Join(l.Path, name),
-		Name:      name,
-		SharedEnv: Environment{},
-		BuildEnv:  Environment{},
-		LaunchEnv: Environment{},
+		Path:             filepath.Join(l.Path, name),
+		Name:             name,
+		SharedEnv:        Environment{},
+		BuildEnv:         Environment{},
+		LaunchEnv:        Environment{},
+		ProcessLaunchEnv: make(map[string]Environment),
 	}
 
 	_, err := toml.DecodeFile(filepath.Join(l.Path, fmt.Sprintf("%s.toml", name)), &layer)
@@ -47,6 +48,22 @@ func (l Layers) Get(name string) (Layer, error) {
 	layer.LaunchEnv, err = newEnvironmentFromPath(filepath.Join(l.Path, name, "env.launch"))
 	if err != nil {
 		return Layer{}, err
+	}
+
+	if _, err := os.Stat(filepath.Join(l.Path, name, "env.launch")); !os.IsNotExist(err) {
+		paths, err := os.ReadDir(filepath.Join(l.Path, name, "env.launch"))
+		if err != nil {
+			return Layer{}, err
+		}
+
+		for _, path := range paths {
+			if path.IsDir() {
+				layer.ProcessLaunchEnv[path.Name()], err = newEnvironmentFromPath(filepath.Join(l.Path, name, "env.launch", path.Name()))
+				if err != nil {
+					return Layer{}, err
+				}
+			}
+		}
 	}
 
 	return layer, nil

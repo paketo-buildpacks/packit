@@ -1,66 +1,56 @@
 package commands
 
 import (
-	"errors"
-	"flag"
 	"fmt"
+	"os"
 
-	"github.com/paketo-buildpacks/packit/cargo"
+	"github.com/paketo-buildpacks/packit/cargo/jam/internal"
+	"github.com/spf13/cobra"
 )
 
-//go:generate faux --interface BuildpackInspector --output fakes/buildpack_inspector.go
-type BuildpackInspector interface {
-	Dependencies(path string) ([]cargo.Config, error)
+type summarizeFlags struct {
+	buildpackTarballPath string
+	format               string
 }
 
-//go:generate faux --interface Formatter --output fakes/formatter.go
-type Formatter interface {
-	Markdown([]cargo.Config)
-	JSON([]cargo.Config)
-}
-
-type Summarize struct {
-	buildpackInspector BuildpackInspector
-	formatter          Formatter
-}
-
-func NewSummarize(buildpackInspector BuildpackInspector, formatter Formatter) Summarize {
-	return Summarize{
-		buildpackInspector: buildpackInspector,
-		formatter:          formatter,
+func summarize() *cobra.Command {
+	flags := &summarizeFlags{}
+	cmd := &cobra.Command{
+		Use:   "summarize",
+		Short: "summarize buildpackage",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return summarizeRun(*flags)
+		},
 	}
-}
+	cmd.Flags().StringVar(&flags.buildpackTarballPath, "buildpack", "", "path to a buildpackage tarball (required)")
+	cmd.Flags().StringVar(&flags.format, "format", "markdown", "format of output options are (markdown, json)")
 
-func (s Summarize) Execute(args []string) error {
-	var (
-		buildpackTarballPath string
-		format               string
-	)
-
-	fset := flag.NewFlagSet("summarize", flag.ContinueOnError)
-	fset.StringVar(&buildpackTarballPath, "buildpack", "", "path to a buildpackage tarball (required)")
-	fset.StringVar(&format, "format", "markdown", "format of output options are (markdown, json)")
-	err := fset.Parse(args)
+	err := cmd.MarkFlagRequired("buildpack")
 	if err != nil {
-		return err
+		fmt.Fprintf(os.Stderr, "Unable to mark buildpack flag as required")
 	}
+	return cmd
+}
 
-	if buildpackTarballPath == "" {
-		return errors.New("missing required flag --buildpack")
-	}
+func init() {
+	rootCmd.AddCommand(summarize())
+}
 
-	configs, err := s.buildpackInspector.Dependencies(buildpackTarballPath)
+func summarizeRun(flags summarizeFlags) error {
+	buildpackInspector := internal.NewBuildpackInspector()
+	formatter := internal.NewFormatter(os.Stdout)
+	configs, err := buildpackInspector.Dependencies(flags.buildpackTarballPath)
 	if err != nil {
 		return fmt.Errorf("failed to inspect buildpack dependencies: %w", err)
 	}
 
-	switch format {
+	switch flags.format {
 	case "markdown":
-		s.formatter.Markdown(configs)
+		formatter.Markdown(configs)
 	case "json":
-		s.formatter.JSON(configs)
+		formatter.JSON(configs)
 	default:
-		return fmt.Errorf("unknown format %q, please choose from the following formats (\"markdown\")", format)
+		return fmt.Errorf("unknown format %q, please choose from the following formats: markdown, json)", flags.format)
 	}
 
 	return nil

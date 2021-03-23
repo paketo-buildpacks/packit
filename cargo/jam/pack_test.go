@@ -2,7 +2,6 @@ package main_test
 
 import (
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -33,10 +32,10 @@ func testPack(t *testing.T, context spec.G, it spec.S) {
 
 	it.Before(func() {
 		var err error
-		tmpDir, err = ioutil.TempDir("", "output")
+		tmpDir, err = os.MkdirTemp("", "output")
 		Expect(err).NotTo(HaveOccurred())
 
-		buildpackDir, err = ioutil.TempDir("", "buildpack")
+		buildpackDir, err = os.MkdirTemp("", "buildpack")
 		Expect(err).NotTo(HaveOccurred())
 
 		buffer = &Buffer{}
@@ -46,6 +45,7 @@ func testPack(t *testing.T, context spec.G, it spec.S) {
 		Expect(os.RemoveAll(tmpDir)).To(Succeed())
 		Expect(os.RemoveAll(buildpackDir)).To(Succeed())
 	})
+
 	context("when packaging a language family buildpack", func() {
 
 		it.Before(func() {
@@ -331,17 +331,68 @@ func testPack(t *testing.T, context spec.G, it spec.S) {
 				Expect(hdr.Mode).To(Equal(int64(0644)))
 			})
 		})
+	})
 
-		context("failure cases", func() {
-			context("when the --buildpack flag is empty", func() {
-				it("prints an error message", func() {
-					command := exec.Command(path, "pack")
-					session, err := gexec.Start(command, buffer, buffer)
-					Expect(err).NotTo(HaveOccurred())
-					Eventually(session).Should(gexec.Exit(1), func() string { return buffer.String() })
+	context("failure cases", func() {
+		context("when the all the required flags are not set", func() {
+			it("prints an error message", func() {
+				command := exec.Command(path, "pack")
+				session, err := gexec.Start(command, buffer, buffer)
+				Expect(err).NotTo(HaveOccurred())
+				Eventually(session).Should(gexec.Exit(1), func() string { return buffer.String() })
 
-					Expect(session.Err).To(gbytes.Say("missing required flag --buildpack"))
-				})
+				Expect(session.Err.Contents()).To(ContainSubstring("Error: required flag(s) \"buildpack\", \"output\", \"version\" not set"))
+			})
+		})
+
+		context("when the required buildpack flag is not set", func() {
+			it("prints an error message", func() {
+				command := exec.Command(
+					path, "pack",
+					"--output", filepath.Join(tmpDir, "output.tgz"),
+					"--version", "some-version",
+					"--offline",
+					"--stack", "io.buildpacks.stacks.bionic",
+				)
+				session, err := gexec.Start(command, buffer, buffer)
+				Expect(err).NotTo(HaveOccurred())
+				Eventually(session).Should(gexec.Exit(1), func() string { return buffer.String() })
+
+				Expect(session.Err.Contents()).To(ContainSubstring("Error: required flag(s) \"buildpack\" not set"))
+			})
+		})
+
+		context("when the required output flag is not set", func() {
+			it("prints an error message", func() {
+				command := exec.Command(
+					path, "pack",
+					"--buildpack", filepath.Join(buildpackDir, "buildpack.toml"),
+					"--version", "some-version",
+					"--offline",
+					"--stack", "io.buildpacks.stacks.bionic",
+				)
+				session, err := gexec.Start(command, buffer, buffer)
+				Expect(err).NotTo(HaveOccurred())
+				Eventually(session).Should(gexec.Exit(1), func() string { return buffer.String() })
+
+				Expect(session.Err.Contents()).To(ContainSubstring("Error: required flag(s) \"output\" not set"))
+			})
+		})
+
+		context("when the required version flag is not set", func() {
+			it("prints an error message", func() {
+				command := exec.Command(
+					path, "pack",
+					"--buildpack", filepath.Join(buildpackDir, "buildpack.toml"),
+					"--output", filepath.Join(tmpDir, "output.tgz"),
+					"--offline",
+					"--stack", "io.buildpacks.stacks.bionic",
+				)
+				session, err := gexec.Start(command, buffer, buffer)
+				Expect(err).NotTo(HaveOccurred())
+				Eventually(session).Should(gexec.Exit(1), func() string { return buffer.String() })
+
+				Expect(session.Err.Contents()).To(ContainSubstring("Error: required flag(s) \"version\" not set"))
 			})
 		})
 	})

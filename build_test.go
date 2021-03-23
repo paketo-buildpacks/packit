@@ -3,7 +3,6 @@ package packit_test
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -21,6 +20,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 		Expect = NewWithT(t).Expect
 
 		workingDir  string
+		platformDir string
 		tmpDir      string
 		layersDir   string
 		planPath    string
@@ -35,7 +35,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 		workingDir, err = os.Getwd()
 		Expect(err).NotTo(HaveOccurred())
 
-		tmpDir, err = ioutil.TempDir("", "working-dir")
+		tmpDir, err = os.MkdirTemp("", "working-dir")
 		Expect(err).NotTo(HaveOccurred())
 
 		tmpDir, err = filepath.EvalSymlinks(tmpDir)
@@ -43,10 +43,13 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 
 		Expect(os.Chdir(tmpDir)).To(Succeed())
 
-		layersDir, err = ioutil.TempDir("", "layers")
+		layersDir, err = os.MkdirTemp("", "layers")
 		Expect(err).NotTo(HaveOccurred())
 
-		file, err := ioutil.TempFile("", "plan.toml")
+		platformDir, err = os.MkdirTemp("", "platform")
+		Expect(err).NotTo(HaveOccurred())
+
+		file, err := os.CreateTemp("", "plan.toml")
 		Expect(err).NotTo(HaveOccurred())
 		defer file.Close()
 
@@ -62,21 +65,22 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 
 		planPath = file.Name()
 
-		cnbDir, err = ioutil.TempDir("", "cnb")
+		cnbDir, err = os.MkdirTemp("", "cnb")
 		Expect(err).NotTo(HaveOccurred())
 
-		envCnbDir, err = ioutil.TempDir("", "envCnb")
+		envCnbDir, err = os.MkdirTemp("", "envCnb")
 		Expect(err).NotTo(HaveOccurred())
 
 		bpTOML := []byte(`
+api = "0.5"
 [buildpack]
   id = "some-id"
   name = "some-name"
   version = "some-version"
   clear-env = false
 `)
-		Expect(ioutil.WriteFile(filepath.Join(cnbDir, "buildpack.toml"), bpTOML, 0600)).To(Succeed())
-		Expect(ioutil.WriteFile(filepath.Join(envCnbDir, "buildpack.toml"), bpTOML, 0600)).To(Succeed())
+		Expect(os.WriteFile(filepath.Join(cnbDir, "buildpack.toml"), bpTOML, 0600)).To(Succeed())
+		Expect(os.WriteFile(filepath.Join(envCnbDir, "buildpack.toml"), bpTOML, 0600)).To(Succeed())
 
 		binaryPath = filepath.Join(cnbDir, "bin", "build")
 
@@ -91,6 +95,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 		Expect(os.Chdir(workingDir)).To(Succeed())
 		Expect(os.RemoveAll(tmpDir)).To(Succeed())
 		Expect(os.RemoveAll(layersDir)).To(Succeed())
+		Expect(os.RemoveAll(platformDir)).To(Succeed())
 	})
 
 	it("provides the build context to the given BuildFunc", func() {
@@ -100,11 +105,14 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 			context = ctx
 
 			return packit.BuildResult{}, nil
-		}, packit.WithArgs([]string{binaryPath, layersDir, "", planPath}))
+		}, packit.WithArgs([]string{binaryPath, layersDir, platformDir, planPath}))
 
 		Expect(context).To(Equal(packit.BuildContext{
-			CNBPath:    cnbDir,
-			Stack:      "some-stack",
+			CNBPath: cnbDir,
+			Stack:   "some-stack",
+			Platform: packit.Platform{
+				Path: platformDir,
+			},
 			WorkingDir: tmpDir,
 			Plan: packit.BuildpackPlan{
 				Entries: []packit.BuildpackPlanEntry{
@@ -127,20 +135,36 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 			},
 		}))
 	})
+	context("when there are updates to the build plan", func() {
+		context("when the api version is less than 0.5", func() {
 
-	it("updates the buildpack plan.toml with any changes", func() {
-		packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
-			ctx.Plan.Entries[0].Metadata["other-key"] = "other-value"
+			it.Before(func() {
+				bpTOML := []byte(`
+api = "0.4"
+[buildpack]
+  id = "some-id"
+  name = "some-name"
+  version = "some-version"
+  clear-env = false
+`)
+				Expect(os.WriteFile(filepath.Join(cnbDir, "buildpack.toml"), bpTOML, 0600)).To(Succeed())
+				Expect(os.WriteFile(filepath.Join(envCnbDir, "buildpack.toml"), bpTOML, 0600)).To(Succeed())
 
-			return packit.BuildResult{
-				Plan: ctx.Plan,
-			}, nil
-		}, packit.WithArgs([]string{binaryPath, "", "", planPath}))
+			})
 
-		contents, err := ioutil.ReadFile(planPath)
-		Expect(err).NotTo(HaveOccurred())
+			it("updates the buildpack plan.toml with any changes", func() {
+				packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
+					ctx.Plan.Entries[0].Metadata["other-key"] = "other-value"
 
-		Expect(string(contents)).To(MatchTOML(`
+					return packit.BuildResult{
+						Plan: ctx.Plan,
+					}, nil
+				}, packit.WithArgs([]string{binaryPath, layersDir, platformDir, planPath}))
+
+				contents, err := os.ReadFile(planPath)
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(string(contents)).To(MatchTOML(`
 [[entries]]
   name = "some-entry"
 
@@ -149,6 +173,19 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
   some-key = "some-value"
   other-key = "other-value"
 `))
+			})
+		})
+		context("when the api version is greater or equal to 0.5", func() {
+			it("throws an error", func() {
+				packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
+					return packit.BuildResult{
+						Plan: ctx.Plan,
+					}, nil
+				}, packit.WithArgs([]string{binaryPath, layersDir, platformDir, planPath}), packit.WithExitHandler(exitHandler))
+
+				Expect(exitHandler.ErrorCall.Receives.Error).To(MatchError(ContainSubstring("buildpack plan is read only")))
+			})
+		})
 	})
 
 	it("persists layer metadata", func() {
@@ -170,9 +207,9 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 					},
 				},
 			}, nil
-		}, packit.WithArgs([]string{binaryPath, layersDir, "", planPath}))
+		}, packit.WithArgs([]string{binaryPath, layersDir, platformDir, planPath}))
 
-		contents, err := ioutil.ReadFile(filepath.Join(layersDir, "some-layer.toml"))
+		contents, err := os.ReadFile(filepath.Join(layersDir, "some-layer.toml"))
 		Expect(err).NotTo(HaveOccurred())
 
 		Expect(string(contents)).To(MatchTOML(`
@@ -192,10 +229,10 @@ cache = true
 			it.Before(func() {
 				obsoleteLayerPath = filepath.Join(layersDir, "obsolete-layer")
 				Expect(os.MkdirAll(obsoleteLayerPath, os.ModePerm)).To(Succeed())
-				Expect(ioutil.WriteFile(obsoleteLayerPath+".toml", []byte{}, 0600)).To(Succeed())
+				Expect(os.WriteFile(obsoleteLayerPath+".toml", []byte{}, 0600)).To(Succeed())
 
-				Expect(ioutil.WriteFile(filepath.Join(layersDir, "launch.toml"), []byte{}, 0600)).To(Succeed())
-				Expect(ioutil.WriteFile(filepath.Join(layersDir, "store.toml"), []byte{}, 0600)).To(Succeed())
+				Expect(os.WriteFile(filepath.Join(layersDir, "launch.toml"), []byte{}, 0600)).To(Succeed())
+				Expect(os.WriteFile(filepath.Join(layersDir, "store.toml"), []byte{}, 0600)).To(Succeed())
 			})
 
 			it("removes them", func() {
@@ -203,7 +240,7 @@ cache = true
 					return packit.BuildResult{
 						Layers: []packit.Layer{},
 					}, nil
-				}, packit.WithArgs([]string{binaryPath, layersDir, "", planPath}))
+				}, packit.WithArgs([]string{binaryPath, layersDir, platformDir, planPath}))
 				Expect(obsoleteLayerPath).NotTo(BeARegularFile())
 				Expect(obsoleteLayerPath + ".toml").NotTo(BeARegularFile())
 
@@ -229,10 +266,13 @@ cache = true
 					context = ctx
 
 					return packit.BuildResult{}, nil
-				}, packit.WithArgs([]string{binaryPath, layersDir, "", planPath}))
+				}, packit.WithArgs([]string{binaryPath, layersDir, platformDir, planPath}))
 
 				Expect(context).To(Equal(packit.BuildContext{
-					CNBPath:    envCnbDir,
+					CNBPath: envCnbDir,
+					Platform: packit.Platform{
+						Path: platformDir,
+					},
 					Stack:      "some-stack",
 					WorkingDir: tmpDir,
 					Plan: packit.BuildpackPlan{
@@ -265,7 +305,7 @@ cache = true
 				it.Before(func() {
 					unremovableTOMLPath = filepath.Join(layersDir, "unremovable.toml")
 					Expect(os.MkdirAll(filepath.Join(layersDir, "unremovable"), os.ModePerm)).To(Succeed())
-					Expect(ioutil.WriteFile(unremovableTOMLPath, []byte{}, os.ModePerm)).To(Succeed())
+					Expect(os.WriteFile(unremovableTOMLPath, []byte{}, os.ModePerm)).To(Succeed())
 					Expect(os.Chmod(layersDir, 0666)).To(Succeed())
 				})
 
@@ -278,10 +318,179 @@ cache = true
 						return packit.BuildResult{
 							Layers: []packit.Layer{},
 						}, nil
-					}, packit.WithArgs([]string{binaryPath, layersDir, "", planPath}), packit.WithExitHandler(exitHandler))
+					}, packit.WithArgs([]string{binaryPath, layersDir, platformDir, planPath}), packit.WithExitHandler(exitHandler))
 					Expect(exitHandler.ErrorCall.Receives.Error).To(MatchError(ContainSubstring("failed to remove layer toml:")))
 				})
 			})
+		})
+	})
+
+	context("when there are bom entries in the build metadata", func() {
+		it("persists a build.toml", func() {
+			packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
+				return packit.BuildResult{
+					Build: packit.BuildMetadata{
+						BOM: []packit.BOMEntry{
+							{
+								Name: "example",
+							},
+							{
+								Name: "another-example",
+								Metadata: map[string]interface{}{
+									"version": "0.5",
+								},
+							},
+						},
+					},
+				}, nil
+			}, packit.WithArgs([]string{binaryPath, layersDir, platformDir, planPath}))
+
+			contents, err := os.ReadFile(filepath.Join(layersDir, "build.toml"))
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(string(contents)).To(MatchTOML(`
+				[[bom]]
+					name = "example"
+				[[bom]]
+					name = "another-example"
+				[bom.metadata]
+					version = "0.5"
+			`))
+		})
+
+		context("when the api version is less than 0.5", func() {
+			it.Before(func() {
+				bpTOML := []byte(`
+api = "0.4"
+[buildpack]
+  id = "some-id"
+  name = "some-name"
+  version = "some-version"
+  clear-env = false
+`)
+				Expect(os.WriteFile(filepath.Join(cnbDir, "buildpack.toml"), bpTOML, 0600)).To(Succeed())
+				Expect(os.WriteFile(filepath.Join(envCnbDir, "buildpack.toml"), bpTOML, 0600)).To(Succeed())
+
+			})
+			it("throws an error", func() {
+				packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
+					return packit.BuildResult{
+						Build: packit.BuildMetadata{
+							BOM: []packit.BOMEntry{
+								{
+									Name: "example",
+								},
+								{
+									Name: "another-example",
+									Metadata: map[string]interface{}{
+										"version": "0.5",
+									},
+								},
+							},
+						},
+					}, nil
+				}, packit.WithArgs([]string{binaryPath, layersDir, platformDir, planPath}), packit.WithExitHandler(exitHandler))
+				Expect(exitHandler.ErrorCall.Receives.Error).To(MatchError(ContainSubstring("build.toml is only supported with Buildpack API v0.5 or higher")))
+
+			})
+		})
+	})
+
+	context("when there are unmet entries in the build metadata", func() {
+		it("persists a build.toml", func() {
+			packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
+				return packit.BuildResult{
+					Build: packit.BuildMetadata{
+						Unmet: []packit.UnmetEntry{
+							{
+								Name: "example",
+							},
+							{
+								Name: "another-example",
+							},
+						},
+					},
+				}, nil
+			}, packit.WithArgs([]string{binaryPath, layersDir, platformDir, planPath}))
+
+			contents, err := os.ReadFile(filepath.Join(layersDir, "build.toml"))
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(string(contents)).To(MatchTOML(`
+				[[unmet]]
+					name = "example"
+				[[unmet]]
+					name = "another-example"
+			`))
+		})
+		context("when the api version is less than 0.5", func() {
+			it.Before(func() {
+				bpTOML := []byte(`
+api = "0.4"
+[buildpack]
+  id = "some-id"
+  name = "some-name"
+  version = "some-version"
+  clear-env = false
+`)
+				Expect(os.WriteFile(filepath.Join(cnbDir, "buildpack.toml"), bpTOML, 0600)).To(Succeed())
+				Expect(os.WriteFile(filepath.Join(envCnbDir, "buildpack.toml"), bpTOML, 0600)).To(Succeed())
+
+			})
+
+			it("throws an error", func() {
+				packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
+					return packit.BuildResult{
+						Build: packit.BuildMetadata{
+							Unmet: []packit.UnmetEntry{
+								{
+									Name: "example",
+								},
+								{
+									Name: "another-example",
+								},
+							},
+						},
+					}, nil
+				}, packit.WithArgs([]string{binaryPath, layersDir, platformDir, planPath}), packit.WithExitHandler(exitHandler))
+				Expect(exitHandler.ErrorCall.Receives.Error).To(MatchError(ContainSubstring("build.toml is only supported with Buildpack API v0.5 or higher")))
+
+			})
+		})
+
+	})
+
+	context("when there are bom entries in the launch metadata", func() {
+		it("persists a launch.toml", func() {
+			packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
+				return packit.BuildResult{
+					Launch: packit.LaunchMetadata{
+						BOM: []packit.BOMEntry{
+							{
+								Name: "example",
+							},
+							{
+								Name: "another-example",
+								Metadata: map[string]interface{}{
+									"version": "0.5",
+								},
+							},
+						},
+					},
+				}, nil
+			}, packit.WithArgs([]string{binaryPath, layersDir, platformDir, planPath}))
+
+			contents, err := os.ReadFile(filepath.Join(layersDir, "launch.toml"))
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(string(contents)).To(MatchTOML(`
+				[[bom]]
+					name = "example"
+				[[bom]]
+					name = "another-example"
+				[bom.metadata]
+					version = "0.5"
+			`))
 		})
 	})
 
@@ -300,9 +509,9 @@ cache = true
 						},
 					},
 				}, nil
-			}, packit.WithArgs([]string{binaryPath, layersDir, "", planPath}))
+			}, packit.WithArgs([]string{binaryPath, layersDir, platformDir, planPath}))
 
-			contents, err := ioutil.ReadFile(filepath.Join(layersDir, "launch.toml"))
+			contents, err := os.ReadFile(filepath.Join(layersDir, "launch.toml"))
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(string(contents)).To(MatchTOML(`
@@ -329,9 +538,9 @@ cache = true
 							},
 						},
 					}, nil
-				}, packit.WithArgs([]string{binaryPath, layersDir, "", planPath}))
+				}, packit.WithArgs([]string{binaryPath, layersDir, platformDir, planPath}))
 
-				contents, err := ioutil.ReadFile(filepath.Join(layersDir, "launch.toml"))
+				contents, err := os.ReadFile(filepath.Join(layersDir, "launch.toml"))
 				Expect(err).NotTo(HaveOccurred())
 
 				Expect(string(contents)).To(MatchTOML(`
@@ -357,9 +566,9 @@ cache = true
 						},
 					},
 				}, nil
-			}, packit.WithArgs([]string{binaryPath, layersDir, "", planPath}))
+			}, packit.WithArgs([]string{binaryPath, layersDir, platformDir, planPath}))
 
-			contents, err := ioutil.ReadFile(filepath.Join(layersDir, "launch.toml"))
+			contents, err := os.ReadFile(filepath.Join(layersDir, "launch.toml"))
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(string(contents)).To(MatchTOML(`
@@ -380,9 +589,9 @@ cache = true
 							},
 						},
 					}, nil
-				}, packit.WithArgs([]string{binaryPath, layersDir, "", planPath}))
+				}, packit.WithArgs([]string{binaryPath, layersDir, platformDir, planPath}))
 
-				contents, err := ioutil.ReadFile(filepath.Join(layersDir, "launch.toml"))
+				contents, err := os.ReadFile(filepath.Join(layersDir, "launch.toml"))
 				Expect(err).NotTo(HaveOccurred())
 
 				Expect(string(contents)).To(MatchTOML(`
@@ -404,9 +613,9 @@ cache = true
 						},
 					},
 				}, nil
-			}, packit.WithArgs([]string{binaryPath, layersDir, "", planPath}))
+			}, packit.WithArgs([]string{binaryPath, layersDir, platformDir, planPath}))
 
-			contents, err := ioutil.ReadFile(filepath.Join(layersDir, "launch.toml"))
+			contents, err := os.ReadFile(filepath.Join(layersDir, "launch.toml"))
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(string(contents)).To(MatchTOML(`
@@ -431,9 +640,9 @@ cache = true
 							},
 						},
 					}, nil
-				}, packit.WithArgs([]string{binaryPath, layersDir, "", planPath}))
+				}, packit.WithArgs([]string{binaryPath, layersDir, platformDir, planPath}))
 
-				contents, err := ioutil.ReadFile(filepath.Join(layersDir, "launch.toml"))
+				contents, err := os.ReadFile(filepath.Join(layersDir, "launch.toml"))
 				Expect(err).NotTo(HaveOccurred())
 
 				Expect(string(contents)).To(MatchTOML(`
@@ -449,11 +658,11 @@ cache = true
 		})
 	})
 
-	context("when there are no processes, slices or labels in the result", func() {
+	context("when there are no processes, slices, bom or labels in the result", func() {
 		it("does not persist a launch.toml", func() {
 			packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
 				return packit.BuildResult{}, nil
-			}, packit.WithArgs([]string{binaryPath, layersDir, "", planPath}))
+			}, packit.WithArgs([]string{binaryPath, layersDir, platformDir, planPath}))
 
 			Expect(filepath.Join(layersDir, "launch.toml")).NotTo(BeARegularFile())
 		})
@@ -477,10 +686,10 @@ cache = true
 							},
 						},
 					}, nil
-				}, packit.WithArgs([]string{binaryPath, layersDir, "", planPath}))
+				}, packit.WithArgs([]string{binaryPath, layersDir, platformDir, planPath}))
 
 				for _, modifier := range []string{"append", "default", "delim", "prepend", "override"} {
-					contents, err := ioutil.ReadFile(filepath.Join(layersDir, "some-layer", "env", fmt.Sprintf("SOME_VAR.%s", modifier)))
+					contents, err := os.ReadFile(filepath.Join(layersDir, "some-layer", "env", fmt.Sprintf("SOME_VAR.%s", modifier)))
 					Expect(err).NotTo(HaveOccurred())
 					Expect(string(contents)).To(Equal(fmt.Sprintf("%s-value", modifier)))
 				}
@@ -504,12 +713,47 @@ cache = true
 							},
 						},
 					}, nil
-				}, packit.WithArgs([]string{binaryPath, layersDir, "", planPath}))
+				}, packit.WithArgs([]string{binaryPath, layersDir, platformDir, planPath}))
 
 				for _, modifier := range []string{"append", "default", "delim", "prepend", "override"} {
-					contents, err := ioutil.ReadFile(filepath.Join(layersDir, "some-layer", "env.launch", fmt.Sprintf("SOME_VAR.%s", modifier)))
+					contents, err := os.ReadFile(filepath.Join(layersDir, "some-layer", "env.launch", fmt.Sprintf("SOME_VAR.%s", modifier)))
 					Expect(err).NotTo(HaveOccurred())
 					Expect(string(contents)).To(Equal(fmt.Sprintf("%s-value", modifier)))
+				}
+			})
+			it("writes env vars into env.launch/<process> directory", func() {
+				packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
+					return packit.BuildResult{
+						Layers: []packit.Layer{
+							{
+								Path: filepath.Join(ctx.Layers.Path, "some-layer"),
+								ProcessLaunchEnv: map[string]packit.Environment{
+									"process-name": {
+										"SOME_VAR.append":   "append-value",
+										"SOME_VAR.default":  "default-value",
+										"SOME_VAR.delim":    "delim-value",
+										"SOME_VAR.prepend":  "prepend-value",
+										"SOME_VAR.override": "override-value",
+									},
+									"another-process-name": {
+										"SOME_VAR.append":   "append-value",
+										"SOME_VAR.default":  "default-value",
+										"SOME_VAR.delim":    "delim-value",
+										"SOME_VAR.prepend":  "prepend-value",
+										"SOME_VAR.override": "override-value",
+									},
+								},
+							},
+						},
+					}, nil
+				}, packit.WithArgs([]string{binaryPath, layersDir, platformDir, planPath}))
+
+				for _, process := range []string{"process-name", "another-process-name"} {
+					for _, modifier := range []string{"append", "default", "delim", "prepend", "override"} {
+						contents, err := os.ReadFile(filepath.Join(layersDir, "some-layer", "env.launch", process, fmt.Sprintf("SOME_VAR.%s", modifier)))
+						Expect(err).NotTo(HaveOccurred())
+						Expect(string(contents)).To(Equal(fmt.Sprintf("%s-value", modifier)))
+					}
 				}
 			})
 		})
@@ -531,10 +775,10 @@ cache = true
 							},
 						},
 					}, nil
-				}, packit.WithArgs([]string{binaryPath, layersDir, "", planPath}))
+				}, packit.WithArgs([]string{binaryPath, layersDir, platformDir, planPath}))
 
 				for _, modifier := range []string{"append", "default", "delim", "prepend", "override"} {
-					contents, err := ioutil.ReadFile(filepath.Join(layersDir, "some-layer", "env.build", fmt.Sprintf("SOME_VAR.%s", modifier)))
+					contents, err := os.ReadFile(filepath.Join(layersDir, "some-layer", "env.build", fmt.Sprintf("SOME_VAR.%s", modifier)))
 					Expect(err).NotTo(HaveOccurred())
 					Expect(string(contents)).To(Equal(fmt.Sprintf("%s-value", modifier)))
 				}
@@ -545,14 +789,14 @@ cache = true
 	context("failure cases", func() {
 		context("when the buildpack plan.toml is malformed", func() {
 			it.Before(func() {
-				err := ioutil.WriteFile(planPath, []byte("%%%"), 0600)
+				err := os.WriteFile(planPath, []byte("%%%"), 0600)
 				Expect(err).NotTo(HaveOccurred())
 			})
 
 			it("calls the exit handler", func() {
 				packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
 					return packit.BuildResult{}, nil
-				}, packit.WithArgs([]string{binaryPath, "", "", planPath}), packit.WithExitHandler(exitHandler))
+				}, packit.WithArgs([]string{binaryPath, layersDir, platformDir, planPath}), packit.WithExitHandler(exitHandler))
 
 				Expect(exitHandler.ErrorCall.Receives.Error).To(MatchError(ContainSubstring("bare keys cannot contain '%'")))
 			})
@@ -562,7 +806,7 @@ cache = true
 			it("calls the exit handler", func() {
 				packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
 					return packit.BuildResult{}, errors.New("build failed")
-				}, packit.WithArgs([]string{binaryPath, "", "", planPath}), packit.WithExitHandler(exitHandler))
+				}, packit.WithArgs([]string{binaryPath, layersDir, platformDir, planPath}), packit.WithExitHandler(exitHandler))
 
 				Expect(exitHandler.ErrorCall.Receives.Error).To(MatchError("build failed"))
 			})
@@ -570,14 +814,14 @@ cache = true
 
 		context("when the buildpack.toml is malformed", func() {
 			it.Before(func() {
-				err := ioutil.WriteFile(filepath.Join(cnbDir, "buildpack.toml"), []byte("%%%"), 0600)
+				err := os.WriteFile(filepath.Join(cnbDir, "buildpack.toml"), []byte("%%%"), 0600)
 				Expect(err).NotTo(HaveOccurred())
 			})
 
 			it("calls the exit handler", func() {
 				packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
 					return packit.BuildResult{}, nil
-				}, packit.WithArgs([]string{binaryPath, "", "", planPath}), packit.WithExitHandler(exitHandler))
+				}, packit.WithArgs([]string{binaryPath, layersDir, platformDir, planPath}), packit.WithExitHandler(exitHandler))
 
 				Expect(exitHandler.ErrorCall.Receives.Error).To(MatchError(ContainSubstring("bare keys cannot contain '%'")))
 			})
@@ -585,13 +829,23 @@ cache = true
 
 		context("when the buildpack plan.toml cannot be written", func() {
 			it.Before(func() {
+				bpTOML := []byte(`
+api = "0.4"
+[buildpack]
+  id = "some-id"
+  name = "some-name"
+  version = "some-version"
+  clear-env = false
+				`)
+				Expect(os.WriteFile(filepath.Join(cnbDir, "buildpack.toml"), bpTOML, 0600)).To(Succeed())
+				Expect(os.WriteFile(filepath.Join(envCnbDir, "buildpack.toml"), bpTOML, 0600)).To(Succeed())
 				Expect(os.Chmod(planPath, 0444)).To(Succeed())
 			})
 
 			it("calls the exit handler", func() {
 				packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
-					return packit.BuildResult{}, nil
-				}, packit.WithArgs([]string{binaryPath, "", "", planPath}), packit.WithExitHandler(exitHandler))
+					return packit.BuildResult{Plan: ctx.Plan}, nil
+				}, packit.WithArgs([]string{binaryPath, layersDir, platformDir, planPath}), packit.WithExitHandler(exitHandler))
 
 				Expect(exitHandler.ErrorCall.Receives.Error).To(MatchError(ContainSubstring("permission denied")))
 			})
@@ -616,7 +870,7 @@ cache = true
 							},
 						},
 					}, nil
-				}, packit.WithArgs([]string{binaryPath, layersDir, "", planPath}), packit.WithExitHandler(exitHandler))
+				}, packit.WithArgs([]string{binaryPath, layersDir, platformDir, planPath}), packit.WithExitHandler(exitHandler))
 
 				Expect(exitHandler.ErrorCall.Receives.Error).To(MatchError(ContainSubstring("permission denied")))
 			})
@@ -639,7 +893,7 @@ cache = true
 							Processes: []packit.Process{{}},
 						},
 					}, nil
-				}, packit.WithArgs([]string{binaryPath, layersDir, "", planPath}), packit.WithExitHandler(exitHandler))
+				}, packit.WithArgs([]string{binaryPath, layersDir, platformDir, planPath}), packit.WithExitHandler(exitHandler))
 
 				Expect(exitHandler.ErrorCall.Receives.Error).To(MatchError(ContainSubstring("permission denied")))
 			})
@@ -649,7 +903,7 @@ cache = true
 			var envDir string
 			it.Before(func() {
 				var err error
-				envDir, err = ioutil.TempDir("", "environment")
+				envDir, err = os.MkdirTemp("", "environment")
 				Expect(err).NotTo(HaveOccurred())
 
 				Expect(os.Chmod(envDir, 0000)).To(Succeed())
@@ -672,7 +926,7 @@ cache = true
 								},
 							},
 						}, nil
-					}, packit.WithArgs([]string{binaryPath, layersDir, "", planPath}), packit.WithExitHandler(exitHandler))
+					}, packit.WithArgs([]string{binaryPath, layersDir, platformDir, planPath}), packit.WithExitHandler(exitHandler))
 					Expect(exitHandler.ErrorCall.Receives.Error).To(MatchError(ContainSubstring("permission denied")))
 				})
 			})
@@ -690,7 +944,7 @@ cache = true
 								},
 							},
 						}, nil
-					}, packit.WithArgs([]string{binaryPath, layersDir, "", planPath}), packit.WithExitHandler(exitHandler))
+					}, packit.WithArgs([]string{binaryPath, layersDir, platformDir, planPath}), packit.WithExitHandler(exitHandler))
 					Expect(exitHandler.ErrorCall.Receives.Error).To(MatchError(ContainSubstring("permission denied")))
 				})
 			})
@@ -708,7 +962,7 @@ cache = true
 								},
 							},
 						}, nil
-					}, packit.WithArgs([]string{binaryPath, layersDir, "", planPath}), packit.WithExitHandler(exitHandler))
+					}, packit.WithArgs([]string{binaryPath, layersDir, platformDir, planPath}), packit.WithExitHandler(exitHandler))
 					Expect(exitHandler.ErrorCall.Receives.Error).To(MatchError(ContainSubstring("permission denied")))
 				})
 			})
@@ -737,7 +991,7 @@ cache = true
 								},
 							}},
 						}, nil
-					}, packit.WithArgs([]string{binaryPath, layersDir, "", planPath}), packit.WithExitHandler(exitHandler))
+					}, packit.WithArgs([]string{binaryPath, layersDir, platformDir, planPath}), packit.WithExitHandler(exitHandler))
 					Expect(exitHandler.ErrorCall.Receives.Error).To(MatchError(ContainSubstring("permission denied")))
 				})
 			})
@@ -764,7 +1018,7 @@ cache = true
 								},
 							}},
 						}, nil
-					}, packit.WithArgs([]string{binaryPath, layersDir, "", planPath}), packit.WithExitHandler(exitHandler))
+					}, packit.WithArgs([]string{binaryPath, layersDir, platformDir, planPath}), packit.WithExitHandler(exitHandler))
 					Expect(exitHandler.ErrorCall.Receives.Error).To(MatchError(ContainSubstring("permission denied")))
 				})
 			})
@@ -791,7 +1045,7 @@ cache = true
 								},
 							}},
 						}, nil
-					}, packit.WithArgs([]string{binaryPath, layersDir, "", planPath}), packit.WithExitHandler(exitHandler))
+					}, packit.WithArgs([]string{binaryPath, layersDir, platformDir, planPath}), packit.WithExitHandler(exitHandler))
 					Expect(exitHandler.ErrorCall.Receives.Error).To(MatchError(ContainSubstring("permission denied")))
 				})
 			})
