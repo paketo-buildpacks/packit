@@ -44,7 +44,8 @@ func testImage(t *testing.T, context spec.G, it spec.S) {
 								"0.20.1",
 								"0.20.12",
 								"999999",
-								"latest"
+								"latest",
+								"0.20.13-rc1"
 							]
 					}`)
 
@@ -80,7 +81,7 @@ func testImage(t *testing.T, context spec.G, it spec.S) {
 			Expect(os.RemoveAll(dockerConfig)).To(Succeed())
 		})
 
-		it("returns the latest semver tag for the given image uri", func() {
+		it("returns the latest non-prerelease semver tag for the given image uri", func() {
 			image, err := internal.FindLatestImage(fmt.Sprintf("%s/some-org/some-repo:latest", strings.TrimPrefix(server.URL, "http://")))
 			Expect(err).NotTo(HaveOccurred())
 			Expect(image).To(Equal(internal.Image{

@@ -45,6 +45,9 @@ func FindLatestImage(uri string) (Image, error) {
 		if err != nil {
 			continue
 		}
+		if version.Prerelease() != "" {
+			continue
+		}
 
 		versions = append(versions, version)
 	}
