@@ -141,7 +141,6 @@ func (ta TarArchive) Decompress(destination string) error {
 			if err != nil {
 				return fmt.Errorf("failed to extract symlink: %s", err)
 			}
-
 		}
 	}
 
@@ -150,6 +149,10 @@ func (ta TarArchive) Decompress(destination string) error {
 
 // Decompress reads from Archive, determines the archive type of the input
 // stream, and writes files into the destination specified.
+//
+// Archive decompression will also handle files that are types "text/plain;
+// charset=utf-8" and write the contents of the input stream to a file name
+// "artifact" in the destination directory.
 func (a Archive) Decompress(destination string) error {
 	// Convert reader into a buffered read so that the header can be peeked to
 	// determine the type.
@@ -176,6 +179,10 @@ func (a Archive) Decompress(destination string) error {
 		return NewTarXZArchive(bufferedReader).StripComponents(a.components).Decompress(destination)
 	case "application/zip":
 		return NewZipArchive(bufferedReader).Decompress(destination)
+	case "text/plain; charset=utf-8":
+		// This function will write the contents of the reader to file called
+		// "artifact" in the destination directory
+		return writeTextFile(bufferedReader, destination)
 	default:
 		return fmt.Errorf("unsupported archive type: %s", mime.String())
 	}
@@ -201,6 +208,20 @@ func (txz TarXZArchive) Decompress(destination string) error {
 	}
 
 	return NewTarArchive(xzr).StripComponents(txz.components).Decompress(destination)
+}
+
+func writeTextFile(reader io.Reader, destination string) error {
+	file, err := os.Create(filepath.Join(destination, "artifact"))
+	if err != nil {
+		panic(err)
+	}
+
+	_, err = io.Copy(file, reader)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // StripComponents behaves like the --strip-components flag on tar command

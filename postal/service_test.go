@@ -450,7 +450,8 @@ version = "this is super not semver"
 
 			context("when the file contents are empty", func() {
 				it.Before(func() {
-					buffer := bytes.NewBuffer(nil)
+					// This is a FLAC header
+					buffer := bytes.NewBuffer([]byte("\x66\x4C\x61\x43\x00\x00\x00\x22"))
 					transport.DropCall.Returns.ReadCloser = io.NopCloser(buffer)
 
 					sum := sha256.Sum256(buffer.Bytes())
@@ -703,7 +704,8 @@ version = "this is super not semver"
 
 			context("when the file contents are empty", func() {
 				it.Before(func() {
-					buffer := bytes.NewBuffer(nil)
+					// This is a FLAC header
+					buffer := bytes.NewBuffer([]byte("\x66\x4C\x61\x43\x00\x00\x00\x22"))
 					transport.DropCall.Returns.ReadCloser = io.NopCloser(buffer)
 
 					sum := sha256.Sum256(buffer.Bytes())
