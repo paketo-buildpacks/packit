@@ -264,7 +264,8 @@ func testVacationArchive(t *testing.T, context spec.G, it spec.S) {
 					tempDir, err = os.MkdirTemp("", "vacation")
 					Expect(err).NotTo(HaveOccurred())
 
-					buffer := bytes.NewBuffer([]byte(`some contents`))
+					// This is a FLAC header
+					buffer := bytes.NewBuffer([]byte("\x66\x4C\x61\x43\x00\x00\x00\x22"))
 
 					archive = vacation.NewArchive(buffer)
 				})
