@@ -16,14 +16,8 @@ type Dependency struct {
 	// ID is the identifier used to specify the dependency.
 	ID string `toml:"id"`
 
-	// Version is the specific version of the dependency.
-	Version string `toml:"version"`
-
 	// Name is the human-readable name of the dependency.
 	Name string `toml:"name"`
-
-	// URI is the uri location of the built dependency.
-	URI string `toml:"uri"`
 
 	// SHA256 is the hex-encoded SHA256 checksum of the built dependency.
 	SHA256 string `toml:"sha256"`
@@ -36,6 +30,12 @@ type Dependency struct {
 
 	// Stacks is a list of stacks for which the dependency is built.
 	Stacks []string `toml:"stacks"`
+
+	// URI is the uri location of the built dependency.
+	URI string `toml:"uri"`
+
+	// Version is the specific version of the dependency.
+	Version string `toml:"version"`
 }
 
 func parseBuildpack(path, name string) ([]Dependency, string, error) {

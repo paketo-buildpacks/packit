@@ -14,6 +14,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/paketo-buildpacks/packit"
 	"github.com/paketo-buildpacks/packit/postal"
 	"github.com/paketo-buildpacks/packit/postal/fakes"
 	"github.com/sclevine/spec"
@@ -38,7 +39,6 @@ func testService(t *testing.T, context spec.G, it spec.S) {
 		Expect(err).NotTo(HaveOccurred())
 
 		path = file.Name()
-
 		_, err = file.WriteString(`
 [[metadata.dependencies]]
 deprecation_date = 2022-04-01T00:00:00Z
@@ -819,6 +819,61 @@ version = "this is super not semver"
 					Expect(err).To(MatchError(ContainSubstring("failed to extract symlink")))
 				})
 			})
+		})
+	})
+
+	context("GenerateBillOfMaterials", func() {
+		var deprecationDate time.Time
+
+		it.Before(func() {
+			var err error
+			deprecationDate, err = time.Parse(time.RFC3339, "2022-04-01T00:00:00Z")
+			Expect(err).NotTo(HaveOccurred())
+		})
+
+		it("returns a list of BOMEntry values", func() {
+			entries := service.GenerateBillOfMaterials(
+				postal.Dependency{
+					DeprecationDate: deprecationDate,
+					ID:              "some-entry",
+					Name:            "Some Entry",
+					SHA256:          "some-sha",
+					Source:          "some-source",
+					Stacks:          []string{"some-stack"},
+					URI:             "some-uri",
+					Version:         "1.2.3",
+				},
+				postal.Dependency{
+					ID:      "other-entry",
+					Name:    "Other Entry",
+					SHA256:  "other-sha",
+					Source:  "other-source",
+					Stacks:  []string{"other-stack"},
+					URI:     "other-uri",
+					Version: "4.5.6",
+				},
+			)
+			Expect(entries).To(Equal([]packit.BOMEntry{
+				{
+					Name: "Some Entry",
+					Metadata: map[string]interface{}{
+						"deprecation-date": deprecationDate,
+						"sha256":           "some-sha",
+						"stacks":           []string{"some-stack"},
+						"uri":              "some-uri",
+						"version":          "1.2.3",
+					},
+				},
+				{
+					Name: "Other Entry",
+					Metadata: map[string]interface{}{
+						"sha256":  "other-sha",
+						"stacks":  []string{"other-stack"},
+						"uri":     "other-uri",
+						"version": "4.5.6",
+					},
+				},
+			}))
 		})
 	})
 }
