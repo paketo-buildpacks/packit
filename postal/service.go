@@ -7,8 +7,10 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/Masterminds/semver/v3"
+	"github.com/paketo-buildpacks/packit"
 	"github.com/paketo-buildpacks/packit/cargo"
 	"github.com/paketo-buildpacks/packit/postal/internal"
 	"github.com/paketo-buildpacks/packit/vacation"
@@ -176,4 +178,29 @@ func (s Service) Deliver(dependency Dependency, cnbPath, layerPath, platformPath
 // Deprecated: Use Deliver instead.
 func (s Service) Install(dependency Dependency, cnbPath, layerPath string) error {
 	return s.Deliver(dependency, cnbPath, layerPath, "/platform")
+}
+
+// GenerateBillOfMaterials will generate a list of BOMEntry values given a
+// collection of Dependency values.
+func (s Service) GenerateBillOfMaterials(dependencies ...Dependency) []packit.BOMEntry {
+	var entries []packit.BOMEntry
+	for _, dependency := range dependencies {
+		entry := packit.BOMEntry{
+			Name: dependency.Name,
+			Metadata: map[string]interface{}{
+				"sha256":  dependency.SHA256,
+				"stacks":  dependency.Stacks,
+				"uri":     dependency.URI,
+				"version": dependency.Version,
+			},
+		}
+
+		if (dependency.DeprecationDate != time.Time{}) {
+			entry.Metadata["deprecation-date"] = dependency.DeprecationDate
+		}
+
+		entries = append(entries, entry)
+	}
+
+	return entries
 }
