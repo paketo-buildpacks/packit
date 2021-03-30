@@ -13,6 +13,7 @@ func TestVacation(t *testing.T) {
 	suite("VacationTar", testVacationTar)
 	suite("VacationTarGzip", testVacationTarGzip)
 	suite("VacationTarXZ", testVacationTarXZ)
+	suite("VacationText", testVacationText)
 	suite("VacationZip", testVacationZip)
 	suite.Run(t)
 }
