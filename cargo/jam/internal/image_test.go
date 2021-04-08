@@ -240,4 +240,33 @@ func testImage(t *testing.T, context spec.G, it spec.S) {
 			})
 		})
 	}, spec.Sequential())
+
+	context("GetBuildpackageID", func() {
+		it("returns the buildpackage ID from the io.buildpacks.buildpackage.metadata image label", func() {
+			id, err := internal.GetBuildpackageID("gcr.io/paketo-buildpacks/go")
+			Expect(err).NotTo(HaveOccurred())
+			Expect(id).To(Equal("paketo-buildpacks/go"))
+		})
+
+		context("failure cases", func() {
+			context("uri cannot be parsed", func() {
+				it("returns an error", func() {
+					_, err := internal.GetBuildpackageID("some garbage uri")
+					Expect(err).To(MatchError(ContainSubstring("could not parse reference")))
+				})
+			})
+			context("image cannot be created from ref", func() {
+				it("returns an error", func() {
+					_, err := internal.GetBuildpackageID("gcr.io/does-not-exist/go:0.5.0")
+					Expect(err).To(MatchError(ContainSubstring("Project 'project:does-not-exist' not found or deleted")))
+				})
+			})
+			context("image has no buildpackage metadata label", func() {
+				it("returns an error", func() {
+					_, err := internal.GetBuildpackageID("gcr.io/paketo-buildpacks/builder:base")
+					Expect(err).To(MatchError(ContainSubstring("could not get buildpackage id: image gcr.io/paketo-buildpacks/builder:base has no label 'io.buildpacks.buildpackage.metadata'")))
+				})
+			})
+		})
+	})
 }
