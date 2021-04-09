@@ -313,17 +313,17 @@ func (z ZipArchive) Decompress(destination string) error {
 				return err
 			}
 
-			content, err := io.ReadAll(fd)
+			linkname, err := io.ReadAll(fd)
 			if err != nil {
 				return err
 			}
 
-			err = checkExtractPath(filepath.Join(filepath.Dir(f.Name), string(content)), destination)
+			err = checkExtractPath(filepath.Join(filepath.Dir(f.Name), string(linkname)), destination)
 			if err != nil {
 				return err
 			}
 
-			err = os.Symlink(string(content), path)
+			err = os.Symlink(string(linkname), path)
 			if err != nil {
 				return fmt.Errorf("failed to unzip symlink: %w", err)
 			}
