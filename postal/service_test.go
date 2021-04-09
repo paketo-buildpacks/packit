@@ -552,6 +552,7 @@ version = "this is super not semver"
 					Expect(tw.Close()).To(Succeed())
 					Expect(zw.Close()).To(Succeed())
 
+					Expect(os.WriteFile(filepath.Join(layerPath, "some-file"), nil, 0644)).To(Succeed())
 					Expect(os.Symlink("some-file", filepath.Join(layerPath, "symlink"))).To(Succeed())
 
 					sum := sha256.Sum256(buffer.Bytes())
@@ -803,6 +804,7 @@ version = "this is super not semver"
 					Expect(tw.Close()).To(Succeed())
 					Expect(zw.Close()).To(Succeed())
 
+					Expect(os.WriteFile(filepath.Join(layerPath, "some-file"), nil, 0644)).To(Succeed())
 					Expect(os.Symlink("some-file", filepath.Join(layerPath, "symlink"))).To(Succeed())
 
 					sum := sha256.Sum256(buffer.Bytes())
