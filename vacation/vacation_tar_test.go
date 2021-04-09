@@ -143,6 +143,29 @@ func testVacationTar(t *testing.T, context spec.G, it spec.S) {
 		})
 
 		context("failure cases", func() {
+			context("when a file is not inside of the destination director (Zip Slip)", func() {
+				it.Before(func() {
+					var err error
+
+					buffer := bytes.NewBuffer(nil)
+					tw := tar.NewWriter(buffer)
+
+					nestedFile := filepath.Join("..", "some-dir", "some-other-dir", "some-file")
+					Expect(tw.WriteHeader(&tar.Header{Name: nestedFile, Mode: 0755, Size: int64(len(nestedFile))})).To(Succeed())
+					_, err = tw.Write([]byte(nestedFile))
+					Expect(err).NotTo(HaveOccurred())
+
+					Expect(tw.Close()).To(Succeed())
+
+					tarArchive = vacation.NewTarArchive(bytes.NewReader(buffer.Bytes()))
+				})
+
+				it("returns an error", func() {
+					err := tarArchive.Decompress(tempDir)
+					Expect(err).To(MatchError(ContainSubstring(fmt.Sprintf("illegal file path %q: the file path does not occur within the destination directory", filepath.Join("..", "some-dir", "some-other-dir", "some-file")))))
+				})
+			})
+
 			context("when it fails to read the tar response", func() {
 				it("returns an error", func() {
 					readyArchive := vacation.NewTarArchive(bytes.NewBuffer([]byte(`something`)))
@@ -166,7 +189,7 @@ func testVacationTar(t *testing.T, context spec.G, it spec.S) {
 					Expect(err).To(MatchError(ContainSubstring("failed to create archived directory")))
 				})
 
-				context("there are no directory headers", func() {
+				context("when there are no directory headers", func() {
 					it.Before(func() {
 						var err error
 
