@@ -189,4 +189,31 @@ func testEmitter(t *testing.T, context spec.G, it spec.S) {
 			})
 		})
 	})
+
+	context("LaunchProcesses", func() {
+		it("prints a list of launch processes", func() {
+			emitter.LaunchProcesses([]packit.Process{
+				{
+					Type:    "some-type",
+					Command: "some-command",
+				},
+				{
+					Type:    "web",
+					Command: "web-command",
+				},
+				{
+					Type:    "some-other-type",
+					Command: "some-other-command",
+					Args:    []string{"some", "args"},
+				},
+			})
+
+			Expect(buffer.String()).To(Equal(`  Assigning launch processes:
+    some-type: some-command
+    web: web-command (default)
+    some-other-type: some-other-command some args
+
+`), buffer.String())
+		})
+	})
 }

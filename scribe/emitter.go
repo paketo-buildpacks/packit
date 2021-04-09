@@ -1,8 +1,10 @@
 package scribe
 
 import (
+	"fmt"
 	"io"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/paketo-buildpacks/packit"
@@ -81,5 +83,26 @@ Entries:
 		e.Action(("%-" + strconv.Itoa(maxLen) + "s -> %q"), source[0], source[1])
 	}
 
+	e.Break()
+}
+
+func (e Emitter) LaunchProcesses(processes []packit.Process) {
+	e.Process("Assigning launch processes:")
+
+	for _, process := range processes {
+		p := fmt.Sprintf("%s: %s", process.Type, process.Command)
+
+		if process.Args != nil {
+			p = fmt.Sprintf("%s %s", p, strings.Join(process.Args, " "))
+		}
+
+		// This conditional should be replaced when API 0.6 is supported at which
+		// point any process can be set as default
+		if process.Type == "web" {
+			p = fmt.Sprintf("%s %s", p, "(default)")
+		}
+
+		e.Subprocess(p)
+	}
 	e.Break()
 }
