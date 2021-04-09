@@ -74,6 +74,13 @@ func (ta TarArchive) Decompress(destination string) error {
 	// tarball, which can be seen in the test around there being no directory
 	// metadata.
 	directories := map[string]interface{}{}
+	type header struct {
+		name     string
+		linkname string
+		path     string
+	}
+
+	var symlinkHeaders []header
 
 	tarReader := tar.NewReader(ta.reader)
 	for {
@@ -142,15 +149,30 @@ func (ta TarArchive) Decompress(destination string) error {
 			}
 
 		case tar.TypeSymlink:
-			err = checkExtractPath(filepath.Join(filepath.Dir(hdr.Name), hdr.Linkname), destination)
-			if err != nil {
-				return err
-			}
+			// Collect all of the headers for symlinks so that they can be verified
+			// after all other files are written
+			symlinkHeaders = append(symlinkHeaders, header{
+				name:     hdr.Name,
+				linkname: hdr.Linkname,
+				path:     path,
+			})
+		}
+	}
 
-			err = os.Symlink(hdr.Linkname, path)
-			if err != nil {
-				return fmt.Errorf("failed to extract symlink: %s", err)
-			}
+	for _, h := range symlinkHeaders {
+		_, err := filepath.EvalSymlinks(filepath.Join(destination, h.linkname))
+		if err != nil {
+			return err
+		}
+
+		err = checkExtractPath(filepath.Join(filepath.Dir(h.name), h.linkname), destination)
+		if err != nil {
+			return err
+		}
+
+		err = os.Symlink(h.linkname, h.path)
+		if err != nil {
+			return fmt.Errorf("failed to extract symlink: %s", err)
 		}
 	}
 
