@@ -118,6 +118,28 @@ func testVacationZip(t *testing.T, context spec.G, it spec.S) {
 				})
 			})
 
+			context("when a file is not inside of the destination director (Zip Slip)", func() {
+				var buffer *bytes.Buffer
+				it.Before(func() {
+					var err error
+					buffer = bytes.NewBuffer(nil)
+					zw := zip.NewWriter(buffer)
+
+					_, err = zw.Create(filepath.Join("..", "some-dir"))
+					Expect(err).NotTo(HaveOccurred())
+
+					Expect(zw.Close()).To(Succeed())
+				})
+
+				it("returns an error", func() {
+					readyArchive := vacation.NewZipArchive(buffer)
+
+					err := readyArchive.Decompress(tempDir)
+					Expect(err).To(MatchError(ContainSubstring(fmt.Sprintf("illegal file path %q: the file path does not occur within the destination directory", filepath.Join("..", "some-dir")))))
+				})
+
+			})
+
 			context("when it fails to unzip a directory", func() {
 				var buffer *bytes.Buffer
 				it.Before(func() {

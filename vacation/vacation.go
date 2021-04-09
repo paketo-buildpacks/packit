@@ -85,6 +85,11 @@ func (ta TarArchive) Decompress(destination string) error {
 			return fmt.Errorf("failed to read tar response: %s", err)
 		}
 
+		err = checkExtractPath(hdr.Name, destination)
+		if err != nil {
+			return err
+		}
+
 		fileNames := strings.Split(hdr.Name, string(filepath.Separator))
 
 		// Checks to see if file should be written when stripping components
@@ -284,6 +289,11 @@ func (z ZipArchive) Decompress(destination string) error {
 	}
 
 	for _, f := range zr.File {
+		err = checkExtractPath(f.Name, destination)
+		if err != nil {
+			return err
+		}
+
 		path := filepath.Join(destination, f.Name)
 
 		switch {
@@ -332,5 +342,15 @@ func (z ZipArchive) Decompress(destination string) error {
 		}
 	}
 
+	return nil
+}
+
+// This function checks to see that the given path is within the destination
+// directory
+func checkExtractPath(filePath string, destination string) error {
+	destpath := filepath.Join(destination, filePath)
+	if !strings.HasPrefix(destpath, filepath.Clean(destination)+string(os.PathSeparator)) {
+		return fmt.Errorf("illegal file path %q: the file path does not occur within the destination directory", filePath)
+	}
 	return nil
 }
