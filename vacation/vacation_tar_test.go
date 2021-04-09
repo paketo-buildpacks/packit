@@ -229,7 +229,7 @@ func testVacationTar(t *testing.T, context spec.G, it spec.S) {
 				})
 			})
 
-			context("when it tries to symlinkto a file that does not exist", func() {
+			context("when it tries to symlink to a file that does not exist", func() {
 				var zipSlipSymlinkTar vacation.TarArchive
 
 				it.Before(func() {
@@ -280,7 +280,7 @@ func testVacationTar(t *testing.T, context spec.G, it spec.S) {
 				})
 			})
 
-			context("when it tries to decompress a broken symlink", func() {
+			context("when the symlink creation fails", func() {
 				var brokenSymlinkTar vacation.TarArchive
 
 				it.Before(func() {

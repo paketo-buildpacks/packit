@@ -74,6 +74,7 @@ func (ta TarArchive) Decompress(destination string) error {
 	// tarball, which can be seen in the test around there being no directory
 	// metadata.
 	directories := map[string]interface{}{}
+
 	type header struct {
 		name     string
 		linkname string
@@ -160,11 +161,14 @@ func (ta TarArchive) Decompress(destination string) error {
 	}
 
 	for _, h := range symlinkHeaders {
-		_, err := filepath.EvalSymlinks(filepath.Join(destination, h.linkname))
+		// Check to see if the file that will be linked to is valid for symlinking
+		_, err := filepath.EvalSymlinks(filepath.Join(filepath.Dir(h.path), h.linkname))
 		if err != nil {
 			return err
 		}
 
+		// Check that the file being symlinked to is inside the destination
+		// directory
 		err = checkExtractPath(filepath.Join(filepath.Dir(h.name), h.linkname), destination)
 		if err != nil {
 			return err
@@ -299,6 +303,14 @@ func NewZipArchive(inputReader io.Reader) ZipArchive {
 // Decompress reads from ZipArchive and writes files into the destination
 // specified.
 func (z ZipArchive) Decompress(destination string) error {
+	type header struct {
+		name     string
+		linkname string
+		path     string
+	}
+
+	var symlinkHeaders []header
+
 	// Have to convert an io.Reader into a bytes.Reader which implements the
 	// ReadAt function making it compatible with the io.ReaderAt inteface which
 	// required for zip.NewReader
@@ -340,15 +352,14 @@ func (z ZipArchive) Decompress(destination string) error {
 				return err
 			}
 
-			err = checkExtractPath(filepath.Join(filepath.Dir(f.Name), string(linkname)), destination)
-			if err != nil {
-				return err
-			}
+			// Collect all of the headers for symlinks so that they can be verified
+			// after all other files are written
+			symlinkHeaders = append(symlinkHeaders, header{
+				name:     f.Name,
+				linkname: string(linkname),
+				path:     path,
+			})
 
-			err = os.Symlink(string(linkname), path)
-			if err != nil {
-				return fmt.Errorf("failed to unzip symlink: %w", err)
-			}
 		default:
 			err = os.MkdirAll(filepath.Dir(path), os.ModePerm)
 			if err != nil {
@@ -371,6 +382,26 @@ func (z ZipArchive) Decompress(destination string) error {
 			if err != nil {
 				return err
 			}
+		}
+	}
+
+	for _, h := range symlinkHeaders {
+		// Check to see if the file that will be linked to is valid for symlinking
+		_, err := filepath.EvalSymlinks(filepath.Join(filepath.Dir(h.path), h.linkname))
+		if err != nil {
+			return err
+		}
+
+		// Check that the file being symlinked to is inside the destination
+		// directory
+		err = checkExtractPath(filepath.Join(filepath.Dir(h.name), h.linkname), destination)
+		if err != nil {
+			return err
+		}
+
+		err = os.Symlink(h.linkname, h.path)
+		if err != nil {
+			return fmt.Errorf("failed to unzip symlink: %w", err)
 		}
 	}
 
