@@ -194,6 +194,34 @@ func testVacationZip(t *testing.T, context spec.G, it spec.S) {
 				})
 			})
 
+			context("when it tries to symlink that tries to link to a file outside of the directory", func() {
+				var buffer *bytes.Buffer
+				it.Before(func() {
+					var err error
+					buffer = bytes.NewBuffer(nil)
+					zw := zip.NewWriter(buffer)
+
+					header := &zip.FileHeader{Name: "symlink"}
+					header.SetMode(0755 | os.ModeSymlink)
+
+					symlink, err := zw.CreateHeader(header)
+					Expect(err).NotTo(HaveOccurred())
+
+					_, err = symlink.Write([]byte(filepath.Join("..", "some-file")))
+					Expect(err).NotTo(HaveOccurred())
+
+					Expect(zw.Close()).To(Succeed())
+
+				})
+
+				it("returns an error", func() {
+					readyArchive := vacation.NewZipArchive(buffer)
+
+					err := readyArchive.Decompress(tempDir)
+					Expect(err).To(MatchError(ContainSubstring(fmt.Sprintf("illegal file path %q: the file path does not occur within the destination directory", filepath.Join("..", "some-file")))))
+				})
+			})
+
 			context("when it fails to unzip a symlink", func() {
 				var buffer *bytes.Buffer
 				it.Before(func() {

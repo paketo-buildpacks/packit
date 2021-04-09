@@ -142,6 +142,11 @@ func (ta TarArchive) Decompress(destination string) error {
 			}
 
 		case tar.TypeSymlink:
+			err = checkExtractPath(filepath.Join(filepath.Dir(hdr.Name), hdr.Linkname), destination)
+			if err != nil {
+				return err
+			}
+
 			err = os.Symlink(hdr.Linkname, path)
 			if err != nil {
 				return fmt.Errorf("failed to extract symlink: %s", err)
@@ -309,6 +314,11 @@ func (z ZipArchive) Decompress(destination string) error {
 			}
 
 			content, err := io.ReadAll(fd)
+			if err != nil {
+				return err
+			}
+
+			err = checkExtractPath(filepath.Join(filepath.Dir(f.Name), string(content)), destination)
 			if err != nil {
 				return err
 			}
