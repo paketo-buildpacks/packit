@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"encoding/json"
 	"fmt"
 	"sort"
 	"strings"
@@ -115,4 +116,38 @@ func FindLatestBuildImage(runURI, buildURI string) (Image, error) {
 		Path:    reference.Path(buildNamed),
 		Version: fmt.Sprintf("%s%s", versions[len(versions)-1].String(), suffix),
 	}, nil
+}
+
+func GetBuildpackageID(uri string) (string, error) {
+	ref, err := name.ParseReference(uri)
+	if err != nil {
+		return "", err
+	}
+
+	image, err := remote.Image(ref)
+	if err != nil {
+		return "", err
+	}
+
+	cfg, err := image.ConfigFile()
+	if err != nil {
+		return "", err
+	}
+
+	type BuildpackageMetadata struct {
+		BuildpackageID string `json:"id"`
+	}
+	var metadataString string
+	var ok bool
+	if metadataString, ok = cfg.Config.Labels["io.buildpacks.buildpackage.metadata"]; !ok {
+		return "", fmt.Errorf("could not get buildpackage id: image %s has no label 'io.buildpacks.buildpackage.metadata'", uri)
+	}
+
+	metadata := BuildpackageMetadata{}
+
+	err = json.Unmarshal([]byte(metadataString), &metadata)
+	if err != nil {
+		return "", fmt.Errorf("could not unmarshal buildpackage metadata")
+	}
+	return metadata.BuildpackageID, nil
 }

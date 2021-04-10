@@ -59,9 +59,14 @@ func updateBuildpackRun(flags updateBuildpackFlags) error {
 
 		pkg.Dependencies[i].URI = fmt.Sprintf("%s:%s", image.Name, image.Version)
 
+		buildpackageID, err := internal.GetBuildpackageID(dependency.URI)
+		if err != nil {
+			return fmt.Errorf("failed to get buildpackage ID for %s: %w", dependency.URI, err)
+		}
+
 		for j, order := range bp.Order {
 			for k, group := range order.Group {
-				if group.ID == image.Path {
+				if group.ID == buildpackageID {
 					bp.Order[j].Group[k].Version = image.Version
 				}
 			}
