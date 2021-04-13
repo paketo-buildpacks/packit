@@ -76,6 +76,8 @@ func (ta TarArchive) Decompress(destination string) error {
 	// metadata.
 	directories := map[string]interface{}{}
 
+	// Struct and slice to collect symlinks and create them after all files have
+	// been created
 	type header struct {
 		name     string
 		linkname string
@@ -166,6 +168,18 @@ func (ta TarArchive) Decompress(destination string) error {
 		}
 	}
 
+	// Sort the symlinks so that symlinks of symlinks have their base link
+	// created before they are created.
+	//
+	// For example:
+	// b-sym -> a-sym/file
+	// a-sym -> dir
+	// c-sym -> a-sym/other-file
+	//
+	// Will sort to:
+	// a-sym -> dir
+	// b-sym -> a-sym/file
+	// c-sym -> a-sym/other-file
 	sort.Slice(symlinkHeaders, func(i, j int) bool {
 		return filepath.Clean(symlinkHeaders[i].name) < filepath.Clean(filepath.Join(filepath.Dir(symlinkHeaders[j].name), symlinkHeaders[j].linkname))
 	})
@@ -313,6 +327,8 @@ func NewZipArchive(inputReader io.Reader) ZipArchive {
 // Decompress reads from ZipArchive and writes files into the destination
 // specified.
 func (z ZipArchive) Decompress(destination string) error {
+	// Struct and slice to collect symlinks and create them after all files have
+	// been created
 	type header struct {
 		name     string
 		linkname string
@@ -400,6 +416,18 @@ func (z ZipArchive) Decompress(destination string) error {
 		}
 	}
 
+	// Sort the symlinks so that symlinks of symlinks have their base link
+	// created before they are created.
+	//
+	// For example:
+	// b-sym -> a-sym/file
+	// a-sym -> dir
+	// c-sym -> a-sym/other-file
+	//
+	// Will sort to:
+	// a-sym -> dir
+	// b-sym -> a-sym/file
+	// c-sym -> a-sym/other-file
 	sort.Slice(symlinkHeaders, func(i, j int) bool {
 		return filepath.Clean(symlinkHeaders[i].name) < filepath.Clean(filepath.Join(filepath.Dir(symlinkHeaders[j].name), symlinkHeaders[j].linkname))
 	})
