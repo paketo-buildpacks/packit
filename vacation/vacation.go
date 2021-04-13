@@ -409,10 +409,10 @@ func (z ZipArchive) Decompress(destination string) error {
 }
 
 // This function checks to see that the given path is within the destination
-// directory
+// directory or it is the destination directory itself i.e. ./
 func checkExtractPath(filePath string, destination string) error {
 	destpath := filepath.Join(destination, filePath)
-	if !strings.HasPrefix(destpath, filepath.Clean(destination)+string(os.PathSeparator)) {
+	if !strings.HasPrefix(destpath, filepath.Clean(destination)+string(os.PathSeparator)) && destpath != filepath.Clean(destination) {
 		return fmt.Errorf("illegal file path %q: the file path does not occur within the destination directory", filePath)
 	}
 	return nil

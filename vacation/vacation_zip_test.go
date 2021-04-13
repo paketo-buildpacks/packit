@@ -42,6 +42,11 @@ func testVacationZip(t *testing.T, context spec.G, it spec.S) {
 			_, err = symlink.Write([]byte(filepath.Join("some-dir", "some-other-dir", "some-file")))
 			Expect(err).NotTo(HaveOccurred())
 
+			// Some archive files will make a relative top level path directory these
+			// should still successfully decompress.
+			_, err = zw.Create("./")
+			Expect(err).NotTo(HaveOccurred())
+
 			_, err = zw.Create("some-dir/")
 			Expect(err).NotTo(HaveOccurred())
 

@@ -35,6 +35,12 @@ func testVacationTarGzip(t *testing.T, context spec.G, it spec.S) {
 			gw := gzip.NewWriter(buffer)
 			tw := tar.NewWriter(gw)
 
+			// Some archive files will make a relative top level path directory these
+			// should still successfully decompress.
+			Expect(tw.WriteHeader(&tar.Header{Name: "./", Mode: 0755, Typeflag: tar.TypeDir})).To(Succeed())
+			_, err = tw.Write(nil)
+			Expect(err).NotTo(HaveOccurred())
+
 			Expect(tw.WriteHeader(&tar.Header{Name: "some-dir", Mode: 0755, Typeflag: tar.TypeDir})).To(Succeed())
 			_, err = tw.Write(nil)
 			Expect(err).NotTo(HaveOccurred())
