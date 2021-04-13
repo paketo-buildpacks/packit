@@ -10,6 +10,7 @@ import (
 func TestVacation(t *testing.T) {
 	suite := spec.New("vacation", spec.Report(report.Terminal{}))
 	suite("VacationArchive", testVacationArchive)
+	suite("VacationSymlinkSorting", testVacationSymlinkSorting)
 	suite("VacationTar", testVacationTar)
 	suite("VacationTarGzip", testVacationTarGzip)
 	suite("VacationTarXZ", testVacationTarXZ)

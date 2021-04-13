@@ -14,6 +14,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/gabriel-vasile/mimetype"
@@ -165,11 +166,15 @@ func (ta TarArchive) Decompress(destination string) error {
 		}
 	}
 
+	sort.Slice(symlinkHeaders, func(i, j int) bool {
+		return filepath.Clean(symlinkHeaders[i].name) < filepath.Clean(filepath.Join(filepath.Dir(symlinkHeaders[j].name), symlinkHeaders[j].linkname))
+	})
+
 	for _, h := range symlinkHeaders {
 		// Check to see if the file that will be linked to is valid for symlinking
 		_, err := filepath.EvalSymlinks(filepath.Join(filepath.Dir(h.path), h.linkname))
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to evaluate symlink %s: %w", h.path, err)
 		}
 
 		// Check that the file being symlinked to is inside the destination
@@ -395,11 +400,15 @@ func (z ZipArchive) Decompress(destination string) error {
 		}
 	}
 
+	sort.Slice(symlinkHeaders, func(i, j int) bool {
+		return filepath.Clean(symlinkHeaders[i].name) < filepath.Clean(filepath.Join(filepath.Dir(symlinkHeaders[j].name), symlinkHeaders[j].linkname))
+	})
+
 	for _, h := range symlinkHeaders {
 		// Check to see if the file that will be linked to is valid for symlinking
 		_, err := filepath.EvalSymlinks(filepath.Join(filepath.Dir(h.path), h.linkname))
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to evaluate symlink %s: %w", h.path, err)
 		}
 
 		// Check that the file being symlinked to is inside the destination
