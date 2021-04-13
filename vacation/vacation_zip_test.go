@@ -82,7 +82,7 @@ func testVacationZip(t *testing.T, context spec.G, it spec.S) {
 			Expect(os.RemoveAll(tempDir)).To(Succeed())
 		})
 
-		it("downloads the dependency and unpackages it into the path", func() {
+		it("unpackages the archive into the path", func() {
 			var err error
 			err = zipArchive.Decompress(tempDir)
 			Expect(err).ToNot(HaveOccurred())
@@ -223,6 +223,7 @@ func testVacationZip(t *testing.T, context spec.G, it spec.S) {
 					readyArchive := vacation.NewZipArchive(buffer)
 
 					err := readyArchive.Decompress(tempDir)
+					Expect(err).To(MatchError(ContainSubstring("failed to evaluate symlink")))
 					Expect(err).To(MatchError(ContainSubstring("no such file or directory")))
 				})
 			})
