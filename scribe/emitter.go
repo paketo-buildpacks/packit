@@ -96,12 +96,6 @@ func (e Emitter) LaunchProcesses(processes []packit.Process) {
 			p = fmt.Sprintf("%s %s", p, strings.Join(process.Args, " "))
 		}
 
-		// This conditional should be replaced when API 0.6 is supported at which
-		// point any process can be set as default
-		if process.Type == "web" {
-			p = fmt.Sprintf("%s %s", p, "(default)")
-		}
-
 		e.Subprocess(p)
 	}
 	e.Break()

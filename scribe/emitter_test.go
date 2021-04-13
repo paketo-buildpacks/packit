@@ -210,7 +210,7 @@ func testEmitter(t *testing.T, context spec.G, it spec.S) {
 
 			Expect(buffer.String()).To(Equal(`  Assigning launch processes:
     some-type: some-command
-    web: web-command (default)
+    web: web-command
     some-other-type: some-other-command some args
 
 `), buffer.String())
