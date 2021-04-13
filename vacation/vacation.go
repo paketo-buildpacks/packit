@@ -14,6 +14,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/gabriel-vasile/mimetype"
@@ -75,6 +76,8 @@ func (ta TarArchive) Decompress(destination string) error {
 	// metadata.
 	directories := map[string]interface{}{}
 
+	// Struct and slice to collect symlinks and create them after all files have
+	// been created
 	type header struct {
 		name     string
 		linkname string
@@ -91,6 +94,11 @@ func (ta TarArchive) Decompress(destination string) error {
 		}
 		if err != nil {
 			return fmt.Errorf("failed to read tar response: %s", err)
+		}
+
+		// Skip if the destination it the destination directory itself i.e. ./
+		if hdr.Name == "."+string(filepath.Separator) {
+			continue
 		}
 
 		err = checkExtractPath(hdr.Name, destination)
@@ -160,11 +168,27 @@ func (ta TarArchive) Decompress(destination string) error {
 		}
 	}
 
+	// Sort the symlinks so that symlinks of symlinks have their base link
+	// created before they are created.
+	//
+	// For example:
+	// b-sym -> a-sym/file
+	// a-sym -> dir
+	// c-sym -> a-sym/other-file
+	//
+	// Will sort to:
+	// a-sym -> dir
+	// b-sym -> a-sym/file
+	// c-sym -> a-sym/other-file
+	sort.Slice(symlinkHeaders, func(i, j int) bool {
+		return filepath.Clean(symlinkHeaders[i].name) < filepath.Clean(filepath.Join(filepath.Dir(symlinkHeaders[j].name), symlinkHeaders[j].linkname))
+	})
+
 	for _, h := range symlinkHeaders {
 		// Check to see if the file that will be linked to is valid for symlinking
 		_, err := filepath.EvalSymlinks(filepath.Join(filepath.Dir(h.path), h.linkname))
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to evaluate symlink %s: %w", h.path, err)
 		}
 
 		// Check that the file being symlinked to is inside the destination
@@ -303,6 +327,8 @@ func NewZipArchive(inputReader io.Reader) ZipArchive {
 // Decompress reads from ZipArchive and writes files into the destination
 // specified.
 func (z ZipArchive) Decompress(destination string) error {
+	// Struct and slice to collect symlinks and create them after all files have
+	// been created
 	type header struct {
 		name     string
 		linkname string
@@ -328,6 +354,11 @@ func (z ZipArchive) Decompress(destination string) error {
 	}
 
 	for _, f := range zr.File {
+		// Skip if the destination it the destination directory itself i.e. ./
+		if f.Name == "."+string(filepath.Separator) {
+			continue
+		}
+
 		err = checkExtractPath(f.Name, destination)
 		if err != nil {
 			return err
@@ -385,11 +416,27 @@ func (z ZipArchive) Decompress(destination string) error {
 		}
 	}
 
+	// Sort the symlinks so that symlinks of symlinks have their base link
+	// created before they are created.
+	//
+	// For example:
+	// b-sym -> a-sym/file
+	// a-sym -> dir
+	// c-sym -> a-sym/other-file
+	//
+	// Will sort to:
+	// a-sym -> dir
+	// b-sym -> a-sym/file
+	// c-sym -> a-sym/other-file
+	sort.Slice(symlinkHeaders, func(i, j int) bool {
+		return filepath.Clean(symlinkHeaders[i].name) < filepath.Clean(filepath.Join(filepath.Dir(symlinkHeaders[j].name), symlinkHeaders[j].linkname))
+	})
+
 	for _, h := range symlinkHeaders {
 		// Check to see if the file that will be linked to is valid for symlinking
 		_, err := filepath.EvalSymlinks(filepath.Join(filepath.Dir(h.path), h.linkname))
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to evaluate symlink %s: %w", h.path, err)
 		}
 
 		// Check that the file being symlinked to is inside the destination
