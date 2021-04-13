@@ -41,6 +41,10 @@ func testVacationTar(t *testing.T, context spec.G, it spec.S) {
 			_, err = tw.Write(nil)
 			Expect(err).NotTo(HaveOccurred())
 
+			Expect(tw.WriteHeader(&tar.Header{Name: "symlink", Mode: 0755, Size: int64(0), Typeflag: tar.TypeSymlink, Linkname: "first"})).To(Succeed())
+			_, err = tw.Write([]byte{})
+			Expect(err).NotTo(HaveOccurred())
+
 			nestedFile := filepath.Join("some-dir", "some-other-dir", "some-file")
 			Expect(tw.WriteHeader(&tar.Header{Name: nestedFile, Mode: 0755, Size: int64(len(nestedFile))})).To(Succeed())
 			_, err = tw.Write([]byte(nestedFile))
@@ -51,10 +55,6 @@ func testVacationTar(t *testing.T, context spec.G, it spec.S) {
 				_, err = tw.Write([]byte(file))
 				Expect(err).NotTo(HaveOccurred())
 			}
-
-			Expect(tw.WriteHeader(&tar.Header{Name: "symlink", Mode: 0755, Size: int64(0), Typeflag: tar.TypeSymlink, Linkname: "first"})).To(Succeed())
-			_, err = tw.Write([]byte{})
-			Expect(err).NotTo(HaveOccurred())
 
 			Expect(tw.Close()).To(Succeed())
 
@@ -143,6 +143,29 @@ func testVacationTar(t *testing.T, context spec.G, it spec.S) {
 		})
 
 		context("failure cases", func() {
+			context("when a file is not inside of the destination director (Zip Slip)", func() {
+				it.Before(func() {
+					var err error
+
+					buffer := bytes.NewBuffer(nil)
+					tw := tar.NewWriter(buffer)
+
+					nestedFile := filepath.Join("..", "some-dir", "some-other-dir", "some-file")
+					Expect(tw.WriteHeader(&tar.Header{Name: nestedFile, Mode: 0755, Size: int64(len(nestedFile))})).To(Succeed())
+					_, err = tw.Write([]byte(nestedFile))
+					Expect(err).NotTo(HaveOccurred())
+
+					Expect(tw.Close()).To(Succeed())
+
+					tarArchive = vacation.NewTarArchive(bytes.NewReader(buffer.Bytes()))
+				})
+
+				it("returns an error", func() {
+					err := tarArchive.Decompress(tempDir)
+					Expect(err).To(MatchError(ContainSubstring(fmt.Sprintf("illegal file path %q: the file path does not occur within the destination directory", filepath.Join("..", "some-dir", "some-other-dir", "some-file")))))
+				})
+			})
+
 			context("when it fails to read the tar response", func() {
 				it("returns an error", func() {
 					readyArchive := vacation.NewTarArchive(bytes.NewBuffer([]byte(`something`)))
@@ -166,7 +189,7 @@ func testVacationTar(t *testing.T, context spec.G, it spec.S) {
 					Expect(err).To(MatchError(ContainSubstring("failed to create archived directory")))
 				})
 
-				context("there are no directory headers", func() {
+				context("when there are no directory headers", func() {
 					it.Before(func() {
 						var err error
 
@@ -206,7 +229,58 @@ func testVacationTar(t *testing.T, context spec.G, it spec.S) {
 				})
 			})
 
-			context("when it tries to decompress a broken symlink", func() {
+			context("when it tries to symlink to a file that does not exist", func() {
+				var zipSlipSymlinkTar vacation.TarArchive
+
+				it.Before(func() {
+					var err error
+
+					buffer := bytes.NewBuffer(nil)
+					tw := tar.NewWriter(buffer)
+
+					Expect(tw.WriteHeader(&tar.Header{Name: "symlink", Mode: 0755, Size: int64(0), Typeflag: tar.TypeSymlink, Linkname: filepath.Join("..", "some-file")})).To(Succeed())
+					_, err = tw.Write([]byte{})
+					Expect(err).NotTo(HaveOccurred())
+
+					Expect(tw.Close()).To(Succeed())
+
+					zipSlipSymlinkTar = vacation.NewTarArchive(bytes.NewReader(buffer.Bytes()))
+				})
+
+				it("returns an error", func() {
+					err := zipSlipSymlinkTar.Decompress(tempDir)
+					Expect(err).To(MatchError(ContainSubstring("no such file or directory")))
+				})
+			})
+
+			context("when it tries to symlink that tries to link to a file outside of the directory", func() {
+				var zipSlipSymlinkTar vacation.TarArchive
+
+				it.Before(func() {
+					var err error
+
+					Expect(os.MkdirAll(filepath.Join(tempDir, "sub-dir"), os.ModePerm)).To(Succeed())
+					Expect(os.WriteFile(filepath.Join(tempDir, "some-file"), nil, 0644)).To(Succeed())
+
+					buffer := bytes.NewBuffer(nil)
+					tw := tar.NewWriter(buffer)
+
+					Expect(tw.WriteHeader(&tar.Header{Name: "symlink", Mode: 0755, Size: int64(0), Typeflag: tar.TypeSymlink, Linkname: filepath.Join("..", "some-file")})).To(Succeed())
+					_, err = tw.Write([]byte{})
+					Expect(err).NotTo(HaveOccurred())
+
+					Expect(tw.Close()).To(Succeed())
+
+					zipSlipSymlinkTar = vacation.NewTarArchive(bytes.NewReader(buffer.Bytes()))
+				})
+
+				it("returns an error", func() {
+					err := zipSlipSymlinkTar.Decompress(filepath.Join(tempDir, "sub-dir"))
+					Expect(err).To(MatchError(ContainSubstring(fmt.Sprintf("illegal file path %q: the file path does not occur within the destination directory", filepath.Join("..", "some-file")))))
+				})
+			})
+
+			context("when the symlink creation fails", func() {
 				var brokenSymlinkTar vacation.TarArchive
 
 				it.Before(func() {
@@ -215,11 +289,16 @@ func testVacationTar(t *testing.T, context spec.G, it spec.S) {
 					buffer := bytes.NewBuffer(nil)
 					tw := tar.NewWriter(buffer)
 
-					Expect(tw.WriteHeader(&tar.Header{Name: "symlink", Mode: 0755, Size: int64(0), Typeflag: tar.TypeSymlink, Linkname: ""})).To(Succeed())
+					Expect(tw.WriteHeader(&tar.Header{Name: "symlink", Mode: 0755, Size: int64(0), Typeflag: tar.TypeSymlink, Linkname: "some-file"})).To(Succeed())
 					_, err = tw.Write([]byte{})
 					Expect(err).NotTo(HaveOccurred())
 
 					Expect(tw.Close()).To(Succeed())
+
+					// Create a symlink in the target to force the new symlink create to
+					// fail
+					Expect(os.WriteFile(filepath.Join(tempDir, "some-file"), nil, 0644)).To(Succeed())
+					Expect(os.Symlink("some-file", filepath.Join(tempDir, "symlink"))).To(Succeed())
 
 					brokenSymlinkTar = vacation.NewTarArchive(bytes.NewReader(buffer.Bytes()))
 				})

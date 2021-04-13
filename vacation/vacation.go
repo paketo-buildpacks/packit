@@ -75,6 +75,14 @@ func (ta TarArchive) Decompress(destination string) error {
 	// metadata.
 	directories := map[string]interface{}{}
 
+	type header struct {
+		name     string
+		linkname string
+		path     string
+	}
+
+	var symlinkHeaders []header
+
 	tarReader := tar.NewReader(ta.reader)
 	for {
 		hdr, err := tarReader.Next()
@@ -83,6 +91,11 @@ func (ta TarArchive) Decompress(destination string) error {
 		}
 		if err != nil {
 			return fmt.Errorf("failed to read tar response: %s", err)
+		}
+
+		err = checkExtractPath(hdr.Name, destination)
+		if err != nil {
+			return err
 		}
 
 		fileNames := strings.Split(hdr.Name, string(filepath.Separator))
@@ -137,10 +150,33 @@ func (ta TarArchive) Decompress(destination string) error {
 			}
 
 		case tar.TypeSymlink:
-			err = os.Symlink(hdr.Linkname, path)
-			if err != nil {
-				return fmt.Errorf("failed to extract symlink: %s", err)
-			}
+			// Collect all of the headers for symlinks so that they can be verified
+			// after all other files are written
+			symlinkHeaders = append(symlinkHeaders, header{
+				name:     hdr.Name,
+				linkname: hdr.Linkname,
+				path:     path,
+			})
+		}
+	}
+
+	for _, h := range symlinkHeaders {
+		// Check to see if the file that will be linked to is valid for symlinking
+		_, err := filepath.EvalSymlinks(filepath.Join(filepath.Dir(h.path), h.linkname))
+		if err != nil {
+			return err
+		}
+
+		// Check that the file being symlinked to is inside the destination
+		// directory
+		err = checkExtractPath(filepath.Join(filepath.Dir(h.name), h.linkname), destination)
+		if err != nil {
+			return err
+		}
+
+		err = os.Symlink(h.linkname, h.path)
+		if err != nil {
+			return fmt.Errorf("failed to extract symlink: %s", err)
 		}
 	}
 
@@ -267,6 +303,14 @@ func NewZipArchive(inputReader io.Reader) ZipArchive {
 // Decompress reads from ZipArchive and writes files into the destination
 // specified.
 func (z ZipArchive) Decompress(destination string) error {
+	type header struct {
+		name     string
+		linkname string
+		path     string
+	}
+
+	var symlinkHeaders []header
+
 	// Have to convert an io.Reader into a bytes.Reader which implements the
 	// ReadAt function making it compatible with the io.ReaderAt inteface which
 	// required for zip.NewReader
@@ -284,6 +328,11 @@ func (z ZipArchive) Decompress(destination string) error {
 	}
 
 	for _, f := range zr.File {
+		err = checkExtractPath(f.Name, destination)
+		if err != nil {
+			return err
+		}
+
 		path := filepath.Join(destination, f.Name)
 
 		switch {
@@ -298,15 +347,19 @@ func (z ZipArchive) Decompress(destination string) error {
 				return err
 			}
 
-			content, err := io.ReadAll(fd)
+			linkname, err := io.ReadAll(fd)
 			if err != nil {
 				return err
 			}
 
-			err = os.Symlink(string(content), path)
-			if err != nil {
-				return fmt.Errorf("failed to unzip symlink: %w", err)
-			}
+			// Collect all of the headers for symlinks so that they can be verified
+			// after all other files are written
+			symlinkHeaders = append(symlinkHeaders, header{
+				name:     f.Name,
+				linkname: string(linkname),
+				path:     path,
+			})
+
 		default:
 			err = os.MkdirAll(filepath.Dir(path), os.ModePerm)
 			if err != nil {
@@ -332,5 +385,35 @@ func (z ZipArchive) Decompress(destination string) error {
 		}
 	}
 
+	for _, h := range symlinkHeaders {
+		// Check to see if the file that will be linked to is valid for symlinking
+		_, err := filepath.EvalSymlinks(filepath.Join(filepath.Dir(h.path), h.linkname))
+		if err != nil {
+			return err
+		}
+
+		// Check that the file being symlinked to is inside the destination
+		// directory
+		err = checkExtractPath(filepath.Join(filepath.Dir(h.name), h.linkname), destination)
+		if err != nil {
+			return err
+		}
+
+		err = os.Symlink(h.linkname, h.path)
+		if err != nil {
+			return fmt.Errorf("failed to unzip symlink: %w", err)
+		}
+	}
+
+	return nil
+}
+
+// This function checks to see that the given path is within the destination
+// directory
+func checkExtractPath(filePath string, destination string) error {
+	destpath := filepath.Join(destination, filePath)
+	if !strings.HasPrefix(destpath, filepath.Clean(destination)+string(os.PathSeparator)) {
+		return fmt.Errorf("illegal file path %q: the file path does not occur within the destination directory", filePath)
+	}
 	return nil
 }

@@ -350,10 +350,8 @@ version = "this is super not semver"
 			linkName := "./symlink"
 			linkDest := "./first"
 			Expect(tw.WriteHeader(&tar.Header{Name: linkName, Mode: 0777, Size: int64(0), Typeflag: tar.TypeSymlink, Linkname: linkDest})).To(Succeed())
-			// what does a sylink actually look like??
 			_, err = tw.Write([]byte{})
 			Expect(err).NotTo(HaveOccurred())
-			// add a symlink header
 
 			Expect(tw.Close()).To(Succeed())
 			Expect(zw.Close()).To(Succeed())
@@ -546,15 +544,16 @@ version = "this is super not semver"
 					zw := gzip.NewWriter(buffer)
 					tw := tar.NewWriter(zw)
 
-					linkName := "./symlink"
-					Expect(tw.WriteHeader(&tar.Header{Name: linkName, Mode: 0777, Size: int64(0), Typeflag: tar.TypeSymlink, Linkname: ""})).To(Succeed())
-					// what does a sylink actually look like??
+					linkName := "symlink"
+					Expect(tw.WriteHeader(&tar.Header{Name: linkName, Mode: 0777, Size: int64(0), Typeflag: tar.TypeSymlink, Linkname: "some-file"})).To(Succeed())
 					_, err := tw.Write([]byte{})
 					Expect(err).NotTo(HaveOccurred())
-					// add a symlink header
 
 					Expect(tw.Close()).To(Succeed())
 					Expect(zw.Close()).To(Succeed())
+
+					Expect(os.WriteFile(filepath.Join(layerPath, "some-file"), nil, 0644)).To(Succeed())
+					Expect(os.Symlink("some-file", filepath.Join(layerPath, "symlink"))).To(Succeed())
 
 					sum := sha256.Sum256(buffer.Bytes())
 					dependencySHA = hex.EncodeToString(sum[:])
@@ -605,10 +604,8 @@ version = "this is super not semver"
 			linkName := "./symlink"
 			linkDest := "./first"
 			Expect(tw.WriteHeader(&tar.Header{Name: linkName, Mode: 0777, Size: int64(0), Typeflag: tar.TypeSymlink, Linkname: linkDest})).To(Succeed())
-			// what does a sylink actually look like??
 			_, err = tw.Write([]byte{})
 			Expect(err).NotTo(HaveOccurred())
-			// add a symlink header
 
 			Expect(tw.Close()).To(Succeed())
 			Expect(zw.Close()).To(Succeed())
@@ -799,15 +796,16 @@ version = "this is super not semver"
 					zw := gzip.NewWriter(buffer)
 					tw := tar.NewWriter(zw)
 
-					linkName := "./symlink"
-					Expect(tw.WriteHeader(&tar.Header{Name: linkName, Mode: 0777, Size: int64(0), Typeflag: tar.TypeSymlink, Linkname: ""})).To(Succeed())
-					// what does a sylink actually look like??
+					linkName := "symlink"
+					Expect(tw.WriteHeader(&tar.Header{Name: linkName, Mode: 0777, Size: int64(0), Typeflag: tar.TypeSymlink, Linkname: "some-file"})).To(Succeed())
 					_, err := tw.Write([]byte{})
 					Expect(err).NotTo(HaveOccurred())
-					// add a symlink header
 
 					Expect(tw.Close()).To(Succeed())
 					Expect(zw.Close()).To(Succeed())
+
+					Expect(os.WriteFile(filepath.Join(layerPath, "some-file"), nil, 0644)).To(Succeed())
+					Expect(os.Symlink("some-file", filepath.Join(layerPath, "symlink"))).To(Succeed())
 
 					sum := sha256.Sum256(buffer.Bytes())
 					dependencySHA = hex.EncodeToString(sum[:])

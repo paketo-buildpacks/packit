@@ -51,9 +51,14 @@ func updateBuilderRun(flags updateBuilderFlags) error {
 		builder.Buildpacks[i].Version = image.Version
 		builder.Buildpacks[i].URI = fmt.Sprintf("%s:%s", image.Name, image.Version)
 
+		buildpackageID, err := internal.GetBuildpackageID(buildpack.URI)
+		if err != nil {
+			return fmt.Errorf("failed to get buildpackage ID for %s: %w", buildpack.URI, err)
+		}
+
 		for j, order := range builder.Order {
 			for k, group := range order.Group {
-				if group.ID == image.Path {
+				if group.ID == buildpackageID {
 					if builder.Order[j].Group[k].Version != "" {
 						builder.Order[j].Group[k].Version = image.Version
 					}
