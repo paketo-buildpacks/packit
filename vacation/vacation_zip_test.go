@@ -228,38 +228,6 @@ func testVacationZip(t *testing.T, context spec.G, it spec.S) {
 				})
 			})
 
-			// context("when it tries to symlink that tries to link to a file outside of the directory", func() {
-			// 	var buffer *bytes.Buffer
-			// 	it.Before(func() {
-			// 		var err error
-
-			// 		Expect(os.MkdirAll(filepath.Join(tempDir, "sub-dir"), os.ModePerm)).To(Succeed())
-			// 		Expect(os.WriteFile(filepath.Join(tempDir, "some-file"), nil, 0644)).To(Succeed())
-
-			// 		buffer = bytes.NewBuffer(nil)
-			// 		zw := zip.NewWriter(buffer)
-
-			// 		header := &zip.FileHeader{Name: "symlink"}
-			// 		header.SetMode(0755 | os.ModeSymlink)
-
-			// 		symlink, err := zw.CreateHeader(header)
-			// 		Expect(err).NotTo(HaveOccurred())
-
-			// 		_, err = symlink.Write([]byte(filepath.Join("..", "some-file")))
-			// 		Expect(err).NotTo(HaveOccurred())
-
-			// 		Expect(zw.Close()).To(Succeed())
-
-			// 	})
-
-			// 	it("returns an error", func() {
-			// 		readyArchive := vacation.NewZipArchive(buffer)
-
-			// 		err := readyArchive.Decompress(filepath.Join(tempDir, "sub-dir"))
-			// 		Expect(err).To(MatchError(ContainSubstring(fmt.Sprintf("illegal file path %q: the file path does not occur within the destination directory", filepath.Join("..", "some-file")))))
-			// 	})
-			// })
-
 			context("when the symlink creation fails", func() {
 				var buffer *bytes.Buffer
 				it.Before(func() {
