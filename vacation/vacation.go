@@ -201,12 +201,11 @@ func (ta TarArchive) Decompress(destination string) error {
 			return fmt.Errorf("failed to evaluate symlink %s: %w", h.path, err)
 		}
 
-		// Check that the file being symlinked to is inside the destination
-		// directory
-		err = checkExtractPath(linknameFullPath(h.name, h.linkname), destination)
-		if err != nil {
-			return err
-		}
+		// // Check that the symlink is inside the destination directory
+		// err = checkExtractPath(h.name, destination)
+		// if err != nil {
+		// 	return err
+		// }
 
 		err = os.Symlink(h.linkname, h.path)
 		if err != nil {
@@ -459,12 +458,11 @@ func (z ZipArchive) Decompress(destination string) error {
 			return fmt.Errorf("failed to evaluate symlink %s: %w", h.path, err)
 		}
 
-		// Check that the file being symlinked to is inside the destination
-		// directory
-		err = checkExtractPath(linknameFullPath(h.name, h.linkname), destination)
-		if err != nil {
-			return err
-		}
+		// // Check that the symlink is inside the destination directory
+		// err = checkExtractPath(h.name, destination)
+		// if err != nil {
+		// 	return err
+		// }
 
 		err = os.Symlink(h.linkname, h.path)
 		if err != nil {
