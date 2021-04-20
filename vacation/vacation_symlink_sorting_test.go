@@ -38,6 +38,14 @@ func testVacationSymlinkSorting(t *testing.T, context spec.G, it spec.S) {
 			_, err = tw.Write([]byte{})
 			Expect(err).NotTo(HaveOccurred())
 
+			Expect(tw.WriteHeader(&tar.Header{Name: "c-symlink", Mode: 0755, Size: int64(0), Typeflag: tar.TypeSymlink, Linkname: "d-symlink"})).To(Succeed())
+			_, err = tw.Write([]byte{})
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(tw.WriteHeader(&tar.Header{Name: "d-symlink", Mode: 0755, Size: int64(0), Typeflag: tar.TypeSymlink, Linkname: "z"})).To(Succeed())
+			_, err = tw.Write([]byte{})
+			Expect(err).NotTo(HaveOccurred())
+
 			Expect(tw.WriteHeader(&tar.Header{Name: "a-symlink", Mode: 0755, Size: int64(0), Typeflag: tar.TypeSymlink, Linkname: "z"})).To(Succeed())
 			_, err = tw.Write([]byte{})
 			Expect(err).NotTo(HaveOccurred())
@@ -71,12 +79,22 @@ func testVacationSymlinkSorting(t *testing.T, context spec.G, it spec.S) {
 				filepath.Join(tempDir, "a-symlink"),
 				filepath.Join(tempDir, "b-symlink"),
 				filepath.Join(tempDir, "z"),
+				filepath.Join(tempDir, "d-symlink"),
+				filepath.Join(tempDir, "c-symlink"),
 			}))
 
 			Expect(filepath.Join(tempDir, "z")).To(BeADirectory())
 			Expect(filepath.Join(tempDir, "z", "x")).To(BeARegularFile())
 
 			link, err := os.Readlink(filepath.Join(tempDir, "a-symlink"))
+			Expect(err).NotTo(HaveOccurred())
+			Expect(link).To(Equal("z"))
+
+			link, err = os.Readlink(filepath.Join(tempDir, "c-symlink"))
+			Expect(err).NotTo(HaveOccurred())
+			Expect(link).To(Equal("d-symlink"))
+
+			link, err = os.Readlink(filepath.Join(tempDir, "d-symlink"))
 			Expect(err).NotTo(HaveOccurred())
 			Expect(link).To(Equal("z"))
 
@@ -107,6 +125,24 @@ func testVacationSymlinkSorting(t *testing.T, context spec.G, it spec.S) {
 			Expect(err).NotTo(HaveOccurred())
 
 			_, err = bSymlink.Write([]byte(filepath.Join("a-symlink", "x")))
+			Expect(err).NotTo(HaveOccurred())
+
+			fileHeader = &zip.FileHeader{Name: "c-symlink"}
+			fileHeader.SetMode(0755 | os.ModeSymlink)
+
+			cSymlink, err := zw.CreateHeader(fileHeader)
+			Expect(err).NotTo(HaveOccurred())
+
+			_, err = cSymlink.Write([]byte(`d-symlink`))
+			Expect(err).NotTo(HaveOccurred())
+
+			fileHeader = &zip.FileHeader{Name: "d-symlink"}
+			fileHeader.SetMode(0755 | os.ModeSymlink)
+
+			dSymlink, err := zw.CreateHeader(fileHeader)
+			Expect(err).NotTo(HaveOccurred())
+
+			_, err = dSymlink.Write([]byte(`z`))
 			Expect(err).NotTo(HaveOccurred())
 
 			fileHeader = &zip.FileHeader{Name: "a-symlink"}
@@ -150,12 +186,22 @@ func testVacationSymlinkSorting(t *testing.T, context spec.G, it spec.S) {
 				filepath.Join(tempDir, "a-symlink"),
 				filepath.Join(tempDir, "b-symlink"),
 				filepath.Join(tempDir, "z"),
+				filepath.Join(tempDir, "d-symlink"),
+				filepath.Join(tempDir, "c-symlink"),
 			}))
 
 			Expect(filepath.Join(tempDir, "z")).To(BeADirectory())
 			Expect(filepath.Join(tempDir, "z", "x")).To(BeARegularFile())
 
 			link, err := os.Readlink(filepath.Join(tempDir, "a-symlink"))
+			Expect(err).NotTo(HaveOccurred())
+			Expect(link).To(Equal("z"))
+
+			link, err = os.Readlink(filepath.Join(tempDir, "c-symlink"))
+			Expect(err).NotTo(HaveOccurred())
+			Expect(link).To(Equal("d-symlink"))
+
+			link, err = os.Readlink(filepath.Join(tempDir, "d-symlink"))
 			Expect(err).NotTo(HaveOccurred())
 			Expect(link).To(Equal("z"))
 
