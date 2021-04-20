@@ -172,28 +172,38 @@ func (ta TarArchive) Decompress(destination string) error {
 	// created before they are created.
 	//
 	// For example:
-	// b-sym -> a-sym/file
-	// a-sym -> dir
-	// c-sym -> a-sym/other-file
+	// b-sym -> a-sym/x
+	// a-sym -> z
+	// c-sym -> d-sym
+	// d-sym -> z
 	//
 	// Will sort to:
-	// a-sym -> dir
-	// b-sym -> a-sym/file
-	// c-sym -> a-sym/other-file
+	// a-sym -> z
+	// b-sym -> a-sym/x
+	// d-sym -> z
+	// c-sym -> d-sym
 	sort.Slice(symlinkHeaders, func(i, j int) bool {
-		return filepath.Clean(symlinkHeaders[i].name) < filepath.Clean(filepath.Join(filepath.Dir(symlinkHeaders[j].name), symlinkHeaders[j].linkname))
+		if filepath.Clean(symlinkHeaders[i].name) == linknameFullPath(symlinkHeaders[j].name, symlinkHeaders[j].linkname) {
+			return true
+		}
+
+		if filepath.Clean(symlinkHeaders[j].name) == linknameFullPath(symlinkHeaders[i].name, symlinkHeaders[i].linkname) {
+			return false
+		}
+
+		return filepath.Clean(symlinkHeaders[i].name) < linknameFullPath(symlinkHeaders[j].name, symlinkHeaders[j].linkname)
 	})
 
 	for _, h := range symlinkHeaders {
 		// Check to see if the file that will be linked to is valid for symlinking
-		_, err := filepath.EvalSymlinks(filepath.Join(filepath.Dir(h.path), h.linkname))
+		_, err := filepath.EvalSymlinks(linknameFullPath(h.path, h.linkname))
 		if err != nil {
 			return fmt.Errorf("failed to evaluate symlink %s: %w", h.path, err)
 		}
 
 		// Check that the file being symlinked to is inside the destination
 		// directory
-		err = checkExtractPath(filepath.Join(filepath.Dir(h.name), h.linkname), destination)
+		err = checkExtractPath(linknameFullPath(h.name, h.linkname), destination)
 		if err != nil {
 			return err
 		}
@@ -420,28 +430,38 @@ func (z ZipArchive) Decompress(destination string) error {
 	// created before they are created.
 	//
 	// For example:
-	// b-sym -> a-sym/file
-	// a-sym -> dir
-	// c-sym -> a-sym/other-file
+	// b-sym -> a-sym/x
+	// a-sym -> z
+	// c-sym -> d-sym
+	// d-sym -> z
 	//
 	// Will sort to:
-	// a-sym -> dir
-	// b-sym -> a-sym/file
-	// c-sym -> a-sym/other-file
+	// a-sym -> z
+	// b-sym -> a-sym/x
+	// d-sym -> z
+	// c-sym -> d-sym
 	sort.Slice(symlinkHeaders, func(i, j int) bool {
-		return filepath.Clean(symlinkHeaders[i].name) < filepath.Clean(filepath.Join(filepath.Dir(symlinkHeaders[j].name), symlinkHeaders[j].linkname))
+		if filepath.Clean(symlinkHeaders[i].name) == linknameFullPath(symlinkHeaders[j].name, symlinkHeaders[j].linkname) {
+			return true
+		}
+
+		if filepath.Clean(symlinkHeaders[j].name) == linknameFullPath(symlinkHeaders[i].name, symlinkHeaders[i].linkname) {
+			return false
+		}
+
+		return filepath.Clean(symlinkHeaders[i].name) < linknameFullPath(symlinkHeaders[j].name, symlinkHeaders[j].linkname)
 	})
 
 	for _, h := range symlinkHeaders {
 		// Check to see if the file that will be linked to is valid for symlinking
-		_, err := filepath.EvalSymlinks(filepath.Join(filepath.Dir(h.path), h.linkname))
+		_, err := filepath.EvalSymlinks(linknameFullPath(h.path, h.linkname))
 		if err != nil {
 			return fmt.Errorf("failed to evaluate symlink %s: %w", h.path, err)
 		}
 
 		// Check that the file being symlinked to is inside the destination
 		// directory
-		err = checkExtractPath(filepath.Join(filepath.Dir(h.name), h.linkname), destination)
+		err = checkExtractPath(linknameFullPath(h.name, h.linkname), destination)
 		if err != nil {
 			return err
 		}
@@ -463,4 +483,9 @@ func checkExtractPath(filePath string, destination string) error {
 		return fmt.Errorf("illegal file path %q: the file path does not occur within the destination directory", filePath)
 	}
 	return nil
+}
+
+// Generates the full path for a symlink from the linkname and the symlink path
+func linknameFullPath(path, linkname string) string {
+	return filepath.Clean(filepath.Join(filepath.Dir(path), linkname))
 }
