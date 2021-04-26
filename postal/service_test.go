@@ -82,6 +82,7 @@ sha256 = "some-sha"
 stacks = ["some-stack"]
 uri = "some-uri"
 version = "4.5.6"
+strip-components = 1
 `)
 		Expect(err).NotTo(HaveOccurred())
 
@@ -119,11 +120,12 @@ version = "4.5.6"
 					dependency, err := service.Resolve(path, "some-entry", "", "some-stack")
 					Expect(err).NotTo(HaveOccurred())
 					Expect(dependency).To(Equal(postal.Dependency{
-						ID:      "some-entry",
-						Stacks:  []string{"some-stack"},
-						URI:     "some-uri",
-						SHA256:  "some-sha",
-						Version: "4.5.6",
+						ID:              "some-entry",
+						Stacks:          []string{"some-stack"},
+						URI:             "some-uri",
+						SHA256:          "some-sha",
+						Version:         "4.5.6",
+						StripComponents: 1,
 					}))
 				})
 			})
@@ -133,11 +135,12 @@ version = "4.5.6"
 					dependency, err := service.Resolve(path, "some-entry", "default", "some-stack")
 					Expect(err).NotTo(HaveOccurred())
 					Expect(dependency).To(Equal(postal.Dependency{
-						ID:      "some-entry",
-						Stacks:  []string{"some-stack"},
-						URI:     "some-uri",
-						SHA256:  "some-sha",
-						Version: "4.5.6",
+						ID:              "some-entry",
+						Stacks:          []string{"some-stack"},
+						URI:             "some-uri",
+						SHA256:          "some-sha",
+						Version:         "4.5.6",
+						StripComponents: 1,
 					}))
 				})
 			})
@@ -400,6 +403,90 @@ version = "this is super not semver"
 			info, err := os.Stat(filepath.Join(layerPath, "first"))
 			Expect(err).NotTo(HaveOccurred())
 			Expect(info.Mode()).To(Equal(os.FileMode(0755)))
+		})
+		context("when the dependency has a strip-components value set", func() {
+			it.Before(func() {
+				var err error
+				layerPath, err = os.MkdirTemp("", "path")
+				Expect(err).NotTo(HaveOccurred())
+
+				buffer := bytes.NewBuffer(nil)
+				zw := gzip.NewWriter(buffer)
+				tw := tar.NewWriter(zw)
+
+				Expect(tw.WriteHeader(&tar.Header{Name: "some-dir", Mode: 0755, Typeflag: tar.TypeDir})).To(Succeed())
+				_, err = tw.Write(nil)
+				Expect(err).NotTo(HaveOccurred())
+
+				nestedFile := "some-dir/some-file"
+				Expect(tw.WriteHeader(&tar.Header{Name: nestedFile, Mode: 0755, Size: int64(len(nestedFile))})).To(Succeed())
+				_, err = tw.Write([]byte(nestedFile))
+				Expect(err).NotTo(HaveOccurred())
+
+				for _, file := range []string{"some-dir/first", "some-dir/second", "some-dir/third"} {
+					Expect(tw.WriteHeader(&tar.Header{Name: file, Mode: 0755, Size: int64(len(file))})).To(Succeed())
+					_, err = tw.Write([]byte(file))
+					Expect(err).NotTo(HaveOccurred())
+				}
+
+				linkName := "some-dir/symlink"
+				linkDest := "./first"
+				Expect(tw.WriteHeader(&tar.Header{Name: linkName, Mode: 0777, Size: int64(0), Typeflag: tar.TypeSymlink, Linkname: linkDest})).To(Succeed())
+				// what does a sylink actually look like??
+				_, err = tw.Write([]byte{})
+				Expect(err).NotTo(HaveOccurred())
+				// add a symlink header
+
+				Expect(tw.Close()).To(Succeed())
+				Expect(zw.Close()).To(Succeed())
+
+				sum := sha256.Sum256(buffer.Bytes())
+				dependencySHA = hex.EncodeToString(sum[:])
+
+				transport.DropCall.Returns.ReadCloser = io.NopCloser(buffer)
+
+				deliver = func() error {
+					return service.Deliver(postal.Dependency{
+						ID:              "some-entry",
+						Stacks:          []string{"some-stack"},
+						URI:             "some-entry.tgz",
+						SHA256:          dependencySHA,
+						Version:         "1.2.3",
+						StripComponents: 1,
+					}, "some-cnb-path",
+						layerPath,
+						platformPath,
+					)
+				}
+			})
+
+			it.After(func() {
+				Expect(os.RemoveAll(layerPath)).To(Succeed())
+			})
+
+			it("downloads the dependency, strips given number of componenets and unpackages it into the path", func() {
+				err := deliver()
+
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(transport.DropCall.Receives.Root).To(Equal("some-cnb-path"))
+				Expect(transport.DropCall.Receives.Uri).To(Equal("some-entry.tgz"))
+
+				files, err := filepath.Glob(fmt.Sprintf("%s/*", layerPath))
+				Expect(err).NotTo(HaveOccurred())
+				Expect(files).To(ConsistOf([]string{
+					filepath.Join(layerPath, "first"),
+					filepath.Join(layerPath, "second"),
+					filepath.Join(layerPath, "third"),
+					filepath.Join(layerPath, "symlink"),
+					filepath.Join(layerPath, "some-file"),
+				}))
+
+				info, err := os.Stat(filepath.Join(layerPath, "first"))
+				Expect(err).NotTo(HaveOccurred())
+				Expect(info.Mode()).To(Equal(os.FileMode(0755)))
+			})
+
 		})
 
 		context("when there is a dependency mapping via binding", func() {
