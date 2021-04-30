@@ -100,3 +100,36 @@ func (e Emitter) LaunchProcesses(processes []packit.Process) {
 	}
 	e.Break()
 }
+
+func (e Emitter) EnvironmentVariables(layer packit.Layer) {
+	buildEnv := packit.Environment{}
+	launchEnv := packit.Environment{}
+
+	// Makes deep local copy of the env map on the layer
+	for key, value := range layer.BuildEnv {
+		buildEnv[key] = value
+	}
+
+	for key, value := range layer.LaunchEnv {
+		launchEnv[key] = value
+	}
+
+	// Merge the shared env map with the launch and build to remove CNB spec
+	// specific terminiology from the output
+	for key, value := range layer.SharedEnv {
+		buildEnv[key] = value
+		launchEnv[key] = value
+	}
+
+	if len(buildEnv) != 0 {
+		e.Process("Configuring build environment")
+		e.Subprocess("%s", NewFormattedMapFromEnvironment(buildEnv))
+		e.Break()
+	}
+
+	if len(launchEnv) != 0 {
+		e.Process("Configuring launch environment")
+		e.Subprocess("%s", NewFormattedMapFromEnvironment(launchEnv))
+		e.Break()
+	}
+}
