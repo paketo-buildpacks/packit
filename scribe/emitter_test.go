@@ -47,8 +47,8 @@ func testEmitter(t *testing.T, context spec.G, it spec.S) {
 			}
 		})
 
-		it("prints details about the selected dependency", func() {
 
+		it("prints details about the selected dependency", func() {
 			emitter.SelectedDependency(entry, dependency, now)
 			Expect(buffer.String()).To(ContainLines(
 				"    Selected Some Dependency version (using some-source): some-version",
