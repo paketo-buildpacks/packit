@@ -86,7 +86,7 @@ Entries:
 	e.Break()
 }
 
-func (e Emitter) LaunchProcesses(processes []packit.Process) {
+func (e Emitter) LaunchProcesses(processes []packit.Process, processEnvs ...map[string]packit.Environment) {
 	e.Process("Assigning launch processes:")
 
 	for _, process := range processes {
@@ -97,6 +97,22 @@ func (e Emitter) LaunchProcesses(processes []packit.Process) {
 		}
 
 		e.Subprocess(p)
+
+		// This ensures that the process environment variable is always the same no
+		// matter the order of the process envs map list
+		processEnv := packit.Environment{}
+		for _, pEnvs := range processEnvs {
+			if env, ok := pEnvs[process.Type]; ok {
+				for key, value := range env {
+					processEnv[key] = value
+				}
+			}
+		}
+
+		if len(processEnv) != 0 {
+			e.Action("%s", NewFormattedMapFromEnvironment(processEnv))
+		}
+
 	}
 	e.Break()
 }
