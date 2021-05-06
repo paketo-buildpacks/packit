@@ -8,7 +8,6 @@ import (
 	"archive/tar"
 	"archive/zip"
 	"bufio"
-	"bytes"
 	"compress/gzip"
 	"fmt"
 	"io"
@@ -349,15 +348,18 @@ func (z ZipArchive) Decompress(destination string) error {
 	// Have to convert an io.Reader into a bytes.Reader which implements the
 	// ReadAt function making it compatible with the io.ReaderAt inteface which
 	// required for zip.NewReader
-	buff := bytes.NewBuffer(nil)
-	size, err := io.Copy(buff, z.reader)
+	buffer, err := os.CreateTemp("", "")
+	if err != nil {
+		return err
+	}
+	defer os.Remove(buffer.Name())
+
+	size, err := io.Copy(buffer, z.reader)
 	if err != nil {
 		return err
 	}
 
-	readerAt := bytes.NewReader(buff.Bytes())
-
-	zr, err := zip.NewReader(readerAt, size)
+	zr, err := zip.NewReader(buffer, size)
 	if err != nil {
 		return fmt.Errorf("failed to create zip reader: %w", err)
 	}
