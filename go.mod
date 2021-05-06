@@ -9,9 +9,7 @@ require (
 	github.com/docker/distribution v2.7.1+incompatible
 	github.com/gabriel-vasile/mimetype v1.2.0
 	github.com/google/go-containerregistry v0.5.0
-	github.com/nxadm/tail v1.4.5 // indirect
-	github.com/onsi/ginkgo v1.14.2 // indirect
-	github.com/onsi/gomega v1.11.0
+	github.com/onsi/gomega v1.12.0
 	github.com/pelletier/go-toml v1.9.0
 	github.com/sclevine/spec v1.4.0
 	github.com/spf13/cobra v1.1.3
