@@ -345,9 +345,9 @@ func (z ZipArchive) Decompress(destination string) error {
 
 	var symlinkHeaders []header
 
-	// Have to convert an io.Reader into a bytes.Reader which implements the
-	// ReadAt function making it compatible with the io.ReaderAt inteface which
-	// required for zip.NewReader
+	// Use an os.File to buffer the zip contents. This is needed because
+	// zip.NewReader requires an io.ReaderAt so that it can jump around within
+	// the file as it decompresses.
 	buffer, err := os.CreateTemp("", "")
 	if err != nil {
 		return err
