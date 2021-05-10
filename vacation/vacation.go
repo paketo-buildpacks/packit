@@ -13,7 +13,6 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"sort"
 	"strings"
 
 	"github.com/gabriel-vasile/mimetype"
@@ -166,32 +165,6 @@ func (ta TarArchive) Decompress(destination string) error {
 			})
 		}
 	}
-
-	// Sort the symlinks so that symlinks of symlinks have their base link
-	// created before they are created.
-	//
-	// For example:
-	// b-sym -> a-sym/x
-	// a-sym -> z
-	// c-sym -> d-sym
-	// d-sym -> z
-	//
-	// Will sort to:
-	// a-sym -> z
-	// b-sym -> a-sym/x
-	// d-sym -> z
-	// c-sym -> d-sym
-	sort.Slice(symlinkHeaders, func(i, j int) bool {
-		if filepath.Clean(symlinkHeaders[i].name) == linknameFullPath(symlinkHeaders[j].name, symlinkHeaders[j].linkname) {
-			return true
-		}
-
-		if filepath.Clean(symlinkHeaders[j].name) == linknameFullPath(symlinkHeaders[i].name, symlinkHeaders[i].linkname) {
-			return false
-		}
-
-		return filepath.Clean(symlinkHeaders[i].name) < linknameFullPath(symlinkHeaders[j].name, symlinkHeaders[j].linkname)
-	})
 
 	for _, h := range symlinkHeaders {
 		err := os.Symlink(h.linkname, h.path)
@@ -414,32 +387,6 @@ func (z ZipArchive) Decompress(destination string) error {
 			}
 		}
 	}
-
-	// Sort the symlinks so that symlinks of symlinks have their base link
-	// created before they are created.
-	//
-	// For example:
-	// b-sym -> a-sym/x
-	// a-sym -> z
-	// c-sym -> d-sym
-	// d-sym -> z
-	//
-	// Will sort to:
-	// a-sym -> z
-	// b-sym -> a-sym/x
-	// d-sym -> z
-	// c-sym -> d-sym
-	sort.Slice(symlinkHeaders, func(i, j int) bool {
-		if filepath.Clean(symlinkHeaders[i].name) == linknameFullPath(symlinkHeaders[j].name, symlinkHeaders[j].linkname) {
-			return true
-		}
-
-		if filepath.Clean(symlinkHeaders[j].name) == linknameFullPath(symlinkHeaders[i].name, symlinkHeaders[i].linkname) {
-			return false
-		}
-
-		return filepath.Clean(symlinkHeaders[i].name) < linknameFullPath(symlinkHeaders[j].name, symlinkHeaders[j].linkname)
-	})
 
 	for _, h := range symlinkHeaders {
 		err := os.Symlink(h.linkname, h.path)
