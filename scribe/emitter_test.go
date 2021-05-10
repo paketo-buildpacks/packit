@@ -47,8 +47,8 @@ func testEmitter(t *testing.T, context spec.G, it spec.S) {
 			}
 		})
 
-		it("prints details about the selected dependency", func() {
 
+		it("prints details about the selected dependency", func() {
 			emitter.SelectedDependency(entry, dependency, now)
 			Expect(buffer.String()).To(ContainLines(
 				"    Selected Some Dependency version (using some-source): some-version",
@@ -225,8 +225,10 @@ func testEmitter(t *testing.T, context spec.G, it spec.S) {
 	})
 
 	context("LaunchProcesses", func() {
-		it("prints a list of launch processes", func() {
-			emitter.LaunchProcesses([]packit.Process{
+		var processes []packit.Process
+
+		it.Before(func() {
+			processes = []packit.Process{
 				{
 					Type:    "some-type",
 					Command: "some-command",
@@ -240,7 +242,11 @@ func testEmitter(t *testing.T, context spec.G, it spec.S) {
 					Command: "some-other-command",
 					Args:    []string{"some", "args"},
 				},
-			})
+			}
+		})
+
+		it("prints a list of launch processes", func() {
+			emitter.LaunchProcesses(processes)
 
 			Expect(buffer.String()).To(ContainLines(
 				"  Assigning launch processes:",
@@ -249,6 +255,39 @@ func testEmitter(t *testing.T, context spec.G, it spec.S) {
 				"    some-other-type: some-other-command some args",
 				"",
 			))
+		})
+
+		context("when passed process specific environment variables", func() {
+			var processEnvs []map[string]packit.Environment
+
+			it.Before(func() {
+				processEnvs = []map[string]packit.Environment{
+					{
+						"web": packit.Environment{
+							"WEB_VAR.default": "some-env",
+						},
+					},
+					{
+						"web": packit.Environment{
+							"ANOTHER_WEB_VAR.default": "another-env",
+						},
+					},
+				}
+			})
+
+			it("prints a list of the launch processes and their processes specific env vars", func() {
+				emitter.LaunchProcesses(processes, processEnvs...)
+
+				Expect(buffer.String()).To(ContainLines(
+					"  Assigning launch processes:",
+					"    some-type: some-command",
+					"    web: web-command",
+					`      ANOTHER_WEB_VAR -> "another-env"`,
+					`      WEB_VAR         -> "some-env"`,
+					"    some-other-type: some-other-command some args",
+					"",
+				))
+			})
 		})
 	})
 
