@@ -407,8 +407,3 @@ func checkExtractPath(filePath string, destination string) error {
 	}
 	return nil
 }
-
-// Generates the full path for a symlink from the linkname and the symlink path
-func linknameFullPath(path, linkname string) string {
-	return filepath.Clean(filepath.Join(filepath.Dir(path), linkname))
-}
