@@ -235,31 +235,6 @@ func testVacationTar(t *testing.T, context spec.G, it spec.S) {
 				})
 			})
 
-			context("when it tries to symlink to a file that does not exist", func() {
-				var zipSlipSymlinkTar vacation.TarArchive
-
-				it.Before(func() {
-					var err error
-
-					buffer := bytes.NewBuffer(nil)
-					tw := tar.NewWriter(buffer)
-
-					Expect(tw.WriteHeader(&tar.Header{Name: "symlink", Mode: 0755, Size: int64(0), Typeflag: tar.TypeSymlink, Linkname: filepath.Join("..", "some-file")})).To(Succeed())
-					_, err = tw.Write([]byte{})
-					Expect(err).NotTo(HaveOccurred())
-
-					Expect(tw.Close()).To(Succeed())
-
-					zipSlipSymlinkTar = vacation.NewTarArchive(bytes.NewReader(buffer.Bytes()))
-				})
-
-				it("returns an error", func() {
-					err := zipSlipSymlinkTar.Decompress(tempDir)
-					Expect(err).To(MatchError(ContainSubstring("failed to evaluate symlink")))
-					Expect(err).To(MatchError(ContainSubstring("no such file or directory")))
-				})
-			})
-
 			context("when the symlink creation fails", func() {
 				var brokenSymlinkTar vacation.TarArchive
 

@@ -199,35 +199,6 @@ func testVacationZip(t *testing.T, context spec.G, it spec.S) {
 				})
 			})
 
-			context("when it tries to symlink to a file that does not exist", func() {
-				var buffer *bytes.Buffer
-				it.Before(func() {
-					var err error
-					buffer = bytes.NewBuffer(nil)
-					zw := zip.NewWriter(buffer)
-
-					header := &zip.FileHeader{Name: "symlink"}
-					header.SetMode(0755 | os.ModeSymlink)
-
-					symlink, err := zw.CreateHeader(header)
-					Expect(err).NotTo(HaveOccurred())
-
-					_, err = symlink.Write([]byte(filepath.Join("..", "some-file")))
-					Expect(err).NotTo(HaveOccurred())
-
-					Expect(zw.Close()).To(Succeed())
-
-				})
-
-				it("returns an error", func() {
-					readyArchive := vacation.NewZipArchive(buffer)
-
-					err := readyArchive.Decompress(tempDir)
-					Expect(err).To(MatchError(ContainSubstring("failed to evaluate symlink")))
-					Expect(err).To(MatchError(ContainSubstring("no such file or directory")))
-				})
-			})
-
 			context("when the symlink creation fails", func() {
 				var buffer *bytes.Buffer
 				it.Before(func() {
