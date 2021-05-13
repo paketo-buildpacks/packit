@@ -60,9 +60,18 @@ func testConfig(t *testing.T, context spec.G, it spec.S) {
 							ID:              "some-dependency",
 							Name:            "Some Dependency",
 							SHA256:          "shasum",
+							Source:          "source",
+							SourceSHA256:    "source-shasum",
 							Stacks:          []string{"io.buildpacks.stacks.bionic", "org.cloudfoundry.stacks.tiny"},
 							URI:             "http://some-url",
 							Version:         "1.2.3",
+						},
+					},
+					DependencyConstraints: []cargo.ConfigMetadataDependencyConstraint{
+						{
+							ID:         "some-dependency",
+							Constraint: "1.*",
+							Patches:    1,
 						},
 					},
 					DefaultVersions: map[string]string{
@@ -104,9 +113,16 @@ some-dependency = "1.2.x"
   id = "some-dependency"
   name = "Some Dependency"
   sha256 = "shasum"
+	source = "source"
+  source_sha256 = "source-shasum"
   stacks = ["io.buildpacks.stacks.bionic", "org.cloudfoundry.stacks.tiny"]
   uri = "http://some-url"
   version = "1.2.3"
+
+[[metadata.dependency-constraints]]
+  id = "some-dependency"
+  constraint = "1.*"
+	patches = 1.0
 
 [[metadata.some-map]]
   key = "value"
@@ -170,9 +186,16 @@ some-dependency = "1.2.x"
   id = "some-dependency"
   name = "Some Dependency"
   sha256 = "shasum"
+	source = "source"
+  source_sha256 = "source-shasum"
   stacks = ["io.buildpacks.stacks.bionic", "org.cloudfoundry.stacks.tiny"]
   uri = "http://some-url"
   version = "1.2.3"
+
+[[metadata.dependency-constraints]]
+  id = "some-dependency"
+  constraint = "1.*"
+	patches = 1
 
 [[stacks]]
   id = "some-stack-id"
@@ -220,12 +243,21 @@ some-dependency = "1.2.x"
 					PrePackage: "some-pre-package-script.sh",
 					Dependencies: []cargo.ConfigMetadataDependency{
 						{
-							ID:      "some-dependency",
-							Name:    "Some Dependency",
-							SHA256:  "shasum",
-							Stacks:  []string{"io.buildpacks.stacks.bionic", "org.cloudfoundry.stacks.tiny"},
-							URI:     "http://some-url",
-							Version: "1.2.3",
+							ID:           "some-dependency",
+							Name:         "Some Dependency",
+							SHA256:       "shasum",
+							Source:       "source",
+							SourceSHA256: "source-shasum",
+							Stacks:       []string{"io.buildpacks.stacks.bionic", "org.cloudfoundry.stacks.tiny"},
+							URI:          "http://some-url",
+							Version:      "1.2.3",
+						},
+					},
+					DependencyConstraints: []cargo.ConfigMetadataDependencyConstraint{
+						{
+							ID:         "some-dependency",
+							Constraint: "1.*",
+							Patches:    1,
 						},
 					},
 					DefaultVersions: map[string]string{
@@ -312,6 +344,14 @@ some-dependency = "1.2.x"
 					it("it returns an error", func() {
 						var metadata cargo.ConfigMetadata
 						err := metadata.UnmarshalJSON([]byte(`{"dependencies": true}`))
+						Expect(err).To(MatchError(ContainSubstring("json: cannot unmarshal")))
+					})
+				})
+
+				context("metadata field dependency-constraints is not an array of objects", func() {
+					it("it returns an error", func() {
+						var metadata cargo.ConfigMetadata
+						err := metadata.UnmarshalJSON([]byte(`{"dependency-constraints": true}`))
 						Expect(err).To(MatchError(ContainSubstring("json: cannot unmarshal")))
 					})
 				})
