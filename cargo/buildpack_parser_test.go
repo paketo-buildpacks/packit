@@ -38,6 +38,8 @@ pre-package = "some-pre-package-script.sh"
   id = "some-dependency"
   name = "Some Dependency"
   sha256 = "shasum"
+	source = "source"
+  source_sha256 = "source-shasum"
   stacks = ["io.buildpacks.stacks.bionic", "org.cloudfoundry.stacks.tiny"]
   uri = "http://some-url"
   version = "1.2.3"
@@ -80,6 +82,8 @@ pre-package = "some-pre-package-script.sh"
 							ID:              "some-dependency",
 							Name:            "Some Dependency",
 							SHA256:          "shasum",
+							Source:          "source",
+							SourceSHA256:    "source-shasum",
 							Stacks:          []string{"io.buildpacks.stacks.bionic", "org.cloudfoundry.stacks.tiny"},
 							URI:             "http://some-url",
 							Version:         "1.2.3",

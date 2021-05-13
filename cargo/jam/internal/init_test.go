@@ -23,6 +23,7 @@ func TestUnitCargo(t *testing.T) {
 	suite("BuildpackConfig", testBuildpackConfig)
 	suite("BuildpackInspector", testBuildpackInspector)
 	suite("DependencyCacher", testDependencyCacher)
+	suite("Dependency", testDependency)
 	suite("FileBundler", testFileBundler)
 	suite("Formatter", testFormatter)
 	suite("Image", testImage)

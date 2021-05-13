@@ -30,11 +30,12 @@ type ConfigBuildpack struct {
 }
 
 type ConfigMetadata struct {
-	IncludeFiles    []string                   `toml:"include-files"    json:"include-files,omitempty"`
-	PrePackage      string                     `toml:"pre-package"      json:"pre-package,omitempty"`
-	DefaultVersions map[string]string          `toml:"default-versions" json:"default-versions,omitempty"`
-	Dependencies    []ConfigMetadataDependency `toml:"dependencies"     json:"dependencies,omitempty"`
-	Unstructured    map[string]interface{}     `toml:"-"                json:"-"`
+	IncludeFiles          []string                             `toml:"include-files"              json:"include-files,omitempty"`
+	PrePackage            string                               `toml:"pre-package"                json:"pre-package,omitempty"`
+	DefaultVersions       map[string]string                    `toml:"default-versions"           json:"default-versions,omitempty"`
+	Dependencies          []ConfigMetadataDependency           `toml:"dependencies"               json:"dependencies,omitempty"`
+	DependencyConstraints []ConfigMetadataDependencyConstraint `toml:"dependency-constraints"     json:"dependency-constraints,omitempty"`
+	Unstructured          map[string]interface{}               `toml:"-"                          json:"-"`
 }
 
 type ConfigMetadataDependency struct {
@@ -42,9 +43,17 @@ type ConfigMetadataDependency struct {
 	ID              string     `toml:"id"               json:"id,omitempty"`
 	Name            string     `toml:"name"             json:"name,omitempty"`
 	SHA256          string     `toml:"sha256"           json:"sha256,omitempty"`
+	Source          string     `toml:"source"           json:"source,omitempty"`
+	SourceSHA256    string     `toml:"source_sha256"    json:"source_sha256,omitempty"`
 	Stacks          []string   `toml:"stacks"           json:"stacks,omitempty"`
 	URI             string     `toml:"uri"              json:"uri,omitempty"`
 	Version         string     `toml:"version"          json:"version,omitempty"`
+}
+
+type ConfigMetadataDependencyConstraint struct {
+	Constraint string `toml:"constraint"       json:"constraint,omitempty"`
+	ID         string `toml:"id"               json:"id,omitempty"`
+	Patches    int    `toml:"patches"          json:"patches,omitempty"`
 }
 
 type ConfigOrder struct {
@@ -106,6 +115,10 @@ func (m ConfigMetadata) MarshalJSON() ([]byte, error) {
 		metadata["dependencies"] = m.Dependencies
 	}
 
+	if len(m.DependencyConstraints) > 0 {
+		metadata["dependency-constraints"] = m.DependencyConstraints
+	}
+
 	if len(m.DefaultVersions) > 0 {
 		metadata["default-versions"] = m.DefaultVersions
 	}
@@ -142,6 +155,14 @@ func (m *ConfigMetadata) UnmarshalJSON(data []byte) error {
 			return err
 		}
 		delete(metadata, "dependencies")
+	}
+
+	if dependencyConstraints, ok := metadata["dependency-constraints"]; ok {
+		err = json.Unmarshal(dependencyConstraints, &m.DependencyConstraints)
+		if err != nil {
+			return err
+		}
+		delete(metadata, "dependency-constraints")
 	}
 
 	if defaultVersions, ok := metadata["default-versions"]; ok {
