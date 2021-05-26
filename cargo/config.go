@@ -78,6 +78,8 @@ func EncodeConfig(writer io.Writer, config Config) error {
 		return err
 	}
 
+	c = convertPatches(config.Metadata.DependencyConstraints, c)
+
 	return toml.NewEncoder(writer).Encode(c)
 }
 
@@ -191,4 +193,16 @@ func (cd ConfigMetadataDependency) HasStack(stack string) bool {
 	}
 
 	return false
+}
+
+// Unmarshal stores json numbers in float64 types, adding an unnecessary decimal point to the patch in the final toml.
+// convertPatches converts this float64 into an int and returns a new map that contains an integer value for patches
+func convertPatches(constraints []ConfigMetadataDependencyConstraint, c map[string]interface{}) map[string]interface{} {
+	if len(constraints) > 0 {
+		for i, dependencyConstraint := range c["metadata"].(map[string]interface{})["dependency-constraints"].([]interface{}) {
+			patches := dependencyConstraint.(map[string]interface{})["patches"]
+			c["metadata"].(map[string]interface{})["dependency-constraints"].([]interface{})[i].(map[string]interface{})["patches"] = int(patches.(float64))
+		}
+	}
+	return c
 }

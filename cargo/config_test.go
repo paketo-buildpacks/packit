@@ -122,7 +122,7 @@ some-dependency = "1.2.x"
 [[metadata.dependency-constraints]]
   id = "some-dependency"
   constraint = "1.*"
-	patches = 1.0
+	patches = 1
 
 [[metadata.some-map]]
   key = "value"
