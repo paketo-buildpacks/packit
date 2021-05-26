@@ -154,12 +154,12 @@ func testUpdateDependencies(t *testing.T, context spec.G, it spec.S) {
 				[[metadata.dependency-constraints]]
 					constraint = "1.*"
 					id = "node"
-					patches = 1.0
+					patches = 1
 
 				[[metadata.dependency-constraints]]
 					constraint = "2.*"
 					id = "node"
-					patches = 2.0
+					patches = 2
 
 				[[stacks]]
 				  id = "io.buildpacks.stacks.bionic"
@@ -232,12 +232,12 @@ api = "0.2"
 [[metadata.dependency-constraints]]
 	constraint = "1.*"
 	id = "node"
-	patches = 1.0
+	patches = 1
 
 [[metadata.dependency-constraints]]
 	constraint = "2.*"
 	id = "node"
-	patches = 2.0
+	patches = 2
 
 [[stacks]]
   id = "io.buildpacks.stacks.bionic"
@@ -270,7 +270,7 @@ api = "0.2"
 				[[metadata.dependency-constraints]]
 					constraint = "2.2.*"
 					id = "node"
-					patches = 3.0
+					patches = 3
 
 				[[stacks]]
 				  id = "io.buildpacks.stacks.bionic"
@@ -322,7 +322,7 @@ api = "0.2"
 [[metadata.dependency-constraints]]
 	constraint = "2.2.*"
 	id = "node"
-	patches = 3.0
+	patches = 3
 
 [[stacks]]
   id = "io.buildpacks.stacks.bionic"
@@ -356,7 +356,7 @@ api = "0.2"
 				[[metadata.dependency-constraints]]
 					constraint = "2.2.*"
 					id = "node"
-					patches = 3.0
+					patches = 3
 
 				[[stacks]]
 				  id = "io.buildpacks.stacks.bionic"
@@ -408,7 +408,7 @@ api = "0.2"
 [[metadata.dependency-constraints]]
 	constraint = "2.2.*"
 	id = "node"
-	patches = 3.0
+	patches = 3
 
 [[stacks]]
   id = "io.buildpacks.stacks.bionic"
