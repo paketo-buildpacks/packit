@@ -160,6 +160,23 @@ some-dependency = "1.2.x"
 					Expect(err).To(MatchError(ContainSubstring("json: unsupported type")))
 				})
 			})
+
+			context("when the patches in dependency constraints cannot be converted to an int", func() {
+				it("returns an error", func() {
+					err := cargo.EncodeConfig(bytes.NewBuffer(nil), cargo.Config{
+						Metadata: cargo.ConfigMetadata{
+							DependencyConstraints: []cargo.ConfigMetadataDependencyConstraint{
+								{
+									Constraint: "some-valid-constraint",
+									ID:         "some-valid-ID",
+									Patches:    0,
+								},
+							},
+						},
+					})
+					Expect(err).To(MatchError(ContainSubstring("failure to assert type: unexpected data in constraint patches")))
+				})
+			})
 		})
 	})
 
