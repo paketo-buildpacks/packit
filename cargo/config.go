@@ -2,6 +2,7 @@ package cargo
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"time"
 
@@ -78,7 +79,10 @@ func EncodeConfig(writer io.Writer, config Config) error {
 		return err
 	}
 
-	c = convertPatches(config.Metadata.DependencyConstraints, c)
+	c, err = convertPatches(config.Metadata.DependencyConstraints, c)
+	if err != nil {
+		return err
+	}
 
 	return toml.NewEncoder(writer).Encode(c)
 }
@@ -197,12 +201,30 @@ func (cd ConfigMetadataDependency) HasStack(stack string) bool {
 
 // Unmarshal stores json numbers in float64 types, adding an unnecessary decimal point to the patch in the final toml.
 // convertPatches converts this float64 into an int and returns a new map that contains an integer value for patches
-func convertPatches(constraints []ConfigMetadataDependencyConstraint, c map[string]interface{}) map[string]interface{} {
+func convertPatches(constraints []ConfigMetadataDependencyConstraint, c map[string]interface{}) (map[string]interface{}, error) {
 	if len(constraints) > 0 {
-		for i, dependencyConstraint := range c["metadata"].(map[string]interface{})["dependency-constraints"].([]interface{}) {
-			patches := dependencyConstraint.(map[string]interface{})["patches"]
-			c["metadata"].(map[string]interface{})["dependency-constraints"].([]interface{})[i].(map[string]interface{})["patches"] = int(patches.(float64))
+		metadata, ok := c["metadata"].(map[string]interface{})
+		if !ok {
+			return nil, fmt.Errorf("failure to assert type: unexpected data in metadata")
+		}
+
+		constraints, ok := metadata["dependency-constraints"].([]interface{})
+		if !ok {
+			return nil, fmt.Errorf("failure to assert type: unexpected data in constraints")
+		}
+
+		for _, dependencyConstraint := range constraints {
+			patches, ok := dependencyConstraint.(map[string]interface{})["patches"]
+			if !ok {
+				return nil, fmt.Errorf("failure to assert type: unexpected data in constraint patches")
+			}
+
+			floatPatches, ok := patches.(float64)
+			if !ok {
+				return nil, fmt.Errorf("failure to assert type: unexpected data")
+			}
+			dependencyConstraint.(map[string]interface{})["patches"] = int(floatPatches)
 		}
 	}
-	return c
+	return c, nil
 }
