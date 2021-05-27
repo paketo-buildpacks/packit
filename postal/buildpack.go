@@ -36,6 +36,10 @@ type Dependency struct {
 
 	// Version is the specific version of the dependency.
 	Version string `toml:"version"`
+
+	// StripComponents behaves like the --strip-components flag on tar command
+	// removing the first n levels from the final decompression destination.
+	StripComponents int `toml:"strip-components"`
 }
 
 func parseBuildpack(path, name string) ([]Dependency, string, error) {
