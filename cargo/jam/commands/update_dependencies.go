@@ -47,21 +47,21 @@ func updateDependenciesRun(flags updateDependenciesFlags) error {
 	api := flags.api
 
 	// All internal.Dependencies from the dep-server
-	var allDependencies []internal.Dependency
+	allDependencies := map[string][]internal.Dependency{}
 	// All cargo.ConfigMetadataDependencies that match one of the given constraints
 	var matchingDependencies []cargo.ConfigMetadataDependency
 
-	dependencyID := ""
-
 	for _, constraint := range config.Metadata.DependencyConstraints {
 		// Only query the API once per unique dependency
-		if constraint.ID != dependencyID {
-			dependencyID = constraint.ID
+		dependencies, ok := allDependencies[constraint.ID]
+		if !ok {
+			var err error
 			fmt.Printf("reaching out to %s/v1/dependency?name=%s", api, constraint.ID)
-			allDependencies, err = internal.GetAllDependencies(api, dependencyID)
+			dependencies, err = internal.GetAllDependencies(api, constraint.ID)
 			if err != nil {
 				return err
 			}
+			allDependencies[constraint.ID] = dependencies
 		}
 
 		// Manually lookup the existent dependency name from the buildpack.toml since this
@@ -69,7 +69,7 @@ func updateDependenciesRun(flags updateDependenciesFlags) error {
 		dependencyName := internal.FindDependencyName(constraint.ID, config)
 
 		// Filter allDependencies for only those that match the constraint
-		mds, err := internal.GetDependenciesWithinConstraint(allDependencies, constraint, dependencyName)
+		mds, err := internal.GetDependenciesWithinConstraint(dependencies, constraint, dependencyName)
 		if err != nil {
 			return err
 		}
