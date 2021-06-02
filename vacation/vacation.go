@@ -94,7 +94,8 @@ func (ta TarArchive) Decompress(destination string) error {
 			return err
 		}
 
-		fileNames := strings.Split(hdr.Name, string(filepath.Separator))
+		test := hdr.Name
+		fileNames := strings.Split(test, string(filepath.Separator))
 
 		// Checks to see if file should be written when stripping components
 		if len(fileNames) <= ta.components {
