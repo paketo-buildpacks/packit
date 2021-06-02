@@ -2,6 +2,7 @@ package cargo
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"time"
 
@@ -30,11 +31,12 @@ type ConfigBuildpack struct {
 }
 
 type ConfigMetadata struct {
-	IncludeFiles    []string                   `toml:"include-files"    json:"include-files,omitempty"`
-	PrePackage      string                     `toml:"pre-package"      json:"pre-package,omitempty"`
-	DefaultVersions map[string]string          `toml:"default-versions" json:"default-versions,omitempty"`
-	Dependencies    []ConfigMetadataDependency `toml:"dependencies"     json:"dependencies,omitempty"`
-	Unstructured    map[string]interface{}     `toml:"-"                json:"-"`
+	IncludeFiles          []string                             `toml:"include-files"              json:"include-files,omitempty"`
+	PrePackage            string                               `toml:"pre-package"                json:"pre-package,omitempty"`
+	DefaultVersions       map[string]string                    `toml:"default-versions"           json:"default-versions,omitempty"`
+	Dependencies          []ConfigMetadataDependency           `toml:"dependencies"               json:"dependencies,omitempty"`
+	DependencyConstraints []ConfigMetadataDependencyConstraint `toml:"dependency-constraints"     json:"dependency-constraints,omitempty"`
+	Unstructured          map[string]interface{}               `toml:"-"                          json:"-"`
 }
 
 type ConfigMetadataDependency struct {
@@ -42,9 +44,17 @@ type ConfigMetadataDependency struct {
 	ID              string     `toml:"id"               json:"id,omitempty"`
 	Name            string     `toml:"name"             json:"name,omitempty"`
 	SHA256          string     `toml:"sha256"           json:"sha256,omitempty"`
+	Source          string     `toml:"source"           json:"source,omitempty"`
+	SourceSHA256    string     `toml:"source_sha256"    json:"source_sha256,omitempty"`
 	Stacks          []string   `toml:"stacks"           json:"stacks,omitempty"`
 	URI             string     `toml:"uri"              json:"uri,omitempty"`
 	Version         string     `toml:"version"          json:"version,omitempty"`
+}
+
+type ConfigMetadataDependencyConstraint struct {
+	Constraint string `toml:"constraint"       json:"constraint,omitempty"`
+	ID         string `toml:"id"               json:"id,omitempty"`
+	Patches    int    `toml:"patches"          json:"patches,omitempty"`
 }
 
 type ConfigOrder struct {
@@ -65,6 +75,11 @@ func EncodeConfig(writer io.Writer, config Config) error {
 
 	c := map[string]interface{}{}
 	err = json.Unmarshal(content, &c)
+	if err != nil {
+		return err
+	}
+
+	c, err = convertPatches(config.Metadata.DependencyConstraints, c)
 	if err != nil {
 		return err
 	}
@@ -106,6 +121,10 @@ func (m ConfigMetadata) MarshalJSON() ([]byte, error) {
 		metadata["dependencies"] = m.Dependencies
 	}
 
+	if len(m.DependencyConstraints) > 0 {
+		metadata["dependency-constraints"] = m.DependencyConstraints
+	}
+
 	if len(m.DefaultVersions) > 0 {
 		metadata["default-versions"] = m.DefaultVersions
 	}
@@ -144,6 +163,14 @@ func (m *ConfigMetadata) UnmarshalJSON(data []byte) error {
 		delete(metadata, "dependencies")
 	}
 
+	if dependencyConstraints, ok := metadata["dependency-constraints"]; ok {
+		err = json.Unmarshal(dependencyConstraints, &m.DependencyConstraints)
+		if err != nil {
+			return err
+		}
+		delete(metadata, "dependency-constraints")
+	}
+
 	if defaultVersions, ok := metadata["default-versions"]; ok {
 		err = json.Unmarshal(defaultVersions, &m.DefaultVersions)
 		if err != nil {
@@ -170,4 +197,34 @@ func (cd ConfigMetadataDependency) HasStack(stack string) bool {
 	}
 
 	return false
+}
+
+// Unmarshal stores json numbers in float64 types, adding an unnecessary decimal point to the patch in the final toml.
+// convertPatches converts this float64 into an int and returns a new map that contains an integer value for patches
+func convertPatches(constraints []ConfigMetadataDependencyConstraint, c map[string]interface{}) (map[string]interface{}, error) {
+	if len(constraints) > 0 {
+		metadata, ok := c["metadata"].(map[string]interface{})
+		if !ok {
+			return nil, fmt.Errorf("failure to assert type: unexpected data in metadata")
+		}
+
+		constraints, ok := metadata["dependency-constraints"].([]interface{})
+		if !ok {
+			return nil, fmt.Errorf("failure to assert type: unexpected data in constraints")
+		}
+
+		for _, dependencyConstraint := range constraints {
+			patches, ok := dependencyConstraint.(map[string]interface{})["patches"]
+			if !ok {
+				return nil, fmt.Errorf("failure to assert type: unexpected data in constraint patches")
+			}
+
+			floatPatches, ok := patches.(float64)
+			if !ok {
+				return nil, fmt.Errorf("failure to assert type: unexpected data")
+			}
+			dependencyConstraint.(map[string]interface{})["patches"] = int(floatPatches)
+		}
+	}
+	return c, nil
 }
