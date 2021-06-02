@@ -89,12 +89,12 @@ func (ta TarArchive) Decompress(destination string) error {
 			continue
 		}
 
-		name, err := checkExtractPath(hdr.Name, destination)
+		err = checkExtractPath(hdr.Name, destination)
 		if err != nil {
 			return err
 		}
 
-		fileNames := strings.Split(name, string(filepath.Separator))
+		fileNames := strings.Split(hdr.Name, string(filepath.Separator))
 
 		// Checks to see if file should be written when stripping components
 		if len(fileNames) <= ta.components {
@@ -301,12 +301,12 @@ func (z ZipArchive) Decompress(destination string) error {
 			continue
 		}
 
-		name, err := checkExtractPath(f.Name, destination)
+		err = checkExtractPath(f.Name, destination)
 		if err != nil {
 			return err
 		}
 
-		path := filepath.Join(destination, name)
+		path := filepath.Join(destination, f.Name)
 
 		switch {
 		case f.FileInfo().IsDir():
@@ -360,10 +360,10 @@ func (z ZipArchive) Decompress(destination string) error {
 
 // This function checks to see that the given path is within the destination
 // directory
-func checkExtractPath(filePath string, destination string) (string, error) {
+func checkExtractPath(filePath string, destination string) error {
 	destpath := filepath.Join(destination, filePath)
 	if !strings.HasPrefix(destpath, filepath.Clean(destination)+string(os.PathSeparator)) {
-		return "", fmt.Errorf("illegal file path %q: the file path does not occur within the destination directory", filePath)
+		return fmt.Errorf("illegal file path %q: the file path does not occur within the destination directory", filePath)
 	}
-	return filePath, nil
+	return nil
 }
