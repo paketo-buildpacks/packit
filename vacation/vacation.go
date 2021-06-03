@@ -84,17 +84,20 @@ func (ta TarArchive) Decompress(destination string) error {
 			return fmt.Errorf("failed to read tar response: %s", err)
 		}
 
-		// Skip if the destination it the destination directory itself i.e. ./
-		if hdr.Name == "."+string(filepath.Separator) {
+		// Clean the name in the header to prevent './filename' being stripped to
+		// 'filename' also to skip if the destination it the destination directory
+		// itself i.e. './'
+		var name string
+		if name = filepath.Clean(hdr.Name); name == "." {
 			continue
 		}
 
-		err = checkExtractPath(hdr.Name, destination)
+		err = checkExtractPath(name, destination)
 		if err != nil {
 			return err
 		}
 
-		fileNames := strings.Split(hdr.Name, string(filepath.Separator))
+		fileNames := strings.Split(name, string(filepath.Separator))
 
 		// Checks to see if file should be written when stripping components
 		if len(fileNames) <= ta.components {
@@ -296,17 +299,18 @@ func (z ZipArchive) Decompress(destination string) error {
 	}
 
 	for _, f := range zr.File {
-		// Skip if the destination it the destination directory itself i.e. ./
-		if f.Name == "."+string(filepath.Separator) {
+		// Skip if the destination it the destination directory itself i.e. './'
+		var name string
+		if name = filepath.Clean(f.Name); name == "." {
 			continue
 		}
 
-		err = checkExtractPath(f.Name, destination)
+		err = checkExtractPath(name, destination)
 		if err != nil {
 			return err
 		}
 
-		path := filepath.Join(destination, f.Name)
+		path := filepath.Join(destination, name)
 
 		switch {
 		case f.FileInfo().IsDir():
