@@ -276,6 +276,7 @@ func testDependency(t *testing.T, context spec.G, it spec.S) {
 				Expect(err).NotTo(HaveOccurred())
 				Expect(dependencies).To(Equal([]cargo.ConfigMetadataDependency{
 					{
+						CPE:          "cpe-notation",
 						ID:           "some-dep",
 						Version:      "1.0.0",
 						Stacks:       []string{"some-stack"},
@@ -285,6 +286,7 @@ func testDependency(t *testing.T, context spec.G, it spec.S) {
 						SourceSHA256: "some-source-sha",
 					},
 					{
+						CPE:          "cpe-notation",
 						ID:           "some-dep",
 						Version:      "1.1.2",
 						Stacks:       []string{"some-stack-two"},
@@ -294,6 +296,7 @@ func testDependency(t *testing.T, context spec.G, it spec.S) {
 						SourceSHA256: "some-source-sha-two",
 					},
 					{
+						CPE:          "cpe-notation",
 						ID:           "some-dep",
 						Version:      "1.5.6",
 						Stacks:       []string{"some-stack-three"},
