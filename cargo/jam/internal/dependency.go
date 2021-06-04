@@ -127,6 +127,7 @@ func convertToCargoDependency(dependency Dependency, dependencyName string) carg
 		cargoDependency.DeprecationDate = &deprecationDate
 	}
 
+	cargoDependency.CPE = dependency.CPE
 	cargoDependency.ID = dependency.ID
 	cargoDependency.Name = dependencyName
 	cargoDependency.SHA256 = dependency.SHA256

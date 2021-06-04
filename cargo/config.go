@@ -40,6 +40,7 @@ type ConfigMetadata struct {
 }
 
 type ConfigMetadataDependency struct {
+	CPE             string     `toml:"cpe"              json:"cpe,omitempty"`
 	DeprecationDate *time.Time `toml:"deprecation_date" json:"deprecation_date,omitempty"`
 	ID              string     `toml:"id"               json:"id,omitempty"`
 	Name            string     `toml:"name"             json:"name,omitempty"`

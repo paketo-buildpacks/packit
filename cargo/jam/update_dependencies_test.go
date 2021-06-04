@@ -54,7 +54,8 @@ func testUpdateDependencies(t *testing.T, context spec.G, it spec.S) {
       }
     ],
     "source": "some-source",
-    "source_sha256": "some-source-sha"
+    "source_sha256": "some-source-sha",
+		"cpe": "node-cpe"
 	},
   {
     "name": "node",
@@ -67,7 +68,8 @@ func testUpdateDependencies(t *testing.T, context spec.G, it spec.S) {
       }
     ],
     "source": "some-source",
-    "source_sha256": "some-source-sha"
+    "source_sha256": "some-source-sha",
+		"cpe": "node-cpe"
 	},
   {
     "name": "node",
@@ -80,7 +82,8 @@ func testUpdateDependencies(t *testing.T, context spec.G, it spec.S) {
       }
     ],
     "source": "some-source",
-    "source_sha256": "some-source-sha"
+    "source_sha256": "some-source-sha",
+		"cpe": "node-cpe"
 	},
   {
     "name": "node",
@@ -93,7 +96,8 @@ func testUpdateDependencies(t *testing.T, context spec.G, it spec.S) {
       }
     ],
     "source": "some-source",
-    "source_sha256": "some-source-sha"
+    "source_sha256": "some-source-sha",
+		"cpe": "node-cpe"
 	}]`)
 				}
 
@@ -122,6 +126,7 @@ func testUpdateDependencies(t *testing.T, context spec.G, it spec.S) {
 					include-files = ["buildpack.toml"]
 
 					[[metadata.dependencies]]
+					  cpe = "node-cpe"
 						id = "node"
 						name = "Node Engine"
 						sha256 = "some-sha"
@@ -132,6 +137,7 @@ func testUpdateDependencies(t *testing.T, context spec.G, it spec.S) {
 						version = "1.2.3"
 
 					[[metadata.dependencies]]
+					  cpe = "node-cpe"
 						id = "node"
 						name = "Node Engine"
 						sha256 = "some-sha"
@@ -142,6 +148,7 @@ func testUpdateDependencies(t *testing.T, context spec.G, it spec.S) {
 						version = "2.1.1"
 
 					[[metadata.dependencies]]
+					  cpe = "node-cpe"
 						id = "node"
 						name = "Node Engine"
 						sha256 = "some-sha"
@@ -200,6 +207,7 @@ api = "0.2"
 	include-files = ["buildpack.toml"]
 
 [[metadata.dependencies]]
+	cpe = "node-cpe"
 	id = "node"
 	name = "Node Engine"
 	sha256 = "some-sha"
@@ -210,6 +218,7 @@ api = "0.2"
 	version = "1.3.5"
 
 [[metadata.dependencies]]
+	cpe = "node-cpe"
 	id = "node"
 	name = "Node Engine"
 	sha256 = "some-sha"
@@ -220,6 +229,7 @@ api = "0.2"
 	version = "2.1.9"
 
 [[metadata.dependencies]]
+	cpe = "node-cpe"
 	id = "node"
 	name = "Node Engine"
 	sha256 = "some-sha"
@@ -258,6 +268,7 @@ api = "0.2"
 					include-files = ["buildpack.toml"]
 
 				[[metadata.dependencies]]
+	        cpe = "node-cpe"
 					id = "node"
 					name = "Node Engine"
 					sha256 = "some-sha"
@@ -310,6 +321,7 @@ api = "0.2"
 	include-files = ["buildpack.toml"]
 
 [[metadata.dependencies]]
+	cpe = "node-cpe"
 	id = "node"
 	name = "Node Engine"
 	sha256 = "some-sha"
@@ -344,6 +356,7 @@ api = "0.2"
 					include-files = ["buildpack.toml"]
 
 				[[metadata.dependencies]]
+	        cpe = "node-cpe"
 					id = "node"
 					name = "Node Engine"
 					sha256 = "some-sha"
@@ -396,6 +409,7 @@ api = "0.2"
 	include-files = ["buildpack.toml"]
 
 [[metadata.dependencies]]
+	cpe = "node-cpe"
 	id = "node"
 	name = "Node Engine"
 	sha256 = "some-sha"
@@ -484,6 +498,7 @@ api = "0.2"
 					include-files = ["buildpack.toml"]
 
 					[[metadata.dependencies]]
+	          cpe = "non-existent-cpe"
 						id = "non-existent"
 						sha256 = "some-sha"
 						source = "some-source"
