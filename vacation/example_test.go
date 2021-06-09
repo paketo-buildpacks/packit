@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 
+	dsnetBzip2 "github.com/dsnet/compress/bzip2"
 	"github.com/paketo-buildpacks/packit/vacation"
 	"github.com/ulikunitz/xz"
 )
@@ -543,6 +544,147 @@ func ExampleTarXZArchive_StripComponents() {
 	defer os.RemoveAll(destination)
 
 	archive := vacation.NewTarXZArchive(bytes.NewReader(buffer.Bytes())).StripComponents(1)
+	if err := archive.Decompress(destination); err != nil {
+		log.Fatal(err)
+	}
+
+	err = filepath.Walk(destination, func(path string, info os.FileInfo, err error) error {
+		if !info.IsDir() {
+			rel, err := filepath.Rel(destination, path)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			fmt.Printf("%s\n", rel)
+			return nil
+		}
+		return nil
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Output:
+	// some-other-dir/some-file
+}
+
+func ExampleTarBzip2Archive() {
+	buffer := bytes.NewBuffer(nil)
+
+	// Using the dsnet library because the Go compression library does not
+	// have a writer. There is recent discussion on this issue
+	// https://github.com/golang/go/issues/4828 to add an encoder. The
+	// library should be removed once there is a native encoder
+	bz, err := dsnetBzip2.NewWriter(buffer, nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	tw := tar.NewWriter(bz)
+
+	files := []ArchiveFile{
+		{Name: "some-dir/"},
+		{Name: "some-dir/some-other-dir/"},
+		{Name: "some-dir/some-other-dir/some-file", Content: []byte("some-dir/some-other-dir/some-file")},
+		{Name: "first", Content: []byte("first")},
+		{Name: "second", Content: []byte("second")},
+		{Name: "third", Content: []byte("third")},
+	}
+
+	for _, file := range files {
+		err := tw.WriteHeader(&tar.Header{Name: file.Name, Mode: 0755, Size: int64(len(file.Content))})
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		_, err = tw.Write(file.Content)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+
+	tw.Close()
+	bz.Close()
+
+	destination, err := os.MkdirTemp("", "destination")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer os.RemoveAll(destination)
+
+	archive := vacation.NewTarBzip2Archive(bytes.NewReader(buffer.Bytes()))
+	if err := archive.Decompress(destination); err != nil {
+		log.Fatal(err)
+	}
+
+	err = filepath.Walk(destination, func(path string, info os.FileInfo, err error) error {
+		if !info.IsDir() {
+			rel, err := filepath.Rel(destination, path)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			fmt.Printf("%s\n", rel)
+			return nil
+		}
+		return nil
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Output:
+	// first
+	// second
+	// some-dir/some-other-dir/some-file
+	// third
+}
+
+func ExampleTarBzip2Archive_StripComponents() {
+	buffer := bytes.NewBuffer(nil)
+
+	// Using the dsnet library because the Go compression library does not
+	// have a writer. There is recent discussion on this issue
+	// https://github.com/golang/go/issues/4828 to add an encoder. The
+	// library should be removed once there is a native encoder
+	bz, err := dsnetBzip2.NewWriter(buffer, nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	tw := tar.NewWriter(bz)
+
+	files := []ArchiveFile{
+		{Name: "some-dir/"},
+		{Name: "some-dir/some-other-dir/"},
+		{Name: "some-dir/some-other-dir/some-file", Content: []byte("some-dir/some-other-dir/some-file")},
+		{Name: "first", Content: []byte("first")},
+		{Name: "second", Content: []byte("second")},
+		{Name: "third", Content: []byte("third")},
+	}
+
+	for _, file := range files {
+		err := tw.WriteHeader(&tar.Header{Name: file.Name, Mode: 0755, Size: int64(len(file.Content))})
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		_, err = tw.Write(file.Content)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+
+	tw.Close()
+	bz.Close()
+
+	destination, err := os.MkdirTemp("", "destination")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer os.RemoveAll(destination)
+
+	archive := vacation.NewTarBzip2Archive(bytes.NewReader(buffer.Bytes())).StripComponents(1)
 	if err := archive.Decompress(destination); err != nil {
 		log.Fatal(err)
 	}

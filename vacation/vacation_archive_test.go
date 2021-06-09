@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	dsnetBzip2 "github.com/dsnet/compress/bzip2"
 	"github.com/paketo-buildpacks/packit/vacation"
 	"github.com/sclevine/spec"
 	"github.com/ulikunitz/xz"
@@ -176,6 +177,75 @@ func testVacationArchive(t *testing.T, context spec.G, it spec.S) {
 
 				Expect(tw.Close()).To(Succeed())
 				Expect(xzw.Close()).To(Succeed())
+
+				archive = vacation.NewArchive(buffer)
+			})
+
+			it.After(func() {
+				Expect(os.RemoveAll(tempDir)).To(Succeed())
+			})
+
+			it("unpackages the archive into the path", func() {
+				err := archive.Decompress(tempDir)
+				Expect(err).NotTo(HaveOccurred())
+
+				files, err := filepath.Glob(filepath.Join(tempDir, "*"))
+				Expect(err).NotTo(HaveOccurred())
+				Expect(files).To(ConsistOf([]string{
+					filepath.Join(tempDir, "some-dir"),
+					filepath.Join(tempDir, "some-file"),
+				}))
+			})
+
+			it("unpackages the archive into the path but also strips the first component", func() {
+				err := archive.StripComponents(1).Decompress(tempDir)
+				Expect(err).NotTo(HaveOccurred())
+
+				files, err := filepath.Glob(filepath.Join(tempDir, "*"))
+				Expect(err).NotTo(HaveOccurred())
+				Expect(files).To(ConsistOf([]string{
+					filepath.Join(tempDir, "some-nested-file"),
+				}))
+			})
+		})
+
+		context("when passed the reader of a bzip2 file", func() {
+			var (
+				archive vacation.Archive
+				tempDir string
+			)
+
+			it.Before(func() {
+				var err error
+				tempDir, err = os.MkdirTemp("", "vacation")
+				Expect(err).NotTo(HaveOccurred())
+
+				buffer := bytes.NewBuffer(nil)
+
+				// Using the dsnet library because the Go compression library does not
+				// have a writer. There is recent discussion on this issue
+				// https://github.com/golang/go/issues/4828 to add an encoder. The
+				// library should be removed once there is a native encoder
+				bz, err := dsnetBzip2.NewWriter(buffer, nil)
+				Expect(err).NotTo(HaveOccurred())
+
+				tw := tar.NewWriter(bz)
+
+				Expect(tw.WriteHeader(&tar.Header{Name: "some-dir", Mode: 0755, Typeflag: tar.TypeDir})).To(Succeed())
+				_, err = tw.Write(nil)
+				Expect(err).NotTo(HaveOccurred())
+
+				nestedFile := filepath.Join("some-dir", "some-nested-file")
+				Expect(tw.WriteHeader(&tar.Header{Name: nestedFile, Mode: 0755, Size: int64(len(nestedFile))})).To(Succeed())
+				_, err = tw.Write([]byte(nestedFile))
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(tw.WriteHeader(&tar.Header{Name: "some-file", Mode: 0755, Size: int64(len("some-file"))})).To(Succeed())
+				_, err = tw.Write([]byte("some-file"))
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(tw.Close()).To(Succeed())
+				Expect(bz.Close()).To(Succeed())
 
 				archive = vacation.NewArchive(buffer)
 			})

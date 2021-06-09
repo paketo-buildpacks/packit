@@ -8,6 +8,7 @@ import (
 	"archive/tar"
 	"archive/zip"
 	"bufio"
+	"compress/bzip2"
 	"compress/gzip"
 	"fmt"
 	"io"
@@ -45,6 +46,12 @@ type TarXZArchive struct {
 	components int
 }
 
+// A TarBzip2Archive decompresses bzip2 files from an input stream.
+type TarBzip2Archive struct {
+	reader     io.Reader
+	components int
+}
+
 // NewArchive returns a new Archive that reads from inputReader.
 func NewArchive(inputReader io.Reader) Archive {
 	return Archive{reader: inputReader}
@@ -63,6 +70,11 @@ func NewTarGzipArchive(inputReader io.Reader) TarGzipArchive {
 // NewTarXZArchive returns a new TarXZArchive that reads from inputReader.
 func NewTarXZArchive(inputReader io.Reader) TarXZArchive {
 	return TarXZArchive{reader: inputReader}
+}
+
+// NewTarBzip2Archive returns a new Bzip2Archive that reads from inputReader.
+func NewTarBzip2Archive(inputReader io.Reader) TarBzip2Archive {
+	return TarBzip2Archive{reader: inputReader}
 }
 
 // Decompress reads from TarArchive and writes files into the
@@ -245,6 +257,8 @@ func (a Archive) Decompress(destination string) error {
 		return NewTarGzipArchive(bufferedReader).StripComponents(a.components).Decompress(destination)
 	case "application/x-xz":
 		return NewTarXZArchive(bufferedReader).StripComponents(a.components).Decompress(destination)
+	case "application/x-bzip2":
+		return NewTarBzip2Archive(bufferedReader).StripComponents(a.components).Decompress(destination)
 	case "application/zip":
 		return NewZipArchive(bufferedReader).Decompress(destination)
 	case "text/plain; charset=utf-8":
@@ -276,6 +290,12 @@ func (txz TarXZArchive) Decompress(destination string) error {
 	}
 
 	return NewTarArchive(xzr).StripComponents(txz.components).Decompress(destination)
+}
+
+// Decompress reads from TarBzip2Archive and writes files into the destination
+// specified.
+func (tbz TarBzip2Archive) Decompress(destination string) error {
+	return NewTarArchive(bzip2.NewReader(tbz.reader)).StripComponents(tbz.components).Decompress(destination)
 }
 
 func writeTextFile(reader io.Reader, destination string) error {
@@ -320,6 +340,13 @@ func (gz TarGzipArchive) StripComponents(components int) TarGzipArchive {
 func (txz TarXZArchive) StripComponents(components int) TarXZArchive {
 	txz.components = components
 	return txz
+}
+
+// StripComponents behaves like the --strip-components flag on tar command
+// removing the first n levels from the final decompression destination.
+func (tbz TarBzip2Archive) StripComponents(components int) TarBzip2Archive {
+	tbz.components = components
+	return tbz
 }
 
 // A ZipArchive decompresses zip files from an input stream.
