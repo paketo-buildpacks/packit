@@ -29,6 +29,7 @@ func TestUnitJam(t *testing.T) {
 	suite("summarize", testSummarize)
 	suite("update-builder", testUpdateBuilder)
 	suite("update-buildpack", testUpdateBuildpack)
+	suite("update-dependencies", testUpdateDependencies)
 
 	suite.Before(func(t *testing.T) {
 		var (

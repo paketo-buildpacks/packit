@@ -223,6 +223,7 @@ description = "Some description"
 
 	it.After(func() {
 		server.Close()
+		Expect(os.RemoveAll(builderDir)).To(Succeed())
 	})
 
 	it("updates the builder files", func() {

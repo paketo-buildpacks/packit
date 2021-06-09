@@ -37,10 +37,12 @@ func testFormatter(t *testing.T, context spec.G, it spec.S) {
 					Metadata: cargo.ConfigMetadata{
 						Dependencies: []cargo.ConfigMetadataDependency{
 							{
-								ID:      "some-dependency",
-								Stacks:  []string{"some-stack"},
-								Version: "1.2.3",
-								SHA256:  "one-more-sha",
+								ID:           "some-dependency",
+								Stacks:       []string{"some-stack"},
+								Version:      "1.2.3",
+								SHA256:       "one-more-sha",
+								Source:       "some-source",
+								SourceSHA256: "source-sha",
 							},
 							{
 								ID:      "some-dependency",

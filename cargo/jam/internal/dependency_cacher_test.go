@@ -54,6 +54,10 @@ func testDependencyCacher(t *testing.T, context spec.G, it spec.S) {
 		cacher = internal.NewDependencyCacher(downloader, scribe.NewLogger(output))
 	})
 
+	it.After(func() {
+		Expect(os.RemoveAll(tmpDir)).To(Succeed())
+	})
+
 	context("Cache", func() {
 		it("caches dependencies and returns updated dependencies list", func() {
 			deps, err := cacher.Cache(tmpDir, []cargo.ConfigMetadataDependency{

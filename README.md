@@ -228,6 +228,14 @@ The `packit` library comes with a command-line tool called `jam` that can be
 used to create buildpack tarball artifacts. The `jam` name is simply a play on
 the idea of "packaging" or "packing" a buildpack.
 
+`jam` comes with the following commands:
+* help                : Help about any command
+* pack                : package buildpack
+* summarize           : summarize buildpackage
+* update-builder      : update builder
+* update-buildpack    : update buildpack
+* update-dependencies : update all depdendencies in a buildpack.toml according to metadata.constraints
+
 The `jam` executable can be installed by downloading the latest version from
 the [Releases](../../releases) page. Once downloaded, buildpacks can be created from
 a source repository using the `pack` command like this:
@@ -240,6 +248,5 @@ jam pack \
   --offline \
   --output ./buildpack.tgz
 ```
-
 ---
 Readme created from Go doc with [goreadme](https://github.com/posener/goreadme)
