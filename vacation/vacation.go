@@ -8,7 +8,6 @@ import (
 	"archive/tar"
 	"archive/zip"
 	"bufio"
-	"bytes"
 	"compress/gzip"
 	"fmt"
 	"io"
@@ -97,7 +96,7 @@ func (ta TarArchive) Decompress(destination string) error {
 		}
 
 		// Skip if the destination it the destination directory itself i.e. ./
-		if hdr.Name == "."+string(filepath.Separator) {
+		if hdr.Name == "./" {
 			continue
 		}
 
@@ -106,7 +105,7 @@ func (ta TarArchive) Decompress(destination string) error {
 			return err
 		}
 
-		fileNames := strings.Split(hdr.Name, string(filepath.Separator))
+		fileNames := strings.Split(hdr.Name, "/")
 
 		// Checks to see if file should be written when stripping components
 		if len(fileNames) <= ta.components {
@@ -346,25 +345,28 @@ func (z ZipArchive) Decompress(destination string) error {
 
 	var symlinkHeaders []header
 
-	// Have to convert an io.Reader into a bytes.Reader which implements the
-	// ReadAt function making it compatible with the io.ReaderAt inteface which
-	// required for zip.NewReader
-	buff := bytes.NewBuffer(nil)
-	size, err := io.Copy(buff, z.reader)
+	// Use an os.File to buffer the zip contents. This is needed because
+	// zip.NewReader requires an io.ReaderAt so that it can jump around within
+	// the file as it decompresses.
+	buffer, err := os.CreateTemp("", "")
+	if err != nil {
+		return err
+	}
+	defer os.Remove(buffer.Name())
+
+	size, err := io.Copy(buffer, z.reader)
 	if err != nil {
 		return err
 	}
 
-	readerAt := bytes.NewReader(buff.Bytes())
-
-	zr, err := zip.NewReader(readerAt, size)
+	zr, err := zip.NewReader(buffer, size)
 	if err != nil {
 		return fmt.Errorf("failed to create zip reader: %w", err)
 	}
 
 	for _, f := range zr.File {
 		// Skip if the destination it the destination directory itself i.e. ./
-		if f.Name == "."+string(filepath.Separator) {
+		if f.Name == "./" {
 			continue
 		}
 
@@ -475,10 +477,11 @@ func (z ZipArchive) Decompress(destination string) error {
 
 // This function checks to see that the given path is within the destination
 // directory
-func checkExtractPath(filePath string, destination string) error {
-	destpath := filepath.Join(destination, filePath)
+func checkExtractPath(tarFilePath string, destination string) error {
+	osPath := filepath.FromSlash(tarFilePath)
+	destpath := filepath.Join(destination, osPath)
 	if !strings.HasPrefix(destpath, filepath.Clean(destination)+string(os.PathSeparator)) {
-		return fmt.Errorf("illegal file path %q: the file path does not occur within the destination directory", filePath)
+		return fmt.Errorf("illegal file path %q: the file path does not occur within the destination directory", tarFilePath)
 	}
 	return nil
 }

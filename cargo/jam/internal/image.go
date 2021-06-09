@@ -124,7 +124,7 @@ func GetBuildpackageID(uri string) (string, error) {
 		return "", err
 	}
 
-	image, err := remote.Image(ref)
+	image, err := remote.Image(ref, remote.WithAuthFromKeychain(authn.DefaultKeychain))
 	if err != nil {
 		return "", err
 	}

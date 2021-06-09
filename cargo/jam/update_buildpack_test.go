@@ -214,6 +214,7 @@ func testUpdateBuildpack(t *testing.T, context spec.G, it spec.S) {
 
 	it.After(func() {
 		server.Close()
+		Expect(os.RemoveAll(buildpackDir)).To(Succeed())
 	})
 
 	it("updates the buildpack.toml and package.toml files", func() {

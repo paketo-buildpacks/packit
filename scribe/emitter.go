@@ -86,7 +86,7 @@ Entries:
 	e.Break()
 }
 
-func (e Emitter) LaunchProcesses(processes []packit.Process) {
+func (e Emitter) LaunchProcesses(processes []packit.Process, processEnvs ...map[string]packit.Environment) {
 	e.Process("Assigning launch processes:")
 
 	for _, process := range processes {
@@ -97,6 +97,55 @@ func (e Emitter) LaunchProcesses(processes []packit.Process) {
 		}
 
 		e.Subprocess(p)
+
+		// This ensures that the process environment variable is always the same no
+		// matter the order of the process envs map list
+		processEnv := packit.Environment{}
+		for _, pEnvs := range processEnvs {
+			if env, ok := pEnvs[process.Type]; ok {
+				for key, value := range env {
+					processEnv[key] = value
+				}
+			}
+		}
+
+		if len(processEnv) != 0 {
+			e.Action("%s", NewFormattedMapFromEnvironment(processEnv))
+		}
+
 	}
 	e.Break()
+}
+
+func (e Emitter) EnvironmentVariables(layer packit.Layer) {
+	buildEnv := packit.Environment{}
+	launchEnv := packit.Environment{}
+
+	// Makes deep local copy of the env map on the layer
+	for key, value := range layer.BuildEnv {
+		buildEnv[key] = value
+	}
+
+	for key, value := range layer.LaunchEnv {
+		launchEnv[key] = value
+	}
+
+	// Merge the shared env map with the launch and build to remove CNB spec
+	// specific terminiology from the output
+	for key, value := range layer.SharedEnv {
+		buildEnv[key] = value
+		launchEnv[key] = value
+	}
+
+	if len(buildEnv) != 0 {
+		e.Process("Configuring build environment")
+		e.Subprocess("%s", NewFormattedMapFromEnvironment(buildEnv))
+		e.Break()
+	}
+
+	if len(launchEnv) != 0 {
+		e.Process("Configuring launch environment")
+		e.Subprocess("%s", NewFormattedMapFromEnvironment(launchEnv))
+		e.Break()
+	}
 }
