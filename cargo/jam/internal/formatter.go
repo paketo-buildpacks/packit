@@ -100,17 +100,17 @@ func printImplementation(writer io.Writer, config cargo.Config) {
 }
 
 func (f Formatter) Markdown(configs []cargo.Config) {
-	var familyConfig cargo.Config
-	for index, config := range configs {
-		if len(config.Order) > 0 {
-			familyConfig = config
-			configs = append(configs[:index], configs[index+1:]...)
-			break
-		}
-	}
-
 	//Language-family case
-	if (familyConfig.Buildpack != cargo.ConfigBuildpack{}) {
+	if len(configs) > 1 {
+		var familyConfig cargo.Config
+		for index, config := range configs {
+			if len(config.Order) > 0 {
+				familyConfig = config
+				configs = append(configs[:index], configs[index+1:]...)
+				break
+			}
+		}
+
 		//Header section
 		fmt.Fprintf(f.writer, "## %s %s\n\n**ID:** `%s`\n\n", familyConfig.Buildpack.Name, familyConfig.Buildpack.Version, familyConfig.Buildpack.ID)
 		fmt.Fprintf(f.writer, "**Digest:** `%s`\n\n", familyConfig.Buildpack.SHA256)
