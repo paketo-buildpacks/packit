@@ -209,14 +209,8 @@ func (ta TarArchive) Decompress(destination string) error {
 	})
 
 	for _, h := range symlinkHeaders {
-		evalPath := linknameFullPath(h.path, h.linkname)
-		// Don't use constucted link if the link is absolute
-		if filepath.IsAbs(h.linkname) {
-			evalPath = h.linkname
-		}
-
 		// Check to see if the file that will be linked to is valid for symlinking
-		_, err := filepath.EvalSymlinks(evalPath)
+		_, err := filepath.EvalSymlinks(linknameFullPath(h.path, h.linkname))
 		if err != nil {
 			return fmt.Errorf("failed to evaluate symlink %s: %w", h.path, err)
 		}
@@ -487,14 +481,8 @@ func (z ZipArchive) Decompress(destination string) error {
 	})
 
 	for _, h := range symlinkHeaders {
-		evalPath := linknameFullPath(h.path, h.linkname)
-		// Don't use constucted link if the link is absolute
-		if filepath.IsAbs(h.linkname) {
-			evalPath = h.linkname
-		}
-
 		// Check to see if the file that will be linked to is valid for symlinking
-		_, err := filepath.EvalSymlinks(evalPath)
+		_, err := filepath.EvalSymlinks(linknameFullPath(h.path, h.linkname))
 		if err != nil {
 			return fmt.Errorf("failed to evaluate symlink %s: %w", h.path, err)
 		}

@@ -37,6 +37,12 @@ func testConfig(t *testing.T, context spec.G, it spec.S) {
 					Name:     "some-buildpack-name",
 					Version:  "some-buildpack-version",
 					Homepage: "some-homepage-link",
+					Licenses: []cargo.ConfigBuildpackLicense{
+						{
+							Type: "some-license-type",
+							URI:  "some-license-uri",
+						},
+					},
 				},
 				Stacks: []cargo.ConfigStack{
 					{
@@ -95,19 +101,25 @@ func testConfig(t *testing.T, context spec.G, it spec.S) {
 				},
 			})
 			Expect(err).NotTo(HaveOccurred())
-			Expect(buffer.String()).To(MatchTOML(`api = "0.2"
+			Expect(buffer.String()).To(MatchTOML(`
+api = "0.2"
+
 [buildpack]
-id = "some-buildpack-id"
-name = "some-buildpack-name"
-version = "some-buildpack-version"
-homepage = "some-homepage-link"
+	id = "some-buildpack-id"
+	name = "some-buildpack-name"
+	version = "some-buildpack-version"
+	homepage = "some-homepage-link"
+
+[[buildpack.licenses]]
+  type = "some-license-type"
+	uri = "some-license-uri"
 
 [metadata]
-include-files = ["some-include-file", "other-include-file"]
-pre-package = "some-pre-package-script.sh"
+	include-files = ["some-include-file", "other-include-file"]
+	pre-package = "some-pre-package-script.sh"
 
 [metadata.default-versions]
-some-dependency = "1.2.x"
+	some-dependency = "1.2.x"
 
 [[metadata.dependencies]]
   cpe = "some-cpe"
@@ -184,19 +196,25 @@ some-dependency = "1.2.x"
 
 	context("DecodeConfig", func() {
 		it("decodes TOML to config", func() {
-			tomlBuffer := strings.NewReader(`api = "0.2"
+			tomlBuffer := strings.NewReader(`
+api = "0.2"
+
 [buildpack]
-id = "some-buildpack-id"
-name = "some-buildpack-name"
-version = "some-buildpack-version"
-homepage = "some-homepage-link"
+	id = "some-buildpack-id"
+	name = "some-buildpack-name"
+	version = "some-buildpack-version"
+	homepage = "some-homepage-link"
+
+[[buildpack.licenses]]
+	type = "some-license-type"
+	uri = "some-license-uri"
 
 [metadata]
-include-files = ["some-include-file", "other-include-file"]
-pre-package = "some-pre-package-script.sh"
+	include-files = ["some-include-file", "other-include-file"]
+	pre-package = "some-pre-package-script.sh"
 
 [metadata.default-versions]
-some-dependency = "1.2.x"
+	some-dependency = "1.2.x"
 
 [[metadata.some-map]]
   key = "value"
@@ -244,6 +262,12 @@ some-dependency = "1.2.x"
 					Name:     "some-buildpack-name",
 					Version:  "some-buildpack-version",
 					Homepage: "some-homepage-link",
+					Licenses: []cargo.ConfigBuildpackLicense{
+						{
+							Type: "some-license-type",
+							URI:  "some-license-uri",
+						},
+					},
 				},
 				Stacks: []cargo.ConfigStack{
 					{
