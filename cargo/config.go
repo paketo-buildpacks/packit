@@ -23,11 +23,18 @@ type ConfigStack struct {
 }
 
 type ConfigBuildpack struct {
-	ID       string `toml:"id"                 json:"id,omitempty"`
-	Name     string `toml:"name"               json:"name,omitempty"`
-	Version  string `toml:"version"            json:"version,omitempty"`
-	Homepage string `toml:"homepage,omitempty" json:"homepage,omitempty"`
-	SHA256   string `toml:"-"                  json:"-"`
+	ID       string                   `toml:"id"                 json:"id,omitempty"`
+	Name     string                   `toml:"name"               json:"name,omitempty"`
+	Version  string                   `toml:"version"            json:"version,omitempty"`
+	Homepage string                   `toml:"homepage,omitempty" json:"homepage,omitempty"`
+	Licenses []ConfigBuildpackLicense `toml:"licenses,omitempty" json:"licenses,omitempty"`
+
+	SHA256 string `toml:"-" json:"-"`
+}
+
+type ConfigBuildpackLicense struct {
+	Type string `toml:"type" json:"type"`
+	URI  string `toml:"uri"  json:"uri"`
 }
 
 type ConfigMetadata struct {
