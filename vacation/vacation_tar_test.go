@@ -39,7 +39,7 @@ func testVacationTar(t *testing.T, context spec.G, it spec.S) {
 			_, err = tw.Write(nil)
 			Expect(err).NotTo(HaveOccurred())
 
-			Expect(tw.WriteHeader(&tar.Header{Name: "some-dir", Mode: 0755, Typeflag: tar.TypeDir})).To(Succeed())
+			Expect(tw.WriteHeader(&tar.Header{Name: "./some-dir", Mode: 0755, Typeflag: tar.TypeDir})).To(Succeed())
 			_, err = tw.Write(nil)
 			Expect(err).NotTo(HaveOccurred())
 
