@@ -1,5 +1,6 @@
 # packit
 
+Checkout the Go Docs for details on how to use the sub-packages within packit:
 [![GoDoc](https://img.shields.io/badge/pkg.go.dev-doc-blue)](http://pkg.go.dev/github.com/paketo-buildpacks/packit)
 
 Package packit provides primitives for implementing a Cloud Native Buildpack
