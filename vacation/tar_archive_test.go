@@ -14,12 +14,12 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-func testVacationTar(t *testing.T, context spec.G, it spec.S) {
+func testTarArchive(t *testing.T, context spec.G, it spec.S) {
 	var (
 		Expect = NewWithT(t).Expect
 	)
 
-	context("TarArchive.Decompress", func() {
+	context("Decompress", func() {
 		var (
 			tempDir    string
 			tarArchive vacation.TarArchive

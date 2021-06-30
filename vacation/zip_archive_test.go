@@ -14,12 +14,12 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-func testVacationZip(t *testing.T, context spec.G, it spec.S) {
+func testZipArchive(t *testing.T, context spec.G, it spec.S) {
 	var (
 		Expect = NewWithT(t).Expect
 	)
 
-	context("ZipArchive.Decompress", func() {
+	context("Decompress", func() {
 		var (
 			tempDir    string
 			zipArchive vacation.ZipArchive
@@ -248,7 +248,7 @@ func testVacationZip(t *testing.T, context spec.G, it spec.S) {
 
 					// Create a symlink in the target to force the new symlink create to
 					// fail
-					Expect(os.WriteFile(filepath.Join(tempDir, "some-file"), nil, 0644)).To(Succeed())
+					Expect(os.WriteFile(filepath.Join(tempDir, "some-file"), nil, 0600)).To(Succeed())
 					Expect(os.Symlink("some-file", filepath.Join(tempDir, "symlink"))).To(Succeed())
 				})
 
