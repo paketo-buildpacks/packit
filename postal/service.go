@@ -156,7 +156,8 @@ func (s Service) Deliver(dependency Dependency, cnbPath, layerPath, platformPath
 
 	validatedReader := cargo.NewValidatedReader(bundle, dependency.SHA256)
 
-	err = vacation.NewArchive(validatedReader).StripComponents(dependency.StripComponents).Decompress(layerPath)
+	name := filepath.Base(dependency.URI)
+	err = vacation.NewArchive(validatedReader).WithName(name).StripComponents(dependency.StripComponents).Decompress(layerPath)
 	if err != nil {
 		return err
 	}

@@ -3,7 +3,6 @@ package vacation_test
 import (
 	"archive/tar"
 	"bytes"
-	"compress/gzip"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -11,19 +10,20 @@ import (
 
 	"github.com/paketo-buildpacks/packit/vacation"
 	"github.com/sclevine/spec"
+	"github.com/ulikunitz/xz"
 
 	. "github.com/onsi/gomega"
 )
 
-func testVacationTarGzip(t *testing.T, context spec.G, it spec.S) {
+func testTarXZArchive(t *testing.T, context spec.G, it spec.S) {
 	var (
 		Expect = NewWithT(t).Expect
 	)
 
-	context("TarGzipArchive.Decompress", func() {
+	context("Decompress", func() {
 		var (
-			tempDir        string
-			tarGzipArchive vacation.TarGzipArchive
+			tempDir      string
+			tarXZArchive vacation.TarXZArchive
 		)
 
 		it.Before(func() {
@@ -32,8 +32,10 @@ func testVacationTarGzip(t *testing.T, context spec.G, it spec.S) {
 			Expect(err).NotTo(HaveOccurred())
 
 			buffer := bytes.NewBuffer(nil)
-			gw := gzip.NewWriter(buffer)
-			tw := tar.NewWriter(gw)
+			xzw, err := xz.NewWriter(buffer)
+			Expect(err).NotTo(HaveOccurred())
+
+			tw := tar.NewWriter(xzw)
 
 			Expect(tw.WriteHeader(&tar.Header{Name: "some-dir", Mode: 0755, Typeflag: tar.TypeDir})).To(Succeed())
 			_, err = tw.Write(nil)
@@ -59,9 +61,9 @@ func testVacationTarGzip(t *testing.T, context spec.G, it spec.S) {
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(tw.Close()).To(Succeed())
-			Expect(gw.Close()).To(Succeed())
+			Expect(xzw.Close()).To(Succeed())
 
-			tarGzipArchive = vacation.NewTarGzipArchive(bytes.NewReader(buffer.Bytes()))
+			tarXZArchive = vacation.NewTarXZArchive(bytes.NewReader(buffer.Bytes()))
 
 		})
 
@@ -71,7 +73,7 @@ func testVacationTarGzip(t *testing.T, context spec.G, it spec.S) {
 
 		it("unpackages the archive into the path", func() {
 			var err error
-			err = tarGzipArchive.Decompress(tempDir)
+			err = tarXZArchive.Decompress(tempDir)
 			Expect(err).ToNot(HaveOccurred())
 
 			files, err := filepath.Glob(fmt.Sprintf("%s/*", tempDir))
@@ -98,7 +100,7 @@ func testVacationTarGzip(t *testing.T, context spec.G, it spec.S) {
 
 		it("unpackages the archive into the path but also strips the first component", func() {
 			var err error
-			err = tarGzipArchive.StripComponents(1).Decompress(tempDir)
+			err = tarXZArchive.StripComponents(1).Decompress(tempDir)
 			Expect(err).ToNot(HaveOccurred())
 
 			files, err := filepath.Glob(fmt.Sprintf("%s/*", tempDir))
@@ -109,15 +111,16 @@ func testVacationTarGzip(t *testing.T, context spec.G, it spec.S) {
 
 			Expect(filepath.Join(tempDir, "some-other-dir")).To(BeADirectory())
 			Expect(filepath.Join(tempDir, "some-other-dir", "some-file")).To(BeARegularFile())
+
 		})
 
 		context("failure cases", func() {
-			context("when it fails to create a grip reader", func() {
+			context("when it fails to create a xz reader", func() {
 				it("returns an error", func() {
-					readyArchive := vacation.NewTarGzipArchive(bytes.NewBuffer([]byte(`something`)))
+					readyArchive := vacation.NewTarXZArchive(bytes.NewBuffer([]byte(`something`)))
 
 					err := readyArchive.Decompress(tempDir)
-					Expect(err).To(MatchError(ContainSubstring("failed to create gzip reader")))
+					Expect(err).To(MatchError(ContainSubstring("failed to create xz reader")))
 				})
 			})
 		})

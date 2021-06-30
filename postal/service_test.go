@@ -404,6 +404,7 @@ version = "this is super not semver"
 			Expect(err).NotTo(HaveOccurred())
 			Expect(info.Mode()).To(Equal(os.FileMode(0755)))
 		})
+
 		context("when the dependency has a strip-components value set", func() {
 			it.Before(func() {
 				var err error
@@ -484,7 +485,55 @@ version = "this is super not semver"
 				Expect(err).NotTo(HaveOccurred())
 				Expect(info.Mode()).To(Equal(os.FileMode(0755)))
 			})
+		})
 
+		context("when the dependency should be a named file", func() {
+			it.Before(func() {
+				var err error
+				layerPath, err = os.MkdirTemp("", "path")
+				Expect(err).NotTo(HaveOccurred())
+
+				buffer := bytes.NewBuffer(nil)
+				buffer.WriteString("some-file-contents")
+
+				sum := sha256.Sum256(buffer.Bytes())
+				dependencySHA = hex.EncodeToString(sum[:])
+
+				transport.DropCall.Returns.ReadCloser = io.NopCloser(buffer)
+
+				deliver = func() error {
+					return service.Deliver(postal.Dependency{
+						ID:      "some-entry",
+						Stacks:  []string{"some-stack"},
+						URI:     "https://dependencies.example.com/dependencies/some-file-name.txt",
+						SHA256:  dependencySHA,
+						Version: "1.2.3",
+					}, "some-cnb-path",
+						layerPath,
+						platformPath,
+					)
+				}
+			})
+
+			it.After(func() {
+				Expect(os.RemoveAll(layerPath)).To(Succeed())
+			})
+
+			it("downloads the dependency and copies it into the path with the given name", func() {
+				err := deliver()
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(transport.DropCall.Receives.Root).To(Equal("some-cnb-path"))
+				Expect(transport.DropCall.Receives.Uri).To(Equal("https://dependencies.example.com/dependencies/some-file-name.txt"))
+
+				files, err := filepath.Glob(fmt.Sprintf("%s/*", layerPath))
+				Expect(err).NotTo(HaveOccurred())
+				Expect(files).To(ConsistOf([]string{filepath.Join(layerPath, "some-file-name.txt")}))
+
+				content, err := os.ReadFile(filepath.Join(layerPath, "some-file-name.txt"))
+				Expect(err).NotTo(HaveOccurred())
+				Expect(string(content)).To(Equal("some-file-contents"))
+			})
 		})
 
 		context("when there is a dependency mapping via binding", func() {

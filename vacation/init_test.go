@@ -9,13 +9,13 @@ import (
 
 func TestVacation(t *testing.T) {
 	suite := spec.New("vacation", spec.Report(report.Terminal{}))
-	suite("VacationArchive", testVacationArchive)
-	suite("VacationTarBzip2", testVacationTarBzip2)
-	suite("VacationSymlinkSorting", testVacationSymlinkSorting)
-	suite("VacationTar", testVacationTar)
-	suite("VacationTarGzip", testVacationTarGzip)
-	suite("VacationTarXZ", testVacationTarXZ)
-	suite("VacationText", testVacationText)
-	suite("VacationZip", testVacationZip)
+	suite("Archive", testArchive)
+	suite("NopArchive", testNopArchive)
+	suite("SymlinkSorting", testSymlinkSorting)
+	suite("TarArchive", testTarArchive)
+	suite("TarBzip2Archive", testTarBzip2Archive)
+	suite("TarGzipArchive", testTarGzipArchive)
+	suite("TarXZArchive", testTarXZArchive)
+	suite("ZipArchive", testZipArchive)
 	suite.Run(t)
 }
