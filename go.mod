@@ -8,7 +8,7 @@ require (
 	github.com/cheggaaa/pb/v3 v3.0.8
 	github.com/docker/distribution v2.7.1+incompatible
 	github.com/dsnet/compress v0.0.1
-	github.com/gabriel-vasile/mimetype v1.3.0
+	github.com/gabriel-vasile/mimetype v1.3.1
 	github.com/google/go-containerregistry v0.5.1
 	github.com/onsi/gomega v1.13.0
 	github.com/pelletier/go-toml v1.9.3
