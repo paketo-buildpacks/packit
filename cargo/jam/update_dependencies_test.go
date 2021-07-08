@@ -55,7 +55,8 @@ func testUpdateDependencies(t *testing.T, context spec.G, it spec.S) {
     ],
     "source": "some-source",
     "source_sha256": "some-source-sha",
-		"cpe": "node-cpe"
+		"cpe": "node-cpe",
+		"licenses": ["MIT", "MIT-2"]
 	},
   {
     "name": "node",
@@ -69,7 +70,8 @@ func testUpdateDependencies(t *testing.T, context spec.G, it spec.S) {
     ],
     "source": "some-source",
     "source_sha256": "some-source-sha",
-		"cpe": "node-cpe"
+		"cpe": "node-cpe",
+		"licenses": ["MIT", "MIT-2"]
 	},
   {
     "name": "node",
@@ -83,7 +85,8 @@ func testUpdateDependencies(t *testing.T, context spec.G, it spec.S) {
     ],
     "source": "some-source",
     "source_sha256": "some-source-sha",
-		"cpe": "node-cpe"
+		"cpe": "node-cpe",
+		"licenses": ["MIT", "MIT-2"]
 	},
   {
     "name": "node",
@@ -97,7 +100,8 @@ func testUpdateDependencies(t *testing.T, context spec.G, it spec.S) {
     ],
     "source": "some-source",
     "source_sha256": "some-source-sha",
-		"cpe": "node-cpe"
+		"cpe": "node-cpe",
+		"licenses": ["MIT", "MIT-2"]
 	}]`)
 				}
 
@@ -209,6 +213,7 @@ api = "0.2"
 [[metadata.dependencies]]
 	cpe = "node-cpe"
 	id = "node"
+	licenses = ["MIT", "MIT-2"]
 	name = "Node Engine"
 	sha256 = "some-sha"
 	source = "some-source"
@@ -220,6 +225,7 @@ api = "0.2"
 [[metadata.dependencies]]
 	cpe = "node-cpe"
 	id = "node"
+	licenses = ["MIT", "MIT-2"]
 	name = "Node Engine"
 	sha256 = "some-sha"
 	source = "some-source"
@@ -231,6 +237,7 @@ api = "0.2"
 [[metadata.dependencies]]
 	cpe = "node-cpe"
 	id = "node"
+	licenses = ["MIT", "MIT-2"]
 	name = "Node Engine"
 	sha256 = "some-sha"
 	source = "some-source"
@@ -270,6 +277,7 @@ api = "0.2"
 				[[metadata.dependencies]]
 	        cpe = "node-cpe"
 					id = "node"
+					licenses = ["MIT", "MIT-2"]
 					name = "Node Engine"
 					sha256 = "some-sha"
 					source = "some-source"
@@ -323,6 +331,7 @@ api = "0.2"
 [[metadata.dependencies]]
 	cpe = "node-cpe"
 	id = "node"
+	licenses = ["MIT", "MIT-2"]
 	name = "Node Engine"
 	sha256 = "some-sha"
 	source = "some-source"
@@ -359,6 +368,7 @@ api = "0.2"
 	        cpe = "node-cpe"
 					id = "node"
 					name = "Node Engine"
+					licenses = ["MIT", "MIT-2"]
 					sha256 = "some-sha"
 					source = "some-source"
 					source_sha256 = "some-source-sha"
@@ -411,6 +421,7 @@ api = "0.2"
 [[metadata.dependencies]]
 	cpe = "node-cpe"
 	id = "node"
+	licenses = ["MIT", "MIT-2"]
 	name = "Node Engine"
 	sha256 = "some-sha"
 	source = "some-source"
@@ -500,6 +511,7 @@ api = "0.2"
 					[[metadata.dependencies]]
 	          cpe = "non-existent-cpe"
 						id = "non-existent"
+					  licenses = ["MIT", "MIT-2"]
 						sha256 = "some-sha"
 						source = "some-source"
 						source_sha256 = "some-source-sha"

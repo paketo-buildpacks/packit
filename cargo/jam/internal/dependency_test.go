@@ -38,6 +38,10 @@ func testDependency(t *testing.T, context spec.G, it spec.S) {
 				CreatedAt: "sometime",
 				ModifedAt: "another-time",
 				CPE:       "cpe-notation",
+				Licenses: []string{
+					"fancy-license",
+					"fancy-license-2",
+				},
 			},
 			{
 				DeprecationDate: "",
@@ -55,6 +59,10 @@ func testDependency(t *testing.T, context spec.G, it spec.S) {
 				CreatedAt: "sometime",
 				ModifedAt: "another-time",
 				CPE:       "cpe-notation",
+				Licenses: []string{
+					"fancy-license",
+					"fancy-license-2",
+				},
 			},
 			{
 				DeprecationDate: "",
@@ -72,6 +80,10 @@ func testDependency(t *testing.T, context spec.G, it spec.S) {
 				CreatedAt: "sometime",
 				ModifedAt: "another-time",
 				CPE:       "cpe-notation",
+				Licenses: []string{
+					"fancy-license",
+					"fancy-license-2",
+				},
 			},
 			{
 				DeprecationDate: "",
@@ -89,6 +101,10 @@ func testDependency(t *testing.T, context spec.G, it spec.S) {
 				CreatedAt: "sometime",
 				ModifedAt: "another-time",
 				CPE:       "cpe-notation",
+				Licenses: []string{
+					"fancy-license",
+					"fancy-license-2",
+				},
 			},
 			{
 				DeprecationDate: "",
@@ -106,6 +122,10 @@ func testDependency(t *testing.T, context spec.G, it spec.S) {
 				CreatedAt: "sometime",
 				ModifedAt: "another-time",
 				CPE:       "cpe-notation",
+				Licenses: []string{
+					"fancy-license",
+					"fancy-license-2",
+				},
 			},
 		}
 	})
@@ -142,7 +162,8 @@ func testDependency(t *testing.T, context spec.G, it spec.S) {
     "created_at": "sometime",
     "modified_at": "another-time",
 		"cpe": "cpe-notation",
-		"deprecation_date" : ""
+		"deprecation_date": "",
+		"licenses": ["fancy-license", "fancy-license-2"]
   },
   {
     "name": "some-dep",
@@ -158,7 +179,8 @@ func testDependency(t *testing.T, context spec.G, it spec.S) {
     "source_sha256": "some-source-sha-two",
     "created_at": "sometime",
     "modified_at": "another-time",
-		"cpe": "cpe-notation"
+		"cpe": "cpe-notation",
+		"licenses": ["fancy-license", "fancy-license-2"]
   },
   {
     "name": "some-dep",
@@ -174,7 +196,8 @@ func testDependency(t *testing.T, context spec.G, it spec.S) {
     "source_sha256": "some-source-sha-three",
     "created_at": "sometime",
     "modified_at": "another-time",
-		"cpe": "cpe-notation"
+		"cpe": "cpe-notation",
+		"licenses": ["fancy-license", "fancy-license-2"]
   },
   {
     "name": "some-dep",
@@ -190,7 +213,8 @@ func testDependency(t *testing.T, context spec.G, it spec.S) {
 		"source_sha256": "some-source-sha-four",
     "created_at": "sometime",
     "modified_at": "another-time",
-		"cpe": "cpe-notation"
+		"cpe": "cpe-notation",
+		"licenses": ["fancy-license", "fancy-license-2"]
   },
   {
     "name": "different-dep",
@@ -206,7 +230,8 @@ func testDependency(t *testing.T, context spec.G, it spec.S) {
 		"source_sha256": "different-dep-source-sha",
     "created_at": "sometime",
     "modified_at": "another-time",
-		"cpe": "cpe-notation"
+		"cpe": "cpe-notation",
+		"licenses": ["fancy-license", "fancy-license-2"]
   }
 ]`)
 					}
@@ -278,6 +303,7 @@ func testDependency(t *testing.T, context spec.G, it spec.S) {
 					{
 						CPE:          "cpe-notation",
 						ID:           "some-dep",
+						Licenses:     []string{"fancy-license", "fancy-license-2"},
 						Version:      "1.0.0",
 						Stacks:       []string{"some-stack"},
 						URI:          "some-dep-uri",
@@ -288,6 +314,7 @@ func testDependency(t *testing.T, context spec.G, it spec.S) {
 					{
 						CPE:          "cpe-notation",
 						ID:           "some-dep",
+						Licenses:     []string{"fancy-license", "fancy-license-2"},
 						Version:      "1.1.2",
 						Stacks:       []string{"some-stack-two"},
 						URI:          "some-dep-uri-two",
@@ -298,6 +325,7 @@ func testDependency(t *testing.T, context spec.G, it spec.S) {
 					{
 						CPE:          "cpe-notation",
 						ID:           "some-dep",
+						Licenses:     []string{"fancy-license", "fancy-license-2"},
 						Version:      "1.5.6",
 						Stacks:       []string{"some-stack-three"},
 						URI:          "some-dep-uri-three",
@@ -347,6 +375,7 @@ func testDependency(t *testing.T, context spec.G, it spec.S) {
 							CreatedAt: "sometime",
 							ModifedAt: "another-time",
 							CPE:       "cpe-notation",
+							Licenses:  []string{"fancy-license", "fancy-license-2"},
 						},
 					}
 

@@ -65,6 +65,7 @@ func testConfig(t *testing.T, context spec.G, it spec.S) {
 							CPE:             "some-cpe",
 							DeprecationDate: &deprecationDate,
 							ID:              "some-dependency",
+							Licenses:        []string{"fancy-license", "fancy-license-2"},
 							Name:            "Some Dependency",
 							SHA256:          "shasum",
 							Source:          "source",
@@ -125,6 +126,7 @@ api = "0.2"
   cpe = "some-cpe"
   deprecation_date = "2020-06-01T00:00:00Z"
   id = "some-dependency"
+	licenses = ["fancy-license", "fancy-license-2"]
   name = "Some Dependency"
   sha256 = "shasum"
 	source = "source"
@@ -222,6 +224,7 @@ api = "0.2"
 [[metadata.dependencies]]
   cpe = "some-cpe"
   id = "some-dependency"
+	licenses = ["fancy-license", "fancy-license-2"]
   name = "Some Dependency"
   sha256 = "shasum"
 	source = "source"
@@ -289,6 +292,7 @@ api = "0.2"
 						{
 							CPE:          "some-cpe",
 							ID:           "some-dependency",
+							Licenses:     []string{"fancy-license", "fancy-license-2"},
 							Name:         "Some Dependency",
 							SHA256:       "shasum",
 							Source:       "source",

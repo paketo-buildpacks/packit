@@ -17,16 +17,17 @@ import (
 type Dependency struct {
 	DeprecationDate string `json:"deprecation_date,omitempty"`
 	// The ID field should be the `name` from the dep-server
-	ID           string  `json:"name,omitempty"`
-	SHA256       string  `json:"sha256,omitempty"`
-	Source       string  `json:"source,omitempty"`
-	SourceSHA256 string  `json:"source_sha256,omitempty"`
-	Stacks       []Stack `json:"stacks,omitempty"`
-	URI          string  `json:"uri,omitempty"`
-	Version      string  `json:"version,omitempty"`
-	CreatedAt    string  `json:"created_at,omitempty"`
-	ModifedAt    string  `json:"modified_at,omitempty"`
-	CPE          string  `json:"cpe,omitempty"`
+	ID           string   `json:"name,omitempty"`
+	SHA256       string   `json:"sha256,omitempty"`
+	Source       string   `json:"source,omitempty"`
+	SourceSHA256 string   `json:"source_sha256,omitempty"`
+	Stacks       []Stack  `json:"stacks,omitempty"`
+	URI          string   `json:"uri,omitempty"`
+	Version      string   `json:"version,omitempty"`
+	CreatedAt    string   `json:"created_at,omitempty"`
+	ModifedAt    string   `json:"modified_at,omitempty"`
+	CPE          string   `json:"cpe,omitempty"`
+	Licenses     []string `json:"licenses,omitempty"`
 }
 
 type Stack struct {
@@ -137,6 +138,9 @@ func convertToCargoDependency(dependency Dependency, dependencyName string) carg
 	cargoDependency.Version = strings.Replace(dependency.Version, "v", "", -1)
 	for _, stack := range dependency.Stacks {
 		cargoDependency.Stacks = append(cargoDependency.Stacks, stack.ID)
+	}
+	for _, license := range dependency.Licenses {
+		cargoDependency.Licenses = append(cargoDependency.Licenses, license)
 	}
 	return cargoDependency
 }
