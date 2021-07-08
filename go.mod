@@ -10,7 +10,7 @@ require (
 	github.com/dsnet/compress v0.0.1
 	github.com/gabriel-vasile/mimetype v1.3.1
 	github.com/google/go-containerregistry v0.5.1
-	github.com/onsi/gomega v1.13.0
+	github.com/onsi/gomega v1.14.0
 	github.com/pelletier/go-toml v1.9.3
 	github.com/sclevine/spec v1.4.0
 	github.com/spf13/cobra v1.2.1
