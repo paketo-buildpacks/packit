@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"regexp"
 	"sort"
 	"strings"
 	"time"
@@ -46,6 +47,12 @@ func GetDependenciesWithinConstraint(dependencies []Dependency, constraint cargo
 		if err != nil {
 			return nil, err
 		}
+
+		// Cut off any non-digit characters at the beginning of the version and update dependency.Version to have that version.
+		// EX. go1.2.3  becomes 1.2.3
+		// EX. v2.3.4   becomes 2.3.4
+		cutOffCharacters := regexp.MustCompile(`\D*`)
+		dependency.Version = cutOffCharacters.Split(dependency.Version, 2)[1]
 
 		depVersion, err := semver.NewVersion(dependency.Version)
 		if err != nil {

@@ -107,6 +107,23 @@ func testDependency(t *testing.T, context spec.G, it spec.S) {
 				ModifedAt: "another-time",
 				CPE:       "cpe-notation",
 			},
+			{
+				DeprecationDate: "",
+				ID:              "non-semver-dep",
+				SHA256:          "non-semver-sha",
+				Source:          "non-semver-source",
+				SourceSHA256:    "non-semver-source-sha",
+				Stacks: []internal.Stack{
+					{
+						ID: "non-semver-stack",
+					},
+				},
+				URI:       "non-semver-uri",
+				Version:   "non-semver1.9.8",
+				CreatedAt: "sometime",
+				ModifedAt: "another-time",
+				CPE:       "cpe-notation",
+			},
 		}
 	})
 
@@ -207,6 +224,22 @@ func testDependency(t *testing.T, context spec.G, it spec.S) {
     "created_at": "sometime",
     "modified_at": "another-time",
 		"cpe": "cpe-notation"
+  },
+  {
+    "name": "non-semver-dep",
+    "version": "non-semver1.9.8",
+    "sha256": "non-semver-sha",
+    "uri": "non-semver-uri",
+    "stacks": [
+      {
+        "id": "non-semver-stack"
+      }
+    ],
+    "source": "non-semver-source",
+		"source_sha256": "non-semver-source-sha",
+    "created_at": "sometime",
+    "modified_at": "another-time",
+		"cpe": "cpe-notation"
   }
 ]`)
 					}
@@ -304,6 +337,31 @@ func testDependency(t *testing.T, context spec.G, it spec.S) {
 						SHA256:       "some-sha-three",
 						Source:       "some-source-three",
 						SourceSHA256: "some-source-sha-three",
+					},
+				}))
+			})
+		})
+
+		context("given a valid api and constraint that returns a dependency with non-semver version", func() {
+			it("returns dependencies and makes the version semver-compatible", func() {
+				constraint := cargo.ConfigMetadataDependencyConstraint{
+					Constraint: "1.*",
+					ID:         "non-semver-dep",
+					Patches:    1,
+				}
+
+				dependencies, err := internal.GetDependenciesWithinConstraint(allDependencies, constraint, "")
+				Expect(err).NotTo(HaveOccurred())
+				Expect(dependencies).To(Equal([]cargo.ConfigMetadataDependency{
+					{
+						CPE:          "cpe-notation",
+						ID:           "non-semver-dep",
+						Version:      "1.9.8",
+						Stacks:       []string{"non-semver-stack"},
+						URI:          "non-semver-uri",
+						SHA256:       "non-semver-sha",
+						Source:       "non-semver-source",
+						SourceSHA256: "non-semver-source-sha",
 					},
 				}))
 			})
