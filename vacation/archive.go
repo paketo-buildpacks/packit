@@ -34,7 +34,8 @@ func NewArchive(inputReader io.Reader) Archive {
 //
 // Archive decompression will also handle files that are types "text/plain;
 // charset=utf-8" and write the contents of the input stream to a file name
-// "artifact" in the destination directory.
+// specified by the `Archive.WithName()` option (or defaults to "artifact")
+// in the destination directory.
 func (a Archive) Decompress(destination string) error {
 	// Convert reader into a buffered read so that the header can be peeked to
 	// determine the type.
@@ -83,6 +84,8 @@ func (a Archive) StripComponents(components int) Archive {
 	return a
 }
 
+// WithName provides a way of overriding the name of the file
+// that the decompressed file will be copied into.
 func (a Archive) WithName(name string) Archive {
 	a.name = name
 	return a
