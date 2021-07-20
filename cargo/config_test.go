@@ -63,6 +63,7 @@ func testConfig(t *testing.T, context spec.G, it spec.S) {
 					Dependencies: []cargo.ConfigMetadataDependency{
 						{
 							CPE:             "some-cpe",
+							PURL:            "some-purl",
 							DeprecationDate: &deprecationDate,
 							ID:              "some-dependency",
 							Licenses:        []string{"fancy-license", "fancy-license-2"},
@@ -124,6 +125,7 @@ api = "0.2"
 
 [[metadata.dependencies]]
   cpe = "some-cpe"
+  purl = "some-purl"
   deprecation_date = "2020-06-01T00:00:00Z"
   id = "some-dependency"
 	licenses = ["fancy-license", "fancy-license-2"]
@@ -223,6 +225,7 @@ api = "0.2"
 
 [[metadata.dependencies]]
   cpe = "some-cpe"
+  purl = "some-purl"
   id = "some-dependency"
 	licenses = ["fancy-license", "fancy-license-2"]
   name = "Some Dependency"
@@ -291,6 +294,7 @@ api = "0.2"
 					Dependencies: []cargo.ConfigMetadataDependency{
 						{
 							CPE:          "some-cpe",
+							PURL:         "some-purl",
 							ID:           "some-dependency",
 							Licenses:     []string{"fancy-license", "fancy-license-2"},
 							Name:         "Some Dependency",

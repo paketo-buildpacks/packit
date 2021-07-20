@@ -27,6 +27,7 @@ type Dependency struct {
 	CreatedAt    string   `json:"created_at,omitempty"`
 	ModifedAt    string   `json:"modified_at,omitempty"`
 	CPE          string   `json:"cpe,omitempty"`
+	PURL         string   `json:"purl,omitempty"`
 	Licenses     []string `json:"licenses,omitempty"`
 }
 
@@ -129,6 +130,7 @@ func convertToCargoDependency(dependency Dependency, dependencyName string) carg
 	}
 
 	cargoDependency.CPE = dependency.CPE
+	cargoDependency.PURL = dependency.PURL
 	cargoDependency.ID = dependency.ID
 	cargoDependency.Name = dependencyName
 	cargoDependency.SHA256 = dependency.SHA256

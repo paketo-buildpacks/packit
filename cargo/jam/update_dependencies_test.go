@@ -56,6 +56,7 @@ func testUpdateDependencies(t *testing.T, context spec.G, it spec.S) {
     "source": "some-source",
     "source_sha256": "some-source-sha",
 		"cpe": "node-cpe",
+		"purl": "some-purl",
 		"licenses": ["MIT", "MIT-2"]
 	},
   {
@@ -71,6 +72,7 @@ func testUpdateDependencies(t *testing.T, context spec.G, it spec.S) {
     "source": "some-source",
     "source_sha256": "some-source-sha",
 		"cpe": "node-cpe",
+		"purl": "some-purl",
 		"licenses": ["MIT", "MIT-2"]
 	},
   {
@@ -86,6 +88,7 @@ func testUpdateDependencies(t *testing.T, context spec.G, it spec.S) {
     "source": "some-source",
     "source_sha256": "some-source-sha",
 		"cpe": "node-cpe",
+		"purl": "some-purl",
 		"licenses": ["MIT", "MIT-2"]
 	},
   {
@@ -101,6 +104,7 @@ func testUpdateDependencies(t *testing.T, context spec.G, it spec.S) {
     "source": "some-source",
     "source_sha256": "some-source-sha",
 		"cpe": "node-cpe",
+		"purl": "some-purl",
 		"licenses": ["MIT", "MIT-2"]
 	}]`)
 				}
@@ -131,6 +135,7 @@ func testUpdateDependencies(t *testing.T, context spec.G, it spec.S) {
 
 					[[metadata.dependencies]]
 					  cpe = "node-cpe"
+					  purl = "some-purl"
 						id = "node"
 						name = "Node Engine"
 						sha256 = "some-sha"
@@ -142,6 +147,7 @@ func testUpdateDependencies(t *testing.T, context spec.G, it spec.S) {
 
 					[[metadata.dependencies]]
 					  cpe = "node-cpe"
+					  purl = "some-purl"
 						id = "node"
 						name = "Node Engine"
 						sha256 = "some-sha"
@@ -153,6 +159,7 @@ func testUpdateDependencies(t *testing.T, context spec.G, it spec.S) {
 
 					[[metadata.dependencies]]
 					  cpe = "node-cpe"
+					  purl = "some-purl"
 						id = "node"
 						name = "Node Engine"
 						sha256 = "some-sha"
@@ -212,6 +219,7 @@ api = "0.2"
 
 [[metadata.dependencies]]
 	cpe = "node-cpe"
+	purl = "some-purl"
 	id = "node"
 	licenses = ["MIT", "MIT-2"]
 	name = "Node Engine"
@@ -224,6 +232,7 @@ api = "0.2"
 
 [[metadata.dependencies]]
 	cpe = "node-cpe"
+	purl = "some-purl"
 	id = "node"
 	licenses = ["MIT", "MIT-2"]
 	name = "Node Engine"
@@ -236,6 +245,7 @@ api = "0.2"
 
 [[metadata.dependencies]]
 	cpe = "node-cpe"
+	purl = "some-purl"
 	id = "node"
 	licenses = ["MIT", "MIT-2"]
 	name = "Node Engine"
@@ -276,6 +286,7 @@ api = "0.2"
 
 				[[metadata.dependencies]]
 	        cpe = "node-cpe"
+					purl = "some-purl"
 					id = "node"
 					licenses = ["MIT", "MIT-2"]
 					name = "Node Engine"
@@ -330,6 +341,7 @@ api = "0.2"
 
 [[metadata.dependencies]]
 	cpe = "node-cpe"
+	purl = "some-purl"
 	id = "node"
 	licenses = ["MIT", "MIT-2"]
 	name = "Node Engine"
@@ -366,6 +378,7 @@ api = "0.2"
 
 				[[metadata.dependencies]]
 	        cpe = "node-cpe"
+					purl = "some-purl"
 					id = "node"
 					name = "Node Engine"
 					licenses = ["MIT", "MIT-2"]
@@ -420,6 +433,7 @@ api = "0.2"
 
 [[metadata.dependencies]]
 	cpe = "node-cpe"
+	purl = "some-purl"
 	id = "node"
 	licenses = ["MIT", "MIT-2"]
 	name = "Node Engine"
@@ -510,6 +524,7 @@ api = "0.2"
 
 					[[metadata.dependencies]]
 	          cpe = "non-existent-cpe"
+						purl = "non-existent-purl"
 						id = "non-existent"
 					  licenses = ["MIT", "MIT-2"]
 						sha256 = "some-sha"

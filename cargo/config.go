@@ -48,6 +48,7 @@ type ConfigMetadata struct {
 
 type ConfigMetadataDependency struct {
 	CPE             string     `toml:"cpe"              json:"cpe,omitempty"`
+	PURL            string     `toml:"purl"              json:"purl,omitempty"`
 	DeprecationDate *time.Time `toml:"deprecation_date" json:"deprecation_date,omitempty"`
 	ID              string     `toml:"id"               json:"id,omitempty"`
 	Licenses        []string   `toml:"licenses"         json:"licenses,omitempty"`
