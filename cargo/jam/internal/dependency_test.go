@@ -38,6 +38,7 @@ func testDependency(t *testing.T, context spec.G, it spec.S) {
 				CreatedAt: "sometime",
 				ModifedAt: "another-time",
 				CPE:       "cpe-notation",
+				PURL:      "some-purl",
 				Licenses: []string{
 					"fancy-license",
 					"fancy-license-2",
@@ -59,6 +60,7 @@ func testDependency(t *testing.T, context spec.G, it spec.S) {
 				CreatedAt: "sometime",
 				ModifedAt: "another-time",
 				CPE:       "cpe-notation",
+				PURL:      "some-purl",
 				Licenses: []string{
 					"fancy-license",
 					"fancy-license-2",
@@ -80,6 +82,7 @@ func testDependency(t *testing.T, context spec.G, it spec.S) {
 				CreatedAt: "sometime",
 				ModifedAt: "another-time",
 				CPE:       "cpe-notation",
+				PURL:      "some-purl",
 				Licenses: []string{
 					"fancy-license",
 					"fancy-license-2",
@@ -101,6 +104,7 @@ func testDependency(t *testing.T, context spec.G, it spec.S) {
 				CreatedAt: "sometime",
 				ModifedAt: "another-time",
 				CPE:       "cpe-notation",
+				PURL:      "some-purl",
 				Licenses: []string{
 					"fancy-license",
 					"fancy-license-2",
@@ -122,6 +126,7 @@ func testDependency(t *testing.T, context spec.G, it spec.S) {
 				CreatedAt: "sometime",
 				ModifedAt: "another-time",
 				CPE:       "cpe-notation",
+				PURL:      "some-purl",
 				Licenses: []string{
 					"fancy-license",
 					"fancy-license-2",
@@ -162,6 +167,7 @@ func testDependency(t *testing.T, context spec.G, it spec.S) {
     "created_at": "sometime",
     "modified_at": "another-time",
 		"cpe": "cpe-notation",
+		"purl": "some-purl",
 		"deprecation_date": "",
 		"licenses": ["fancy-license", "fancy-license-2"]
   },
@@ -180,6 +186,7 @@ func testDependency(t *testing.T, context spec.G, it spec.S) {
     "created_at": "sometime",
     "modified_at": "another-time",
 		"cpe": "cpe-notation",
+		"purl": "some-purl",
 		"licenses": ["fancy-license", "fancy-license-2"]
   },
   {
@@ -197,6 +204,7 @@ func testDependency(t *testing.T, context spec.G, it spec.S) {
     "created_at": "sometime",
     "modified_at": "another-time",
 		"cpe": "cpe-notation",
+		"purl": "some-purl",
 		"licenses": ["fancy-license", "fancy-license-2"]
   },
   {
@@ -214,6 +222,7 @@ func testDependency(t *testing.T, context spec.G, it spec.S) {
     "created_at": "sometime",
     "modified_at": "another-time",
 		"cpe": "cpe-notation",
+		"purl": "some-purl",
 		"licenses": ["fancy-license", "fancy-license-2"]
   },
   {
@@ -231,6 +240,7 @@ func testDependency(t *testing.T, context spec.G, it spec.S) {
     "created_at": "sometime",
     "modified_at": "another-time",
 		"cpe": "cpe-notation",
+		"purl": "some-purl",
 		"licenses": ["fancy-license", "fancy-license-2"]
   }
 ]`)
@@ -302,6 +312,7 @@ func testDependency(t *testing.T, context spec.G, it spec.S) {
 				Expect(dependencies).To(Equal([]cargo.ConfigMetadataDependency{
 					{
 						CPE:          "cpe-notation",
+						PURL:         "some-purl",
 						ID:           "some-dep",
 						Licenses:     []string{"fancy-license", "fancy-license-2"},
 						Version:      "1.0.0",
@@ -313,6 +324,7 @@ func testDependency(t *testing.T, context spec.G, it spec.S) {
 					},
 					{
 						CPE:          "cpe-notation",
+						PURL:         "some-purl",
 						ID:           "some-dep",
 						Licenses:     []string{"fancy-license", "fancy-license-2"},
 						Version:      "1.1.2",
@@ -324,6 +336,7 @@ func testDependency(t *testing.T, context spec.G, it spec.S) {
 					},
 					{
 						CPE:          "cpe-notation",
+						PURL:         "some-purl",
 						ID:           "some-dep",
 						Licenses:     []string{"fancy-license", "fancy-license-2"},
 						Version:      "1.5.6",
@@ -375,6 +388,7 @@ func testDependency(t *testing.T, context spec.G, it spec.S) {
 							CreatedAt: "sometime",
 							ModifedAt: "another-time",
 							CPE:       "cpe-notation",
+							PURL:      "some-purl",
 							Licenses:  []string{"fancy-license", "fancy-license-2"},
 						},
 					}
