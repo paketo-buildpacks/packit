@@ -7,11 +7,13 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 )
 
 // A ZipArchive decompresses zip files from an input stream.
 type ZipArchive struct {
-	reader io.Reader
+	reader     io.Reader
+	components int
 }
 
 // NewZipArchive returns a new ZipArchive that reads from inputReader.
@@ -65,7 +67,15 @@ func (z ZipArchive) Decompress(destination string) error {
 			return err
 		}
 
-		path := filepath.Join(destination, name)
+		fileNames := strings.Split(name, "/")
+
+		// Checks to see if file should be written when stripping components
+		if len(fileNames) <= z.components {
+			continue
+		}
+
+		// Constructs the path that conforms to the stripped components.
+		path := filepath.Join(append([]string{destination}, fileNames[z.components:]...)...)
 
 		switch {
 		case f.FileInfo().IsDir():
@@ -157,4 +167,11 @@ func (z ZipArchive) Decompress(destination string) error {
 	}
 
 	return nil
+}
+
+// StripComponents removes the first n levels from the final decompression
+// destination.
+func (z ZipArchive) StripComponents(components int) ZipArchive {
+	z.components = components
+	return z
 }

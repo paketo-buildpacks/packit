@@ -191,8 +191,7 @@ func ExampleArchive_StripComponents() {
 
 	// Output:
 	// some-tar-file
-	// some-zip-dir/some-zip-file
-	// zip-file
+	// some-zip-file
 }
 
 func ExampleTarArchive() {

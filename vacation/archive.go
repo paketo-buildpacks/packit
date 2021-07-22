@@ -64,7 +64,7 @@ func (a Archive) Decompress(destination string) error {
 	case "application/x-bzip2":
 		decompressor = NewTarBzip2Archive(bufferedReader).StripComponents(a.components)
 	case "application/zip":
-		decompressor = NewZipArchive(bufferedReader)
+		decompressor = NewZipArchive(bufferedReader).StripComponents(a.components)
 	case "text/plain; charset=utf-8", "application/jar":
 		destination = filepath.Join(destination, a.name)
 		decompressor = NewNopArchive(bufferedReader)
