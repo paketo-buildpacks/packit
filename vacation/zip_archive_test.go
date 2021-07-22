@@ -113,6 +113,21 @@ func testZipArchive(t *testing.T, context spec.G, it spec.S) {
 			Expect(data).To(Equal([]byte("nested file")))
 		})
 
+		it("unpackages the archive into the path but also strips the first component", func() {
+			var err error
+			err = zipArchive.StripComponents(1).Decompress(tempDir)
+			Expect(err).ToNot(HaveOccurred())
+
+			files, err := filepath.Glob(fmt.Sprintf("%s/*", tempDir))
+			Expect(err).NotTo(HaveOccurred())
+			Expect(files).To(ConsistOf([]string{
+				filepath.Join(tempDir, "some-other-dir"),
+			}))
+
+			Expect(filepath.Join(tempDir, "some-other-dir")).To(BeADirectory())
+			Expect(filepath.Join(tempDir, "some-other-dir", "some-file")).To(BeARegularFile())
+		})
+
 		context("failure cases", func() {
 			context("when it fails to create a zip reader", func() {
 				it("returns an error", func() {

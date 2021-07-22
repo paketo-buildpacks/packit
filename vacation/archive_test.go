@@ -301,6 +301,18 @@ func testArchive(t *testing.T, context spec.G, it spec.S) {
 				_, err = f.Write([]byte("some-file"))
 				Expect(err).NotTo(HaveOccurred())
 
+				_, err = zw.Create("some-dir/")
+				Expect(err).NotTo(HaveOccurred())
+
+				header = &zip.FileHeader{Name: filepath.Join("some-dir", "some-nested-file")}
+				header.SetMode(0644)
+
+				f, err = zw.CreateHeader(header)
+				Expect(err).NotTo(HaveOccurred())
+
+				_, err = f.Write([]byte("nested file"))
+				Expect(err).NotTo(HaveOccurred())
+
 				Expect(zw.Close()).To(Succeed())
 
 				archive = vacation.NewArchive(buffer)
@@ -318,6 +330,18 @@ func testArchive(t *testing.T, context spec.G, it spec.S) {
 				Expect(err).NotTo(HaveOccurred())
 				Expect(files).To(ConsistOf([]string{
 					filepath.Join(tempDir, "some-file"),
+					filepath.Join(tempDir, "some-dir"),
+				}))
+			})
+
+			it("unpackages the archive into the path but also strips the first component", func() {
+				err := archive.StripComponents(1).Decompress(tempDir)
+				Expect(err).NotTo(HaveOccurred())
+
+				files, err := filepath.Glob(filepath.Join(tempDir, "*"))
+				Expect(err).NotTo(HaveOccurred())
+				Expect(files).To(ConsistOf([]string{
+					filepath.Join(tempDir, "some-nested-file"),
 				}))
 			})
 		})
