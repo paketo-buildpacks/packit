@@ -2,9 +2,8 @@ package internal
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
-	"strings"
+
+	"github.com/paketo-buildpacks/packit/extensions"
 )
 
 type DependencyMappingResolver struct{}
@@ -22,31 +21,19 @@ func NewDependencyMappingResolver() DependencyMappingResolver {
 
 // Given a target dependency, look up if there is a matching dependency mapping at the given binding path
 func (d DependencyMappingResolver) FindDependencyMapping(sha256, bindingPath string) (string, error) {
-	allBindings, err := filepath.Glob(filepath.Join(bindingPath, "*"))
+	bindings, err := extensions.ListServiceBindings(bindingPath)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to list service bindings: %w", err)
 	}
 
-	for _, binding := range allBindings {
-		bindType, err := os.ReadFile(filepath.Join(binding, "type"))
-		if err != nil {
-			return "", fmt.Errorf("couldn't read binding type: %w", err)
-		}
-
-		if strings.TrimSpace(string(bindType)) == "dependency-mapping" {
-			if _, err := os.Stat(filepath.Join(binding, sha256)); err != nil {
-				if !os.IsNotExist(err) {
-					return "", err
-				}
-				continue
+	for _, binding := range bindings {
+		if binding.Type == "dependency-mapping" {
+			uri, ok := binding.Secrets[sha256]
+			if ok {
+				return string(uri), nil
 			}
-
-			uri, err := os.ReadFile(filepath.Join(binding, sha256))
-			if err != nil {
-				return "", err
-			}
-			return strings.TrimSpace(string(uri)), nil
 		}
 	}
+
 	return "", nil
 }

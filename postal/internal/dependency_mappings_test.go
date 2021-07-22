@@ -66,45 +66,7 @@ func testDependencyMappings(t *testing.T, context spec.G, it spec.S) {
 		context("when the binding path is a bad pattern", func() {
 			it("errors", func() {
 				_, err := resolver.FindDependencyMapping("some-sha", "///")
-				Expect(err).To(HaveOccurred())
-			})
-		})
-
-		context("when type file cannot be opened", func() {
-			it.Before(func() {
-				Expect(os.MkdirAll(filepath.Join(bindingPath, "some-binding"), 0700)).To(Succeed())
-				Expect(os.WriteFile(filepath.Join(bindingPath, "some-binding", "type"), []byte("dependency-mapping"), 0000)).To(Succeed())
-				Expect(os.WriteFile(filepath.Join(bindingPath, "some-binding", "some-sha"), []byte("dependency-mapping-entry.tgz"), 0600)).To(Succeed())
-			})
-			it("errors", func() {
-				_, err := resolver.FindDependencyMapping("some-sha", bindingPath)
-				Expect(err).To(HaveOccurred())
-				Expect(err).To(MatchError(ContainSubstring("couldn't read binding type")))
-			})
-		})
-
-		context("when SHA256 file cannot be stat", func() {
-			it.Before(func() {
-				Expect(os.MkdirAll(filepath.Join(bindingPath, "new-binding"), 0700)).To(Succeed())
-				Expect(os.WriteFile(filepath.Join(bindingPath, "new-binding", "type"), []byte("dependency-mapping"), 0644)).To(Succeed())
-				Expect(os.WriteFile(filepath.Join(bindingPath, "new-binding", "some-sha"), []byte("dependency-mapping-entry.tgz"), 0644)).To(Succeed())
-				Expect(os.Chmod(filepath.Join(bindingPath, "new-binding", "some-sha"), 0000)).To(Succeed())
-			})
-			it("errors", func() {
-				_, err := resolver.FindDependencyMapping("some-sha", bindingPath)
-				Expect(err).To(HaveOccurred())
-			})
-		})
-
-		context("when SHA256 contents cannot be opened", func() {
-			it.Before(func() {
-				Expect(os.MkdirAll(filepath.Join(bindingPath, "some-binding"), 0700)).To(Succeed())
-				Expect(os.WriteFile(filepath.Join(bindingPath, "some-binding", "type"), []byte("dependency-mapping"), 0600)).To(Succeed())
-				Expect(os.WriteFile(filepath.Join(bindingPath, "some-binding", "some-sha"), []byte("dependency-mapping-entry.tgz"), 0000)).To(Succeed())
-			})
-			it("errors", func() {
-				_, err := resolver.FindDependencyMapping("some-sha", bindingPath)
-				Expect(err).To(HaveOccurred())
+				Expect(err).To(MatchError(ContainSubstring("failed to list service bindings")))
 			})
 		})
 	})

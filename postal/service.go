@@ -175,7 +175,8 @@ func (s Service) Deliver(dependency Dependency, cnbPath, layerPath, platformPath
 	return nil
 }
 
-// Install will invoke Deliver with a hardcoded value of /platform for the platform path.
+// Install will invoke Deliver with a hardcoded value of /platform for the
+// platform path.
 //
 // Deprecated: Use Deliver instead.
 func (s Service) Install(dependency Dependency, cnbPath, layerPath string) error {
