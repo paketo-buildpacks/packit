@@ -42,8 +42,6 @@ jobs:
       uses: paketo-buildpacks/github-config/actions/tag/increment-tag@main
       with:
         current_version: ${{ steps.reset.outputs.current_version }}
-    - name: Package Jam
-      run : ./scripts/package.sh
     - name: Create Draft Release
       uses: paketo-buildpacks/github-config/actions/release/create@main
       with:
@@ -53,22 +51,3 @@ jobs:
         target_commitish: ${{ github.sha }}
         name: v${{ steps.tag.outputs.tag }}
         draft: true
-        assets: |
-          [
-            {
-              "path": "build/jam-darwin",
-              "name": "jam-darwin",
-              "content_type": "application/octet-stream"
-            },
-            {
-              "path": "build/jam-linux",
-              "name": "jam-linux",
-              "content_type": "application/octet-stream"
-            },
-            {
-              "path": "build/jam-windows.exe",
-              "name": "jam-windows.exe",
-              "content_type": "application/octet-stream"
-            }
-          ]
-
