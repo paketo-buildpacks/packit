@@ -957,25 +957,17 @@ version = "this is super not semver"
 	})
 
 	context("GenerateBillOfMaterials", func() {
-		var deprecationDate time.Time
-
-		it.Before(func() {
-			var err error
-			deprecationDate, err = time.Parse(time.RFC3339, "2022-04-01T00:00:00Z")
-			Expect(err).NotTo(HaveOccurred())
-		})
 
 		it("returns a list of BOMEntry values", func() {
 			entries := service.GenerateBillOfMaterials(
 				postal.Dependency{
-					DeprecationDate: deprecationDate,
-					ID:              "some-entry",
-					Name:            "Some Entry",
-					SHA256:          "some-sha",
-					Source:          "some-source",
-					Stacks:          []string{"some-stack"},
-					URI:             "some-uri",
-					Version:         "1.2.3",
+					ID:      "some-entry",
+					Name:    "Some Entry",
+					SHA256:  "some-sha",
+					Source:  "some-source",
+					Stacks:  []string{"some-stack"},
+					URI:     "some-uri",
+					Version: "1.2.3",
 				},
 				postal.Dependency{
 					ID:      "other-entry",
@@ -991,11 +983,10 @@ version = "this is super not semver"
 				{
 					Name: "Some Entry",
 					Metadata: map[string]interface{}{
-						"deprecation-date": deprecationDate,
-						"sha256":           "some-sha",
-						"stacks":           []string{"some-stack"},
-						"uri":              "some-uri",
-						"version":          "1.2.3",
+						"sha256":  "some-sha",
+						"stacks":  []string{"some-stack"},
+						"uri":     "some-uri",
+						"version": "1.2.3",
 					},
 				},
 				{
@@ -1008,6 +999,134 @@ version = "this is super not semver"
 					},
 				},
 			}))
+		})
+
+		context("when there is a CPE", func() {
+			it("generates a BOM with the CPE", func() {
+				entries := service.GenerateBillOfMaterials(
+					postal.Dependency{
+						CPE:     "some-cpe",
+						ID:      "some-entry",
+						Name:    "Some Entry",
+						SHA256:  "some-sha",
+						Source:  "some-source",
+						Stacks:  []string{"some-stack"},
+						URI:     "some-uri",
+						Version: "1.2.3",
+					},
+				)
+
+				Expect(entries).To(Equal([]packit.BOMEntry{
+					{
+						Name: "Some Entry",
+						Metadata: map[string]interface{}{
+							"cpe":     "some-cpe",
+							"sha256":  "some-sha",
+							"stacks":  []string{"some-stack"},
+							"uri":     "some-uri",
+							"version": "1.2.3",
+						},
+					},
+				}))
+			})
+		})
+
+		context("when there is a deprecation date", func() {
+			var deprecationDate time.Time
+
+			it.Before(func() {
+				var err error
+				deprecationDate, err = time.Parse(time.RFC3339, "2022-04-01T00:00:00Z")
+				Expect(err).NotTo(HaveOccurred())
+			})
+
+			it("generates a BOM with the deprecation date", func() {
+				entries := service.GenerateBillOfMaterials(
+					postal.Dependency{
+						DeprecationDate: deprecationDate,
+						ID:              "some-entry",
+						Name:            "Some Entry",
+						SHA256:          "some-sha",
+						Source:          "some-source",
+						Stacks:          []string{"some-stack"},
+						URI:             "some-uri",
+						Version:         "1.2.3",
+					},
+				)
+
+				Expect(entries).To(Equal([]packit.BOMEntry{
+					{
+						Name: "Some Entry",
+						Metadata: map[string]interface{}{
+							"deprecation-date": deprecationDate,
+							"sha256":           "some-sha",
+							"stacks":           []string{"some-stack"},
+							"uri":              "some-uri",
+							"version":          "1.2.3",
+						},
+					},
+				}))
+			})
+		})
+
+		context("when there is license information", func() {
+			it("generates a BOM with the license information", func() {
+				entries := service.GenerateBillOfMaterials(
+					postal.Dependency{
+						ID:       "some-entry",
+						Licenses: []string{"some-license"},
+						Name:     "Some Entry",
+						SHA256:   "some-sha",
+						Source:   "some-source",
+						Stacks:   []string{"some-stack"},
+						URI:      "some-uri",
+						Version:  "1.2.3",
+					},
+				)
+
+				Expect(entries).To(Equal([]packit.BOMEntry{
+					{
+						Name: "Some Entry",
+						Metadata: map[string]interface{}{
+							"licenses": []string{"some-license"},
+							"sha256":   "some-sha",
+							"stacks":   []string{"some-stack"},
+							"uri":      "some-uri",
+							"version":  "1.2.3",
+						},
+					},
+				}))
+			})
+		})
+
+		context("when there is a pURL", func() {
+			it("generates a BOM with the pURL", func() {
+				entries := service.GenerateBillOfMaterials(
+					postal.Dependency{
+						ID:      "some-entry",
+						Name:    "Some Entry",
+						PURL:    "some-purl",
+						SHA256:  "some-sha",
+						Source:  "some-source",
+						Stacks:  []string{"some-stack"},
+						URI:     "some-uri",
+						Version: "1.2.3",
+					},
+				)
+
+				Expect(entries).To(Equal([]packit.BOMEntry{
+					{
+						Name: "Some Entry",
+						Metadata: map[string]interface{}{
+							"purl":    "some-purl",
+							"sha256":  "some-sha",
+							"stacks":  []string{"some-stack"},
+							"uri":     "some-uri",
+							"version": "1.2.3",
+						},
+					},
+				}))
+			})
 		})
 	})
 }

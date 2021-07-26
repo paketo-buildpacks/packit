@@ -196,8 +196,20 @@ func (s Service) GenerateBillOfMaterials(dependencies ...Dependency) []packit.BO
 			},
 		}
 
+		if dependency.CPE != "" {
+			entry.Metadata["cpe"] = dependency.CPE
+		}
+
 		if (dependency.DeprecationDate != time.Time{}) {
 			entry.Metadata["deprecation-date"] = dependency.DeprecationDate
+		}
+
+		if dependency.Licenses != nil {
+			entry.Metadata["licenses"] = dependency.Licenses
+		}
+
+		if dependency.PURL != "" {
+			entry.Metadata["purl"] = dependency.PURL
 		}
 
 		entries = append(entries, entry)
