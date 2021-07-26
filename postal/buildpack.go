@@ -10,14 +10,23 @@ import (
 
 // Dependency is a representation of a buildpack dependency.
 type Dependency struct {
+	// CPE is the Common Platform Enumerator for the dependency.
+	CPE string `toml:"cpe"`
+
 	// DeprecationDate is the data upon which this dependency is considered deprecated.
 	DeprecationDate time.Time `toml:"deprecation_date"`
 
 	// ID is the identifier used to specify the dependency.
 	ID string `toml:"id"`
 
+	// Licenses is a list of SPDX license identifiers of licenses in the dependency.
+	Licenses []string `toml:"licenses"`
+
 	// Name is the human-readable name of the dependency.
 	Name string `toml:"name"`
+
+	// PURL is the package URL for the dependency.
+	PURL string `toml:"purl"`
 
 	// SHA256 is the hex-encoded SHA256 checksum of the built dependency.
 	SHA256 string `toml:"sha256"`
