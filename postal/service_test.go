@@ -961,41 +961,47 @@ version = "this is super not semver"
 		it("returns a list of BOMEntry values", func() {
 			entries := service.GenerateBillOfMaterials(
 				postal.Dependency{
-					ID:      "some-entry",
-					Name:    "Some Entry",
-					SHA256:  "some-sha",
-					Source:  "some-source",
-					Stacks:  []string{"some-stack"},
-					URI:     "some-uri",
-					Version: "1.2.3",
+					ID:           "some-entry",
+					Name:         "Some Entry",
+					SHA256:       "some-sha",
+					Source:       "some-source",
+					SourceSHA256: "some-source-sha",
+					Stacks:       []string{"some-stack"},
+					URI:          "some-uri",
+					Version:      "1.2.3",
 				},
 				postal.Dependency{
-					ID:      "other-entry",
-					Name:    "Other Entry",
-					SHA256:  "other-sha",
-					Source:  "other-source",
-					Stacks:  []string{"other-stack"},
-					URI:     "other-uri",
-					Version: "4.5.6",
+					ID:           "other-entry",
+					Name:         "Other Entry",
+					SHA256:       "other-sha",
+					Source:       "other-source",
+					SourceSHA256: "other-source-sha",
+					Stacks:       []string{"other-stack"},
+					URI:          "other-uri",
+					Version:      "4.5.6",
 				},
 			)
 			Expect(entries).To(Equal([]packit.BOMEntry{
 				{
 					Name: "Some Entry",
 					Metadata: map[string]interface{}{
-						"sha256":  "some-sha",
-						"stacks":  []string{"some-stack"},
-						"uri":     "some-uri",
-						"version": "1.2.3",
+						"sha256":        "some-sha",
+						"source":        "some-source",
+						"source-sha256": "some-source-sha",
+						"stacks":        []string{"some-stack"},
+						"uri":           "some-uri",
+						"version":       "1.2.3",
 					},
 				},
 				{
 					Name: "Other Entry",
 					Metadata: map[string]interface{}{
-						"sha256":  "other-sha",
-						"stacks":  []string{"other-stack"},
-						"uri":     "other-uri",
-						"version": "4.5.6",
+						"sha256":        "other-sha",
+						"source":        "other-source",
+						"source-sha256": "other-source-sha",
+						"stacks":        []string{"other-stack"},
+						"uri":           "other-uri",
+						"version":       "4.5.6",
 					},
 				},
 			}))
@@ -1005,14 +1011,15 @@ version = "this is super not semver"
 			it("generates a BOM with the CPE", func() {
 				entries := service.GenerateBillOfMaterials(
 					postal.Dependency{
-						CPE:     "some-cpe",
-						ID:      "some-entry",
-						Name:    "Some Entry",
-						SHA256:  "some-sha",
-						Source:  "some-source",
-						Stacks:  []string{"some-stack"},
-						URI:     "some-uri",
-						Version: "1.2.3",
+						CPE:          "some-cpe",
+						ID:           "some-entry",
+						Name:         "Some Entry",
+						SHA256:       "some-sha",
+						Source:       "some-source",
+						SourceSHA256: "some-source-sha",
+						Stacks:       []string{"some-stack"},
+						URI:          "some-uri",
+						Version:      "1.2.3",
 					},
 				)
 
@@ -1020,11 +1027,13 @@ version = "this is super not semver"
 					{
 						Name: "Some Entry",
 						Metadata: map[string]interface{}{
-							"cpe":     "some-cpe",
-							"sha256":  "some-sha",
-							"stacks":  []string{"some-stack"},
-							"uri":     "some-uri",
-							"version": "1.2.3",
+							"cpe":           "some-cpe",
+							"sha256":        "some-sha",
+							"source":        "some-source",
+							"source-sha256": "some-source-sha",
+							"stacks":        []string{"some-stack"},
+							"uri":           "some-uri",
+							"version":       "1.2.3",
 						},
 					},
 				}))
@@ -1048,6 +1057,7 @@ version = "this is super not semver"
 						Name:            "Some Entry",
 						SHA256:          "some-sha",
 						Source:          "some-source",
+						SourceSHA256:    "some-source-sha",
 						Stacks:          []string{"some-stack"},
 						URI:             "some-uri",
 						Version:         "1.2.3",
@@ -1060,6 +1070,8 @@ version = "this is super not semver"
 						Metadata: map[string]interface{}{
 							"deprecation-date": deprecationDate,
 							"sha256":           "some-sha",
+							"source":           "some-source",
+							"source-sha256":    "some-source-sha",
 							"stacks":           []string{"some-stack"},
 							"uri":              "some-uri",
 							"version":          "1.2.3",
@@ -1073,14 +1085,15 @@ version = "this is super not semver"
 			it("generates a BOM with the license information", func() {
 				entries := service.GenerateBillOfMaterials(
 					postal.Dependency{
-						ID:       "some-entry",
-						Licenses: []string{"some-license"},
-						Name:     "Some Entry",
-						SHA256:   "some-sha",
-						Source:   "some-source",
-						Stacks:   []string{"some-stack"},
-						URI:      "some-uri",
-						Version:  "1.2.3",
+						ID:           "some-entry",
+						Licenses:     []string{"some-license"},
+						Name:         "Some Entry",
+						SHA256:       "some-sha",
+						Source:       "some-source",
+						SourceSHA256: "some-source-sha",
+						Stacks:       []string{"some-stack"},
+						URI:          "some-uri",
+						Version:      "1.2.3",
 					},
 				)
 
@@ -1088,11 +1101,13 @@ version = "this is super not semver"
 					{
 						Name: "Some Entry",
 						Metadata: map[string]interface{}{
-							"licenses": []string{"some-license"},
-							"sha256":   "some-sha",
-							"stacks":   []string{"some-stack"},
-							"uri":      "some-uri",
-							"version":  "1.2.3",
+							"licenses":      []string{"some-license"},
+							"sha256":        "some-sha",
+							"source":        "some-source",
+							"source-sha256": "some-source-sha",
+							"stacks":        []string{"some-stack"},
+							"uri":           "some-uri",
+							"version":       "1.2.3",
 						},
 					},
 				}))
@@ -1103,14 +1118,15 @@ version = "this is super not semver"
 			it("generates a BOM with the pURL", func() {
 				entries := service.GenerateBillOfMaterials(
 					postal.Dependency{
-						ID:      "some-entry",
-						Name:    "Some Entry",
-						PURL:    "some-purl",
-						SHA256:  "some-sha",
-						Source:  "some-source",
-						Stacks:  []string{"some-stack"},
-						URI:     "some-uri",
-						Version: "1.2.3",
+						ID:           "some-entry",
+						Name:         "Some Entry",
+						PURL:         "some-purl",
+						SHA256:       "some-sha",
+						Source:       "some-source",
+						SourceSHA256: "some-source-sha",
+						Stacks:       []string{"some-stack"},
+						URI:          "some-uri",
+						Version:      "1.2.3",
 					},
 				)
 
@@ -1118,11 +1134,13 @@ version = "this is super not semver"
 					{
 						Name: "Some Entry",
 						Metadata: map[string]interface{}{
-							"purl":    "some-purl",
-							"sha256":  "some-sha",
-							"stacks":  []string{"some-stack"},
-							"uri":     "some-uri",
-							"version": "1.2.3",
+							"purl":          "some-purl",
+							"sha256":        "some-sha",
+							"source":        "some-source",
+							"source-sha256": "some-source-sha",
+							"stacks":        []string{"some-stack"},
+							"uri":           "some-uri",
+							"version":       "1.2.3",
 						},
 					},
 				}))

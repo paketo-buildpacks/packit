@@ -189,10 +189,12 @@ func (s Service) GenerateBillOfMaterials(dependencies ...Dependency) []packit.BO
 		entry := packit.BOMEntry{
 			Name: dependency.Name,
 			Metadata: map[string]interface{}{
-				"sha256":  dependency.SHA256,
-				"stacks":  dependency.Stacks,
-				"uri":     dependency.URI,
-				"version": dependency.Version,
+				"sha256":        dependency.SHA256,
+				"source":        dependency.Source,
+				"source-sha256": dependency.SourceSHA256,
+				"stacks":        dependency.Stacks,
+				"uri":           dependency.URI,
+				"version":       dependency.Version,
 			},
 		}
 
