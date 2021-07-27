@@ -985,23 +985,27 @@ version = "this is super not semver"
 				{
 					Name: "Some Entry",
 					Metadata: map[string]interface{}{
-						"sha256":        "some-sha",
-						"source":        "some-source",
-						"source-sha256": "some-source-sha",
-						"stacks":        []string{"some-stack"},
-						"uri":           "some-uri",
-						"version":       "1.2.3",
+						"sha256": "some-sha",
+						"source": map[string]string{
+							"sha256": "some-source-sha",
+							"uri":    "some-source",
+						},
+						"stacks":  []string{"some-stack"},
+						"uri":     "some-uri",
+						"version": "1.2.3",
 					},
 				},
 				{
 					Name: "Other Entry",
 					Metadata: map[string]interface{}{
-						"sha256":        "other-sha",
-						"source":        "other-source",
-						"source-sha256": "other-source-sha",
-						"stacks":        []string{"other-stack"},
-						"uri":           "other-uri",
-						"version":       "4.5.6",
+						"sha256": "other-sha",
+						"source": map[string]string{
+							"sha256": "other-source-sha",
+							"uri":    "other-source",
+						},
+						"stacks":  []string{"other-stack"},
+						"uri":     "other-uri",
+						"version": "4.5.6",
 					},
 				},
 			}))
@@ -1027,13 +1031,15 @@ version = "this is super not semver"
 					{
 						Name: "Some Entry",
 						Metadata: map[string]interface{}{
-							"cpe":           "some-cpe",
-							"sha256":        "some-sha",
-							"source":        "some-source",
-							"source-sha256": "some-source-sha",
-							"stacks":        []string{"some-stack"},
-							"uri":           "some-uri",
-							"version":       "1.2.3",
+							"cpe":    "some-cpe",
+							"sha256": "some-sha",
+							"source": map[string]string{
+								"sha256": "some-source-sha",
+								"uri":    "some-source",
+							},
+							"stacks":  []string{"some-stack"},
+							"uri":     "some-uri",
+							"version": "1.2.3",
 						},
 					},
 				}))
@@ -1070,11 +1076,13 @@ version = "this is super not semver"
 						Metadata: map[string]interface{}{
 							"deprecation-date": deprecationDate,
 							"sha256":           "some-sha",
-							"source":           "some-source",
-							"source-sha256":    "some-source-sha",
-							"stacks":           []string{"some-stack"},
-							"uri":              "some-uri",
-							"version":          "1.2.3",
+							"source": map[string]string{
+								"sha256": "some-source-sha",
+								"uri":    "some-source",
+							},
+							"stacks":  []string{"some-stack"},
+							"uri":     "some-uri",
+							"version": "1.2.3",
 						},
 					},
 				}))
@@ -1101,13 +1109,15 @@ version = "this is super not semver"
 					{
 						Name: "Some Entry",
 						Metadata: map[string]interface{}{
-							"licenses":      []string{"some-license"},
-							"sha256":        "some-sha",
-							"source":        "some-source",
-							"source-sha256": "some-source-sha",
-							"stacks":        []string{"some-stack"},
-							"uri":           "some-uri",
-							"version":       "1.2.3",
+							"licenses": []string{"some-license"},
+							"sha256":   "some-sha",
+							"source": map[string]string{
+								"sha256": "some-source-sha",
+								"uri":    "some-source",
+							},
+							"stacks":  []string{"some-stack"},
+							"uri":     "some-uri",
+							"version": "1.2.3",
 						},
 					},
 				}))
@@ -1134,13 +1144,15 @@ version = "this is super not semver"
 					{
 						Name: "Some Entry",
 						Metadata: map[string]interface{}{
-							"purl":          "some-purl",
-							"sha256":        "some-sha",
-							"source":        "some-source",
-							"source-sha256": "some-source-sha",
-							"stacks":        []string{"some-stack"},
-							"uri":           "some-uri",
-							"version":       "1.2.3",
+							"purl":   "some-purl",
+							"sha256": "some-sha",
+							"source": map[string]string{
+								"sha256": "some-source-sha",
+								"uri":    "some-source",
+							},
+							"stacks":  []string{"some-stack"},
+							"uri":     "some-uri",
+							"version": "1.2.3",
 						},
 					},
 				}))
