@@ -112,16 +112,22 @@ func (z ZipArchive) Decompress(destination string) error {
 			if err != nil {
 				return fmt.Errorf("failed to unzip file: %w", err)
 			}
-			defer dst.Close()
 
 			src, err := f.Open()
 			if err != nil {
 				return err
 			}
-			defer src.Close()
 
 			_, err = io.Copy(dst, src)
 			if err != nil {
+				return err
+			}
+
+			if err := dst.Close(); err != nil {
+				return err
+			}
+
+			if err := src.Close(); err != nil {
 				return err
 			}
 		}

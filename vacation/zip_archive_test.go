@@ -83,8 +83,7 @@ func testZipArchive(t *testing.T, context spec.G, it spec.S) {
 		})
 
 		it("unpackages the archive into the path", func() {
-			var err error
-			err = zipArchive.Decompress(tempDir)
+			err := zipArchive.Decompress(tempDir)
 			Expect(err).ToNot(HaveOccurred())
 
 			files, err := filepath.Glob(fmt.Sprintf("%s/*", tempDir))
@@ -114,8 +113,7 @@ func testZipArchive(t *testing.T, context spec.G, it spec.S) {
 		})
 
 		it("unpackages the archive into the path but also strips the first component", func() {
-			var err error
-			err = zipArchive.StripComponents(1).Decompress(tempDir)
+			err := zipArchive.StripComponents(1).Decompress(tempDir)
 			Expect(err).ToNot(HaveOccurred())
 
 			files, err := filepath.Glob(fmt.Sprintf("%s/*", tempDir))
@@ -126,6 +124,38 @@ func testZipArchive(t *testing.T, context spec.G, it spec.S) {
 
 			Expect(filepath.Join(tempDir, "some-other-dir")).To(BeADirectory())
 			Expect(filepath.Join(tempDir, "some-other-dir", "some-file")).To(BeARegularFile())
+		})
+
+		context("when given a zip file with enough contents to exhaust file descriptors", func() {
+			it.Before(func() {
+				buffer := bytes.NewBuffer(nil)
+				zw := zip.NewWriter(buffer)
+
+				// Linux and MacOS seem to have artificially low limits like 1024 and
+				// 256 respectively. Using a value like 2048 should be high enough to
+				// trigger the limit on both.
+				for i := 0; i < 2048; i++ {
+					name := fmt.Sprintf("some-file-%d", i)
+
+					header := &zip.FileHeader{Name: name}
+					header.SetMode(0755)
+
+					file, err := zw.CreateHeader(header)
+					Expect(err).NotTo(HaveOccurred())
+
+					_, err = file.Write([]byte(name))
+					Expect(err).NotTo(HaveOccurred())
+				}
+
+				Expect(zw.Close()).To(Succeed())
+
+				zipArchive = vacation.NewZipArchive(bytes.NewReader(buffer.Bytes()))
+			})
+
+			it("closes file descriptors as it goes", func() {
+				err := zipArchive.Decompress(tempDir)
+				Expect(err).ToNot(HaveOccurred())
+			})
 		})
 
 		context("failure cases", func() {
@@ -140,12 +170,12 @@ func testZipArchive(t *testing.T, context spec.G, it spec.S) {
 
 			context("when a file is not inside of the destination director (Zip Slip)", func() {
 				var buffer *bytes.Buffer
+
 				it.Before(func() {
-					var err error
 					buffer = bytes.NewBuffer(nil)
 					zw := zip.NewWriter(buffer)
 
-					_, err = zw.Create(filepath.Join("..", "some-dir"))
+					_, err := zw.Create(filepath.Join("..", "some-dir"))
 					Expect(err).NotTo(HaveOccurred())
 
 					Expect(zw.Close()).To(Succeed())
