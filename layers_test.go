@@ -193,7 +193,7 @@ some-key = "some-value"`), 0644)
 				it("returns an error", func() {
 					_, err := layers.Get("some-layer")
 					Expect(err).To(MatchError(ContainSubstring("failed to parse layer content metadata:")))
-					Expect(err).To(MatchError(ContainSubstring("bare keys cannot contain '%'")))
+					Expect(err).To(MatchError(ContainSubstring("expected '.' or '=', but got '%' instead")))
 				})
 			})
 
