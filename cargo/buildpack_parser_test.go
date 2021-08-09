@@ -111,7 +111,7 @@ pre-package = "some-pre-package-script.sh"
 
 			it("returns an error", func() {
 				_, err := parser.Parse(path)
-				Expect(err).To(MatchError(ContainSubstring("keys cannot contain '%'")))
+				Expect(err).To(MatchError(ContainSubstring("expected '.' or '=', but got '%' instead")))
 			})
 		})
 	})

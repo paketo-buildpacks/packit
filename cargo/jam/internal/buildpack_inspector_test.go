@@ -703,7 +703,7 @@ version = "2.3.4"
 
 				it("returns an error", func() {
 					_, err := inspector.Dependencies(buildpackage)
-					Expect(err).To(MatchError(ContainSubstring("bare keys cannot contain '%'")))
+					Expect(err).To(MatchError(ContainSubstring("expected '.' or '=', but got '%' instead")))
 				})
 			})
 		})
