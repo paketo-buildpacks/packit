@@ -798,7 +798,7 @@ api = "0.4"
 					return packit.BuildResult{}, nil
 				}, packit.WithArgs([]string{binaryPath, layersDir, platformDir, planPath}), packit.WithExitHandler(exitHandler))
 
-				Expect(exitHandler.ErrorCall.Receives.Error).To(MatchError(ContainSubstring("bare keys cannot contain '%'")))
+				Expect(exitHandler.ErrorCall.Receives.Error).To(MatchError(ContainSubstring("expected '.' or '=', but got '%' instead")))
 			})
 		})
 
@@ -823,7 +823,7 @@ api = "0.4"
 					return packit.BuildResult{}, nil
 				}, packit.WithArgs([]string{binaryPath, layersDir, platformDir, planPath}), packit.WithExitHandler(exitHandler))
 
-				Expect(exitHandler.ErrorCall.Receives.Error).To(MatchError(ContainSubstring("bare keys cannot contain '%'")))
+				Expect(exitHandler.ErrorCall.Receives.Error).To(MatchError(ContainSubstring("expected '.' or '=', but got '%' instead")))
 			})
 		})
 
