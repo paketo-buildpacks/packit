@@ -985,10 +985,16 @@ version = "this is super not semver"
 				{
 					Name: "Some Entry",
 					Metadata: map[string]interface{}{
-						"sha256": "some-sha",
-						"source": map[string]string{
-							"sha256": "some-source-sha",
-							"uri":    "some-source",
+						"checksum": map[string]string{
+							"algorithm": "sha256",
+							"hash":      "some-sha",
+						},
+						"source": map[string]interface{}{
+							"checksum": map[string]string{
+								"algorithm": "sha256",
+								"hash":      "some-source-sha",
+							},
+							"uri": "some-source",
 						},
 						"stacks":  []string{"some-stack"},
 						"uri":     "some-uri",
@@ -998,10 +1004,16 @@ version = "this is super not semver"
 				{
 					Name: "Other Entry",
 					Metadata: map[string]interface{}{
-						"sha256": "other-sha",
-						"source": map[string]string{
-							"sha256": "other-source-sha",
-							"uri":    "other-source",
+						"checksum": map[string]string{
+							"algorithm": "sha256",
+							"hash":      "other-sha",
+						},
+						"source": map[string]interface{}{
+							"checksum": map[string]string{
+								"algorithm": "sha256",
+								"hash":      "other-source-sha",
+							},
+							"uri": "other-source",
 						},
 						"stacks":  []string{"other-stack"},
 						"uri":     "other-uri",
@@ -1031,11 +1043,17 @@ version = "this is super not semver"
 					{
 						Name: "Some Entry",
 						Metadata: map[string]interface{}{
-							"cpe":    "some-cpe",
-							"sha256": "some-sha",
-							"source": map[string]string{
-								"sha256": "some-source-sha",
-								"uri":    "some-source",
+							"cpe": "some-cpe",
+							"checksum": map[string]string{
+								"algorithm": "sha256",
+								"hash":      "some-sha",
+							},
+							"source": map[string]interface{}{
+								"checksum": map[string]string{
+									"algorithm": "sha256",
+									"hash":      "some-source-sha",
+								},
+								"uri": "some-source",
 							},
 							"stacks":  []string{"some-stack"},
 							"uri":     "some-uri",
@@ -1075,10 +1093,16 @@ version = "this is super not semver"
 						Name: "Some Entry",
 						Metadata: map[string]interface{}{
 							"deprecation-date": deprecationDate,
-							"sha256":           "some-sha",
-							"source": map[string]string{
-								"sha256": "some-source-sha",
-								"uri":    "some-source",
+							"checksum": map[string]string{
+								"algorithm": "sha256",
+								"hash":      "some-sha",
+							},
+							"source": map[string]interface{}{
+								"checksum": map[string]string{
+									"algorithm": "sha256",
+									"hash":      "some-source-sha",
+								},
+								"uri": "some-source",
 							},
 							"stacks":  []string{"some-stack"},
 							"uri":     "some-uri",
@@ -1110,10 +1134,16 @@ version = "this is super not semver"
 						Name: "Some Entry",
 						Metadata: map[string]interface{}{
 							"licenses": []string{"some-license"},
-							"sha256":   "some-sha",
-							"source": map[string]string{
-								"sha256": "some-source-sha",
-								"uri":    "some-source",
+							"checksum": map[string]string{
+								"algorithm": "sha256",
+								"hash":      "some-sha",
+							},
+							"source": map[string]interface{}{
+								"checksum": map[string]string{
+									"algorithm": "sha256",
+									"hash":      "some-source-sha",
+								},
+								"uri": "some-source",
 							},
 							"stacks":  []string{"some-stack"},
 							"uri":     "some-uri",
@@ -1144,11 +1174,17 @@ version = "this is super not semver"
 					{
 						Name: "Some Entry",
 						Metadata: map[string]interface{}{
-							"purl":   "some-purl",
-							"sha256": "some-sha",
-							"source": map[string]string{
-								"sha256": "some-source-sha",
-								"uri":    "some-source",
+							"purl": "some-purl",
+							"checksum": map[string]string{
+								"algorithm": "sha256",
+								"hash":      "some-sha",
+							},
+							"source": map[string]interface{}{
+								"checksum": map[string]string{
+									"algorithm": "sha256",
+									"hash":      "some-source-sha",
+								},
+								"uri": "some-source",
 							},
 							"stacks":  []string{"some-stack"},
 							"uri":     "some-uri",
