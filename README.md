@@ -223,7 +223,7 @@ the types and functions declared herein.
 
 ## `jam` CLI
 
-The `jam` CLI has been moved into its [own dedicated repository](https://github.com/paketo-buildpacks/jam). For new `jam` releases, please visit the `jam` repositories [release page](https://github.com/paketo-buildpacks/jam/releases/tag/v1.0.0).
+The `jam` CLI has been moved into its [own dedicated repository](https://github.com/paketo-buildpacks/jam). For new `jam` releases, please visit the `jam` repositories [release page](https://github.com/paketo-buildpacks/jam/releases).
 
 ---
 Readme created from Go doc with [goreadme](https://github.com/posener/goreadme)
