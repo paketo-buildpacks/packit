@@ -336,8 +336,8 @@ cache = true
 							},
 							{
 								Name: "another-example",
-								Metadata: map[string]interface{}{
-									"version": "0.5",
+								Metadata: &packit.BomMetadata{
+									Version: "0.5",
 								},
 							},
 						},
@@ -382,8 +382,8 @@ api = "0.4"
 								},
 								{
 									Name: "another-example",
-									Metadata: map[string]interface{}{
-										"version": "0.5",
+									Metadata: &packit.BomMetadata{
+										Version: "0.5",
 									},
 								},
 							},
@@ -471,8 +471,8 @@ api = "0.4"
 							},
 							{
 								Name: "another-example",
-								Metadata: map[string]interface{}{
-									"version": "0.5",
+								Metadata: &packit.BomMetadata{
+									Version: "0.5",
 								},
 							},
 						},
