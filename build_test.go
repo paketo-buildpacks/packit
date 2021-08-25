@@ -336,7 +336,7 @@ cache = true
 							},
 							{
 								Name: "another-example",
-								Metadata: &packit.BomMetadata{
+								Metadata: &packit.BOMMetadata{
 									Version: "0.5",
 								},
 							},
@@ -382,7 +382,7 @@ api = "0.4"
 								},
 								{
 									Name: "another-example",
-									Metadata: &packit.BomMetadata{
+									Metadata: &packit.BOMMetadata{
 										Version: "0.5",
 									},
 								},
@@ -471,7 +471,7 @@ api = "0.4"
 							},
 							{
 								Name: "another-example",
-								Metadata: &packit.BomMetadata{
+								Metadata: &packit.BOMMetadata{
 									Version: "0.5",
 								},
 							},

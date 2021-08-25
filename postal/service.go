@@ -188,15 +188,15 @@ func (s Service) GenerateBillOfMaterials(dependencies ...Dependency) []packit.BO
 	for _, dependency := range dependencies {
 		entry := packit.BOMEntry{
 			Name: dependency.Name,
-			Metadata: &packit.BomMetadata{
-				Checksum: &packit.BomChecksum{
+			Metadata: &packit.BOMMetadata{
+				Checksum: &packit.BOMChecksum{
 					Algorithm: "SHA-256",
 					Hash:      dependency.SHA256,
 				},
 				URI:     dependency.URI,
 				Version: dependency.Version,
-				Source: &packit.BomSource{
-					Checksum: &packit.BomChecksum{
+				Source: &packit.BOMSource{
+					Checksum: &packit.BOMChecksum{
 						Algorithm: "SHA-256",
 						Hash:      dependency.SourceSHA256,
 					},
