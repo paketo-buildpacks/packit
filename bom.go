@@ -9,30 +9,30 @@ type BOMEntry struct {
 
 	// Metadata is the metadata of the entry.  Optional.
 	// Metadata map[string]interface{} `toml:"metadata,omitempty"`
-	Metadata *BomMetadata `toml:"metadata,omitempty"`
+	Metadata *BOMMetadata `toml:"metadata,omitempty"`
 }
 
-type BomMetadata struct {
+type BOMMetadata struct {
 	Architecture    string       `toml:"arch,omitempty"`
 	CPE             string       `toml:"cpe,omitempty"`
 	DeprecationDate *time.Time   `toml:"deprecation-date,omitempty"`
 	Licenses        []string     `toml:"licenses,omitempty"`
 	PURL            string       `toml:"purl,omitempty"`
-	Checksum        *BomChecksum `toml:"checksum,omitempty"`
+	Checksum        *BOMChecksum `toml:"checksum,omitempty"`
 	Summary         string       `toml:"summary,omitempty"`
 	URI             string       `toml:"uri,omitempty"`
 	Version         string       `toml:"version,omitempty"`
-	Source          *BomSource   `toml:"source,omitempty"`
+	Source          *BOMSource   `toml:"source,omitempty"`
 }
 
-type BomChecksum struct {
+type BOMChecksum struct {
 	Algorithm string `toml:"alg,omitempty"`
 	Hash      string `toml:"hash,omitempty"`
 }
 
-type BomSource struct {
+type BOMSource struct {
 	Name            string       `toml:"name,omitempty"`
-	Checksum        *BomChecksum `toml:"checksum,omitempty"`
+	Checksum        *BOMChecksum `toml:"checksum,omitempty"`
 	UpstreamVersion string       `toml:"upstream-version,omitempty"`
 	URI             string       `toml:"uri,omitempty"`
 }

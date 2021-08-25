@@ -984,13 +984,13 @@ version = "this is super not semver"
 			Expect(entries).To(Equal([]packit.BOMEntry{
 				{
 					Name: "Some Entry",
-					Metadata: &packit.BomMetadata{
-						Checksum: &packit.BomChecksum{
+					Metadata: &packit.BOMMetadata{
+						Checksum: &packit.BOMChecksum{
 							Algorithm: "SHA-256",
 							Hash:      "some-sha",
 						},
-						Source: &packit.BomSource{
-							Checksum: &packit.BomChecksum{
+						Source: &packit.BOMSource{
+							Checksum: &packit.BOMChecksum{
 								Algorithm: "SHA-256",
 								Hash:      "some-source-sha",
 							},
@@ -1003,13 +1003,13 @@ version = "this is super not semver"
 				},
 				{
 					Name: "Other Entry",
-					Metadata: &packit.BomMetadata{
-						Checksum: &packit.BomChecksum{
+					Metadata: &packit.BOMMetadata{
+						Checksum: &packit.BOMChecksum{
 							Algorithm: "SHA-256",
 							Hash:      "other-sha",
 						},
-						Source: &packit.BomSource{
-							Checksum: &packit.BomChecksum{
+						Source: &packit.BOMSource{
+							Checksum: &packit.BOMChecksum{
 								Algorithm: "SHA-256",
 								Hash:      "other-source-sha",
 							},
@@ -1042,14 +1042,14 @@ version = "this is super not semver"
 				Expect(entries).To(Equal([]packit.BOMEntry{
 					{
 						Name: "Some Entry",
-						Metadata: &packit.BomMetadata{
+						Metadata: &packit.BOMMetadata{
 							CPE: "some-cpe",
-							Checksum: &packit.BomChecksum{
+							Checksum: &packit.BOMChecksum{
 								Algorithm: "SHA-256",
 								Hash:      "some-sha",
 							},
-							Source: &packit.BomSource{
-								Checksum: &packit.BomChecksum{
+							Source: &packit.BOMSource{
+								Checksum: &packit.BOMChecksum{
 									Algorithm: "SHA-256",
 									Hash:      "some-source-sha",
 								},
@@ -1091,14 +1091,14 @@ version = "this is super not semver"
 				Expect(entries).To(Equal([]packit.BOMEntry{
 					{
 						Name: "Some Entry",
-						Metadata: &packit.BomMetadata{
+						Metadata: &packit.BOMMetadata{
 							DeprecationDate: &deprecationDate,
-							Checksum: &packit.BomChecksum{
+							Checksum: &packit.BOMChecksum{
 								Algorithm: "SHA-256",
 								Hash:      "some-sha",
 							},
-							Source: &packit.BomSource{
-								Checksum: &packit.BomChecksum{
+							Source: &packit.BOMSource{
+								Checksum: &packit.BOMChecksum{
 									Algorithm: "SHA-256",
 									Hash:      "some-source-sha",
 								},
@@ -1132,14 +1132,14 @@ version = "this is super not semver"
 				Expect(entries).To(Equal([]packit.BOMEntry{
 					{
 						Name: "Some Entry",
-						Metadata: &packit.BomMetadata{
+						Metadata: &packit.BOMMetadata{
 							Licenses: []string{"some-license"},
-							Checksum: &packit.BomChecksum{
+							Checksum: &packit.BOMChecksum{
 								Algorithm: "SHA-256",
 								Hash:      "some-sha",
 							},
-							Source: &packit.BomSource{
-								Checksum: &packit.BomChecksum{
+							Source: &packit.BOMSource{
+								Checksum: &packit.BOMChecksum{
 									Algorithm: "SHA-256",
 									Hash:      "some-source-sha",
 								},
@@ -1173,14 +1173,14 @@ version = "this is super not semver"
 				Expect(entries).To(Equal([]packit.BOMEntry{
 					{
 						Name: "Some Entry",
-						Metadata: &packit.BomMetadata{
+						Metadata: &packit.BOMMetadata{
 							PURL: "some-purl",
-							Checksum: &packit.BomChecksum{
+							Checksum: &packit.BOMChecksum{
 								Algorithm: "SHA-256",
 								Hash:      "some-sha",
 							},
-							Source: &packit.BomSource{
-								Checksum: &packit.BomChecksum{
+							Source: &packit.BOMSource{
+								Checksum: &packit.BOMChecksum{
 									Algorithm: "SHA-256",
 									Hash:      "some-source-sha",
 								},
