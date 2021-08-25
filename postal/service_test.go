@@ -986,12 +986,12 @@ version = "this is super not semver"
 					Name: "Some Entry",
 					Metadata: map[string]interface{}{
 						"checksum": map[string]string{
-							"algorithm": "sha256",
+							"algorithm": "SHA-256",
 							"hash":      "some-sha",
 						},
 						"source": map[string]interface{}{
 							"checksum": map[string]string{
-								"algorithm": "sha256",
+								"algorithm": "SHA-256",
 								"hash":      "some-source-sha",
 							},
 							"uri": "some-source",
@@ -1005,12 +1005,12 @@ version = "this is super not semver"
 					Name: "Other Entry",
 					Metadata: map[string]interface{}{
 						"checksum": map[string]string{
-							"algorithm": "sha256",
+							"algorithm": "SHA-256",
 							"hash":      "other-sha",
 						},
 						"source": map[string]interface{}{
 							"checksum": map[string]string{
-								"algorithm": "sha256",
+								"algorithm": "SHA-256",
 								"hash":      "other-source-sha",
 							},
 							"uri": "other-source",
@@ -1045,12 +1045,12 @@ version = "this is super not semver"
 						Metadata: map[string]interface{}{
 							"cpe": "some-cpe",
 							"checksum": map[string]string{
-								"algorithm": "sha256",
+								"algorithm": "SHA-256",
 								"hash":      "some-sha",
 							},
 							"source": map[string]interface{}{
 								"checksum": map[string]string{
-									"algorithm": "sha256",
+									"algorithm": "SHA-256",
 									"hash":      "some-source-sha",
 								},
 								"uri": "some-source",
@@ -1094,12 +1094,12 @@ version = "this is super not semver"
 						Metadata: map[string]interface{}{
 							"deprecation-date": deprecationDate,
 							"checksum": map[string]string{
-								"algorithm": "sha256",
+								"algorithm": "SHA-256",
 								"hash":      "some-sha",
 							},
 							"source": map[string]interface{}{
 								"checksum": map[string]string{
-									"algorithm": "sha256",
+									"algorithm": "SHA-256",
 									"hash":      "some-source-sha",
 								},
 								"uri": "some-source",
@@ -1135,12 +1135,12 @@ version = "this is super not semver"
 						Metadata: map[string]interface{}{
 							"licenses": []string{"some-license"},
 							"checksum": map[string]string{
-								"algorithm": "sha256",
+								"algorithm": "SHA-256",
 								"hash":      "some-sha",
 							},
 							"source": map[string]interface{}{
 								"checksum": map[string]string{
-									"algorithm": "sha256",
+									"algorithm": "SHA-256",
 									"hash":      "some-source-sha",
 								},
 								"uri": "some-source",
@@ -1176,12 +1176,12 @@ version = "this is super not semver"
 						Metadata: map[string]interface{}{
 							"purl": "some-purl",
 							"checksum": map[string]string{
-								"algorithm": "sha256",
+								"algorithm": "SHA-256",
 								"hash":      "some-sha",
 							},
 							"source": map[string]interface{}{
 								"checksum": map[string]string{
-									"algorithm": "sha256",
+									"algorithm": "SHA-256",
 									"hash":      "some-source-sha",
 								},
 								"uri": "some-source",

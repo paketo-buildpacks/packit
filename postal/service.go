@@ -190,12 +190,12 @@ func (s Service) GenerateBillOfMaterials(dependencies ...Dependency) []packit.BO
 			Name: dependency.Name,
 			Metadata: map[string]interface{}{
 				"checksum": map[string]string{
-					"algorithm": "sha256",
+					"algorithm": "SHA-256",
 					"hash":      dependency.SHA256,
 				},
 				"source": map[string]interface{}{
 					"checksum": map[string]string{
-						"algorithm": "sha256",
+						"algorithm": "SHA-256",
 						"hash":      dependency.SourceSHA256,
 					},
 					"uri": dependency.Source,
