@@ -984,40 +984,40 @@ version = "this is super not semver"
 			Expect(entries).To(Equal([]packit.BOMEntry{
 				{
 					Name: "Some Entry",
-					Metadata: map[string]interface{}{
-						"checksum": map[string]string{
-							"algorithm": "SHA-256",
-							"hash":      "some-sha",
+					Metadata: &packit.BomMetadata{
+						Checksum: &packit.BomChecksum{
+							Algorithm: "SHA-256",
+							Hash:      "some-sha",
 						},
-						"source": map[string]interface{}{
-							"checksum": map[string]string{
-								"algorithm": "SHA-256",
-								"hash":      "some-source-sha",
+						Source: &packit.BomSource{
+							Checksum: &packit.BomChecksum{
+								Algorithm: "SHA-256",
+								Hash:      "some-source-sha",
 							},
-							"uri": "some-source",
+							URI: "some-source",
 						},
-						"stacks":  []string{"some-stack"},
-						"uri":     "some-uri",
-						"version": "1.2.3",
+
+						URI:     "some-uri",
+						Version: "1.2.3",
 					},
 				},
 				{
 					Name: "Other Entry",
-					Metadata: map[string]interface{}{
-						"checksum": map[string]string{
-							"algorithm": "SHA-256",
-							"hash":      "other-sha",
+					Metadata: &packit.BomMetadata{
+						Checksum: &packit.BomChecksum{
+							Algorithm: "SHA-256",
+							Hash:      "other-sha",
 						},
-						"source": map[string]interface{}{
-							"checksum": map[string]string{
-								"algorithm": "SHA-256",
-								"hash":      "other-source-sha",
+						Source: &packit.BomSource{
+							Checksum: &packit.BomChecksum{
+								Algorithm: "SHA-256",
+								Hash:      "other-source-sha",
 							},
-							"uri": "other-source",
+							URI: "other-source",
 						},
-						"stacks":  []string{"other-stack"},
-						"uri":     "other-uri",
-						"version": "4.5.6",
+
+						URI:     "other-uri",
+						Version: "4.5.6",
 					},
 				},
 			}))
@@ -1042,22 +1042,22 @@ version = "this is super not semver"
 				Expect(entries).To(Equal([]packit.BOMEntry{
 					{
 						Name: "Some Entry",
-						Metadata: map[string]interface{}{
-							"cpe": "some-cpe",
-							"checksum": map[string]string{
-								"algorithm": "SHA-256",
-								"hash":      "some-sha",
+						Metadata: &packit.BomMetadata{
+							CPE: "some-cpe",
+							Checksum: &packit.BomChecksum{
+								Algorithm: "SHA-256",
+								Hash:      "some-sha",
 							},
-							"source": map[string]interface{}{
-								"checksum": map[string]string{
-									"algorithm": "SHA-256",
-									"hash":      "some-source-sha",
+							Source: &packit.BomSource{
+								Checksum: &packit.BomChecksum{
+									Algorithm: "SHA-256",
+									Hash:      "some-source-sha",
 								},
-								"uri": "some-source",
+								URI: "some-source",
 							},
-							"stacks":  []string{"some-stack"},
-							"uri":     "some-uri",
-							"version": "1.2.3",
+
+							URI:     "some-uri",
+							Version: "1.2.3",
 						},
 					},
 				}))
@@ -1091,22 +1091,22 @@ version = "this is super not semver"
 				Expect(entries).To(Equal([]packit.BOMEntry{
 					{
 						Name: "Some Entry",
-						Metadata: map[string]interface{}{
-							"deprecation-date": deprecationDate,
-							"checksum": map[string]string{
-								"algorithm": "SHA-256",
-								"hash":      "some-sha",
+						Metadata: &packit.BomMetadata{
+							DeprecationDate: &deprecationDate,
+							Checksum: &packit.BomChecksum{
+								Algorithm: "SHA-256",
+								Hash:      "some-sha",
 							},
-							"source": map[string]interface{}{
-								"checksum": map[string]string{
-									"algorithm": "SHA-256",
-									"hash":      "some-source-sha",
+							Source: &packit.BomSource{
+								Checksum: &packit.BomChecksum{
+									Algorithm: "SHA-256",
+									Hash:      "some-source-sha",
 								},
-								"uri": "some-source",
+								URI: "some-source",
 							},
-							"stacks":  []string{"some-stack"},
-							"uri":     "some-uri",
-							"version": "1.2.3",
+
+							URI:     "some-uri",
+							Version: "1.2.3",
 						},
 					},
 				}))
@@ -1132,22 +1132,22 @@ version = "this is super not semver"
 				Expect(entries).To(Equal([]packit.BOMEntry{
 					{
 						Name: "Some Entry",
-						Metadata: map[string]interface{}{
-							"licenses": []string{"some-license"},
-							"checksum": map[string]string{
-								"algorithm": "SHA-256",
-								"hash":      "some-sha",
+						Metadata: &packit.BomMetadata{
+							Licenses: []string{"some-license"},
+							Checksum: &packit.BomChecksum{
+								Algorithm: "SHA-256",
+								Hash:      "some-sha",
 							},
-							"source": map[string]interface{}{
-								"checksum": map[string]string{
-									"algorithm": "SHA-256",
-									"hash":      "some-source-sha",
+							Source: &packit.BomSource{
+								Checksum: &packit.BomChecksum{
+									Algorithm: "SHA-256",
+									Hash:      "some-source-sha",
 								},
-								"uri": "some-source",
+								URI: "some-source",
 							},
-							"stacks":  []string{"some-stack"},
-							"uri":     "some-uri",
-							"version": "1.2.3",
+
+							URI:     "some-uri",
+							Version: "1.2.3",
 						},
 					},
 				}))
@@ -1173,22 +1173,22 @@ version = "this is super not semver"
 				Expect(entries).To(Equal([]packit.BOMEntry{
 					{
 						Name: "Some Entry",
-						Metadata: map[string]interface{}{
-							"purl": "some-purl",
-							"checksum": map[string]string{
-								"algorithm": "SHA-256",
-								"hash":      "some-sha",
+						Metadata: &packit.BomMetadata{
+							PURL: "some-purl",
+							Checksum: &packit.BomChecksum{
+								Algorithm: "SHA-256",
+								Hash:      "some-sha",
 							},
-							"source": map[string]interface{}{
-								"checksum": map[string]string{
-									"algorithm": "SHA-256",
-									"hash":      "some-source-sha",
+							Source: &packit.BomSource{
+								Checksum: &packit.BomChecksum{
+									Algorithm: "SHA-256",
+									Hash:      "some-source-sha",
 								},
-								"uri": "some-source",
+								URI: "some-source",
 							},
-							"stacks":  []string{"some-stack"},
-							"uri":     "some-uri",
-							"version": "1.2.3",
+
+							URI:     "some-uri",
+							Version: "1.2.3",
 						},
 					},
 				}))

@@ -188,38 +188,37 @@ func (s Service) GenerateBillOfMaterials(dependencies ...Dependency) []packit.BO
 	for _, dependency := range dependencies {
 		entry := packit.BOMEntry{
 			Name: dependency.Name,
-			Metadata: map[string]interface{}{
-				"checksum": map[string]string{
-					"algorithm": "SHA-256",
-					"hash":      dependency.SHA256,
+			Metadata: &packit.BomMetadata{
+				Checksum: &packit.BomChecksum{
+					Algorithm: "SHA-256",
+					Hash:      dependency.SHA256,
 				},
-				"source": map[string]interface{}{
-					"checksum": map[string]string{
-						"algorithm": "SHA-256",
-						"hash":      dependency.SourceSHA256,
+				URI:     dependency.URI,
+				Version: dependency.Version,
+				Source: &packit.BomSource{
+					Checksum: &packit.BomChecksum{
+						Algorithm: "SHA-256",
+						Hash:      dependency.SourceSHA256,
 					},
-					"uri": dependency.Source,
+					URI: dependency.Source,
 				},
-				"stacks":  dependency.Stacks,
-				"uri":     dependency.URI,
-				"version": dependency.Version,
 			},
 		}
 
 		if dependency.CPE != "" {
-			entry.Metadata["cpe"] = dependency.CPE
+			entry.Metadata.CPE = dependency.CPE
 		}
 
 		if (dependency.DeprecationDate != time.Time{}) {
-			entry.Metadata["deprecation-date"] = dependency.DeprecationDate
+			entry.Metadata.DeprecationDate = &dependency.DeprecationDate
 		}
 
 		if dependency.Licenses != nil {
-			entry.Metadata["licenses"] = dependency.Licenses
+			entry.Metadata.Licenses = dependency.Licenses
 		}
 
 		if dependency.PURL != "" {
-			entry.Metadata["purl"] = dependency.PURL
+			entry.Metadata.PURL = dependency.PURL
 		}
 
 		entries = append(entries, entry)
