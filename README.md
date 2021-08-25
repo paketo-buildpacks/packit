@@ -1,6 +1,5 @@
 # packit
 
-Checkout the Go Docs for details on how to use the sub-packages within packit:
 [![GoDoc](https://img.shields.io/badge/pkg.go.dev-doc-blue)](http://pkg.go.dev/github.com/paketo-buildpacks/packit)
 
 Package packit provides primitives for implementing a Cloud Native Buildpack
@@ -9,7 +8,7 @@ according to the specification:
 
 ## Buildpack Interface
 
-According to the CNB specification, the buildpack interface is composed of both
+According to the specification, the buildpack interface is composed of both
 a detect and build phase. Each of these phases has a corresponding set of
 packit primitives enable developers to easily implement a buildpack.
 
@@ -126,7 +125,6 @@ func main() {
 		if err != nil {
 			return packit.BuildResult{}, err
 		}
-
 		layer.Build = true
 		layer.Launch = true
 
@@ -207,7 +205,7 @@ the types and functions declared herein.
 
 * [chronos](./chronos): Package chronos provides clock functionality that can be useful when developing and testing Cloud Native Buildpacks.
 
-* [draft](./draft): Package draft provides a mechanism for combining Buildpack Plan entries for a dependency into an single entry. The entry has layer metadata that meets all of the entries' specifications. Its version constraint is based on a user-provided prioritized list of version sources. Useful during the build phase. See [the CNB Buildpacks specification](https://github.com/buildpacks/spec/blob/main/buildpack.md#purpose-2) for context.
+* [draft](./draft): Package draft provides a service for resolving the priority of buildpack plan entries as well as consilidating build and launch requirements.
 
 * [fakes](./fakes)
 
@@ -225,29 +223,7 @@ the types and functions declared herein.
 
 ## `jam` CLI
 
-The `packit` library comes with a command-line tool called `jam` that can be
-used to create buildpack tarball artifacts. The `jam` name is simply a play on
-the idea of "packaging" or "packing" a buildpack.
+The `jam` CLI has been moved into its [own dedicated repository](https://github.com/paketo-buildpacks/jam). For new `jam` releases, please visit the `jam` repositories [release page](https://github.com/paketo-buildpacks/jam/releases).
 
-`jam` comes with the following commands:
-* help                : Help about any command
-* pack                : package buildpack
-* summarize           : summarize buildpackage
-* update-builder      : update builder
-* update-buildpack    : update buildpack
-* update-dependencies : update all depdendencies in a buildpack.toml according to metadata.constraints
-
-The `jam` executable can be installed by downloading the latest version from
-the [Releases](../../releases) page. Once downloaded, buildpacks can be created from
-a source repository using the `pack` command like this:
-
-```sh
-jam pack \
-  --buildpack ./buildpack.toml \
-  --stack io.paketo.stacks.tiny \
-  --version 1.2.3 \
-  --offline \
-  --output ./buildpack.tgz
-```
 ---
 Readme created from Go doc with [goreadme](https://github.com/posener/goreadme)
