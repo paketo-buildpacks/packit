@@ -26,7 +26,7 @@ type BOMMetadata struct {
 }
 
 type BOMChecksum struct {
-	Algorithm string `toml:"alg,omitempty"`
+	Algorithm string `toml:"algorithm,omitempty"`
 	Hash      string `toml:"hash,omitempty"`
 }
 
