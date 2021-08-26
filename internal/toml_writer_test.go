@@ -60,8 +60,8 @@ other-field = "other-value"`))
 		context("the TOML data is invalid", func() {
 
 			it("returns an error", func() {
-				err := tomlWriter.Write(path, map[int]int{1: 100})
-				Expect(err).To(MatchError(ContainSubstring("cannot encode a map with non-string key type")))
+				err := tomlWriter.Write(path, 0)
+				Expect(err).To(MatchError(ContainSubstring("Only a struct or map can be marshaled to TOML")))
 			})
 		})
 	})

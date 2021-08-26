@@ -986,13 +986,13 @@ version = "this is super not semver"
 			Expect(entries).To(Equal([]packit.BOMEntry{
 				{
 					Name: "Some Entry",
-					Metadata: &packit.BOMMetadata{
-						Checksum: &packit.BOMChecksum{
+					Metadata: packit.BOMMetadata{
+						Checksum: packit.BOMChecksum{
 							Algorithm: algorithm,
 							Hash:      "some-sha",
 						},
-						Source: &packit.BOMSource{
-							Checksum: &packit.BOMChecksum{
+						Source: packit.BOMSource{
+							Checksum: packit.BOMChecksum{
 								Algorithm: algorithm,
 								Hash:      "some-source-sha",
 							},
@@ -1005,13 +1005,13 @@ version = "this is super not semver"
 				},
 				{
 					Name: "Other Entry",
-					Metadata: &packit.BOMMetadata{
-						Checksum: &packit.BOMChecksum{
+					Metadata: packit.BOMMetadata{
+						Checksum: packit.BOMChecksum{
 							Algorithm: algorithm,
 							Hash:      "other-sha",
 						},
-						Source: &packit.BOMSource{
-							Checksum: &packit.BOMChecksum{
+						Source: packit.BOMSource{
+							Checksum: packit.BOMChecksum{
 								Algorithm: algorithm,
 								Hash:      "other-source-sha",
 							},
@@ -1046,14 +1046,14 @@ version = "this is super not semver"
 				Expect(entries).To(Equal([]packit.BOMEntry{
 					{
 						Name: "Some Entry",
-						Metadata: &packit.BOMMetadata{
+						Metadata: packit.BOMMetadata{
 							CPE: "some-cpe",
-							Checksum: &packit.BOMChecksum{
+							Checksum: packit.BOMChecksum{
 								Algorithm: algorithm,
 								Hash:      "some-sha",
 							},
-							Source: &packit.BOMSource{
-								Checksum: &packit.BOMChecksum{
+							Source: packit.BOMSource{
+								Checksum: packit.BOMChecksum{
 									Algorithm: algorithm,
 									Hash:      "some-source-sha",
 								},
@@ -1098,14 +1098,14 @@ version = "this is super not semver"
 				Expect(entries).To(Equal([]packit.BOMEntry{
 					{
 						Name: "Some Entry",
-						Metadata: &packit.BOMMetadata{
-							DeprecationDate: &deprecationDate,
-							Checksum: &packit.BOMChecksum{
+						Metadata: packit.BOMMetadata{
+							DeprecationDate: deprecationDate,
+							Checksum: packit.BOMChecksum{
 								Algorithm: algorithm,
 								Hash:      "some-sha",
 							},
-							Source: &packit.BOMSource{
-								Checksum: &packit.BOMChecksum{
+							Source: packit.BOMSource{
+								Checksum: packit.BOMChecksum{
 									Algorithm: algorithm,
 									Hash:      "some-source-sha",
 								},
@@ -1142,14 +1142,14 @@ version = "this is super not semver"
 				Expect(entries).To(Equal([]packit.BOMEntry{
 					{
 						Name: "Some Entry",
-						Metadata: &packit.BOMMetadata{
+						Metadata: packit.BOMMetadata{
 							Licenses: []string{"some-license"},
-							Checksum: &packit.BOMChecksum{
+							Checksum: packit.BOMChecksum{
 								Algorithm: algorithm,
 								Hash:      "some-sha",
 							},
-							Source: &packit.BOMSource{
-								Checksum: &packit.BOMChecksum{
+							Source: packit.BOMSource{
+								Checksum: packit.BOMChecksum{
 									Algorithm: algorithm,
 									Hash:      "some-source-sha",
 								},
@@ -1186,14 +1186,14 @@ version = "this is super not semver"
 				Expect(entries).To(Equal([]packit.BOMEntry{
 					{
 						Name: "Some Entry",
-						Metadata: &packit.BOMMetadata{
+						Metadata: packit.BOMMetadata{
 							PURL: "some-purl",
-							Checksum: &packit.BOMChecksum{
+							Checksum: packit.BOMChecksum{
 								Algorithm: algorithm,
 								Hash:      "some-sha",
 							},
-							Source: &packit.BOMSource{
-								Checksum: &packit.BOMChecksum{
+							Source: packit.BOMSource{
+								Checksum: packit.BOMChecksum{
 									Algorithm: algorithm,
 									Hash:      "some-source-sha",
 								},

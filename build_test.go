@@ -340,14 +340,14 @@ cache = true
 							},
 							{
 								Name: "another-example",
-								Metadata: &packit.BOMMetadata{
+								Metadata: packit.BOMMetadata{
 									Version: "0.5",
-									Checksum: &packit.BOMChecksum{
+									Checksum: packit.BOMChecksum{
 										Algorithm: algorithm256,
 										Hash:      "12345",
 									},
-									Source: &packit.BOMSource{
-										Checksum: &packit.BOMChecksum{
+									Source: packit.BOMSource{
+										Checksum: packit.BOMChecksum{
 											Algorithm: algorithm512,
 											Hash:      "some-source-sha",
 										},
@@ -403,7 +403,7 @@ api = "0.4"
 								},
 								{
 									Name: "another-example",
-									Metadata: &packit.BOMMetadata{
+									Metadata: packit.BOMMetadata{
 										Version: "0.5",
 									},
 								},
@@ -492,7 +492,7 @@ api = "0.4"
 							},
 							{
 								Name: "another-example",
-								Metadata: &packit.BOMMetadata{
+								Metadata: packit.BOMMetadata{
 									Version: "0.5",
 								},
 							},

@@ -195,15 +195,15 @@ func (s Service) GenerateBillOfMaterials(dependencies ...Dependency) []packit.BO
 
 		entry := packit.BOMEntry{
 			Name: dependency.Name,
-			Metadata: &packit.BOMMetadata{
-				Checksum: &packit.BOMChecksum{
+			Metadata: packit.BOMMetadata{
+				Checksum: packit.BOMChecksum{
 					Algorithm: algorithm,
 					Hash:      dependency.SHA256,
 				},
 				URI:     dependency.URI,
 				Version: dependency.Version,
-				Source: &packit.BOMSource{
-					Checksum: &packit.BOMChecksum{
+				Source: packit.BOMSource{
+					Checksum: packit.BOMChecksum{
 						Algorithm: algorithm,
 						Hash:      dependency.SourceSHA256,
 					},
@@ -217,7 +217,7 @@ func (s Service) GenerateBillOfMaterials(dependencies ...Dependency) []packit.BO
 		}
 
 		if (dependency.DeprecationDate != time.Time{}) {
-			entry.Metadata.DeprecationDate = &dependency.DeprecationDate
+			entry.Metadata.DeprecationDate = dependency.DeprecationDate
 		}
 
 		if dependency.Licenses != nil {
