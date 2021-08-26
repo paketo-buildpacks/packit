@@ -1,8 +1,6 @@
 package packit
 
 import (
-	"fmt"
-	"strings"
 	"time"
 )
 
@@ -12,7 +10,6 @@ type BOMEntry struct {
 	Name string `toml:"name"`
 
 	// Metadata is the metadata of the entry.  Optional.
-	// Metadata map[string]interface{} `toml:"metadata,omitempty"`
 	Metadata BOMMetadata `toml:"metadata,omitempty"`
 }
 
@@ -29,13 +26,6 @@ type BOMMetadata struct {
 	Source          BOMSource   `toml:"source,omitempty"`
 }
 
-// The Algorithm type is private checksumAlgorithm instead of a string to prevent a
-// non-supported algorithm string from being used.
-type BOMChecksum struct {
-	Algorithm checksumAlgorithm `toml:"algorithm,omitempty"`
-	Hash      string            `toml:"hash,omitempty"`
-}
-
 type BOMSource struct {
 	Name            string      `toml:"name,omitempty"`
 	Checksum        BOMChecksum `toml:"checksum,omitempty"`
@@ -43,46 +33,34 @@ type BOMSource struct {
 	URI             string      `toml:"uri,omitempty"`
 }
 
-type checksumAlgorithm struct {
-	name string
+type BOMChecksum struct {
+	Algorithm ChecksumAlgorithm `toml:"algorithm,omitempty"`
+	Hash      string            `toml:"hash,omitempty"`
 }
 
-// GetBOMChecksumAlgorithm takes in an algorithm string, and reasonably tries
-// to figure out the equivalent CycloneDX-supported algorithm field name.
-// It returns an error if no reasonable supported format is found.
-// Supported formats:
-// { 'MD5'| 'SHA-1'| 'SHA-256'| 'SHA-384'| 'SHA-512'| 'SHA3-256'| 'SHA3-384'| 'SHA3-512'| 'BLAKE2b-256'| 'BLAKE2b-384'| 'BLAKE2b-512'| 'BLAKE3'}
-func GetBOMChecksumAlgorithm(alg string) (checksumAlgorithm, error) {
-	for _, a := range []string{SHA256, SHA1, SHA384, SHA512, SHA3256, SHA3384, SHA3512, BLAKE2B256, BLAKE2B384, BLAKE2B512, BLAKE3, MD5} {
-		if strings.EqualFold(a, alg) || strings.EqualFold(strings.ReplaceAll(a, "-", ""), alg) {
-			return checksumAlgorithm{name: a}, nil
-		}
-	}
-
-	return checksumAlgorithm{}, fmt.Errorf("failed to get supported BOM checksum algorithm: %s is not valid", alg)
+type ChecksumAlgorithm interface {
+	alg() algorithm
 }
 
-func (a checksumAlgorithm) String() string {
-	return a.name
-}
+type algorithm string
 
-func (a checksumAlgorithm) MarshalText() ([]byte, error) {
-	return []byte(a.String()), nil
+func (a algorithm) alg() algorithm {
+	return a
 }
 
 const (
-	SHA256     = "SHA-256"
-	SHA1       = "SHA-1"
-	SHA384     = "SHA-384"
-	SHA512     = "SHA-512"
-	SHA3256    = "SHA3-256"
-	SHA3384    = "SHA3-384"
-	SHA3512    = "SHA3-512"
-	BLAKE2B256 = "BLAKE2b-256"
-	BLAKE2B384 = "BLAKE2b-384"
-	BLAKE2B512 = "BLAKE2b-512"
-	BLAKE3     = "BLAKE3"
-	MD5        = "MD5"
+	SHA256     algorithm = "SHA-256"
+	SHA1       algorithm = "SHA-1"
+	SHA384     algorithm = "SHA-384"
+	SHA512     algorithm = "SHA-512"
+	SHA3256    algorithm = "SHA3-256"
+	SHA3384    algorithm = "SHA3-384"
+	SHA3512    algorithm = "SHA3-512"
+	BLAKE2B256 algorithm = "BLAKE2b-256"
+	BLAKE2B384 algorithm = "BLAKE2b-384"
+	BLAKE2B512 algorithm = "BLAKE2b-512"
+	BLAKE3     algorithm = "BLAKE3"
+	MD5        algorithm = "MD5"
 )
 
 // UnmetEntry contains the name of an unmet dependency from the build process
