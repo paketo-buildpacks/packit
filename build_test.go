@@ -327,6 +327,9 @@ cache = true
 
 	context("when there are bom entries in the build metadata", func() {
 		it("persists a build.toml", func() {
+			algorithm512, err := packit.GetBOMChecksumAlgorithm("sha512")
+			Expect(err).ToNot(HaveOccurred())
+
 			packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
 				return packit.BuildResult{
 					Build: packit.BuildMetadata{
@@ -344,7 +347,7 @@ cache = true
 									},
 									Source: packit.BOMSource{
 										Checksum: packit.BOMChecksum{
-											Algorithm: packit.SHA512,
+											Algorithm: algorithm512,
 											Hash:      "some-source-sha",
 										},
 									},
@@ -1065,6 +1068,12 @@ api = "0.4"
 					}, packit.WithArgs([]string{binaryPath, layersDir, platformDir, planPath}), packit.WithExitHandler(exitHandler))
 					Expect(exitHandler.ErrorCall.Receives.Error).To(MatchError(ContainSubstring("permission denied")))
 				})
+			})
+		})
+		context("when the attempted BOM checksum algorithm is not supported", func() {
+			it("persists a build.toml", func() {
+				_, err := packit.GetBOMChecksumAlgorithm("RANDOM-ALG")
+				Expect(err).To(MatchError("failed to get supported BOM checksum algorithm: RANDOM-ALG is not valid"))
 			})
 		})
 	})
