@@ -3,6 +3,7 @@ package postal
 import (
 	"fmt"
 	"io"
+	"log"
 	"path/filepath"
 	"regexp"
 	"sort"
@@ -186,18 +187,24 @@ func (s Service) Install(dependency Dependency, cnbPath, layerPath string) error
 func (s Service) GenerateBillOfMaterials(dependencies ...Dependency) []packit.BOMEntry {
 	var entries []packit.BOMEntry
 	for _, dependency := range dependencies {
+
+		algorithm, err := packit.GetBOMChecksumAlgorithm("SHA-256")
+		if err != nil {
+			log.Fatal(err)
+		}
+
 		entry := packit.BOMEntry{
 			Name: dependency.Name,
 			Metadata: &packit.BOMMetadata{
 				Checksum: &packit.BOMChecksum{
-					Algorithm: "SHA-256",
+					Algorithm: algorithm,
 					Hash:      dependency.SHA256,
 				},
 				URI:     dependency.URI,
 				Version: dependency.Version,
 				Source: &packit.BOMSource{
 					Checksum: &packit.BOMChecksum{
-						Algorithm: "SHA-256",
+						Algorithm: algorithm,
 						Hash:      dependency.SourceSHA256,
 					},
 					URI: dependency.Source,
