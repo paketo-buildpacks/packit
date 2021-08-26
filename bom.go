@@ -97,17 +97,17 @@ type algorithmName string
 
 const (
 	SHA256     algorithmName = "SHA-256"
-	SHA1                     = "SHA-1"
-	SHA384                   = "SHA-384"
-	SHA512                   = "SHA-512"
-	SHA3256                  = "SHA3-256"
-	SHA3384                  = "SHA3-384"
-	SHA3512                  = "SHA3-512"
-	BLAKE2B256               = "BLAKE2b-256"
-	BLAKE2B384               = "BLAKE2b-384"
-	BLAKE2B512               = "BLAKE2b-512"
-	BLAKE3                   = "BLAKE3"
-	MD5                      = "MD5"
+	SHA1       algorithmName = "SHA-1"
+	SHA384     algorithmName = "SHA-384"
+	SHA512     algorithmName = "SHA-512"
+	SHA3256    algorithmName = "SHA3-256"
+	SHA3384    algorithmName = "SHA3-384"
+	SHA3512    algorithmName = "SHA3-512"
+	BLAKE2B256 algorithmName = "BLAKE2b-256"
+	BLAKE2B384 algorithmName = "BLAKE2b-384"
+	BLAKE2B512 algorithmName = "BLAKE2b-512"
+	BLAKE3     algorithmName = "BLAKE3"
+	MD5        algorithmName = "MD5"
 )
 
 // UnmetEntry contains the name of an unmet dependency from the build process
