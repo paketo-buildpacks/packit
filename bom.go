@@ -13,20 +13,20 @@ type BOMEntry struct {
 
 	// Metadata is the metadata of the entry.  Optional.
 	// Metadata map[string]interface{} `toml:"metadata,omitempty"`
-	Metadata *BOMMetadata `toml:"metadata,omitempty"`
+	Metadata BOMMetadata `toml:"metadata,omitempty"`
 }
 
 type BOMMetadata struct {
-	Architecture    string       `toml:"arch,omitempty"`
-	CPE             string       `toml:"cpe,omitempty"`
-	DeprecationDate *time.Time   `toml:"deprecation-date,omitempty"`
-	Licenses        []string     `toml:"licenses,omitempty"`
-	PURL            string       `toml:"purl,omitempty"`
-	Checksum        *BOMChecksum `toml:"checksum,omitempty"`
-	Summary         string       `toml:"summary,omitempty"`
-	URI             string       `toml:"uri,omitempty"`
-	Version         string       `toml:"version,omitempty"`
-	Source          *BOMSource   `toml:"source,omitempty"`
+	Architecture    string      `toml:"arch,omitempty"`
+	CPE             string      `toml:"cpe,omitempty"`
+	DeprecationDate time.Time   `toml:"deprecation-date,omitempty"`
+	Licenses        []string    `toml:"licenses,omitempty"`
+	PURL            string      `toml:"purl,omitempty"`
+	Checksum        BOMChecksum `toml:"checksum,omitempty"`
+	Summary         string      `toml:"summary,omitempty"`
+	URI             string      `toml:"uri,omitempty"`
+	Version         string      `toml:"version,omitempty"`
+	Source          BOMSource   `toml:"source,omitempty"`
 }
 
 // The Algorithm type is private checksumAlgorithm instead of a string to prevent a
@@ -37,10 +37,10 @@ type BOMChecksum struct {
 }
 
 type BOMSource struct {
-	Name            string       `toml:"name,omitempty"`
-	Checksum        *BOMChecksum `toml:"checksum,omitempty"`
-	UpstreamVersion string       `toml:"upstream-version,omitempty"`
-	URI             string       `toml:"uri,omitempty"`
+	Name            string      `toml:"name,omitempty"`
+	Checksum        BOMChecksum `toml:"checksum,omitempty"`
+	UpstreamVersion string      `toml:"upstream-version,omitempty"`
+	URI             string      `toml:"uri,omitempty"`
 }
 
 type checksumAlgorithm struct {
