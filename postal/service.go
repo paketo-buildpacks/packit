@@ -142,8 +142,9 @@ func (s Service) Resolve(path, id, version, stack string) (Dependency, error) {
 func (s Service) Deliver(dependency Dependency, cnbPath, layerPath, platformPath string) error {
 	dependencyMappingURI, err := s.mappingResolver.FindDependencyMapping(dependency.SHA256, filepath.Join(platformPath, "bindings"))
 	if err != nil {
-		return fmt.Errorf("failure checking out the bindings")
+		return fmt.Errorf("failure checking for dependency mappings: %s", err)
 	}
+
 	if dependencyMappingURI != "" {
 		dependency.URI = dependencyMappingURI
 	}
