@@ -702,6 +702,16 @@ version = "this is super not semver"
 				})
 			})
 		})
+		context("when dependency mapping resolver fails", func() {
+			it.Before(func() {
+				mappingResolver.FindDependencyMappingCall.Returns.Error = fmt.Errorf("some dependency mapping error")
+			})
+			it("fails to find dependency mappings", func() {
+				err := deliver()
+
+				Expect(err).To(MatchError(ContainSubstring("some dependency mapping error")))
+			})
+		})
 	})
 
 	context("Install", func() {
