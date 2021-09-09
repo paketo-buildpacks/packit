@@ -130,11 +130,11 @@ func (ta TarArchive) Decompress(destination string) error {
 		symlinkMap[filepath.Clean(h.path)] = h.linkname
 	}
 
-	// Loop over map until it is empty this is potentially O(infinity) if there
-	// is a cyclical link but I like to live on the edge
-	for len(symlinkMap) > 0 {
-		// Name the outer loop as an escape hatch
-	Builder:
+	// Iterate over the symlink map for every link that is found this ensures
+	// that all symlinks that can be created will be created and any that are
+	// left over are cyclically dependent
+	maxIterations := len(symlinkMap)
+	for i := 0; i < maxIterations; i++ {
 		for path, linkname := range symlinkMap {
 			// Check to see if the linkname lies on the path of another symlink in
 			// the table or if it is another symlink in the table
@@ -147,11 +147,18 @@ func (ta TarArchive) Decompress(destination string) error {
 			//
 			// If there is a match either of the symlink or it is on the path then
 			// skip the creation of this symlink for now
-			sln := strings.Split(linkname, "/")
-			for i := 0; i < len(sln); i++ {
-				if _, ok := symlinkMap[linknameFullPath(path, filepath.Join(sln[:i+1]...))]; ok {
-					continue Builder
+			shouldSkipLink := func() bool {
+				sln := strings.Split(linkname, "/")
+				for j := 0; j < len(sln); j++ {
+					if _, ok := symlinkMap[linknameFullPath(path, filepath.Join(sln[:j+1]...))]; ok {
+						return true
+					}
 				}
+				return false
+			}
+
+			if shouldSkipLink() {
+				continue
 			}
 
 			// If the linkname is not an existing link in the symlink table then we
@@ -173,6 +180,12 @@ func (ta TarArchive) Decompress(destination string) error {
 			// dependent symlinks can be created in the next iteration
 			delete(symlinkMap, path)
 		}
+	}
+
+	// Check to see if there are any symlinks left in the map which would
+	// indicate a cyclical dependency
+	if len(symlinkMap) > 0 {
+		return fmt.Errorf("failed: max iterations reached: this symlink graph contains a cycle")
 	}
 
 	return nil
