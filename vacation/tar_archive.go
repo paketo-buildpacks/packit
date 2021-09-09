@@ -30,14 +30,7 @@ func (ta TarArchive) Decompress(destination string) error {
 	// metadata.
 	directories := map[string]interface{}{}
 
-	// Struct and slice to collect symlinks and create them after all files have
-	// been created
-	type header struct {
-		linkname string
-		path     string
-	}
-
-	var symlinkHeaders []header
+	var symlinks []symlink
 
 	tarReader := tar.NewReader(ta.reader)
 	for {
@@ -116,76 +109,29 @@ func (ta TarArchive) Decompress(destination string) error {
 		case tar.TypeSymlink:
 			// Collect all of the headers for symlinks so that they can be verified
 			// after all other files are written
-			symlinkHeaders = append(symlinkHeaders, header{
-				linkname: hdr.Linkname,
-				path:     path,
+			symlinks = append(symlinks, symlink{
+				name: hdr.Linkname,
+				path: path,
 			})
 		}
 	}
 
-	// Create a map of all of the symlink names and where they are pointing to to
-	// act as a quasi-graph
-	symlinkMap := map[string]string{}
-	for _, h := range symlinkHeaders {
-		symlinkMap[filepath.Clean(h.path)] = h.linkname
+	symlinks, err := sortSymlinks(symlinks)
+	if err != nil {
+		return err
 	}
 
-	// Iterate over the symlink map for every link that is found this ensures
-	// that all symlinks that can be created will be created and any that are
-	// left over are cyclically dependent
-	maxIterations := len(symlinkMap)
-	for i := 0; i < maxIterations; i++ {
-		for path, linkname := range symlinkMap {
-			// Check to see if the linkname lies on the path of another symlink in
-			// the table or if it is another symlink in the table
-			//
-			// Example:
-			// path = dir/file
-			// a-symlink -> dir
-			// b-symlink -> a-symlink
-			// c-symlink -> a-symlink/file
-			//
-			// If there is a match either of the symlink or it is on the path then
-			// skip the creation of this symlink for now
-			shouldSkipLink := func() bool {
-				sln := strings.Split(linkname, "/")
-				for j := 0; j < len(sln); j++ {
-					if _, ok := symlinkMap[linknameFullPath(path, filepath.Join(sln[:j+1]...))]; ok {
-						return true
-					}
-				}
-				return false
-			}
-
-			if shouldSkipLink() {
-				continue
-			}
-
-			// If the linkname is not an existing link in the symlink table then we
-			// can attempt the make the link
-
-			// Check to see if the file that will be linked to is valid for symlinking
-			_, err := filepath.EvalSymlinks(linknameFullPath(path, linkname))
-			if err != nil {
-				return fmt.Errorf("failed to evaluate symlink %s: %w", path, err)
-			}
-
-			// Create the symlink
-			err = os.Symlink(linkname, path)
-			if err != nil {
-				return fmt.Errorf("failed to extract symlink: %s", err)
-			}
-
-			// Remove the created symlink from the symlink table so that its
-			// dependent symlinks can be created in the next iteration
-			delete(symlinkMap, path)
+	for _, link := range symlinks {
+		// Check to see if the file that will be linked to is valid for symlinking
+		_, err := filepath.EvalSymlinks(linknameFullPath(link.path, link.name))
+		if err != nil {
+			return fmt.Errorf("failed to evaluate symlink %s: %w", link.path, err)
 		}
-	}
 
-	// Check to see if there are any symlinks left in the map which would
-	// indicate a cyclical dependency
-	if len(symlinkMap) > 0 {
-		return fmt.Errorf("failed: max iterations reached: this symlink graph contains a cycle")
+		err = os.Symlink(link.name, link.path)
+		if err != nil {
+			return fmt.Errorf("failed to extract symlink: %s", err)
+		}
 	}
 
 	return nil
