@@ -6,7 +6,6 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"sort"
 	"strings"
 )
 
@@ -27,7 +26,6 @@ func (z ZipArchive) Decompress(destination string) error {
 	// Struct and slice to collect symlinks and create them after all files have
 	// been created
 	type header struct {
-		name     string
 		linkname string
 		path     string
 	}
@@ -97,7 +95,6 @@ func (z ZipArchive) Decompress(destination string) error {
 			// Collect all of the headers for symlinks so that they can be verified
 			// after all other files are written
 			symlinkHeaders = append(symlinkHeaders, header{
-				name:     f.Name,
 				linkname: string(linkname),
 				path:     path,
 			})
@@ -133,42 +130,55 @@ func (z ZipArchive) Decompress(destination string) error {
 		}
 	}
 
-	// Sort the symlinks so that symlinks of symlinks have their base link
-	// created before they are created.
-	//
-	// For example:
-	// b-sym -> a-sym/x
-	// a-sym -> z
-	// c-sym -> d-sym
-	// d-sym -> z
-	//
-	// Will sort to:
-	// a-sym -> z
-	// b-sym -> a-sym/x
-	// d-sym -> z
-	// c-sym -> d-sym
-	sort.Slice(symlinkHeaders, func(i, j int) bool {
-		if filepath.Clean(symlinkHeaders[i].name) == linknameFullPath(symlinkHeaders[j].name, symlinkHeaders[j].linkname) {
-			return true
-		}
-
-		if filepath.Clean(symlinkHeaders[j].name) == linknameFullPath(symlinkHeaders[i].name, symlinkHeaders[i].linkname) {
-			return false
-		}
-
-		return filepath.Clean(symlinkHeaders[i].name) < linknameFullPath(symlinkHeaders[j].name, symlinkHeaders[j].linkname)
-	})
-
+	// Create a map of all of the symlink names and where they are pointing to to
+	// act as a quasi-graph
+	symlinkMap := map[string]string{}
 	for _, h := range symlinkHeaders {
-		// Check to see if the file that will be linked to is valid for symlinking
-		_, err := filepath.EvalSymlinks(linknameFullPath(h.path, h.linkname))
-		if err != nil {
-			return fmt.Errorf("failed to evaluate symlink %s: %w", h.path, err)
-		}
+		symlinkMap[filepath.Clean(h.path)] = h.linkname
+	}
 
-		err = os.Symlink(h.linkname, h.path)
-		if err != nil {
-			return fmt.Errorf("failed to unzip symlink: %w", err)
+	// Loop over map until it is empty this is potentially O(infinity) if there
+	// is a cyclical link but I like to live on the edge
+	for len(symlinkMap) > 0 {
+		// Name the outer loop as an escape hatch
+	Builder:
+		for path, linkname := range symlinkMap {
+			// Check to see if the linkname lies on the path of another symlink in
+			// the table or if it is another symlink in the table
+			//
+			// Example:
+			// path = dir/file
+			// a-symlink -> dir
+			// b-symlink -> a-symlink
+			// c-symlink -> a-symlink/file
+			//
+			// If there is a match either of the symlink or it is on the path then
+			// skip the creation of this symlink for now
+			sln := strings.Split(linkname, "/")
+			for i := 0; i < len(sln); i++ {
+				if _, ok := symlinkMap[linknameFullPath(path, filepath.Join(sln[:i+1]...))]; ok {
+					continue Builder
+				}
+			}
+
+			// If the linkname is not an existing link in the symlink table then we
+			// can attempt the make the link
+
+			// Check to see if the file that will be linked to is valid for symlinking
+			_, err := filepath.EvalSymlinks(linknameFullPath(path, linkname))
+			if err != nil {
+				return fmt.Errorf("failed to evaluate symlink %s: %w", path, err)
+			}
+
+			// Create the symlink
+			err = os.Symlink(linkname, path)
+			if err != nil {
+				return fmt.Errorf("failed to unzip symlink: %s", err)
+			}
+
+			// Remove the created symlink from the symlink table so that its
+			// dependent symlinks can be created in the next iteration
+			delete(symlinkMap, path)
 		}
 	}
 
