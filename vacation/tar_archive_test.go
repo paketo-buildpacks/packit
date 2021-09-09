@@ -289,5 +289,33 @@ func testTarArchive(t *testing.T, context spec.G, it spec.S) {
 				})
 			})
 		})
+
+		context("when there is a symlink cycle", func() {
+			var cyclicalSymlinkTar vacation.TarArchive
+
+			it.Before(func() {
+				var err error
+
+				buffer := bytes.NewBuffer(nil)
+				tw := tar.NewWriter(buffer)
+
+				Expect(tw.WriteHeader(&tar.Header{Name: "a-symlink", Mode: 0755, Size: int64(0), Typeflag: tar.TypeSymlink, Linkname: "b-symlink"})).To(Succeed())
+				_, err = tw.Write([]byte{})
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(tw.WriteHeader(&tar.Header{Name: "b-symlink", Mode: 0755, Size: int64(0), Typeflag: tar.TypeSymlink, Linkname: "a-symlink"})).To(Succeed())
+				_, err = tw.Write([]byte{})
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(tw.Close()).To(Succeed())
+
+				cyclicalSymlinkTar = vacation.NewTarArchive(bytes.NewReader(buffer.Bytes()))
+			})
+
+			it("returns an error", func() {
+				err := cyclicalSymlinkTar.Decompress(tempDir)
+				Expect(err).To(MatchError(ContainSubstring("failed: max iterations reached: this symlink graph contains a cycle")))
+			})
+		})
 	})
 }
