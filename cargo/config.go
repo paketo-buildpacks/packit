@@ -29,6 +29,8 @@ type ConfigBuildpack struct {
 	Homepage string                   `toml:"homepage,omitempty" json:"homepage,omitempty"`
 	Licenses []ConfigBuildpackLicense `toml:"licenses,omitempty" json:"licenses,omitempty"`
 
+	// Deprecated: This field is not part of the official buildpack.toml spec and
+	// will therefore be removed in the next major release
 	SHA256 string `toml:"-" json:"-"`
 }
 
