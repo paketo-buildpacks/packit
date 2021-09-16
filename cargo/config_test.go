@@ -66,7 +66,7 @@ func testConfig(t *testing.T, context spec.G, it spec.S) {
 							PURL:            "some-purl",
 							DeprecationDate: &deprecationDate,
 							ID:              "some-dependency",
-							Licenses:        []string{"fancy-license", "fancy-license-2"},
+							Licenses:        []interface{}{"fancy-license", "fancy-license-2"},
 							Name:            "Some Dependency",
 							SHA256:          "shasum",
 							Source:          "source",
@@ -162,6 +162,163 @@ api = "0.2"
 		version = "other-version"
 		optional = true
 `))
+		})
+
+		context("when the config dependency licenses are structured like ConfigBuildpackLicenses", func() {
+			it("encodes the config to TOML", func() {
+				deprecationDate, err := time.Parse(time.RFC3339, "2020-06-01T00:00:00Z")
+				Expect(err).NotTo(HaveOccurred())
+
+				err = cargo.EncodeConfig(buffer, cargo.Config{
+					API: "0.2",
+					Buildpack: cargo.ConfigBuildpack{
+						ID:       "some-buildpack-id",
+						Name:     "some-buildpack-name",
+						Version:  "some-buildpack-version",
+						Homepage: "some-homepage-link",
+						Licenses: []cargo.ConfigBuildpackLicense{
+							{
+								Type: "some-license-type",
+								URI:  "some-license-uri",
+							},
+						},
+					},
+					Stacks: []cargo.ConfigStack{
+						{
+							ID:     "some-stack-id",
+							Mixins: []string{"some-mixin-id"},
+						},
+						{
+							ID: "other-stack-id",
+						},
+					},
+					Metadata: cargo.ConfigMetadata{
+						IncludeFiles: []string{
+							"some-include-file",
+							"other-include-file",
+						},
+						Unstructured: map[string]interface{}{"some-map": []map[string]interface{}{{"key": "value"}}},
+						PrePackage:   "some-pre-package-script.sh",
+						Dependencies: []cargo.ConfigMetadataDependency{
+							{
+								CPE:             "some-cpe",
+								PURL:            "some-purl",
+								DeprecationDate: &deprecationDate,
+								ID:              "some-dependency",
+								Licenses: []interface{}{
+									cargo.ConfigBuildpackLicense{
+										Type: "fancy-license",
+										URI:  "some-license-uri",
+									},
+									cargo.ConfigBuildpackLicense{
+										Type: "fancy-license-2",
+										URI:  "some-license-uri",
+									},
+								},
+								Name:         "Some Dependency",
+								SHA256:       "shasum",
+								Source:       "source",
+								SourceSHA256: "source-shasum",
+								Stacks:       []string{"io.buildpacks.stacks.bionic", "org.cloudfoundry.stacks.tiny"},
+								URI:          "http://some-url",
+								Version:      "1.2.3",
+							},
+						},
+						DependencyConstraints: []cargo.ConfigMetadataDependencyConstraint{
+							{
+								ID:         "some-dependency",
+								Constraint: "1.*",
+								Patches:    1,
+							},
+						},
+						DefaultVersions: map[string]string{
+							"some-dependency": "1.2.x",
+						},
+					},
+					Order: []cargo.ConfigOrder{
+						{
+							Group: []cargo.ConfigOrderGroup{
+								{
+									ID:      "some-dependency",
+									Version: "some-version"},
+								{
+									ID:       "other-dependency",
+									Version:  "other-version",
+									Optional: true,
+								},
+							},
+						},
+					},
+				})
+				Expect(err).NotTo(HaveOccurred())
+				Expect(buffer.String()).To(MatchTOML(`
+api = "0.2"
+
+[buildpack]
+	id = "some-buildpack-id"
+	name = "some-buildpack-name"
+	version = "some-buildpack-version"
+	homepage = "some-homepage-link"
+
+[[buildpack.licenses]]
+  type = "some-license-type"
+	uri = "some-license-uri"
+
+[metadata]
+	include-files = ["some-include-file", "other-include-file"]
+	pre-package = "some-pre-package-script.sh"
+
+[metadata.default-versions]
+	some-dependency = "1.2.x"
+
+[[metadata.dependencies]]
+  cpe = "some-cpe"
+  purl = "some-purl"
+  deprecation_date = "2020-06-01T00:00:00Z"
+  id = "some-dependency"
+  name = "Some Dependency"
+  sha256 = "shasum"
+	source = "source"
+  source_sha256 = "source-shasum"
+  stacks = ["io.buildpacks.stacks.bionic", "org.cloudfoundry.stacks.tiny"]
+  uri = "http://some-url"
+  version = "1.2.3"
+
+  [[metadata.dependencies.licenses]]
+    type = "fancy-license"
+	  uri = "some-license-uri"
+
+	[[metadata.dependencies.licenses]]
+    type = "fancy-license-2"
+	  uri = "some-license-uri"
+
+[[metadata.dependency-constraints]]
+  id = "some-dependency"
+  constraint = "1.*"
+	patches = 1
+
+[[metadata.some-map]]
+  key = "value"
+
+[[stacks]]
+  id = "some-stack-id"
+  mixins = ["some-mixin-id"]
+
+[[stacks]]
+  id = "other-stack-id"
+
+[[order]]
+  [[order.group]]
+	  id = "some-dependency"
+		version = "some-version"
+
+  [[order.group]]
+		id = "other-dependency"
+		version = "other-version"
+		optional = true
+`))
+			})
+
 		})
 
 		context("failure cases", func() {
@@ -296,7 +453,7 @@ api = "0.2"
 							CPE:          "some-cpe",
 							PURL:         "some-purl",
 							ID:           "some-dependency",
-							Licenses:     []string{"fancy-license", "fancy-license-2"},
+							Licenses:     []interface{}{"fancy-license", "fancy-license-2"},
 							Name:         "Some Dependency",
 							SHA256:       "shasum",
 							Source:       "source",
@@ -334,6 +491,162 @@ api = "0.2"
 					},
 				},
 			}))
+		})
+
+		context("dependency license are not a list of IDs", func() {
+			it("decodes TOML to config", func() {
+				tomlBuffer := strings.NewReader(`
+api = "0.2"
+
+[buildpack]
+	id = "some-buildpack-id"
+	name = "some-buildpack-name"
+	version = "some-buildpack-version"
+	homepage = "some-homepage-link"
+
+[[buildpack.licenses]]
+	type = "some-license-type"
+	uri = "some-license-uri"
+
+[metadata]
+	include-files = ["some-include-file", "other-include-file"]
+	pre-package = "some-pre-package-script.sh"
+
+[metadata.default-versions]
+	some-dependency = "1.2.x"
+
+[[metadata.some-map]]
+  key = "value"
+
+[[metadata.dependencies]]
+  cpe = "some-cpe"
+  purl = "some-purl"
+  id = "some-dependency"
+  name = "Some Dependency"
+  sha256 = "shasum"
+	source = "source"
+  source_sha256 = "source-shasum"
+  stacks = ["io.buildpacks.stacks.bionic", "org.cloudfoundry.stacks.tiny"]
+  uri = "http://some-url"
+  version = "1.2.3"
+
+  [[metadata.dependencies.licenses]]
+    type = "fancy-license"
+	  uri = "some-license-uri"
+
+	[[metadata.dependencies.licenses]]
+    type = "fancy-license-2"
+	  uri = "some-license-uri"
+
+[[metadata.dependency-constraints]]
+  id = "some-dependency"
+  constraint = "1.*"
+	patches = 1
+
+[[stacks]]
+  id = "some-stack-id"
+  mixins = ["some-mixin-id"]
+
+[[stacks]]
+  id = "other-stack-id"
+
+[[order]]
+  [[order.group]]
+	  id = "some-dependency"
+		version = "some-version"
+
+  [[order.group]]
+		id = "other-dependency"
+		version = "other-version"
+		optional = true
+`)
+
+				var config cargo.Config
+				Expect(cargo.DecodeConfig(tomlBuffer, &config)).To(Succeed())
+				Expect(config).To(Equal(cargo.Config{
+					API: "0.2",
+					Buildpack: cargo.ConfigBuildpack{
+						ID:       "some-buildpack-id",
+						Name:     "some-buildpack-name",
+						Version:  "some-buildpack-version",
+						Homepage: "some-homepage-link",
+						Licenses: []cargo.ConfigBuildpackLicense{
+							{
+								Type: "some-license-type",
+								URI:  "some-license-uri",
+							},
+						},
+					},
+					Stacks: []cargo.ConfigStack{
+						{
+							ID:     "some-stack-id",
+							Mixins: []string{"some-mixin-id"},
+						},
+						{
+							ID: "other-stack-id",
+						},
+					},
+					Metadata: cargo.ConfigMetadata{
+						Unstructured: map[string]interface{}{"some-map": json.RawMessage(`[{"key":"value"}]`)},
+						IncludeFiles: []string{
+							"some-include-file",
+							"other-include-file",
+						},
+						PrePackage: "some-pre-package-script.sh",
+						Dependencies: []cargo.ConfigMetadataDependency{
+							{
+								CPE:  "some-cpe",
+								PURL: "some-purl",
+								ID:   "some-dependency",
+								Licenses: []interface{}{
+									map[string]interface{}{
+										"type": "fancy-license",
+										"uri":  "some-license-uri",
+									},
+									map[string]interface{}{
+										"type": "fancy-license-2",
+										"uri":  "some-license-uri",
+									},
+								},
+								Name:         "Some Dependency",
+								SHA256:       "shasum",
+								Source:       "source",
+								SourceSHA256: "source-shasum",
+								Stacks:       []string{"io.buildpacks.stacks.bionic", "org.cloudfoundry.stacks.tiny"},
+								URI:          "http://some-url",
+								Version:      "1.2.3",
+							},
+						},
+						DependencyConstraints: []cargo.ConfigMetadataDependencyConstraint{
+							{
+								ID:         "some-dependency",
+								Constraint: "1.*",
+								Patches:    1,
+							},
+						},
+						DefaultVersions: map[string]string{
+							"some-dependency": "1.2.x",
+						},
+					},
+					Order: []cargo.ConfigOrder{
+						{
+							Group: []cargo.ConfigOrderGroup{
+								{
+									ID:       "some-dependency",
+									Version:  "some-version",
+									Optional: false,
+								},
+								{
+									ID:       "other-dependency",
+									Version:  "other-version",
+									Optional: true,
+								},
+							},
+						},
+					},
+				}))
+			})
+
 		})
 
 		context("failure cases", func() {
