@@ -19,4 +19,7 @@ type Process struct {
 
 	// Direct indicates whether the process should bypass the shell when invoked.
 	Direct bool `toml:"direct"`
+
+	// Default indicates if this process should be the default when launched.
+	Default bool `toml:"default,omitempty"`
 }
