@@ -1,6 +1,7 @@
 package packit
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -131,6 +132,7 @@ func Build(f BuildFunc, options ...Option) {
 	}
 
 	apiV05, _ := semver.NewVersion("0.5")
+	apiV06, _ := semver.NewVersion("0.6")
 	apiVersion, err := semver.NewVersion(buildpackInfo.APIVersion)
 	if err != nil {
 		config.exitHandler.Error(err)
@@ -157,7 +159,7 @@ func Build(f BuildFunc, options ...Option) {
 
 	if len(result.Plan.Entries) > 0 {
 		if apiVersion.GreaterThan(apiV05) || apiVersion.Equal(apiV05) {
-			config.exitHandler.Error(fmt.Errorf(`buildpack plan is read only since BuildPack API v0.5`))
+			config.exitHandler.Error(errors.New("buildpack plan is read only since Buildpack API v0.5"))
 			return
 		}
 
@@ -220,7 +222,7 @@ func Build(f BuildFunc, options ...Option) {
 
 	if !result.Launch.isEmpty() {
 		if apiVersion.LessThan(apiV05) && len(result.Launch.BOM) > 0 {
-			config.exitHandler.Error(fmt.Errorf("BOM entries in launch.toml is only supported with Buildpack API v0.5 or higher"))
+			config.exitHandler.Error(errors.New("BOM entries in launch.toml is only supported with Buildpack API v0.5 or higher"))
 			return
 		}
 
@@ -237,6 +239,15 @@ func Build(f BuildFunc, options ...Option) {
 		}
 
 		launch.Processes = result.Launch.Processes
+		if apiVersion.LessThan(apiV06) {
+			for _, process := range launch.Processes {
+				if process.Default {
+					config.exitHandler.Error(errors.New("processes can only be marked as default with Buildpack API v0.6 or higher"))
+					return
+				}
+			}
+		}
+
 		launch.Slices = result.Launch.Slices
 		launch.BOM = result.Launch.BOM
 		if len(result.Launch.Labels) > 0 {
