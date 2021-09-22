@@ -72,7 +72,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 		Expect(err).NotTo(HaveOccurred())
 
 		bpTOML := []byte(`
-api = "0.5"
+api = "0.6"
 [buildpack]
   id = "some-id"
   name = "some-name"
@@ -175,6 +175,7 @@ api = "0.4"
 `))
 			})
 		})
+
 		context("when the api version is greater or equal to 0.5", func() {
 			it("throws an error", func() {
 				packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
@@ -543,7 +544,7 @@ api = "0.4"
 			`))
 		})
 
-		context("when using the deprecated api", func() {
+		context("when the process is the default", func() {
 			it("persists a launch.toml", func() {
 				packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
 					return packit.BuildResult{
@@ -554,6 +555,7 @@ api = "0.4"
 									Command: "some-command",
 									Args:    []string{"some-arg"},
 									Direct:  true,
+									Default: true,
 								},
 							},
 						},
@@ -569,7 +571,41 @@ api = "0.4"
 						command = "some-command"
 						args = ["some-arg"]
 						direct = true
+						default = true
 				`))
+			})
+		})
+
+		context("when the api version is less than 0.6", func() {
+			it.Before(func() {
+				Expect(os.WriteFile(filepath.Join(cnbDir, "buildpack.toml"), []byte(`
+api = "0.5"
+[buildpack]
+  id = "some-id"
+  name = "some-name"
+  version = "some-version"
+  clear-env = false
+`), 0600)).To(Succeed())
+			})
+
+			it("errors", func() {
+				packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
+					return packit.BuildResult{
+						Launch: packit.LaunchMetadata{
+							Processes: []packit.Process{
+								{
+									Type:    "some-type",
+									Command: "some-command",
+									Args:    []string{"some-arg"},
+									Direct:  true,
+									Default: true,
+								},
+							},
+						},
+					}, nil
+				}, packit.WithArgs([]string{binaryPath, layersDir, platformDir, planPath}), packit.WithExitHandler(exitHandler))
+
+				Expect(exitHandler.ErrorCall.Receives.Error).To(MatchError(ContainSubstring("processes can only be marked as default with Buildpack API v0.6 or higher")))
 			})
 		})
 	})
@@ -595,30 +631,6 @@ api = "0.4"
 				[[slices]]
 					paths = ["some-slice"]
 			`))
-		})
-
-		context("when using the deprecated api", func() {
-			it("persists a launch.toml", func() {
-				packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
-					return packit.BuildResult{
-						Launch: packit.LaunchMetadata{
-							Slices: []packit.Slice{
-								{
-									Paths: []string{"some-slice"},
-								},
-							},
-						},
-					}, nil
-				}, packit.WithArgs([]string{binaryPath, layersDir, platformDir, planPath}))
-
-				contents, err := os.ReadFile(filepath.Join(layersDir, "launch.toml"))
-				Expect(err).NotTo(HaveOccurred())
-
-				Expect(string(contents)).To(MatchTOML(`
-					[[slices]]
-						paths = ["some-slice"]
-				`))
-			})
 		})
 	})
 
@@ -647,34 +659,6 @@ api = "0.4"
 					key = "some-other-key"
 					value = "some-other-value"
 			`))
-		})
-
-		context("when using the deprecated api", func() {
-			it("persists a launch.toml", func() {
-				packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
-					return packit.BuildResult{
-						Launch: packit.LaunchMetadata{
-							Labels: map[string]string{
-								"some key":       "some value",
-								"some-other-key": "some-other-value",
-							},
-						},
-					}, nil
-				}, packit.WithArgs([]string{binaryPath, layersDir, platformDir, planPath}))
-
-				contents, err := os.ReadFile(filepath.Join(layersDir, "launch.toml"))
-				Expect(err).NotTo(HaveOccurred())
-
-				Expect(string(contents)).To(MatchTOML(`
-					[[labels]]
-						key = "some key"
-						value = "some value"
-
-					[[labels]]
-						key = "some-other-key"
-						value = "some-other-value"
-				`))
-			})
 		})
 	})
 
