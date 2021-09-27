@@ -4,11 +4,11 @@ import "sync"
 
 type MappingResolver struct {
 	FindDependencyMappingCall struct {
-		sync.Mutex
+		mutex     sync.Mutex
 		CallCount int
 		Receives  struct {
 			SHA256      string
-			BindingPath string
+			PlatformDir string
 		}
 		Returns struct {
 			String string
@@ -19,11 +19,11 @@ type MappingResolver struct {
 }
 
 func (f *MappingResolver) FindDependencyMapping(param1 string, param2 string) (string, error) {
-	f.FindDependencyMappingCall.Lock()
-	defer f.FindDependencyMappingCall.Unlock()
+	f.FindDependencyMappingCall.mutex.Lock()
+	defer f.FindDependencyMappingCall.mutex.Unlock()
 	f.FindDependencyMappingCall.CallCount++
 	f.FindDependencyMappingCall.Receives.SHA256 = param1
-	f.FindDependencyMappingCall.Receives.BindingPath = param2
+	f.FindDependencyMappingCall.Receives.PlatformDir = param2
 	if f.FindDependencyMappingCall.Stub != nil {
 		return f.FindDependencyMappingCall.Stub(param1, param2)
 	}
