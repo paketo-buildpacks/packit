@@ -10,9 +10,11 @@ import (
 	"time"
 
 	"github.com/Masterminds/semver/v3"
+
 	"github.com/paketo-buildpacks/packit"
 	"github.com/paketo-buildpacks/packit/cargo"
 	"github.com/paketo-buildpacks/packit/postal/internal"
+	"github.com/paketo-buildpacks/packit/servicebindings"
 	"github.com/paketo-buildpacks/packit/vacation"
 )
 
@@ -26,9 +28,9 @@ type Transport interface {
 
 //go:generate faux --interface MappingResolver --output fakes/mapping_resolver.go
 // MappingResolver serves as the interface that looks up platform binding provided
-// dependency mappings given a  SHA256 and a path to search for bindings
+// dependency mappings given a SHA256
 type MappingResolver interface {
-	FindDependencyMapping(SHA256, bindingPath string) (string, error)
+	FindDependencyMapping(SHA256, platformDir string) (string, error)
 }
 
 // Service provides a mechanism for resolving and installing dependencies given
@@ -38,11 +40,13 @@ type Service struct {
 	mappingResolver MappingResolver
 }
 
-// NewService creates an instance of a Servicel given a Transport.
+// NewService creates an instance of a Service given a Transport.
 func NewService(transport Transport) Service {
 	return Service{
-		transport:       transport,
-		mappingResolver: internal.NewDependencyMappingResolver(),
+		transport: transport,
+		mappingResolver: internal.NewDependencyMappingResolver(
+			servicebindings.NewResolver(),
+		),
 	}
 }
 
@@ -140,7 +144,7 @@ func (s Service) Resolve(path, id, version, stack string) (Dependency, error) {
 // validated against the checksum value provided on the Dependency and will
 // error if there are inconsistencies in the fetched result.
 func (s Service) Deliver(dependency Dependency, cnbPath, layerPath, platformPath string) error {
-	dependencyMappingURI, err := s.mappingResolver.FindDependencyMapping(dependency.SHA256, filepath.Join(platformPath, "bindings"))
+	dependencyMappingURI, err := s.mappingResolver.FindDependencyMapping(dependency.SHA256, platformPath)
 	if err != nil {
 		return fmt.Errorf("failure checking for dependency mappings: %s", err)
 	}

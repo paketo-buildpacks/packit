@@ -92,9 +92,7 @@ strip-components = 1
 
 		mappingResolver = &fakes.MappingResolver{}
 
-		service = postal.NewService(transport)
-
-		service = service.WithDependencyMappingResolver(mappingResolver)
+		service = postal.NewService(transport).WithDependencyMappingResolver(mappingResolver)
 	})
 
 	context("Resolve", func() {
@@ -319,16 +317,12 @@ version = "this is super not semver"
 		var (
 			dependencySHA string
 			layerPath     string
-			platformPath  string
 			deliver       func() error
 		)
 
 		it.Before(func() {
 			var err error
 			layerPath, err = os.MkdirTemp("", "layer")
-			Expect(err).NotTo(HaveOccurred())
-
-			platformPath, err = os.MkdirTemp("", "platform")
 			Expect(err).NotTo(HaveOccurred())
 
 			buffer := bytes.NewBuffer(nil)
@@ -365,15 +359,17 @@ version = "this is super not semver"
 			transport.DropCall.Returns.ReadCloser = io.NopCloser(buffer)
 
 			deliver = func() error {
-				return service.Deliver(postal.Dependency{
-					ID:      "some-entry",
-					Stacks:  []string{"some-stack"},
-					URI:     "some-entry.tgz",
-					SHA256:  dependencySHA,
-					Version: "1.2.3",
-				}, "some-cnb-path",
+				return service.Deliver(
+					postal.Dependency{
+						ID:      "some-entry",
+						Stacks:  []string{"some-stack"},
+						URI:     "some-entry.tgz",
+						SHA256:  dependencySHA,
+						Version: "1.2.3",
+					},
+					"some-cnb-path",
 					layerPath,
-					platformPath,
+					"some-platform-dir",
 				)
 			}
 		})
@@ -389,6 +385,7 @@ version = "this is super not semver"
 
 			Expect(transport.DropCall.Receives.Root).To(Equal("some-cnb-path"))
 			Expect(transport.DropCall.Receives.Uri).To(Equal("some-entry.tgz"))
+			Expect(mappingResolver.FindDependencyMappingCall.Receives.PlatformDir).To(Equal("some-platform-dir"))
 
 			files, err := filepath.Glob(fmt.Sprintf("%s/*", layerPath))
 			Expect(err).NotTo(HaveOccurred())
@@ -445,16 +442,18 @@ version = "this is super not semver"
 				transport.DropCall.Returns.ReadCloser = io.NopCloser(buffer)
 
 				deliver = func() error {
-					return service.Deliver(postal.Dependency{
-						ID:              "some-entry",
-						Stacks:          []string{"some-stack"},
-						URI:             "some-entry.tgz",
-						SHA256:          dependencySHA,
-						Version:         "1.2.3",
-						StripComponents: 1,
-					}, "some-cnb-path",
+					return service.Deliver(
+						postal.Dependency{
+							ID:              "some-entry",
+							Stacks:          []string{"some-stack"},
+							URI:             "some-entry.tgz",
+							SHA256:          dependencySHA,
+							Version:         "1.2.3",
+							StripComponents: 1,
+						},
+						"some-cnb-path",
 						layerPath,
-						platformPath,
+						"",
 					)
 				}
 			})
@@ -502,15 +501,17 @@ version = "this is super not semver"
 				transport.DropCall.Returns.ReadCloser = io.NopCloser(buffer)
 
 				deliver = func() error {
-					return service.Deliver(postal.Dependency{
-						ID:      "some-entry",
-						Stacks:  []string{"some-stack"},
-						URI:     "https://dependencies.example.com/dependencies/some-file-name.txt",
-						SHA256:  dependencySHA,
-						Version: "1.2.3",
-					}, "some-cnb-path",
+					return service.Deliver(
+						postal.Dependency{
+							ID:      "some-entry",
+							Stacks:  []string{"some-stack"},
+							URI:     "https://dependencies.example.com/dependencies/some-file-name.txt",
+							SHA256:  dependencySHA,
+							Version: "1.2.3",
+						},
+						"some-cnb-path",
 						layerPath,
-						platformPath,
+						"some-platform-dir",
 					)
 				}
 			})
@@ -547,7 +548,7 @@ version = "this is super not semver"
 				Expect(err).NotTo(HaveOccurred())
 
 				Expect(mappingResolver.FindDependencyMappingCall.Receives.SHA256).To(Equal(dependencySHA))
-				Expect(mappingResolver.FindDependencyMappingCall.Receives.BindingPath).To(Equal(filepath.Join(platformPath, "bindings")))
+				Expect(mappingResolver.FindDependencyMappingCall.Receives.PlatformDir).To(Equal("some-platform-dir"))
 				Expect(transport.DropCall.Receives.Root).To(Equal("some-cnb-path"))
 				Expect(transport.DropCall.Receives.Uri).To(Equal("dependency-mapping-entry.tgz"))
 
@@ -622,15 +623,17 @@ version = "this is super not semver"
 
 			context("when the file checksum does not match", func() {
 				it("fails to create a tar reader", func() {
-					err := service.Deliver(postal.Dependency{
-						ID:      "some-entry",
-						Stacks:  []string{"some-stack"},
-						URI:     "some-entry.tgz",
-						SHA256:  "this is not a valid checksum",
-						Version: "1.2.3",
-					}, "some-cnb-path",
+					err := service.Deliver(
+						postal.Dependency{
+							ID:      "some-entry",
+							Stacks:  []string{"some-stack"},
+							URI:     "some-entry.tgz",
+							SHA256:  "this is not a valid checksum",
+							Version: "1.2.3",
+						},
+						"some-cnb-path",
 						layerPath,
-						platformPath,
+						"",
 					)
 
 					Expect(err).To(MatchError(ContainSubstring("checksum does not match")))
@@ -760,13 +763,15 @@ version = "this is super not semver"
 			transport.DropCall.Returns.ReadCloser = io.NopCloser(buffer)
 
 			install = func() error {
-				return service.Install(postal.Dependency{
-					ID:      "some-entry",
-					Stacks:  []string{"some-stack"},
-					URI:     "some-entry.tgz",
-					SHA256:  dependencySHA,
-					Version: "1.2.3",
-				}, "some-cnb-path",
+				return service.Install(
+					postal.Dependency{
+						ID:      "some-entry",
+						Stacks:  []string{"some-stack"},
+						URI:     "some-entry.tgz",
+						SHA256:  dependencySHA,
+						Version: "1.2.3",
+					},
+					"some-cnb-path",
 					layerPath,
 				)
 			}
@@ -810,7 +815,7 @@ version = "this is super not semver"
 				Expect(err).NotTo(HaveOccurred())
 
 				Expect(mappingResolver.FindDependencyMappingCall.Receives.SHA256).To(Equal(dependencySHA))
-				Expect(mappingResolver.FindDependencyMappingCall.Receives.BindingPath).To(Equal("/platform/bindings"))
+				Expect(mappingResolver.FindDependencyMappingCall.Receives.PlatformDir).To(Equal("/platform"))
 				Expect(transport.DropCall.Receives.Root).To(Equal("some-cnb-path"))
 				Expect(transport.DropCall.Receives.Uri).To(Equal("dependency-mapping-entry.tgz"))
 

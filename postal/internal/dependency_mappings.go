@@ -2,51 +2,36 @@ package internal
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
-	"strings"
+	"github.com/paketo-buildpacks/packit/servicebindings"
 )
 
-type DependencyMappingResolver struct{}
-
-func NewDependencyMappingResolver() DependencyMappingResolver {
-	return DependencyMappingResolver{}
+//go:generate faux --interface BindingResolver --output fakes/binding_resolver.go
+type BindingResolver interface {
+	Resolve(typ, provider, platformDir string) ([]servicebindings.Binding, error)
 }
 
-// Reference file structure for bindings directory
-// - bindings
-//    - some-binding
-//       - type -> dependency-mapping
-// 			 - some-sha -> some-uri
-//       - other-sha -> other-uri
+type DependencyMappingResolver struct {
+	bindingResolver BindingResolver
+}
 
-// Given a target dependency, look up if there is a matching dependency mapping at the given binding path
-func (d DependencyMappingResolver) FindDependencyMapping(sha256, bindingPath string) (string, error) {
-	allBindings, err := filepath.Glob(filepath.Join(bindingPath, "*"))
+func NewDependencyMappingResolver(bindingResolver BindingResolver) DependencyMappingResolver {
+	return DependencyMappingResolver{
+		bindingResolver: bindingResolver,
+	}
+}
+
+// FindDependencyMapping looks up if there is a matching dependency mapping
+func (d DependencyMappingResolver) FindDependencyMapping(sha256, platformDir string) (string, error) {
+	bindings, err := d.bindingResolver.Resolve("dependency-mapping", "", platformDir)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to resolve 'dependency-mapping' binding: %w", err)
 	}
 
-	for _, binding := range allBindings {
-		bindType, err := os.ReadFile(filepath.Join(binding, "type"))
-		if err != nil {
-			return "", fmt.Errorf("couldn't read binding type: %w", err)
-		}
-
-		if strings.TrimSpace(string(bindType)) == "dependency-mapping" {
-			if _, err := os.Stat(filepath.Join(binding, sha256)); err != nil {
-				if !os.IsNotExist(err) {
-					return "", err
-				}
-				continue
-			}
-
-			uri, err := os.ReadFile(filepath.Join(binding, sha256))
-			if err != nil {
-				return "", err
-			}
-			return strings.TrimSpace(string(uri)), nil
+	for _, binding := range bindings {
+		if uri, ok := binding.Entries[sha256]; ok {
+			return uri.ReadString()
 		}
 	}
+
 	return "", nil
 }
