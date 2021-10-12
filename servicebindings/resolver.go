@@ -93,7 +93,9 @@ func (r *Resolver) ResolveOne(typ, provider, platformDir string) (Binding, error
 
 func loadBindings(bindingRoot string) ([]Binding, error) {
 	files, err := os.ReadDir(bindingRoot)
-	if err != nil {
+	if os.IsNotExist(err) {
+		return nil, nil
+	} else if err != nil {
 		return nil, err
 	}
 
