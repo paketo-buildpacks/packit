@@ -323,6 +323,14 @@ func testResolver(t *testing.T, context spec.G, it spec.S) {
 				_, err = resolver.Resolve("bad-type", "", "")
 				Expect(err).To(MatchError(HavePrefix("failed to load bindings from '%s': failed to read binding 'bad-binding': open %s: permission denied", bindingRoot, filepath.Join(bindingRoot, "bad-binding", "type"))))
 			})
+
+			it("returns empty list if binding root doesn't exist", func() {
+				Expect(os.RemoveAll(bindingRoot)).To(Succeed())
+
+				bindings, err := resolver.Resolve("type-1", "", "")
+				Expect(err).NotTo(HaveOccurred())
+				Expect(bindings).To(BeEmpty())
+			})
 		})
 
 		context("ResolveOne", func() {
