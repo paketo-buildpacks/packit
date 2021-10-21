@@ -77,7 +77,14 @@ api = "0.6"
   id = "some-id"
   name = "some-name"
   version = "some-version"
+	homepage = "some-homepage"
+	description = "some-description"
+	keywords = ["some-keyword"]
   clear-env = false
+
+	[[buildpack.licenses]]
+		type = "some-license-type"
+		uri = "some-license-uri"
 `)
 		Expect(os.WriteFile(filepath.Join(cnbDir, "buildpack.toml"), bpTOML, 0600)).To(Succeed())
 		Expect(os.WriteFile(filepath.Join(envCnbDir, "buildpack.toml"), bpTOML, 0600)).To(Succeed())
@@ -129,15 +136,24 @@ api = "0.6"
 				Path: layersDir,
 			},
 			BuildpackInfo: packit.BuildpackInfo{
-				ID:      "some-id",
-				Name:    "some-name",
-				Version: "some-version",
+				ID:          "some-id",
+				Name:        "some-name",
+				Version:     "some-version",
+				Homepage:    "some-homepage",
+				Description: "some-description",
+				Keywords:    []string{"some-keyword"},
+				Licenses: []packit.BuildpackInfoLicense{
+					{
+						Type: "some-license-type",
+						URI:  "some-license-uri",
+					},
+				},
 			},
 		}))
 	})
+
 	context("when there are updates to the build plan", func() {
 		context("when the api version is less than 0.5", func() {
-
 			it.Before(func() {
 				bpTOML := []byte(`
 api = "0.4"
@@ -291,9 +307,18 @@ cache = true
 						Path: layersDir,
 					},
 					BuildpackInfo: packit.BuildpackInfo{
-						ID:      "some-id",
-						Name:    "some-name",
-						Version: "some-version",
+						ID:          "some-id",
+						Name:        "some-name",
+						Version:     "some-version",
+						Homepage:    "some-homepage",
+						Description: "some-description",
+						Keywords:    []string{"some-keyword"},
+						Licenses: []packit.BuildpackInfoLicense{
+							{
+								Type: "some-license-type",
+								URI:  "some-license-uri",
+							},
+						},
 					},
 				}))
 			})

@@ -23,11 +23,14 @@ type ConfigStack struct {
 }
 
 type ConfigBuildpack struct {
-	ID       string                   `toml:"id"                 json:"id,omitempty"`
-	Name     string                   `toml:"name"               json:"name,omitempty"`
-	Version  string                   `toml:"version"            json:"version,omitempty"`
-	Homepage string                   `toml:"homepage,omitempty" json:"homepage,omitempty"`
-	Licenses []ConfigBuildpackLicense `toml:"licenses,omitempty" json:"licenses,omitempty"`
+	ID          string                   `toml:"id"                    json:"id,omitempty"`
+	Name        string                   `toml:"name"                  json:"name,omitempty"`
+	Version     string                   `toml:"version"               json:"version,omitempty"`
+	Homepage    string                   `toml:"homepage,omitempty"    json:"homepage,omitempty"`
+	ClearEnv    bool                     `toml:"clear-env,omitempty"   json:"clear-env,omitempty"`
+	Description string                   `toml:"description,omitempty" json:"description,omitempty"`
+	Keywords    []string                 `toml:"keywords,omitempty"    json:"keywords,omitempty"`
+	Licenses    []ConfigBuildpackLicense `toml:"licenses,omitempty"    json:"licenses,omitempty"`
 
 	// Deprecated: This field is not part of the official buildpack.toml spec and
 	// will therefore be removed in the next major release

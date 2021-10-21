@@ -31,12 +31,15 @@ func testConfig(t *testing.T, context spec.G, it spec.S) {
 			Expect(err).NotTo(HaveOccurred())
 
 			err = cargo.EncodeConfig(buffer, cargo.Config{
-				API: "0.2",
+				API: "0.6",
 				Buildpack: cargo.ConfigBuildpack{
-					ID:       "some-buildpack-id",
-					Name:     "some-buildpack-name",
-					Version:  "some-buildpack-version",
-					Homepage: "some-homepage-link",
+					ID:          "some-buildpack-id",
+					Name:        "some-buildpack-name",
+					Version:     "some-buildpack-version",
+					Homepage:    "some-buildpack-homepage",
+					ClearEnv:    true,
+					Description: "some-buildpack-description",
+					Keywords:    []string{"some-buildpack-keyword"},
 					Licenses: []cargo.ConfigBuildpackLicense{
 						{
 							Type: "some-license-type",
@@ -104,13 +107,16 @@ func testConfig(t *testing.T, context spec.G, it spec.S) {
 			})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(buffer.String()).To(MatchTOML(`
-api = "0.2"
+api = "0.6"
 
 [buildpack]
 	id = "some-buildpack-id"
 	name = "some-buildpack-name"
 	version = "some-buildpack-version"
-	homepage = "some-homepage-link"
+	homepage = "some-buildpack-homepage"
+	clear-env = true
+	description = "some-buildpack-description"
+	keywords = [ "some-buildpack-keyword" ]
 
 [[buildpack.licenses]]
   type = "some-license-type"
@@ -170,7 +176,7 @@ api = "0.2"
 				Expect(err).NotTo(HaveOccurred())
 
 				err = cargo.EncodeConfig(buffer, cargo.Config{
-					API: "0.2",
+					API: "0.6",
 					Buildpack: cargo.ConfigBuildpack{
 						ID:       "some-buildpack-id",
 						Name:     "some-buildpack-name",
@@ -252,7 +258,7 @@ api = "0.2"
 				})
 				Expect(err).NotTo(HaveOccurred())
 				Expect(buffer.String()).To(MatchTOML(`
-api = "0.2"
+api = "0.6"
 
 [buildpack]
 	id = "some-buildpack-id"
@@ -358,13 +364,16 @@ api = "0.2"
 	context("DecodeConfig", func() {
 		it("decodes TOML to config", func() {
 			tomlBuffer := strings.NewReader(`
-api = "0.2"
+api = "0.6"
 
 [buildpack]
 	id = "some-buildpack-id"
 	name = "some-buildpack-name"
 	version = "some-buildpack-version"
-	homepage = "some-homepage-link"
+	homepage = "some-buildpack-homepage"
+	clear-env = true
+	description = "some-buildpack-description"
+	keywords = [ "some-buildpack-keyword" ]
 
 [[buildpack.licenses]]
 	type = "some-license-type"
@@ -419,12 +428,15 @@ api = "0.2"
 			var config cargo.Config
 			Expect(cargo.DecodeConfig(tomlBuffer, &config)).To(Succeed())
 			Expect(config).To(Equal(cargo.Config{
-				API: "0.2",
+				API: "0.6",
 				Buildpack: cargo.ConfigBuildpack{
-					ID:       "some-buildpack-id",
-					Name:     "some-buildpack-name",
-					Version:  "some-buildpack-version",
-					Homepage: "some-homepage-link",
+					ID:          "some-buildpack-id",
+					Name:        "some-buildpack-name",
+					Version:     "some-buildpack-version",
+					Homepage:    "some-buildpack-homepage",
+					ClearEnv:    true,
+					Description: "some-buildpack-description",
+					Keywords:    []string{"some-buildpack-keyword"},
 					Licenses: []cargo.ConfigBuildpackLicense{
 						{
 							Type: "some-license-type",
