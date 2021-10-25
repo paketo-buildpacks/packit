@@ -176,12 +176,14 @@ func Build(f BuildFunc, options ...Option) {
 		return
 	}
 
-	for _, file := range layerTomls {
-		if filepath.Base(file) != "launch.toml" && filepath.Base(file) != "store.toml" && filepath.Base(file) != "build.toml" {
-			err = os.Remove(file)
-			if err != nil {
-				config.exitHandler.Error(fmt.Errorf("failed to remove layer toml: %w", err))
-				return
+	if apiVersion.LessThan(apiV06) {
+		for _, file := range layerTomls {
+			if filepath.Base(file) != "launch.toml" && filepath.Base(file) != "store.toml" && filepath.Base(file) != "build.toml" {
+				err = os.Remove(file)
+				if err != nil {
+					config.exitHandler.Error(fmt.Errorf("failed to remove layer toml: %w", err))
+					return
+				}
 			}
 		}
 	}
