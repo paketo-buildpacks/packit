@@ -252,102 +252,141 @@ cache = true
 				Expect(os.WriteFile(filepath.Join(layersDir, "store.toml"), []byte{}, 0600)).To(Succeed())
 			})
 
-			it("removes them", func() {
-				packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
-					return packit.BuildResult{
-						Layers: []packit.Layer{},
-					}, nil
-				}, packit.WithArgs([]string{binaryPath, layersDir, platformDir, planPath}))
-				Expect(obsoleteLayerPath).NotTo(BeARegularFile())
-				Expect(obsoleteLayerPath + ".toml").NotTo(BeARegularFile())
-
-				Expect(filepath.Join(layersDir, "launch.toml")).To(BeARegularFile())
-				Expect(filepath.Join(layersDir, "store.toml")).To(BeARegularFile())
-			})
-		})
-
-		context("when the CNB_BUILDPACK_DIR environment variable is set", func() {
-			it.Before(func() {
-				os.Setenv("CNB_BUILDPACK_DIR", envCnbDir)
-			})
-
-			it.After(func() {
-				os.Unsetenv("CNB_BUILDPACK_DIR")
-			})
-
-			it("sets the correct value for CNBdir in the Build context", func() {
-
-				var context packit.BuildContext
-
-				packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
-					context = ctx
-
-					return packit.BuildResult{}, nil
-				}, packit.WithArgs([]string{binaryPath, layersDir, platformDir, planPath}))
-
-				Expect(context).To(Equal(packit.BuildContext{
-					CNBPath: envCnbDir,
-					Platform: packit.Platform{
-						Path: platformDir,
-					},
-					Stack:      "some-stack",
-					WorkingDir: tmpDir,
-					Plan: packit.BuildpackPlan{
-						Entries: []packit.BuildpackPlanEntry{
-							{
-								Name: "some-entry",
-								Metadata: map[string]interface{}{
-									"version":  "some-version",
-									"some-key": "some-value",
-								},
-							},
-						},
-					},
-					Layers: packit.Layers{
-						Path: layersDir,
-					},
-					BuildpackInfo: packit.BuildpackInfo{
-						ID:          "some-id",
-						Name:        "some-name",
-						Version:     "some-version",
-						Homepage:    "some-homepage",
-						Description: "some-description",
-						Keywords:    []string{"some-keyword"},
-						Licenses: []packit.BuildpackInfoLicense{
-							{
-								Type: "some-license-type",
-								URI:  "some-license-uri",
-							},
-						},
-					},
-				}))
-			})
-		})
-
-		context("failures", func() {
-			context("when getting the layer toml list", func() {
-				var unremovableTOMLPath string
-
+			context("when the buildpack api version is less than 0.6", func() {
 				it.Before(func() {
-					unremovableTOMLPath = filepath.Join(layersDir, "unremovable.toml")
-					Expect(os.MkdirAll(filepath.Join(layersDir, "unremovable"), os.ModePerm)).To(Succeed())
-					Expect(os.WriteFile(unremovableTOMLPath, []byte{}, os.ModePerm)).To(Succeed())
-					Expect(os.Chmod(layersDir, 0666)).To(Succeed())
+					bpTOML := []byte(`
+api = "0.5"
+[buildpack]
+  id = "some-id"
+  name = "some-name"
+  version = "some-version"
+`)
+					Expect(os.WriteFile(filepath.Join(cnbDir, "buildpack.toml"), bpTOML, 0600)).To(Succeed())
 				})
 
-				it.After(func() {
-					Expect(os.Chmod(layersDir, os.ModePerm)).To(Succeed())
-				})
-
-				it("returns an error", func() {
+				it("removes them", func() {
 					packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
 						return packit.BuildResult{
 							Layers: []packit.Layer{},
 						}, nil
-					}, packit.WithArgs([]string{binaryPath, layersDir, platformDir, planPath}), packit.WithExitHandler(exitHandler))
-					Expect(exitHandler.ErrorCall.Receives.Error).To(MatchError(ContainSubstring("failed to remove layer toml:")))
+					}, packit.WithArgs([]string{binaryPath, layersDir, platformDir, planPath}))
+					Expect(obsoleteLayerPath).NotTo(BeARegularFile())
+					Expect(obsoleteLayerPath + ".toml").NotTo(BeARegularFile())
+
+					Expect(filepath.Join(layersDir, "launch.toml")).To(BeARegularFile())
+					Expect(filepath.Join(layersDir, "store.toml")).To(BeARegularFile())
+				})
+
+				context("failures", func() {
+					context("when getting the layer toml list", func() {
+						var unremovableTOMLPath string
+
+						it.Before(func() {
+							unremovableTOMLPath = filepath.Join(layersDir, "unremovable.toml")
+							Expect(os.MkdirAll(filepath.Join(layersDir, "unremovable"), os.ModePerm)).To(Succeed())
+							Expect(os.WriteFile(unremovableTOMLPath, []byte{}, os.ModePerm)).To(Succeed())
+							Expect(os.Chmod(layersDir, 0666)).To(Succeed())
+						})
+
+						it.After(func() {
+							Expect(os.Chmod(layersDir, os.ModePerm)).To(Succeed())
+						})
+
+						it("returns an error", func() {
+							packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
+								return packit.BuildResult{
+									Layers: []packit.Layer{},
+								}, nil
+							}, packit.WithArgs([]string{binaryPath, layersDir, platformDir, planPath}), packit.WithExitHandler(exitHandler))
+							Expect(exitHandler.ErrorCall.Receives.Error).To(MatchError(ContainSubstring("failed to remove layer toml:")))
+						})
+					})
 				})
 			})
+
+			context("when the buildpack api version is greater than or equal to 0.6", func() {
+				it.Before(func() {
+					bpTOML := []byte(`
+api = "0.6"
+[buildpack]
+  id = "some-id"
+  name = "some-name"
+  version = "some-version"
+`)
+					Expect(os.WriteFile(filepath.Join(cnbDir, "buildpack.toml"), bpTOML, 0600)).To(Succeed())
+				})
+
+				it("leaves them in place", func() {
+					packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
+						return packit.BuildResult{
+							Layers: []packit.Layer{},
+						}, nil
+					}, packit.WithArgs([]string{binaryPath, layersDir, platformDir, planPath}))
+
+					Expect(obsoleteLayerPath).To(BeADirectory())
+					Expect(obsoleteLayerPath + ".toml").To(BeARegularFile())
+
+					Expect(filepath.Join(layersDir, "launch.toml")).To(BeARegularFile())
+					Expect(filepath.Join(layersDir, "store.toml")).To(BeARegularFile())
+				})
+			})
+		})
+	})
+
+	context("when the CNB_BUILDPACK_DIR environment variable is set", func() {
+		it.Before(func() {
+			os.Setenv("CNB_BUILDPACK_DIR", envCnbDir)
+		})
+
+		it.After(func() {
+			os.Unsetenv("CNB_BUILDPACK_DIR")
+		})
+
+		it("sets the correct value for CNBdir in the Build context", func() {
+			var context packit.BuildContext
+
+			packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
+				context = ctx
+
+				return packit.BuildResult{}, nil
+			}, packit.WithArgs([]string{binaryPath, layersDir, platformDir, planPath}))
+
+			Expect(context).To(Equal(packit.BuildContext{
+				CNBPath: envCnbDir,
+				Platform: packit.Platform{
+					Path: platformDir,
+				},
+				Stack:      "some-stack",
+				WorkingDir: tmpDir,
+				Plan: packit.BuildpackPlan{
+					Entries: []packit.BuildpackPlanEntry{
+						{
+							Name: "some-entry",
+							Metadata: map[string]interface{}{
+								"version":  "some-version",
+								"some-key": "some-value",
+							},
+						},
+					},
+				},
+				Layers: packit.Layers{
+					Path: layersDir,
+				},
+				BuildpackInfo: packit.BuildpackInfo{
+					ID:          "some-id",
+					Name:        "some-name",
+					Version:     "some-version",
+					Homepage:    "some-homepage",
+					Description: "some-description",
+					Keywords:    []string{"some-keyword"},
+					Licenses: []packit.BuildpackInfoLicense{
+						{
+							Type: "some-license-type",
+							URI:  "some-license-uri",
+						},
+					},
+				},
+			}))
 		})
 	})
 
