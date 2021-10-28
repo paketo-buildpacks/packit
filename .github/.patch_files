@@ -1,0 +1,15 @@
+.github/.patch_files
+.github/.syncignore
+.github/CODEOWNERS
+.github/dependabot.yml
+.github/labels.yml
+.github/workflows/check-pr-labels.yml
+.github/workflows/codeql-analysis.yml
+.github/workflows/label-pr.yml
+.github/workflows/lint.yml
+.github/workflows/synchronize-labels.yml
+.github/workflows/test-pull-request.yml
+.gitignore
+LICENSE
+NOTICE
+README.md
