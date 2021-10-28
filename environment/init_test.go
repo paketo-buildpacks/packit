@@ -1,4 +1,4 @@
-package configuration_test
+package environment_test
 
 import (
 	"testing"

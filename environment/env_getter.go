@@ -1,4 +1,4 @@
-package configuration
+package environment
 
 import (
 	"fmt"
@@ -15,18 +15,18 @@ func NewEnvGetter() EnvGetter {
 	return EnvGetter{}
 }
 
-func (e EnvGetter) LookupEnv(name string) (string, bool) {
+func (e EnvGetter) Lookup(name string) (string, bool) {
 	return os.LookupEnv(name)
 }
 
-func (e EnvGetter) LookupEnvWithDefault(name string, defaultVal string) string {
+func (e EnvGetter) LookupWithDefault(name string, defaultVal string) string {
 	if s, ok := os.LookupEnv(name); ok {
 		return s
 	}
 	return defaultVal
 }
 
-func (e EnvGetter) GetEnvAsBool(name string) bool {
+func (e EnvGetter) GetAsBool(name string) bool {
 	s, ok := os.LookupEnv(name)
 	if !ok {
 		return false
@@ -44,7 +44,7 @@ func (e EnvGetter) GetEnvAsBool(name string) bool {
 	return t
 }
 
-func (e EnvGetter) GetEnvAsShellWords(name string) (words []string, err error) {
+func (e EnvGetter) GetAsShellWords(name string) (words []string, err error) {
 	shellwordsParser := shellwords.NewParser()
 	shellwordsParser.ParseEnv = true
 
