@@ -189,7 +189,7 @@ func Build(f BuildFunc, options ...Option) {
 	}
 
 	for _, layer := range result.Layers {
-		err = config.tomlWriter.Write(filepath.Join(layersPath, fmt.Sprintf("%s.toml", layer.Name)), layer)
+		err = config.tomlWriter.Write(filepath.Join(layersPath, fmt.Sprintf("%s.toml", layer.Name)), formattedLayer{layer, apiVersion})
 		if err != nil {
 			config.exitHandler.Error(err)
 			return

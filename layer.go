@@ -3,6 +3,9 @@ package packit
 import (
 	"fmt"
 	"os"
+
+	"github.com/Masterminds/semver/v3"
+	"github.com/pelletier/go-toml"
 )
 
 // Layer provides a representation of a layer managed by a buildpack as
@@ -10,48 +13,48 @@ import (
 // https://github.com/buildpacks/spec/blob/main/buildpack.md#layers.
 type Layer struct {
 	// Path is the absolute location of the layer on disk.
-	Path string `toml:"-"`
+	Path string
 
 	// Name is the descriptive name of the layer.
-	Name string `toml:"-"`
+	Name string
 
 	// Build indicates whether the layer is available to subsequent buildpacks
 	// during their build phase according to the specification:
 	// https://github.com/buildpacks/spec/blob/main/buildpack.md#build-layers.
-	Build bool `toml:"build"`
+	Build bool
 
 	// Launch indicates whether the layer is exported into the application image
 	// and made available during the launch phase according to the specification:
 	// https://github.com/buildpacks/spec/blob/main/buildpack.md#launch-layers.
-	Launch bool `toml:"launch"`
+	Launch bool
 
 	// Cache indicates whether the layer is persisted and made available to
 	// subsequent builds of the same application according to the specification:
 	// https://github.com/buildpacks/spec/blob/main/buildpack.md#launch-layers
 	// and
 	// https://github.com/buildpacks/spec/blob/main/buildpack.md#build-layers.
-	Cache bool `toml:"cache"`
+	Cache bool
 
 	// SharedEnv is the set of environment variables attached to the layer and
 	// made available during both the build and launch phases according to the
 	// specification:
 	// https://github.com/buildpacks/spec/blob/main/buildpack.md#provided-by-the-buildpacks.
-	SharedEnv Environment `toml:"-"`
+	SharedEnv Environment
 
 	// BuildEnv is the set of environment variables attached to the layer and
 	// made available during the build phase according to the specification:
 	// https://github.com/buildpacks/spec/blob/main/buildpack.md#provided-by-the-buildpacks.
-	BuildEnv Environment `toml:"-"`
+	BuildEnv Environment
 
 	// LaunchEnv is the set of environment variables attached to the layer and
 	// made available during the launch phase according to the specification:
 	// https://github.com/buildpacks/spec/blob/main/buildpack.md#provided-by-the-buildpacks.
-	LaunchEnv Environment `toml:"-"`
+	LaunchEnv Environment
 
 	// ProcessLaunchEnv is a map of environment variables attached to the layer and
 	// made available to specified proccesses in the launch phase accoring to the specification:
 	// https://github.com/buildpacks/spec/blob/main/buildpack.md#provided-by-the-buildpacks
-	ProcessLaunchEnv map[string]Environment `toml:"-"`
+	ProcessLaunchEnv map[string]Environment
 
 	// Metadata is an unspecified field allowing buildpacks to communicate extra
 	// details about the layer. Examples of this type of metadata might include
@@ -60,7 +63,7 @@ type Layer struct {
 	// layer if suitable. The Metadata field ultimately fills the metadata field
 	// of the Layer Content Metadata TOML file according to the specification:
 	// https://github.com/buildpacks/spec/blob/main/buildpack.md#layer-content-metadata-toml.
-	Metadata map[string]interface{} `toml:"metadata"`
+	Metadata map[string]interface{}
 }
 
 // Reset clears the state of a layer such that the layer can be replaced with
@@ -88,4 +91,30 @@ func (l Layer) Reset() (Layer, error) {
 	}
 
 	return l, nil
+}
+
+type formattedLayer struct {
+	layer Layer
+	api   *semver.Version
+}
+
+func (l formattedLayer) MarshalTOML() ([]byte, error) {
+	layer := map[string]interface{}{
+		"metadata": l.layer.Metadata,
+	}
+
+	apiV06, _ := semver.NewVersion("0.6")
+	if l.api.LessThan(apiV06) {
+		layer["build"] = l.layer.Build
+		layer["launch"] = l.layer.Launch
+		layer["cache"] = l.layer.Cache
+	} else {
+		layer["types"] = map[string]bool{
+			"build":  l.layer.Build,
+			"launch": l.layer.Launch,
+			"cache":  l.layer.Cache,
+		}
+	}
+
+	return toml.Marshal(layer)
 }

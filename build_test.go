@@ -230,6 +230,52 @@ api = "0.4"
 		Expect(err).NotTo(HaveOccurred())
 
 		Expect(string(contents)).To(MatchTOML(`
+[types]
+  launch = true
+  build = true
+  cache = true
+
+[metadata]
+  some-key = "some-value"
+`))
+	})
+
+	context("when the buildpack api version is less than 0.6", func() {
+		it.Before(func() {
+			bpTOML := []byte(`
+api = "0.5"
+[buildpack]
+  id = "some-id"
+  name = "some-name"
+  version = "some-version"
+`)
+			Expect(os.WriteFile(filepath.Join(cnbDir, "buildpack.toml"), bpTOML, 0600)).To(Succeed())
+		})
+		it("persists layer metadata", func() {
+			packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
+				layerPath := filepath.Join(ctx.Layers.Path, "some-layer")
+				Expect(os.MkdirAll(layerPath, os.ModePerm)).To(Succeed())
+
+				return packit.BuildResult{
+					Layers: []packit.Layer{
+						packit.Layer{
+							Path:   layerPath,
+							Name:   "some-layer",
+							Build:  true,
+							Launch: true,
+							Cache:  true,
+							Metadata: map[string]interface{}{
+								"some-key": "some-value",
+							},
+						},
+					},
+				}, nil
+			}, packit.WithArgs([]string{binaryPath, layersDir, platformDir, planPath}))
+
+			contents, err := os.ReadFile(filepath.Join(layersDir, "some-layer.toml"))
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(string(contents)).To(MatchTOML(`
 launch = true
 build = true
 cache = true
@@ -237,6 +283,7 @@ cache = true
 [metadata]
   some-key = "some-value"
 `))
+		})
 	})
 
 	context("when there are existing layer.toml files", func() {
