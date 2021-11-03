@@ -120,9 +120,10 @@ func (s Service) Resolve(path, id, version, stack string) (Dependency, error) {
 
 	if len(compatibleVersions) == 0 {
 		return Dependency{}, fmt.Errorf(
-			"failed to satisfy %q dependency version constraint %q: no compatible versions. Supported versions are: [%s]",
+			"failed to satisfy %q dependency version constraint %q: no compatible versions on %q stack. Supported versions are: [%s]",
 			id,
 			version,
+			stack,
 			strings.Join(supportedVersions, ", "),
 		)
 	}
