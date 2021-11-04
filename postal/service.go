@@ -10,12 +10,14 @@ import (
 	"time"
 
 	"github.com/Masterminds/semver/v3"
-
 	"github.com/paketo-buildpacks/packit"
 	"github.com/paketo-buildpacks/packit/cargo"
 	"github.com/paketo-buildpacks/packit/postal/internal"
 	"github.com/paketo-buildpacks/packit/servicebindings"
 	"github.com/paketo-buildpacks/packit/vacation"
+
+	//nolint Ignore SA1019, usage of deprecated package within a deprecated test case
+	"github.com/paketo-buildpacks/packit/paketosbom"
 )
 
 //go:generate faux --interface Transport --output fakes/transport.go
@@ -192,43 +194,46 @@ func (s Service) Install(dependency Dependency, cnbPath, layerPath string) error
 
 // GenerateBillOfMaterials will generate a list of BOMEntry values given a
 // collection of Dependency values.
+//
+// Deprecated: use sbom.GenerateFromDependency instead.
 func (s Service) GenerateBillOfMaterials(dependencies ...Dependency) []packit.BOMEntry {
 	var entries []packit.BOMEntry
 	for _, dependency := range dependencies {
-
-		entry := packit.BOMEntry{
-			Name: dependency.Name,
-			Metadata: packit.BOMMetadata{
-				Checksum: packit.BOMChecksum{
-					Algorithm: packit.SHA256,
-					Hash:      dependency.SHA256,
+		paketoBomMetadata := paketosbom.BOMMetadata{
+			Checksum: paketosbom.BOMChecksum{
+				Algorithm: paketosbom.SHA256,
+				Hash:      dependency.SHA256,
+			},
+			URI:     dependency.URI,
+			Version: dependency.Version,
+			Source: paketosbom.BOMSource{
+				Checksum: paketosbom.BOMChecksum{
+					Algorithm: paketosbom.SHA256,
+					Hash:      dependency.SourceSHA256,
 				},
-				URI:     dependency.URI,
-				Version: dependency.Version,
-				Source: packit.BOMSource{
-					Checksum: packit.BOMChecksum{
-						Algorithm: packit.SHA256,
-						Hash:      dependency.SourceSHA256,
-					},
-					URI: dependency.Source,
-				},
+				URI: dependency.Source,
 			},
 		}
 
 		if dependency.CPE != "" {
-			entry.Metadata.CPE = dependency.CPE
+			paketoBomMetadata.CPE = dependency.CPE
 		}
 
 		if (dependency.DeprecationDate != time.Time{}) {
-			entry.Metadata.DeprecationDate = dependency.DeprecationDate
+			paketoBomMetadata.DeprecationDate = dependency.DeprecationDate
 		}
 
 		if dependency.Licenses != nil {
-			entry.Metadata.Licenses = dependency.Licenses
+			paketoBomMetadata.Licenses = dependency.Licenses
 		}
 
 		if dependency.PURL != "" {
-			entry.Metadata.PURL = dependency.PURL
+			paketoBomMetadata.PURL = dependency.PURL
+		}
+
+		entry := packit.BOMEntry{
+			Name:     dependency.Name,
+			Metadata: paketoBomMetadata,
 		}
 
 		entries = append(entries, entry)

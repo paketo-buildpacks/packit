@@ -19,6 +19,9 @@ import (
 	"github.com/paketo-buildpacks/packit/postal/fakes"
 	"github.com/sclevine/spec"
 
+	//nolint Ignore SA1019, usage of deprecated package within a deprecated test case
+	"github.com/paketo-buildpacks/packit/paketosbom"
+
 	. "github.com/onsi/gomega"
 )
 
@@ -953,14 +956,14 @@ version = "this is super not semver"
 			Expect(entries).To(Equal([]packit.BOMEntry{
 				{
 					Name: "Some Entry",
-					Metadata: packit.BOMMetadata{
-						Checksum: packit.BOMChecksum{
-							Algorithm: packit.SHA256,
+					Metadata: paketosbom.BOMMetadata{
+						Checksum: paketosbom.BOMChecksum{
+							Algorithm: paketosbom.SHA256,
 							Hash:      "some-sha",
 						},
-						Source: packit.BOMSource{
-							Checksum: packit.BOMChecksum{
-								Algorithm: packit.SHA256,
+						Source: paketosbom.BOMSource{
+							Checksum: paketosbom.BOMChecksum{
+								Algorithm: paketosbom.SHA256,
 								Hash:      "some-source-sha",
 							},
 							URI: "some-source",
@@ -972,14 +975,14 @@ version = "this is super not semver"
 				},
 				{
 					Name: "Other Entry",
-					Metadata: packit.BOMMetadata{
-						Checksum: packit.BOMChecksum{
-							Algorithm: packit.SHA256,
+					Metadata: paketosbom.BOMMetadata{
+						Checksum: paketosbom.BOMChecksum{
+							Algorithm: paketosbom.SHA256,
 							Hash:      "other-sha",
 						},
-						Source: packit.BOMSource{
-							Checksum: packit.BOMChecksum{
-								Algorithm: packit.SHA256,
+						Source: paketosbom.BOMSource{
+							Checksum: paketosbom.BOMChecksum{
+								Algorithm: paketosbom.SHA256,
 								Hash:      "other-source-sha",
 							},
 							URI: "other-source",
@@ -1011,15 +1014,15 @@ version = "this is super not semver"
 				Expect(entries).To(Equal([]packit.BOMEntry{
 					{
 						Name: "Some Entry",
-						Metadata: packit.BOMMetadata{
+						Metadata: paketosbom.BOMMetadata{
 							CPE: "some-cpe",
-							Checksum: packit.BOMChecksum{
-								Algorithm: packit.SHA256,
+							Checksum: paketosbom.BOMChecksum{
+								Algorithm: paketosbom.SHA256,
 								Hash:      "some-sha",
 							},
-							Source: packit.BOMSource{
-								Checksum: packit.BOMChecksum{
-									Algorithm: packit.SHA256,
+							Source: paketosbom.BOMSource{
+								Checksum: paketosbom.BOMChecksum{
+									Algorithm: paketosbom.SHA256,
 									Hash:      "some-source-sha",
 								},
 								URI: "some-source",
@@ -1060,15 +1063,15 @@ version = "this is super not semver"
 				Expect(entries).To(Equal([]packit.BOMEntry{
 					{
 						Name: "Some Entry",
-						Metadata: packit.BOMMetadata{
+						Metadata: paketosbom.BOMMetadata{
 							DeprecationDate: deprecationDate,
-							Checksum: packit.BOMChecksum{
-								Algorithm: packit.SHA256,
+							Checksum: paketosbom.BOMChecksum{
+								Algorithm: paketosbom.SHA256,
 								Hash:      "some-sha",
 							},
-							Source: packit.BOMSource{
-								Checksum: packit.BOMChecksum{
-									Algorithm: packit.SHA256,
+							Source: paketosbom.BOMSource{
+								Checksum: paketosbom.BOMChecksum{
+									Algorithm: paketosbom.SHA256,
 									Hash:      "some-source-sha",
 								},
 								URI: "some-source",
@@ -1101,15 +1104,15 @@ version = "this is super not semver"
 				Expect(entries).To(Equal([]packit.BOMEntry{
 					{
 						Name: "Some Entry",
-						Metadata: packit.BOMMetadata{
+						Metadata: paketosbom.BOMMetadata{
 							Licenses: []string{"some-license"},
-							Checksum: packit.BOMChecksum{
-								Algorithm: packit.SHA256,
+							Checksum: paketosbom.BOMChecksum{
+								Algorithm: paketosbom.SHA256,
 								Hash:      "some-sha",
 							},
-							Source: packit.BOMSource{
-								Checksum: packit.BOMChecksum{
-									Algorithm: packit.SHA256,
+							Source: paketosbom.BOMSource{
+								Checksum: paketosbom.BOMChecksum{
+									Algorithm: paketosbom.SHA256,
 									Hash:      "some-source-sha",
 								},
 								URI: "some-source",
@@ -1142,15 +1145,15 @@ version = "this is super not semver"
 				Expect(entries).To(Equal([]packit.BOMEntry{
 					{
 						Name: "Some Entry",
-						Metadata: packit.BOMMetadata{
+						Metadata: paketosbom.BOMMetadata{
 							PURL: "some-purl",
-							Checksum: packit.BOMChecksum{
-								Algorithm: packit.SHA256,
+							Checksum: paketosbom.BOMChecksum{
+								Algorithm: paketosbom.SHA256,
 								Hash:      "some-sha",
 							},
-							Source: packit.BOMSource{
-								Checksum: packit.BOMChecksum{
-									Algorithm: packit.SHA256,
+							Source: paketosbom.BOMSource{
+								Checksum: paketosbom.BOMChecksum{
+									Algorithm: paketosbom.SHA256,
 									Hash:      "some-source-sha",
 								},
 								URI: "some-source",
