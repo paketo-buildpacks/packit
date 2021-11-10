@@ -89,11 +89,26 @@ Entries:
 func (e Emitter) LaunchProcesses(processes []packit.Process, processEnvs ...map[string]packit.Environment) {
 	e.Process("Assigning launch processes:")
 
+	var (
+		typePadding int
+	)
+
 	for _, process := range processes {
-		p := fmt.Sprintf("%s: %s", process.Type, process.Command)
+		if len(process.Type) > typePadding {
+			typePadding = len([]byte(process.Type))
+		}
+	}
+
+	for _, process := range processes {
+		pad := typePadding + len(process.Command) - len(process.Type)
+		p := fmt.Sprintf("%s: %*s", process.Type, pad, process.Command)
 
 		if process.Args != nil {
-			p = fmt.Sprintf("%s %s", p, strings.Join(process.Args, " "))
+			p += " " + strings.Join(process.Args, " ")
+		}
+
+		if process.Default {
+			p += " " + "(default)"
 		}
 
 		e.Subprocess(p)
