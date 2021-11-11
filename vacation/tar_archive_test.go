@@ -51,6 +51,10 @@ func testTarArchive(t *testing.T, context spec.G, it spec.S) {
 			_, err = tw.Write([]byte{})
 			Expect(err).NotTo(HaveOccurred())
 
+			Expect(tw.WriteHeader(&tar.Header{Name: "hardlink", Mode: 0755, Size: int64(0), Typeflag: tar.TypeLink, Linkname: "first"})).To(Succeed())
+			_, err = tw.Write([]byte{})
+			Expect(err).NotTo(HaveOccurred())
+
 			nestedFile := filepath.Join("some-dir", "some-other-dir", "some-file")
 			Expect(tw.WriteHeader(&tar.Header{Name: nestedFile, Mode: 0755, Size: int64(len(nestedFile))})).To(Succeed())
 			_, err = tw.Write([]byte(nestedFile))
@@ -80,10 +84,11 @@ func testTarArchive(t *testing.T, context spec.G, it spec.S) {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(files).To(ConsistOf([]string{
 				filepath.Join(tempDir, "first"),
+				filepath.Join(tempDir, "hardlink"),
 				filepath.Join(tempDir, "second"),
-				filepath.Join(tempDir, "third"),
 				filepath.Join(tempDir, "some-dir"),
 				filepath.Join(tempDir, "symlink"),
+				filepath.Join(tempDir, "third"),
 			}))
 
 			info, err := os.Stat(filepath.Join(tempDir, "first"))
@@ -94,6 +99,10 @@ func testTarArchive(t *testing.T, context spec.G, it spec.S) {
 			Expect(filepath.Join(tempDir, "some-dir", "some-other-dir", "some-file")).To(BeARegularFile())
 
 			data, err := os.ReadFile(filepath.Join(tempDir, "symlink"))
+			Expect(err).NotTo(HaveOccurred())
+			Expect(data).To(Equal([]byte(`first`)))
+
+			data, err = os.ReadFile(filepath.Join(tempDir, "hardlink"))
 			Expect(err).NotTo(HaveOccurred())
 			Expect(data).To(Equal([]byte(`first`)))
 		})
@@ -235,8 +244,8 @@ func testTarArchive(t *testing.T, context spec.G, it spec.S) {
 				})
 			})
 
-			context("when it tries to symlink to a file that does not exist", func() {
-				var zipSlipSymlinkTar vacation.TarArchive
+			context("when there is a symlink cycle", func() {
+				var cyclicalSymlinkTar vacation.TarArchive
 
 				it.Before(func() {
 					var err error
@@ -244,17 +253,45 @@ func testTarArchive(t *testing.T, context spec.G, it spec.S) {
 					buffer := bytes.NewBuffer(nil)
 					tw := tar.NewWriter(buffer)
 
-					Expect(tw.WriteHeader(&tar.Header{Name: "symlink", Mode: 0755, Size: int64(0), Typeflag: tar.TypeSymlink, Linkname: filepath.Join("..", "some-file")})).To(Succeed())
+					Expect(tw.WriteHeader(&tar.Header{Name: "a-symlink", Mode: 0755, Size: int64(0), Typeflag: tar.TypeSymlink, Linkname: "b-symlink"})).To(Succeed())
+					_, err = tw.Write([]byte{})
+					Expect(err).NotTo(HaveOccurred())
+
+					Expect(tw.WriteHeader(&tar.Header{Name: "b-symlink", Mode: 0755, Size: int64(0), Typeflag: tar.TypeSymlink, Linkname: "a-symlink"})).To(Succeed())
 					_, err = tw.Write([]byte{})
 					Expect(err).NotTo(HaveOccurred())
 
 					Expect(tw.Close()).To(Succeed())
 
-					zipSlipSymlinkTar = vacation.NewTarArchive(bytes.NewReader(buffer.Bytes()))
+					cyclicalSymlinkTar = vacation.NewTarArchive(bytes.NewReader(buffer.Bytes()))
 				})
 
 				it("returns an error", func() {
-					err := zipSlipSymlinkTar.Decompress(tempDir)
+					err := cyclicalSymlinkTar.Decompress(tempDir)
+					Expect(err).To(MatchError(ContainSubstring("failed: max iterations reached: this link graph contains a cycle")))
+				})
+			})
+
+			context("when it tries to symlink to a file that does not exist", func() {
+				var symlinkNotExistTar vacation.TarArchive
+
+				it.Before(func() {
+					var err error
+
+					buffer := bytes.NewBuffer(nil)
+					tw := tar.NewWriter(buffer)
+
+					Expect(tw.WriteHeader(&tar.Header{Name: "symlink", Mode: 0755, Size: int64(0), Typeflag: tar.TypeSymlink, Linkname: "some-file"})).To(Succeed())
+					_, err = tw.Write([]byte{})
+					Expect(err).NotTo(HaveOccurred())
+
+					Expect(tw.Close()).To(Succeed())
+
+					symlinkNotExistTar = vacation.NewTarArchive(bytes.NewReader(buffer.Bytes()))
+				})
+
+				it("returns an error", func() {
+					err := symlinkNotExistTar.Decompress(tempDir)
 					Expect(err).To(MatchError(ContainSubstring("failed to evaluate symlink")))
 					Expect(err).To(MatchError(ContainSubstring("no such file or directory")))
 				})
@@ -290,8 +327,8 @@ func testTarArchive(t *testing.T, context spec.G, it spec.S) {
 			})
 		})
 
-		context("when there is a symlink cycle", func() {
-			var cyclicalSymlinkTar vacation.TarArchive
+		context("when there is a link cycle", func() {
+			var cyclicalLinkTar vacation.TarArchive
 
 			it.Before(func() {
 				var err error
@@ -299,22 +336,47 @@ func testTarArchive(t *testing.T, context spec.G, it spec.S) {
 				buffer := bytes.NewBuffer(nil)
 				tw := tar.NewWriter(buffer)
 
-				Expect(tw.WriteHeader(&tar.Header{Name: "a-symlink", Mode: 0755, Size: int64(0), Typeflag: tar.TypeSymlink, Linkname: "b-symlink"})).To(Succeed())
+				Expect(tw.WriteHeader(&tar.Header{Name: "a-link", Mode: 0755, Size: int64(0), Typeflag: tar.TypeLink, Linkname: "b-link"})).To(Succeed())
 				_, err = tw.Write([]byte{})
 				Expect(err).NotTo(HaveOccurred())
 
-				Expect(tw.WriteHeader(&tar.Header{Name: "b-symlink", Mode: 0755, Size: int64(0), Typeflag: tar.TypeSymlink, Linkname: "a-symlink"})).To(Succeed())
+				Expect(tw.WriteHeader(&tar.Header{Name: "b-link", Mode: 0755, Size: int64(0), Typeflag: tar.TypeLink, Linkname: "a-link"})).To(Succeed())
 				_, err = tw.Write([]byte{})
 				Expect(err).NotTo(HaveOccurred())
 
 				Expect(tw.Close()).To(Succeed())
 
-				cyclicalSymlinkTar = vacation.NewTarArchive(bytes.NewReader(buffer.Bytes()))
+				cyclicalLinkTar = vacation.NewTarArchive(bytes.NewReader(buffer.Bytes()))
 			})
 
 			it("returns an error", func() {
-				err := cyclicalSymlinkTar.Decompress(tempDir)
-				Expect(err).To(MatchError(ContainSubstring("failed: max iterations reached: this symlink graph contains a cycle")))
+				err := cyclicalLinkTar.Decompress(tempDir)
+				Expect(err).To(MatchError(ContainSubstring("failed: max iterations reached: this link graph contains a cycle")))
+			})
+		})
+
+		context("when it tries to symlink to a file that does not exist", func() {
+			var linkNotExistTar vacation.TarArchive
+
+			it.Before(func() {
+				var err error
+
+				buffer := bytes.NewBuffer(nil)
+				tw := tar.NewWriter(buffer)
+
+				Expect(tw.WriteHeader(&tar.Header{Name: "link", Mode: 0755, Size: int64(0), Typeflag: tar.TypeLink, Linkname: "some-file"})).To(Succeed())
+				_, err = tw.Write([]byte{})
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(tw.Close()).To(Succeed())
+
+				linkNotExistTar = vacation.NewTarArchive(bytes.NewReader(buffer.Bytes()))
+			})
+
+			it("returns an error", func() {
+				err := linkNotExistTar.Decompress(tempDir)
+				Expect(err).To(MatchError(ContainSubstring("failed to extract link")))
+				Expect(err).To(MatchError(ContainSubstring("no such file or directory")))
 			})
 		})
 	})
