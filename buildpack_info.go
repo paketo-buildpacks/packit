@@ -31,6 +31,10 @@ type BuildpackInfo struct {
 	// Licenses are the list of licenses specified in the `buildpack.licenses`
 	// fields of the buildpack.toml.
 	Licenses []BuildpackInfoLicense
+
+	// SBOM is the list of Software Bill of Materials media types that the buildpack
+	// produces (e.g. "application/spdx+json").
+	SBOM []string `toml:"sbom"`
 }
 
 // BuildpackInfoLicense is a representation of a license specified in the
