@@ -31,6 +31,7 @@ func (ta TarArchive) Decompress(destination string) error {
 	directories := map[string]interface{}{}
 
 	var symlinks []symlink
+	var hardLinks = make(map[string]string)
 
 	tarReader := tar.NewReader(ta.reader)
 	for {
@@ -106,6 +107,25 @@ func (ta TarArchive) Decompress(destination string) error {
 				return err
 			}
 
+		case tar.TypeLink:
+			linkname := filepath.Clean(hdr.Linkname)
+			depth := len(strings.Split(name, "/")) - 1
+
+			if filepath.IsAbs(linkname) {
+				linkname, err = filepath.Rel(destination, linkname)
+				if err != nil {
+					return err
+				}
+			}
+
+			// Verify hardlinks to do not point outside the archive dest root
+			if strings.Count(linkname, "..") > depth {
+				return fmt.Errorf("hard link points %s outside destination", hdr.Linkname)
+			}
+
+			hardLinks[filepath.Join(destination, name)] = filepath.Clean(filepath.Join(destination, hdr.Linkname))
+			continue
+
 		case tar.TypeSymlink:
 			// Collect all of the headers for symlinks so that they can be verified
 			// after all other files are written
@@ -131,6 +151,12 @@ func (ta TarArchive) Decompress(destination string) error {
 		err = os.Symlink(link.name, link.path)
 		if err != nil {
 			return fmt.Errorf("failed to extract symlink: %s", err)
+		}
+	}
+
+	for k, v := range hardLinks {
+		if err := os.Link(v, k); err != nil {
+			return fmt.Errorf("failed to extract hardlink %w", err)
 		}
 	}
 

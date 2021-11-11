@@ -51,6 +51,10 @@ func testTarArchive(t *testing.T, context spec.G, it spec.S) {
 			_, err = tw.Write([]byte{})
 			Expect(err).NotTo(HaveOccurred())
 
+			Expect(tw.WriteHeader(&tar.Header{Name: "hardlink", Mode: 0755, Size: int64(0), Typeflag: tar.TypeLink, Linkname: "first"})).To(Succeed())
+			_, err = tw.Write([]byte{})
+			Expect(err).NotTo(HaveOccurred())
+
 			nestedFile := filepath.Join("some-dir", "some-other-dir", "some-file")
 			Expect(tw.WriteHeader(&tar.Header{Name: nestedFile, Mode: 0755, Size: int64(len(nestedFile))})).To(Succeed())
 			_, err = tw.Write([]byte(nestedFile))
@@ -84,6 +88,7 @@ func testTarArchive(t *testing.T, context spec.G, it spec.S) {
 				filepath.Join(tempDir, "third"),
 				filepath.Join(tempDir, "some-dir"),
 				filepath.Join(tempDir, "symlink"),
+				filepath.Join(tempDir, "hardlink"),
 			}))
 
 			info, err := os.Stat(filepath.Join(tempDir, "first"))
@@ -94,6 +99,10 @@ func testTarArchive(t *testing.T, context spec.G, it spec.S) {
 			Expect(filepath.Join(tempDir, "some-dir", "some-other-dir", "some-file")).To(BeARegularFile())
 
 			data, err := os.ReadFile(filepath.Join(tempDir, "symlink"))
+			Expect(err).NotTo(HaveOccurred())
+			Expect(data).To(Equal([]byte(`first`)))
+
+			data, err = os.ReadFile(filepath.Join(tempDir, "hardlink"))
 			Expect(err).NotTo(HaveOccurred())
 			Expect(data).To(Equal([]byte(`first`)))
 		})
@@ -260,6 +269,30 @@ func testTarArchive(t *testing.T, context spec.G, it spec.S) {
 				})
 			})
 
+			context("when it tries to hardlink to a file that does not exist", func() {
+				var zipSlipLinkTar vacation.TarArchive
+
+				it.Before(func() {
+					var err error
+
+					buffer := bytes.NewBuffer(nil)
+					tw := tar.NewWriter(buffer)
+
+					Expect(tw.WriteHeader(&tar.Header{Name: "hardlink", Mode: 0755, Size: int64(0), Typeflag: tar.TypeLink, Linkname: filepath.Join("..", "some-file")})).To(Succeed())
+					_, err = tw.Write([]byte{})
+					Expect(err).NotTo(HaveOccurred())
+
+					Expect(tw.Close()).To(Succeed())
+
+					zipSlipLinkTar = vacation.NewTarArchive(bytes.NewReader(buffer.Bytes()))
+				})
+
+				it("returns an error", func() {
+					err := zipSlipLinkTar.Decompress(tempDir)
+					Expect(err).To(MatchError(ContainSubstring("hard link points ../some-file outside destination")))
+				})
+			})
+
 			context("when the symlink creation fails", func() {
 				var brokenSymlinkTar vacation.TarArchive
 
@@ -286,6 +319,35 @@ func testTarArchive(t *testing.T, context spec.G, it spec.S) {
 				it("returns an error", func() {
 					err := brokenSymlinkTar.Decompress(tempDir)
 					Expect(err).To(MatchError(ContainSubstring("failed to extract symlink")))
+				})
+			})
+
+			context("when the hardlink creation fails", func() {
+				var brokenLinkTar vacation.TarArchive
+
+				it.Before(func() {
+					var err error
+
+					buffer := bytes.NewBuffer(nil)
+					tw := tar.NewWriter(buffer)
+
+					Expect(tw.WriteHeader(&tar.Header{Name: "hardlink", Mode: 0755, Size: int64(0), Typeflag: tar.TypeLink, Linkname: "some-file"})).To(Succeed())
+					_, err = tw.Write([]byte{})
+					Expect(err).NotTo(HaveOccurred())
+
+					Expect(tw.Close()).To(Succeed())
+
+					// Create a hardlink in the target to force the new hardlink create to
+					// fail
+					Expect(os.WriteFile(filepath.Join(tempDir, "some-file"), nil, 0644)).To(Succeed())
+					Expect(os.Link(filepath.Join(tempDir, "some-file"), filepath.Join(tempDir, "hardlink"))).To(Succeed())
+
+					brokenLinkTar = vacation.NewTarArchive(bytes.NewReader(buffer.Bytes()))
+				})
+
+				it("returns an error", func() {
+					err := brokenLinkTar.Decompress(tempDir)
+					Expect(err).To(MatchError(ContainSubstring("failed to extract hardlink")))
 				})
 			})
 		})
