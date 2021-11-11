@@ -149,7 +149,7 @@ func (ta TarArchive) Decompress(destination string) error {
 	}
 
 	for _, link := range links {
-		err := os.Link(linknameFullPath(link.path, link.name), link.path)
+		err := os.Link(filepath.Join(destination, link.name), link.path)
 		if err != nil {
 			return fmt.Errorf("failed to extract link: %s", err)
 		}
