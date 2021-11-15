@@ -251,7 +251,7 @@ func testEmitter(t *testing.T, context spec.G, it spec.S) {
 			Expect(buffer.String()).To(ContainLines(
 				"  Assigning launch processes:",
 				"    some-type:       some-command",
-				"    web:             web-command (default)",
+				"    web (default):   web-command",
 				"    some-other-type: some-other-command some args",
 				"",
 			))
@@ -281,7 +281,7 @@ func testEmitter(t *testing.T, context spec.G, it spec.S) {
 				Expect(buffer.String()).To(ContainLines(
 					"  Assigning launch processes:",
 					"    some-type:       some-command",
-					"    web:             web-command (default)",
+					"    web (default):   web-command",
 					`      ANOTHER_WEB_VAR -> "another-env"`,
 					`      WEB_VAR         -> "some-env"`,
 					"    some-other-type: some-other-command some args",
