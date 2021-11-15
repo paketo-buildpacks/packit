@@ -29,6 +29,10 @@ func NewPlanner() Planner {
 // returns the highest priority entry as well as the sorted and filtered list
 // of buildpack plan entries that were given. Entries with no given
 // version-source are the lowest priority.
+//
+// If nil is passed for the value of the priority list then the function will
+// just return the first filtered entry from the list of the entries that were
+// passed into the function initially.
 func (p Planner) Resolve(name string, entries []packit.BuildpackPlanEntry, priorities []interface{}) (packit.BuildpackPlanEntry, []packit.BuildpackPlanEntry) {
 	var filteredEntries []packit.BuildpackPlanEntry
 	for _, e := range entries {
