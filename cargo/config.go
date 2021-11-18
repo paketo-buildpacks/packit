@@ -31,6 +31,7 @@ type ConfigBuildpack struct {
 	Description string                   `toml:"description,omitempty" json:"description,omitempty"`
 	Keywords    []string                 `toml:"keywords,omitempty"    json:"keywords,omitempty"`
 	Licenses    []ConfigBuildpackLicense `toml:"licenses,omitempty"    json:"licenses,omitempty"`
+	SBOM        []string                 `toml:"sbom,omitempty"    json:"sbom,omitempty"`
 
 	// Deprecated: This field is not part of the official buildpack.toml spec and
 	// will therefore be removed in the next major release
