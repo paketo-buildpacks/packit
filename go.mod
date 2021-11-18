@@ -13,6 +13,6 @@ require (
 	github.com/pelletier/go-toml v1.9.4
 	github.com/sclevine/spec v1.4.0
 	github.com/ulikunitz/xz v0.5.10
-	golang.org/x/net v0.0.0-20210525063256-abc453219eb5 // indirect
-	golang.org/x/sys v0.0.0-20210603125802-9665404d3644 // indirect
+	golang.org/x/net v0.0.0-20210805182204-aaa1db679c0d // indirect
+	golang.org/x/sys v0.0.0-20210809222454-d867a43fc93e // indirect
 )

@@ -8,8 +8,11 @@ import (
 	"github.com/paketo-buildpacks/packit"
 )
 
+// A FormattedMap is a wrapper for map[string]interface{} to extend functionality.
 type FormattedMap map[string]interface{}
 
+// Sorts all of the keys in the FormattedMap alphabetically and then constructs
+// a padded table.
 func (m FormattedMap) String() string {
 	var (
 		keys    []string
@@ -41,6 +44,8 @@ func (m FormattedMap) String() string {
 	return strings.TrimSpace(builder.String())
 }
 
+// NewFormattedMapFromEnvironment take an environment and returns a
+// FormattedMap with the appropriate environment variable information added.
 func NewFormattedMapFromEnvironment(environment packit.Environment) FormattedMap {
 	envMap := FormattedMap{}
 	for key, value := range environment {

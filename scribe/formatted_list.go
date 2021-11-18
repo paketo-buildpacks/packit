@@ -5,8 +5,11 @@ import (
 	"strings"
 )
 
+// A FormattedList is a wrapper for []string to extend functionality.
 type FormattedList []string
 
+// Sorts the FormattedList alphabetically and then prints each item on its own
+// line.
 func (l FormattedList) String() string {
 	sort.Strings(l)
 
