@@ -11,18 +11,27 @@ import (
 	"github.com/paketo-buildpacks/packit/postal"
 )
 
+// An Emitter embeds the scribe.Logger type to provide an interface for
+// complicated shared logging tasks.
 type Emitter struct {
 	// Logger is embedded and therefore delegates all of its functions to the
 	// Emitter.
 	Logger
 }
 
+// NewEmitter returns an emitter that writes to the given output.
 func NewEmitter(output io.Writer) Emitter {
 	return Emitter{
 		Logger: NewLogger(output),
 	}
 }
 
+// SelectedDependency takes in a buildpack plan entry, a postal dependency, and
+// the current time, and prints out a message giving the name and version of
+// the dependency as well as the source of the request for that given
+// dependency, it will also print a deprecation warning and an EOL warning
+// based if the given dependency is set to be deprecated within the next 30 or
+// is past that window.
 func (e Emitter) SelectedDependency(entry packit.BuildpackPlanEntry, dependency postal.Dependency, now time.Time) {
 	source, ok := entry.Metadata["version-source"].(string)
 	if !ok {
@@ -45,6 +54,8 @@ func (e Emitter) SelectedDependency(entry packit.BuildpackPlanEntry, dependency 
 	e.Break()
 }
 
+// Candidates takes a priority sorted list of buildpack plan entries and prints
+// out a formatted table in priority order removing any duplicate entries.
 func (e Emitter) Candidates(entries []packit.BuildpackPlanEntry) {
 	e.Subprocess("Candidate version sources (in priority order):")
 
@@ -70,6 +81,8 @@ Entries:
 		}
 
 		source := [2]string{versionSource, version}
+
+		// Removes any duplicate entries
 		for _, s := range sources {
 			if s == source {
 				continue Entries
@@ -86,6 +99,10 @@ Entries:
 	e.Break()
 }
 
+// LaunchProcesses take a list of processes and a map of process specific
+// enivronment varables and prints out a formatted table including the type
+// name, whether or not it is a default process, the command, arguments, and
+// any process specific environment variables.
 func (e Emitter) LaunchProcesses(processes []packit.Process, processEnvs ...map[string]packit.Environment) {
 	e.Process("Assigning launch processes:")
 
@@ -138,6 +155,8 @@ func (e Emitter) LaunchProcesses(processes []packit.Process, processEnvs ...map[
 	e.Break()
 }
 
+// EnvironmentVariables take a layer and prints out a formatted table of the
+// build and launch time environment variables set in the layer.
 func (e Emitter) EnvironmentVariables(layer packit.Layer) {
 	buildEnv := packit.Environment{}
 	launchEnv := packit.Environment{}

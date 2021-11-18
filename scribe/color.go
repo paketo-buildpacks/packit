@@ -4,6 +4,7 @@ import (
 	"strconv"
 )
 
+// A set of common text colors
 var (
 	BlackColor   = NewColor(false, 0, -1)
 	RedColor     = NewColor(false, 1, -1)
@@ -16,8 +17,13 @@ var (
 	GrayColor    = NewColor(false, 244, -1)
 )
 
+// A Color is a function that takes a string as an input and returns a string
+// with the proper terminal graphic commands.
 type Color func(message string) string
 
+// NewColor returns a Color function that will make text bold based on the
+// boolean value of bold and set the text foreground and background, using fg
+// and bg respectively, to any color in the 8 bit color space.
 func NewColor(bold bool, fg, bg int) Color {
 	return func(message string) string {
 		prefix := "\x1b["

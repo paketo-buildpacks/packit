@@ -6,12 +6,16 @@ import (
 	"strings"
 )
 
+// A Logger provides a standard logging interface for doing basic low level
+// logging task as well as debug logging.
 type Logger struct {
 	writer io.Writer
 	LeveledLogger
 	Debug LeveledLogger
 }
 
+// NewLogger take a writer and return a Logger that writes to the given
+// writer. The default writter sends all debug logging to io.Discard.
 func NewLogger(writer io.Writer) Logger {
 	return Logger{
 		writer:        writer,
@@ -20,6 +24,8 @@ func NewLogger(writer io.Writer) Logger {
 	}
 }
 
+// WithLevel takes in a log level string configures the log level of the
+// logger. To enable debug logging the log level must be set to "DEFAULT".
 func (l Logger) WithLevel(level string) Logger {
 	switch level {
 	case "DEBUG":
@@ -37,6 +43,7 @@ func (l Logger) WithLevel(level string) Logger {
 	}
 }
 
+// A LeveledLogger provides a standard interface for basic formatted logging.
 type LeveledLogger struct {
 	title      io.Writer
 	process    io.Writer
@@ -46,6 +53,8 @@ type LeveledLogger struct {
 	subdetail  io.Writer
 }
 
+// NewLeveledLogger take a writer and return a LeveledLogger that writes to the given
+// writer.
 func NewLeveledLogger(writer io.Writer) LeveledLogger {
 	return LeveledLogger{
 		title:      NewWriter(writer),
@@ -57,30 +66,43 @@ func NewLeveledLogger(writer io.Writer) LeveledLogger {
 	}
 }
 
+// Title takes a string and optional formatting, and prints a formatted string
+// with zero levels of indentation.
 func (l LeveledLogger) Title(format string, v ...interface{}) {
 	l.printf(l.title, format, v...)
 }
 
+// Process takes a string and optional formatting, and prints a formatted string
+// with one level of indentation.
 func (l LeveledLogger) Process(format string, v ...interface{}) {
 	l.printf(l.process, format, v...)
 }
 
+// Subprocess takes a string and optional formatting, and prints a formatted string
+// with two levels of indentation.
 func (l LeveledLogger) Subprocess(format string, v ...interface{}) {
 	l.printf(l.subprocess, format, v...)
 }
 
+// Action takes a string and optional formatting, and prints a formatted string
+// with three levels of indentation.
 func (l LeveledLogger) Action(format string, v ...interface{}) {
 	l.printf(l.action, format, v...)
 }
 
+// Detail takes a string and optional formatting, and prints a formatted string
+// with four levels of indentation.
 func (l LeveledLogger) Detail(format string, v ...interface{}) {
 	l.printf(l.detail, format, v...)
 }
 
+// Subdetail takes a string and optional formatting, and prints a formatted string
+// with five levels of indentation.
 func (l LeveledLogger) Subdetail(format string, v ...interface{}) {
 	l.printf(l.subdetail, format, v...)
 }
 
+// Break inserts a line break in the log output
 func (l LeveledLogger) Break() {
 	l.printf(l.title, "\n")
 }

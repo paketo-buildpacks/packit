@@ -5,8 +5,11 @@ import (
 	"io"
 )
 
+// An Option is a way to configure a writers format.
 type Option func(Writer) Writer
 
+// WithColor take a Color and returns an Option which can be passed in while
+// creating a new Writer to configure the color of the output of the Writer.
 func WithColor(color Color) Option {
 	return func(l Writer) Writer {
 		l.color = color
@@ -14,6 +17,9 @@ func WithColor(color Color) Option {
 	}
 }
 
+// WithIndent take an indent level and returns an Option which can be passed in
+// while creating a new Writer to configure the indentation level of the output
+// of the Writer.
 func WithIndent(indent int) Option {
 	return func(l Writer) Writer {
 		l.indent = indent
@@ -21,12 +27,16 @@ func WithIndent(indent int) Option {
 	}
 }
 
+// A Writer conforms to the io.Writer interface and allows for configuration of
+// output from the writter such as the color or indentation though Options.
 type Writer struct {
 	writer io.Writer
 	color  Color
 	indent int
 }
 
+// NewWriter take a writter and Options and returns a Writer that will format
+// output according to the options given.
 func NewWriter(writer io.Writer, options ...Option) Writer {
 	w := Writer{writer: writer}
 	for _, option := range options {
@@ -36,6 +46,8 @@ func NewWriter(writer io.Writer, options ...Option) Writer {
 	return w
 }
 
+// Write takes the given byte array and formats it in accordance with the
+// options on the writer and then outputs that formated text.
 func (w Writer) Write(b []byte) (int, error) {
 	var (
 		prefix, suffix []byte

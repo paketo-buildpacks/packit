@@ -6,6 +6,7 @@ import (
 	"github.com/cheggaaa/pb/v3"
 )
 
+// Deprecated: Bar will be removed in the next major release
 type Bar struct {
 	w io.Writer
 	p *pb.ProgressBar
