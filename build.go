@@ -90,6 +90,7 @@ func Build(f BuildFunc, options ...Option) {
 		args:        os.Args,
 		tomlWriter:  internal.NewTOMLWriter(),
 		envWriter:   internal.NewEnvironmentWriter(),
+		fileWriter:  internal.NewFileWriter(),
 	}
 
 	for _, option := range options {
@@ -220,6 +221,20 @@ func Build(f BuildFunc, options ...Option) {
 				return
 			}
 		}
+
+		if apiVersion.GreaterThan(apiV06) {
+			for extension, reader := range layer.SBOM {
+				err = config.fileWriter.Write(filepath.Join(layersPath, fmt.Sprintf("%s.sbom.%s", layer.Name, extension)), reader)
+				if err != nil {
+					panic(err)
+				}
+			}
+		} else {
+			if len(layer.SBOM) > 0 {
+				config.exitHandler.Error(fmt.Errorf("%s.sbom.* output is only supported with Buildpack API v0.7 or higher", layer.Name))
+				return
+			}
+		}
 	}
 
 	if !result.Launch.isEmpty() {
@@ -268,14 +283,42 @@ func Build(f BuildFunc, options ...Option) {
 			config.exitHandler.Error(err)
 			return
 		}
+
+		if apiVersion.GreaterThan(apiV06) {
+			for extension, reader := range result.Launch.SBOM {
+				err = config.fileWriter.Write(filepath.Join(layersPath, fmt.Sprintf("launch.sbom.%s", extension)), reader)
+				if err != nil {
+					panic(err)
+				}
+			}
+		} else {
+			if len(result.Launch.SBOM) > 0 {
+				config.exitHandler.Error(fmt.Errorf("launch.sbom.* output is only supported with Buildpack API v0.7 or higher"))
+				return
+			}
+		}
 	}
 
 	if !result.Build.isEmpty() {
 		if apiVersion.LessThan(apiV05) {
 			config.exitHandler.Error(fmt.Errorf("build.toml is only supported with Buildpack API v0.5 or higher"))
 			return
-
 		}
+
+		if apiVersion.GreaterThan(apiV06) {
+			for extension, reader := range result.Build.SBOM {
+				err = config.fileWriter.Write(filepath.Join(layersPath, fmt.Sprintf("build.sbom.%s", extension)), reader)
+				if err != nil {
+					panic(err)
+				}
+			}
+		} else {
+			if len(result.Build.SBOM) > 0 {
+				config.exitHandler.Error(fmt.Errorf("build.sbom.* output is only supported with Buildpack API v0.7 or higher"))
+				return
+			}
+		}
+
 		err = config.tomlWriter.Write(filepath.Join(layersPath, "build.toml"), result.Build)
 		if err != nil {
 			config.exitHandler.Error(err)

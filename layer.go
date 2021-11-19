@@ -64,6 +64,8 @@ type Layer struct {
 	// of the Layer Content Metadata TOML file according to the specification:
 	// https://github.com/buildpacks/spec/blob/main/buildpack.md#layer-content-metadata-toml.
 	Metadata map[string]interface{}
+
+	SBOM SBOMEntries
 }
 
 // Reset clears the state of a layer such that the layer can be replaced with
@@ -79,6 +81,7 @@ func (l Layer) Reset() (Layer, error) {
 	l.LaunchEnv = Environment{}
 	l.ProcessLaunchEnv = make(map[string]Environment)
 	l.Metadata = nil
+	l.SBOM = SBOMEntries{}
 
 	err := os.RemoveAll(l.Path)
 	if err != nil {

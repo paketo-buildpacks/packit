@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/paketo-buildpacks/packit"
@@ -72,7 +73,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 		Expect(err).NotTo(HaveOccurred())
 
 		bpTOML := []byte(`
-api = "0.6"
+api = "0.7"
 [buildpack]
   id = "some-id"
   name = "some-name"
@@ -251,6 +252,7 @@ api = "0.5"
 `)
 			Expect(os.WriteFile(filepath.Join(cnbDir, "buildpack.toml"), bpTOML, 0600)).To(Succeed())
 		})
+
 		it("persists layer metadata", func() {
 			packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
 				layerPath := filepath.Join(ctx.Layers.Path, "some-layer")
@@ -283,6 +285,72 @@ cache = true
 [metadata]
   some-key = "some-value"
 `))
+		})
+	})
+
+	context("when there are sbom entries layer metadata", func() {
+		it("writes them to their specified locations", func() {
+			packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
+				layerPath := filepath.Join(ctx.Layers.Path, "some-layer")
+				Expect(os.MkdirAll(layerPath, os.ModePerm)).To(Succeed())
+
+				return packit.BuildResult{
+					Layers: []packit.Layer{
+						packit.Layer{
+							Path: layerPath,
+							Name: "some-layer",
+							SBOM: packit.SBOMEntries{
+								"some.json": strings.NewReader(`{"some-key": "some-value"}`),
+								"other.yml": strings.NewReader(`other-key: other-value`),
+							},
+						},
+					},
+				}, nil
+			}, packit.WithArgs([]string{binaryPath, layersDir, platformDir, planPath}))
+
+			contents, err := os.ReadFile(filepath.Join(layersDir, "some-layer.sbom.some.json"))
+			Expect(err).NotTo(HaveOccurred())
+			Expect(string(contents)).To(MatchJSON(`{"some-key": "some-value"}`))
+
+			contents, err = os.ReadFile(filepath.Join(layersDir, "some-layer.sbom.other.yml"))
+			Expect(err).NotTo(HaveOccurred())
+			Expect(string(contents)).To(MatchYAML(`other-key: other-value`))
+		})
+
+		context("when the api version is less than 0.7", func() {
+			it.Before(func() {
+				bpTOML := []byte(`
+api = "0.6"
+[buildpack]
+  id = "some-id"
+  name = "some-name"
+  version = "some-version"
+  clear-env = false
+`)
+				Expect(os.WriteFile(filepath.Join(cnbDir, "buildpack.toml"), bpTOML, 0600)).To(Succeed())
+				Expect(os.WriteFile(filepath.Join(envCnbDir, "buildpack.toml"), bpTOML, 0600)).To(Succeed())
+			})
+
+			it("throws an error", func() {
+				packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
+					layerPath := filepath.Join(ctx.Layers.Path, "some-layer")
+					Expect(os.MkdirAll(layerPath, os.ModePerm)).To(Succeed())
+
+					return packit.BuildResult{
+						Layers: []packit.Layer{
+							packit.Layer{
+								Path: layerPath,
+								Name: "some-layer",
+								SBOM: packit.SBOMEntries{
+									"some.json": strings.NewReader(`{"some-key": "some-value"}`),
+									"other.yml": strings.NewReader(`other-key: other-value`),
+								},
+							},
+						},
+					}, nil
+				}, packit.WithArgs([]string{binaryPath, layersDir, platformDir, planPath}), packit.WithExitHandler(exitHandler))
+				Expect(exitHandler.ErrorCall.Receives.Error).To(MatchError(ContainSubstring("some-layer.sbom.* output is only supported with Buildpack API v0.7 or higher")))
+			})
 		})
 	})
 
@@ -437,6 +505,58 @@ api = "0.6"
 		})
 	})
 
+	context("when there are sbom entries in the build metadata", func() {
+		it("writes them to their specified locations", func() {
+			packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
+				return packit.BuildResult{
+					Build: packit.BuildMetadata{
+						SBOM: packit.SBOMEntries{
+							"some.json": strings.NewReader(`{"some-key": "some-value"}`),
+							"other.yml": strings.NewReader(`other-key: other-value`),
+						},
+					},
+				}, nil
+			}, packit.WithArgs([]string{binaryPath, layersDir, platformDir, planPath}))
+
+			contents, err := os.ReadFile(filepath.Join(layersDir, "build.sbom.some.json"))
+			Expect(err).NotTo(HaveOccurred())
+			Expect(string(contents)).To(MatchJSON(`{"some-key": "some-value"}`))
+
+			contents, err = os.ReadFile(filepath.Join(layersDir, "build.sbom.other.yml"))
+			Expect(err).NotTo(HaveOccurred())
+			Expect(string(contents)).To(MatchYAML(`other-key: other-value`))
+		})
+
+		context("when the api version is less than 0.7", func() {
+			it.Before(func() {
+				bpTOML := []byte(`
+api = "0.6"
+[buildpack]
+  id = "some-id"
+  name = "some-name"
+  version = "some-version"
+  clear-env = false
+`)
+				Expect(os.WriteFile(filepath.Join(cnbDir, "buildpack.toml"), bpTOML, 0600)).To(Succeed())
+				Expect(os.WriteFile(filepath.Join(envCnbDir, "buildpack.toml"), bpTOML, 0600)).To(Succeed())
+			})
+
+			it("throws an error", func() {
+				packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
+					return packit.BuildResult{
+						Build: packit.BuildMetadata{
+							SBOM: packit.SBOMEntries{
+								"some.json": strings.NewReader(`{"some-key": "some-value"}`),
+								"other.yml": strings.NewReader(`other-key: other-value`),
+							},
+						},
+					}, nil
+				}, packit.WithArgs([]string{binaryPath, layersDir, platformDir, planPath}), packit.WithExitHandler(exitHandler))
+				Expect(exitHandler.ErrorCall.Receives.Error).To(MatchError(ContainSubstring("build.sbom.* output is only supported with Buildpack API v0.7 or higher")))
+			})
+		})
+	})
+
 	context("when there are bom entries in the build metadata", func() {
 		it("persists a build.toml", func() {
 			algorithm512, err := packit.GetBOMChecksumAlgorithm("sha512")
@@ -481,12 +601,12 @@ api = "0.6"
 				[bom.metadata]
 					version = "0.5"
 				[bom.metadata.checksum]
-				  algorithm = "SHA-256"
+					algorithm = "SHA-256"
 					hash = "12345"
 				[bom.metadata.source]
-				  [bom.metadata.source.checksum]
-				    algorithm = "SHA-512"
-					  hash = "some-source-sha"
+					[bom.metadata.source.checksum]
+						algorithm = "SHA-512"
+						hash = "some-source-sha"
 			`))
 		})
 
@@ -502,8 +622,8 @@ api = "0.4"
 `)
 				Expect(os.WriteFile(filepath.Join(cnbDir, "buildpack.toml"), bpTOML, 0600)).To(Succeed())
 				Expect(os.WriteFile(filepath.Join(envCnbDir, "buildpack.toml"), bpTOML, 0600)).To(Succeed())
-
 			})
+
 			it("throws an error", func() {
 				packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
 					return packit.BuildResult{
@@ -523,7 +643,6 @@ api = "0.4"
 					}, nil
 				}, packit.WithArgs([]string{binaryPath, layersDir, platformDir, planPath}), packit.WithExitHandler(exitHandler))
 				Expect(exitHandler.ErrorCall.Receives.Error).To(MatchError(ContainSubstring("build.toml is only supported with Buildpack API v0.5 or higher")))
-
 			})
 		})
 	})
@@ -589,7 +708,58 @@ api = "0.4"
 
 			})
 		})
+	})
 
+	context("when there are sbom entries in the launch metadata", func() {
+		it("writes them to their specified locations", func() {
+			packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
+				return packit.BuildResult{
+					Launch: packit.LaunchMetadata{
+						SBOM: packit.SBOMEntries{
+							"some.json": strings.NewReader(`{"some-key": "some-value"}`),
+							"other.yml": strings.NewReader(`other-key: other-value`),
+						},
+					},
+				}, nil
+			}, packit.WithArgs([]string{binaryPath, layersDir, platformDir, planPath}))
+
+			contents, err := os.ReadFile(filepath.Join(layersDir, "launch.sbom.some.json"))
+			Expect(err).NotTo(HaveOccurred())
+			Expect(string(contents)).To(MatchJSON(`{"some-key": "some-value"}`))
+
+			contents, err = os.ReadFile(filepath.Join(layersDir, "launch.sbom.other.yml"))
+			Expect(err).NotTo(HaveOccurred())
+			Expect(string(contents)).To(MatchYAML(`other-key: other-value`))
+		})
+
+		context("when the api version is less than 0.7", func() {
+			it.Before(func() {
+				bpTOML := []byte(`
+api = "0.6"
+[buildpack]
+  id = "some-id"
+  name = "some-name"
+  version = "some-version"
+  clear-env = false
+`)
+				Expect(os.WriteFile(filepath.Join(cnbDir, "buildpack.toml"), bpTOML, 0600)).To(Succeed())
+				Expect(os.WriteFile(filepath.Join(envCnbDir, "buildpack.toml"), bpTOML, 0600)).To(Succeed())
+			})
+
+			it("throws an error", func() {
+				packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
+					return packit.BuildResult{
+						Launch: packit.LaunchMetadata{
+							SBOM: packit.SBOMEntries{
+								"some.json": strings.NewReader(`{"some-key": "some-value"}`),
+								"other.yml": strings.NewReader(`other-key: other-value`),
+							},
+						},
+					}, nil
+				}, packit.WithArgs([]string{binaryPath, layersDir, platformDir, planPath}), packit.WithExitHandler(exitHandler))
+				Expect(exitHandler.ErrorCall.Receives.Error).To(MatchError(ContainSubstring("launch.sbom.* output is only supported with Buildpack API v0.7 or higher")))
+			})
+		})
 	})
 
 	context("when there are bom entries in the launch metadata", func() {
