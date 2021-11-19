@@ -64,6 +64,10 @@ type Layer struct {
 	// of the Layer Content Metadata TOML file according to the specification:
 	// https://github.com/buildpacks/spec/blob/main/buildpack.md#layer-content-metadata-toml.
 	Metadata map[string]interface{}
+
+	// SBOM is a type that implements SBOMFormatter and declares the formats that
+	// bill-of-materials should be output for the layer SBoM.
+	SBOM SBOMFormatter
 }
 
 // Reset clears the state of a layer such that the layer can be replaced with

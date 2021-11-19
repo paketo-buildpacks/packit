@@ -1,5 +1,7 @@
 package packit
 
+import "io"
+
 // OptionConfig is the set of configurable options for the Build and Detect
 // functions.
 type OptionConfig struct {
@@ -7,6 +9,7 @@ type OptionConfig struct {
 	args        []string
 	tomlWriter  TOMLWriter
 	envWriter   EnvironmentWriter
+	fileWriter  FileWriter
 }
 
 // Option declares a function signature that can be used to define optional
@@ -36,6 +39,10 @@ type TOMLWriter interface {
 // https://github.com/buildpacks/spec/blob/main/buildpack.md#provided-by-the-buildpacks.
 type EnvironmentWriter interface {
 	Write(dir string, env map[string]string) error
+}
+
+type FileWriter interface {
+	Write(path string, reader io.Reader) error
 }
 
 // WithExitHandler is an Option that overrides the ExitHandler for a given

@@ -12,6 +12,7 @@ func TestUnitInternal(t *testing.T) {
 	suite("EnvironmentWriter", testEnvironmentWriter)
 	suite("ExitHandler", testExitHandler)
 	suite("Fail", testFail)
+	suite("FileWriter", testFileWriter)
 	suite("TOMLWriter", testTOMLWriter)
 	suite.Run(t)
 }
