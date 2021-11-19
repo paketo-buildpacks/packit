@@ -4,7 +4,7 @@ import "sync"
 
 type ExitHandler struct {
 	ErrorCall struct {
-		sync.Mutex
+		mutex     sync.Mutex
 		CallCount int
 		Receives  struct {
 			Error error
@@ -14,8 +14,8 @@ type ExitHandler struct {
 }
 
 func (f *ExitHandler) Error(param1 error) {
-	f.ErrorCall.Lock()
-	defer f.ErrorCall.Unlock()
+	f.ErrorCall.mutex.Lock()
+	defer f.ErrorCall.mutex.Unlock()
 	f.ErrorCall.CallCount++
 	f.ErrorCall.Receives.Error = param1
 	if f.ErrorCall.Stub != nil {
