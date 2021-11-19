@@ -19,16 +19,17 @@ type LaunchMetadata struct {
 	// BOM is the Bill-of-Material entries containing information about the
 	// dependencies provided to the launch environment.
 	BOM []BOMEntry
+
+	// SBOM is a type that implements SBOMFormatter and declares the formats that
+	// bill-of-materials should be output for the launch SBoM.
+	SBOM SBOMFormatter
 }
 
 func (l LaunchMetadata) isEmpty() bool {
-	return (len(l.Processes) == 0 &&
-		len(l.Slices) == 0 &&
-		len(l.Labels) == 0 &&
-		len(l.BOM) == 0)
-}
+	var sbom []SBOMFormat
+	if l.SBOM != nil {
+		sbom = l.SBOM.Formats()
+	}
 
-func (b BuildMetadata) isEmpty() bool {
-	return (len(b.BOM) == 0 &&
-		len(b.Unmet) == 0)
+	return len(sbom)+len(l.Processes)+len(l.Slices)+len(l.Labels)+len(l.BOM) == 0
 }

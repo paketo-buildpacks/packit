@@ -90,6 +90,7 @@ func Build(f BuildFunc, options ...Option) {
 		args:        os.Args,
 		tomlWriter:  internal.NewTOMLWriter(),
 		envWriter:   internal.NewEnvironmentWriter(),
+		fileWriter:  internal.NewFileWriter(),
 	}
 
 	for _, option := range options {
@@ -220,6 +221,21 @@ func Build(f BuildFunc, options ...Option) {
 				return
 			}
 		}
+
+		if layer.SBOM != nil {
+			if apiVersion.GreaterThan(apiV06) {
+				for _, format := range layer.SBOM.Formats() {
+					err = config.fileWriter.Write(filepath.Join(layersPath, fmt.Sprintf("%s.sbom.%s", layer.Name, format.Extension)), format.Content)
+					if err != nil {
+						config.exitHandler.Error(err)
+						return
+					}
+				}
+			} else {
+				config.exitHandler.Error(fmt.Errorf("%s.sbom.* output is only supported with Buildpack API v0.7 or higher", layer.Name))
+				return
+			}
+		}
 	}
 
 	if !result.Launch.isEmpty() {
@@ -268,13 +284,42 @@ func Build(f BuildFunc, options ...Option) {
 			config.exitHandler.Error(err)
 			return
 		}
+
+		if result.Launch.SBOM != nil {
+			if apiVersion.GreaterThan(apiV06) {
+				for _, format := range result.Launch.SBOM.Formats() {
+					err = config.fileWriter.Write(filepath.Join(layersPath, fmt.Sprintf("launch.sbom.%s", format.Extension)), format.Content)
+					if err != nil {
+						config.exitHandler.Error(err)
+						return
+					}
+				}
+			} else {
+				config.exitHandler.Error(fmt.Errorf("launch.sbom.* output is only supported with Buildpack API v0.7 or higher"))
+				return
+			}
+		}
 	}
 
 	if !result.Build.isEmpty() {
 		if apiVersion.LessThan(apiV05) {
 			config.exitHandler.Error(fmt.Errorf("build.toml is only supported with Buildpack API v0.5 or higher"))
 			return
+		}
 
+		if result.Build.SBOM != nil {
+			if apiVersion.GreaterThan(apiV06) {
+				for _, format := range result.Build.SBOM.Formats() {
+					err = config.fileWriter.Write(filepath.Join(layersPath, fmt.Sprintf("build.sbom.%s", format.Extension)), format.Content)
+					if err != nil {
+						config.exitHandler.Error(err)
+						return
+					}
+				}
+			} else {
+				config.exitHandler.Error(fmt.Errorf("build.sbom.* output is only supported with Buildpack API v0.7 or higher"))
+				return
+			}
 		}
 		err = config.tomlWriter.Write(filepath.Join(layersPath, "build.toml"), result.Build)
 		if err != nil {
