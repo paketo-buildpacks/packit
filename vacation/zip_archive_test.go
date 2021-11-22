@@ -271,6 +271,42 @@ func testZipArchive(t *testing.T, context spec.G, it spec.S) {
 				})
 			})
 
+			context("when there is a symlink cycle", func() {
+				var buffer *bytes.Buffer
+				it.Before(func() {
+					var err error
+					buffer = bytes.NewBuffer(nil)
+					zw := zip.NewWriter(buffer)
+
+					header := &zip.FileHeader{Name: "a-symlink"}
+					header.SetMode(0755 | os.ModeSymlink)
+
+					aSymlink, err := zw.CreateHeader(header)
+					Expect(err).NotTo(HaveOccurred())
+
+					_, err = aSymlink.Write([]byte(filepath.Join("b-symlink")))
+					Expect(err).NotTo(HaveOccurred())
+
+					header = &zip.FileHeader{Name: "b-symlink"}
+					header.SetMode(0755 | os.ModeSymlink)
+
+					bSymlink, err := zw.CreateHeader(header)
+					Expect(err).NotTo(HaveOccurred())
+
+					_, err = bSymlink.Write([]byte(filepath.Join("a-symlink")))
+					Expect(err).NotTo(HaveOccurred())
+
+					Expect(zw.Close()).To(Succeed())
+				})
+
+				it("returns an error", func() {
+					readyArchive := vacation.NewZipArchive(buffer)
+
+					err := readyArchive.Decompress(tempDir)
+					Expect(err).To(MatchError("failed: max iterations reached: this link graph contains a cycle"))
+				})
+			})
+
 			context("when it tries to symlink to a file that does not exist", func() {
 				var buffer *bytes.Buffer
 				it.Before(func() {
@@ -332,41 +368,6 @@ func testZipArchive(t *testing.T, context spec.G, it spec.S) {
 				})
 			})
 
-			context("when there is a symlink cycle", func() {
-				var buffer *bytes.Buffer
-				it.Before(func() {
-					var err error
-					buffer = bytes.NewBuffer(nil)
-					zw := zip.NewWriter(buffer)
-
-					header := &zip.FileHeader{Name: "a-symlink"}
-					header.SetMode(0755 | os.ModeSymlink)
-
-					aSymlink, err := zw.CreateHeader(header)
-					Expect(err).NotTo(HaveOccurred())
-
-					_, err = aSymlink.Write([]byte(filepath.Join("b-symlink")))
-					Expect(err).NotTo(HaveOccurred())
-
-					header = &zip.FileHeader{Name: "b-symlink"}
-					header.SetMode(0755 | os.ModeSymlink)
-
-					bSymlink, err := zw.CreateHeader(header)
-					Expect(err).NotTo(HaveOccurred())
-
-					_, err = bSymlink.Write([]byte(filepath.Join("a-symlink")))
-					Expect(err).NotTo(HaveOccurred())
-
-					Expect(zw.Close()).To(Succeed())
-				})
-
-				it("returns an error", func() {
-					readyArchive := vacation.NewZipArchive(buffer)
-
-					err := readyArchive.Decompress(tempDir)
-					Expect(err).To(MatchError("failed: max iterations reached: this symlink graph contains a cycle"))
-				})
-			})
 		})
 	})
 }

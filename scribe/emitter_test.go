@@ -47,7 +47,6 @@ func testEmitter(t *testing.T, context spec.G, it spec.S) {
 			}
 		})
 
-
 		it("prints details about the selected dependency", func() {
 			emitter.SelectedDependency(entry, dependency, now)
 			Expect(buffer.String()).To(ContainLines(
@@ -236,6 +235,7 @@ func testEmitter(t *testing.T, context spec.G, it spec.S) {
 				{
 					Type:    "web",
 					Command: "web-command",
+					Default: true,
 				},
 				{
 					Type:    "some-other-type",
@@ -250,8 +250,8 @@ func testEmitter(t *testing.T, context spec.G, it spec.S) {
 
 			Expect(buffer.String()).To(ContainLines(
 				"  Assigning launch processes:",
-				"    some-type: some-command",
-				"    web: web-command",
+				"    some-type:       some-command",
+				"    web (default):   web-command",
 				"    some-other-type: some-other-command some args",
 				"",
 			))
@@ -280,8 +280,8 @@ func testEmitter(t *testing.T, context spec.G, it spec.S) {
 
 				Expect(buffer.String()).To(ContainLines(
 					"  Assigning launch processes:",
-					"    some-type: some-command",
-					"    web: web-command",
+					"    some-type:       some-command",
+					"    web (default):   web-command",
 					`      ANOTHER_WEB_VAR -> "another-env"`,
 					`      WEB_VAR         -> "some-env"`,
 					"    some-other-type: some-other-command some args",

@@ -15,7 +15,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-func testSymlinkSorting(t *testing.T, context spec.G, it spec.S) {
+func testLinkSorting(t *testing.T, context spec.G, it spec.S) {
 	var (
 		Expect = NewWithT(t).Expect
 	)
