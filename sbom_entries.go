@@ -2,8 +2,17 @@ package packit
 
 import "io"
 
-type SBOMEntries map[string]io.Reader
+type SBOMEntries interface {
+	Format() (map[string]io.Reader, error)
+	IsEmpty() bool
+}
 
-func (e SBOMEntries) Set(path string, reader io.Reader) {
-	e[path] = reader
+type EmptySBOM struct{}
+
+func (e EmptySBOM) Format() (map[string]io.Reader, error) {
+	return make(map[string]io.Reader), nil
+}
+
+func (e EmptySBOM) IsEmpty() bool {
+	return true
 }

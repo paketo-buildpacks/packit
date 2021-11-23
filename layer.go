@@ -81,7 +81,7 @@ func (l Layer) Reset() (Layer, error) {
 	l.LaunchEnv = Environment{}
 	l.ProcessLaunchEnv = make(map[string]Environment)
 	l.Metadata = nil
-	l.SBOM = SBOMEntries{}
+	l.SBOM = EmptySBOM{}
 
 	err := os.RemoveAll(l.Path)
 	if err != nil {

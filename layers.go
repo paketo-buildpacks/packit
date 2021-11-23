@@ -26,7 +26,7 @@ func (l Layers) Get(name string) (Layer, error) {
 		BuildEnv:         Environment{},
 		LaunchEnv:        Environment{},
 		ProcessLaunchEnv: make(map[string]Environment),
-		SBOM:             SBOMEntries{},
+		SBOM:             EmptySBOM{},
 	}
 
 	_, err := toml.DecodeFile(filepath.Join(l.Path, fmt.Sprintf("%s.toml", name)), &layer)

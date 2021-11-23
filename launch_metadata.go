@@ -24,5 +24,8 @@ type LaunchMetadata struct {
 }
 
 func (l LaunchMetadata) isEmpty() bool {
-	return len(l.Processes)+len(l.Slices)+len(l.Labels)+len(l.BOM)+len(l.SBOM) == 0
+	if l.SBOM != nil {
+		return l.SBOM.IsEmpty() && (len(l.Processes)+len(l.Slices)+len(l.Labels)+len(l.BOM) == 0)
+	}
+	return len(l.Processes)+len(l.Slices)+len(l.Labels)+len(l.BOM) == 0
 }

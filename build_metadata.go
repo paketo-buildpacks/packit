@@ -16,5 +16,8 @@ type BuildMetadata struct {
 }
 
 func (b BuildMetadata) isEmpty() bool {
-	return len(b.SBOM)+len(b.BOM)+len(b.Unmet) == 0
+	if b.SBOM != nil {
+		return b.SBOM.IsEmpty() && (len(b.BOM)+len(b.Unmet) == 0)
+	}
+	return len(b.BOM)+len(b.Unmet) == 0
 }

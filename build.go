@@ -223,14 +223,18 @@ func Build(f BuildFunc, options ...Option) {
 		}
 
 		if apiVersion.GreaterThan(apiV06) {
-			for extension, reader := range layer.SBOM {
+			layerEntries, err := layer.SBOM.Format()
+			if err != nil {
+				panic(err)
+			}
+			for extension, reader := range layerEntries {
 				err = config.fileWriter.Write(filepath.Join(layersPath, fmt.Sprintf("%s.sbom.%s", layer.Name, extension)), reader)
 				if err != nil {
 					panic(err)
 				}
 			}
 		} else {
-			if len(layer.SBOM) > 0 {
+			if !layer.SBOM.IsEmpty() {
 				config.exitHandler.Error(fmt.Errorf("%s.sbom.* output is only supported with Buildpack API v0.7 or higher", layer.Name))
 				return
 			}
@@ -285,14 +289,18 @@ func Build(f BuildFunc, options ...Option) {
 		}
 
 		if apiVersion.GreaterThan(apiV06) {
-			for extension, reader := range result.Launch.SBOM {
+			launchEntries, err := result.Launch.SBOM.Format()
+			if err != nil {
+				panic(err)
+			}
+			for extension, reader := range launchEntries {
 				err = config.fileWriter.Write(filepath.Join(layersPath, fmt.Sprintf("launch.sbom.%s", extension)), reader)
 				if err != nil {
 					panic(err)
 				}
 			}
 		} else {
-			if len(result.Launch.SBOM) > 0 {
+			if !result.Launch.SBOM.IsEmpty() {
 				config.exitHandler.Error(fmt.Errorf("launch.sbom.* output is only supported with Buildpack API v0.7 or higher"))
 				return
 			}
@@ -306,14 +314,18 @@ func Build(f BuildFunc, options ...Option) {
 		}
 
 		if apiVersion.GreaterThan(apiV06) {
-			for extension, reader := range result.Build.SBOM {
+			buildEntries, err := result.Build.SBOM.Format()
+			if err != nil {
+				panic(err)
+			}
+			for extension, reader := range buildEntries {
 				err = config.fileWriter.Write(filepath.Join(layersPath, fmt.Sprintf("build.sbom.%s", extension)), reader)
 				if err != nil {
 					panic(err)
 				}
 			}
 		} else {
-			if len(result.Build.SBOM) > 0 {
+			if !result.Build.SBOM.IsEmpty() {
 				config.exitHandler.Error(fmt.Errorf("build.sbom.* output is only supported with Buildpack API v0.7 or higher"))
 				return
 			}

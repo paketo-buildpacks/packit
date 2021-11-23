@@ -75,3 +75,7 @@ func (s SBOM) Format(format Format) io.Reader {
 		return nil
 	}
 }
+
+func (s SBOM) IsEmpty() bool {
+	return s.syft.Artifacts.PackageCatalog.PackageCount() == 0
+}
