@@ -19,7 +19,7 @@ func NewTarBzip2Archive(inputReader io.Reader) TarBzip2Archive {
 // Decompress reads from TarBzip2Archive and writes files into the destination
 // specified.
 func (tbz TarBzip2Archive) Decompress(destination string) error {
-	return NewTarArchive(bzip2.NewReader(tbz.reader)).StripComponents(tbz.components).Decompress(destination)
+	return NewArchive(bzip2.NewReader(tbz.reader)).StripComponents(tbz.components).Decompress(destination)
 }
 
 // StripComponents behaves like the --strip-components flag on tar command

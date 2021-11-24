@@ -598,29 +598,6 @@ version = "this is super not semver"
 				})
 			})
 
-			context("when the file contents are malformed", func() {
-				it.Before(func() {
-					buffer := bytes.NewBuffer(nil)
-					gzipWriter := gzip.NewWriter(buffer)
-
-					_, err := gzipWriter.Write([]byte("something"))
-					Expect(err).NotTo(HaveOccurred())
-
-					Expect(gzipWriter.Close()).To(Succeed())
-
-					transport.DropCall.Returns.ReadCloser = io.NopCloser(buffer)
-
-					sum := sha256.Sum256(buffer.Bytes())
-					dependencySHA = hex.EncodeToString(sum[:])
-				})
-
-				it("fails to create a tar reader", func() {
-					err := deliver()
-
-					Expect(err).To(MatchError(ContainSubstring("failed to read tar response")))
-				})
-			})
-
 			context("when the file checksum does not match", func() {
 				it("fails to create a tar reader", func() {
 					err := service.Deliver(
@@ -862,29 +839,6 @@ version = "this is super not semver"
 					err := install()
 
 					Expect(err).To(MatchError(ContainSubstring("unsupported archive type")))
-				})
-			})
-
-			context("when the file contents are malformed", func() {
-				it.Before(func() {
-					buffer := bytes.NewBuffer(nil)
-					gzipWriter := gzip.NewWriter(buffer)
-
-					_, err := gzipWriter.Write([]byte("something"))
-					Expect(err).NotTo(HaveOccurred())
-
-					Expect(gzipWriter.Close()).To(Succeed())
-
-					transport.DropCall.Returns.ReadCloser = io.NopCloser(buffer)
-
-					sum := sha256.Sum256(buffer.Bytes())
-					dependencySHA = hex.EncodeToString(sum[:])
-				})
-
-				it("fails to create a tar reader", func() {
-					err := install()
-
-					Expect(err).To(MatchError(ContainSubstring("failed to read tar response")))
 				})
 			})
 

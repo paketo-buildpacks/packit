@@ -25,7 +25,7 @@ func (gz TarGzipArchive) Decompress(destination string) error {
 		return fmt.Errorf("failed to create gzip reader: %w", err)
 	}
 
-	return NewTarArchive(gzr).StripComponents(gz.components).Decompress(destination)
+	return NewArchive(gzr).StripComponents(gz.components).Decompress(destination)
 }
 
 // StripComponents behaves like the --strip-components flag on tar command
