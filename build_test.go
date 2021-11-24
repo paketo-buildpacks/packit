@@ -3,6 +3,7 @@ package packit_test
 import (
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -29,6 +30,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 		envCnbDir   string
 		binaryPath  string
 		exitHandler *fakes.ExitHandler
+		sbomEntries *fakes.SBOMEntries
 	)
 
 	it.Before(func() {
@@ -95,6 +97,8 @@ api = "0.7"
 		Expect(os.Setenv("CNB_STACK_ID", "some-stack")).To(Succeed())
 
 		exitHandler = &fakes.ExitHandler{}
+		sbomEntries = &fakes.SBOMEntries{}
+		sbomEntries.IsEmptyCall.Returns.Bool = true
 	})
 
 	it.After(func() {
@@ -222,6 +226,7 @@ api = "0.4"
 						Metadata: map[string]interface{}{
 							"some-key": "some-value",
 						},
+						SBOM: packit.EmptySBOM{},
 					},
 				},
 			}, nil
@@ -269,6 +274,7 @@ api = "0.5"
 							Metadata: map[string]interface{}{
 								"some-key": "some-value",
 							},
+							SBOM: packit.EmptySBOM{},
 						},
 					},
 				}, nil
@@ -288,7 +294,15 @@ cache = true
 		})
 	})
 
-	context("when there are sbom entries layer metadata", func() {
+	context("when there are sbom entries in layer metadata", func() {
+		it.Before(func() {
+			sbomEntries.IsEmptyCall.Returns.Bool = false
+			sbomEntries.FormatCall.Returns.MapStringIoReader = map[string]io.Reader{
+				"some.json": strings.NewReader(`{"some-key": "some-value"}`),
+				"other.yml": strings.NewReader(`other-key: other-value`),
+			}
+		})
+
 		it("writes them to their specified locations", func() {
 			packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
 				layerPath := filepath.Join(ctx.Layers.Path, "some-layer")
@@ -299,10 +313,7 @@ cache = true
 						packit.Layer{
 							Path: layerPath,
 							Name: "some-layer",
-							SBOM: packit.SBOMEntries{
-								"some.json": strings.NewReader(`{"some-key": "some-value"}`),
-								"other.yml": strings.NewReader(`other-key: other-value`),
-							},
+							SBOM: sbomEntries,
 						},
 					},
 				}, nil
@@ -341,10 +352,7 @@ api = "0.6"
 							packit.Layer{
 								Path: layerPath,
 								Name: "some-layer",
-								SBOM: packit.SBOMEntries{
-									"some.json": strings.NewReader(`{"some-key": "some-value"}`),
-									"other.yml": strings.NewReader(`other-key: other-value`),
-								},
+								SBOM: sbomEntries,
 							},
 						},
 					}, nil
@@ -506,14 +514,19 @@ api = "0.6"
 	})
 
 	context("when there are sbom entries in the build metadata", func() {
+		it.Before(func() {
+			sbomEntries.IsEmptyCall.Returns.Bool = false
+			sbomEntries.FormatCall.Returns.MapStringIoReader = map[string]io.Reader{
+				"some.json": strings.NewReader(`{"some-key": "some-value"}`),
+				"other.yml": strings.NewReader(`other-key: other-value`),
+			}
+		})
+
 		it("writes them to their specified locations", func() {
 			packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
 				return packit.BuildResult{
 					Build: packit.BuildMetadata{
-						SBOM: packit.SBOMEntries{
-							"some.json": strings.NewReader(`{"some-key": "some-value"}`),
-							"other.yml": strings.NewReader(`other-key: other-value`),
-						},
+						SBOM: sbomEntries,
 					},
 				}, nil
 			}, packit.WithArgs([]string{binaryPath, layersDir, platformDir, planPath}))
@@ -545,10 +558,7 @@ api = "0.6"
 				packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
 					return packit.BuildResult{
 						Build: packit.BuildMetadata{
-							SBOM: packit.SBOMEntries{
-								"some.json": strings.NewReader(`{"some-key": "some-value"}`),
-								"other.yml": strings.NewReader(`other-key: other-value`),
-							},
+							SBOM: sbomEntries,
 						},
 					}, nil
 				}, packit.WithArgs([]string{binaryPath, layersDir, platformDir, planPath}), packit.WithExitHandler(exitHandler))
@@ -711,14 +721,19 @@ api = "0.4"
 	})
 
 	context("when there are sbom entries in the launch metadata", func() {
+		it.Before(func() {
+			sbomEntries.IsEmptyCall.Returns.Bool = false
+			sbomEntries.FormatCall.Returns.MapStringIoReader = map[string]io.Reader{
+				"some.json": strings.NewReader(`{"some-key": "some-value"}`),
+				"other.yml": strings.NewReader(`other-key: other-value`),
+			}
+		})
+
 		it("writes them to their specified locations", func() {
 			packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
 				return packit.BuildResult{
 					Launch: packit.LaunchMetadata{
-						SBOM: packit.SBOMEntries{
-							"some.json": strings.NewReader(`{"some-key": "some-value"}`),
-							"other.yml": strings.NewReader(`other-key: other-value`),
-						},
+						SBOM: sbomEntries,
 					},
 				}, nil
 			}, packit.WithArgs([]string{binaryPath, layersDir, platformDir, planPath}))
@@ -750,10 +765,7 @@ api = "0.6"
 				packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
 					return packit.BuildResult{
 						Launch: packit.LaunchMetadata{
-							SBOM: packit.SBOMEntries{
-								"some.json": strings.NewReader(`{"some-key": "some-value"}`),
-								"other.yml": strings.NewReader(`other-key: other-value`),
-							},
+							SBOM: sbomEntries,
 						},
 					}, nil
 				}, packit.WithArgs([]string{binaryPath, layersDir, platformDir, planPath}), packit.WithExitHandler(exitHandler))

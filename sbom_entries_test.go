@@ -1,7 +1,6 @@
 package packit_test
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/paketo-buildpacks/packit"
@@ -10,24 +9,34 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-func testSBOMEntries(t *testing.T, context spec.G, it spec.S) {
+func testEmptySBOM(t *testing.T, context spec.G, it spec.S) {
 	var Expect = NewWithT(t).Expect
 
-	context("Set", func() {
+	context("Format", func() {
 		var entries packit.SBOMEntries
 
 		it.Before(func() {
-			entries = packit.SBOMEntries{}
+			entries = packit.EmptySBOM{}
 		})
 
-		it("initializes an empty layer", func() {
-			entries.Set("some-name.some-extension", strings.NewReader("some-content"))
-			entries.Set("other-name.other-extension", strings.NewReader("other-content"))
+		it("Returns an empty map", func() {
+			result := entries.Format()
 
-			Expect(entries).To(Equal(packit.SBOMEntries{
-				"some-name.some-extension":   strings.NewReader("some-content"),
-				"other-name.other-extension": strings.NewReader("other-content"),
-			}))
+			Expect(result).NotTo(BeNil())
+			Expect(result).To(BeEmpty())
+		})
+	})
+	context("IsEmpty", func() {
+		var entries packit.SBOMEntries
+
+		it.Before(func() {
+			entries = packit.EmptySBOM{}
+		})
+
+		it("Returns true", func() {
+			result := entries.IsEmpty()
+
+			Expect(result).To(BeTrue())
 		})
 	})
 }

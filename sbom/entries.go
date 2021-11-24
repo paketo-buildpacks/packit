@@ -3,23 +3,23 @@ package sbom
 import "io"
 
 type Entries struct {
-	content SBOM
+	content EntryFormatter
 	formats map[Format]string
 }
 
-func NewEntries(content SBOM) Entries {
+func NewEntries(content EntryFormatter) Entries {
 	return Entries{
 		content: content,
 		formats: make(map[Format]string),
 	}
 }
 
-func (e Entries) Format() (map[string]io.Reader, error) {
+func (e Entries) Format() map[string]io.Reader {
 	result := make(map[string]io.Reader)
 	for format := range e.formats {
 		result[format.Extension()] = e.content.Format(format)
 	}
-	return result, nil
+	return result
 }
 
 func (e Entries) IsEmpty() bool {

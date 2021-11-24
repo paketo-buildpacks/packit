@@ -5,6 +5,7 @@ go 1.16
 require (
 	github.com/BurntSushi/toml v0.4.1
 	github.com/Masterminds/semver/v3 v3.1.1
+	github.com/anchore/stereoscope v0.0.0-20211116152349-7e4e1b56a15d
 	github.com/anchore/syft v0.30.1
 	github.com/cheggaaa/pb/v3 v3.0.8
 	github.com/dsnet/compress v0.0.1

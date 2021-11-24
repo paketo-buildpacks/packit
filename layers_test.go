@@ -44,7 +44,7 @@ func testLayers(t *testing.T, context spec.G, it spec.S) {
 				BuildEnv:         packit.Environment{},
 				LaunchEnv:        packit.Environment{},
 				ProcessLaunchEnv: map[string]packit.Environment{},
-				SBOM:             packit.SBOMEntries{},
+				SBOM:             packit.EmptySBOM{},
 			}))
 		})
 
@@ -76,7 +76,7 @@ some-key = "some-value"`), 0644)
 					Metadata: map[string]interface{}{
 						"some-key": "some-value",
 					},
-					SBOM: packit.SBOMEntries{},
+					SBOM: packit.EmptySBOM{},
 				}))
 			})
 
@@ -180,7 +180,7 @@ some-key = "some-value"`), 0644)
 						Metadata: map[string]interface{}{
 							"some-key": "some-value",
 						},
-						SBOM: packit.SBOMEntries{},
+						SBOM: packit.EmptySBOM{},
 					}))
 				})
 			})

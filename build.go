@@ -222,21 +222,20 @@ func Build(f BuildFunc, options ...Option) {
 			}
 		}
 
-		if apiVersion.GreaterThan(apiV06) {
-			layerEntries, err := layer.SBOM.Format()
-			if err != nil {
-				panic(err)
-			}
-			for extension, reader := range layerEntries {
-				err = config.fileWriter.Write(filepath.Join(layersPath, fmt.Sprintf("%s.sbom.%s", layer.Name, extension)), reader)
-				if err != nil {
-					panic(err)
+		if layer.SBOM != nil {
+			if apiVersion.GreaterThan(apiV06) {
+				layerEntries := layer.SBOM.Format()
+				for extension, reader := range layerEntries {
+					err = config.fileWriter.Write(filepath.Join(layersPath, fmt.Sprintf("%s.sbom.%s", layer.Name, extension)), reader)
+					if err != nil {
+						panic(err)
+					}
 				}
-			}
-		} else {
-			if !layer.SBOM.IsEmpty() {
-				config.exitHandler.Error(fmt.Errorf("%s.sbom.* output is only supported with Buildpack API v0.7 or higher", layer.Name))
-				return
+			} else {
+				if !layer.SBOM.IsEmpty() {
+					config.exitHandler.Error(fmt.Errorf("%s.sbom.* output is only supported with Buildpack API v0.7 or higher", layer.Name))
+					return
+				}
 			}
 		}
 	}
@@ -288,21 +287,20 @@ func Build(f BuildFunc, options ...Option) {
 			return
 		}
 
-		if apiVersion.GreaterThan(apiV06) {
-			launchEntries, err := result.Launch.SBOM.Format()
-			if err != nil {
-				panic(err)
-			}
-			for extension, reader := range launchEntries {
-				err = config.fileWriter.Write(filepath.Join(layersPath, fmt.Sprintf("launch.sbom.%s", extension)), reader)
-				if err != nil {
-					panic(err)
+		if result.Launch.SBOM != nil {
+			if apiVersion.GreaterThan(apiV06) {
+				launchEntries := result.Launch.SBOM.Format()
+				for extension, reader := range launchEntries {
+					err = config.fileWriter.Write(filepath.Join(layersPath, fmt.Sprintf("launch.sbom.%s", extension)), reader)
+					if err != nil {
+						panic(err)
+					}
 				}
-			}
-		} else {
-			if !result.Launch.SBOM.IsEmpty() {
-				config.exitHandler.Error(fmt.Errorf("launch.sbom.* output is only supported with Buildpack API v0.7 or higher"))
-				return
+			} else {
+				if !result.Launch.SBOM.IsEmpty() {
+					config.exitHandler.Error(fmt.Errorf("launch.sbom.* output is only supported with Buildpack API v0.7 or higher"))
+					return
+				}
 			}
 		}
 	}
@@ -313,24 +311,22 @@ func Build(f BuildFunc, options ...Option) {
 			return
 		}
 
-		if apiVersion.GreaterThan(apiV06) {
-			buildEntries, err := result.Build.SBOM.Format()
-			if err != nil {
-				panic(err)
-			}
-			for extension, reader := range buildEntries {
-				err = config.fileWriter.Write(filepath.Join(layersPath, fmt.Sprintf("build.sbom.%s", extension)), reader)
-				if err != nil {
-					panic(err)
+		if result.Build.SBOM != nil {
+			if apiVersion.GreaterThan(apiV06) {
+				buildEntries := result.Build.SBOM.Format()
+				for extension, reader := range buildEntries {
+					err = config.fileWriter.Write(filepath.Join(layersPath, fmt.Sprintf("build.sbom.%s", extension)), reader)
+					if err != nil {
+						panic(err)
+					}
+				}
+			} else {
+				if !result.Build.SBOM.IsEmpty() {
+					config.exitHandler.Error(fmt.Errorf("build.sbom.* output is only supported with Buildpack API v0.7 or higher"))
+					return
 				}
 			}
-		} else {
-			if !result.Build.SBOM.IsEmpty() {
-				config.exitHandler.Error(fmt.Errorf("build.sbom.* output is only supported with Buildpack API v0.7 or higher"))
-				return
-			}
 		}
-
 		err = config.tomlWriter.Write(filepath.Join(layersPath, "build.toml"), result.Build)
 		if err != nil {
 			config.exitHandler.Error(err)

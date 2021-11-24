@@ -10,6 +10,12 @@ import (
 	"github.com/paketo-buildpacks/packit/postal"
 )
 
+//go:generate faux --interface EntryFormatter --output fakes/entry_formatter.go
+type EntryFormatter interface {
+	Format(format Format) io.Reader
+	IsEmpty() bool
+}
+
 type SBOM struct {
 	syft sbom.SBOM
 }

@@ -14,7 +14,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-func testGenerate(t *testing.T, context spec.G, it spec.S) {
+func testSBOM(t *testing.T, context spec.G, it spec.S) {
 	var Expect = NewWithT(t).Expect
 
 	context("GenerateFromDependency", func() {
@@ -179,5 +179,15 @@ func testGenerate(t *testing.T, context spec.G, it spec.S) {
 				]
 			}`, spdxOutput.CreationInfo.Created, spdxOutput.DocumentNamespace)))
 		})
+	})
+
+	context.Pend("Generate", func() {
+		fmt.Println("Not finished yet")
+	})
+	context.Pend("IsEmpty", func() {
+		fmt.Println("Not finished yet")
+	})
+	context.Pend("Format", func() {
+		fmt.Println("Not finished yet")
 	})
 }

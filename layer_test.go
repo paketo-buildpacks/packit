@@ -56,7 +56,7 @@ func testLayer(t *testing.T, context spec.G, it spec.S) {
 					SharedEnv:        packit.Environment{},
 					BuildEnv:         packit.Environment{},
 					LaunchEnv:        packit.Environment{},
-					SBOM:             packit.SBOMEntries{},
+					SBOM:             packit.EmptySBOM{},
 					ProcessLaunchEnv: map[string]packit.Environment{},
 				}))
 
@@ -128,7 +128,7 @@ func testLayer(t *testing.T, context spec.G, it spec.S) {
 						BuildEnv:         packit.Environment{},
 						LaunchEnv:        packit.Environment{},
 						ProcessLaunchEnv: map[string]packit.Environment{},
-						SBOM:             packit.SBOMEntries{},
+						SBOM:             packit.EmptySBOM{},
 					}))
 
 					Expect(filepath.Join(layersDir, "some-layer")).To(BeADirectory())

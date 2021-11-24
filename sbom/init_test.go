@@ -13,8 +13,9 @@ func TestSBOM(t *testing.T) {
 
 	suite := spec.New("sbom", spec.Report(report.Terminal{}))
 	suite("CycloneDXFormatter", testCycloneDXFormatter)
-	suite("Generate", testGenerate)
+	suite("SBOM", testSBOM)
 	suite("SPDXFormatter", testSPDXFormatter)
 	suite("SyftFormatter", testSyftFormatter)
+	suite("Entries", testEntries)
 	suite.Run(t)
 }
