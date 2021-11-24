@@ -26,7 +26,7 @@ func (txz TarXZArchive) Decompress(destination string) error {
 		return fmt.Errorf("failed to create xz reader: %w", err)
 	}
 
-	return NewTarArchive(xzr).StripComponents(txz.components).Decompress(destination)
+	return NewArchive(xzr).StripComponents(txz.components).Decompress(destination)
 }
 
 // StripComponents behaves like the --strip-components flag on tar command
