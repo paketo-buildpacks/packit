@@ -25,7 +25,7 @@ func NewLogger(writer io.Writer) Logger {
 }
 
 // WithLevel takes in a log level string and configures the log level of the
-// logger. To enable debug logging the log level must be set to "DEFAULT".
+// logger. To enable debug logging the log level must be set to "DEBUG".
 func (l Logger) WithLevel(level string) Logger {
 	switch level {
 	case "DEBUG":
