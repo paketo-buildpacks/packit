@@ -4,7 +4,7 @@ import (
 	"strconv"
 )
 
-// A set of common text colors
+// A set of common text colors.
 var (
 	BlackColor   = NewColor(false, 0, -1)
 	RedColor     = NewColor(false, 1, -1)
