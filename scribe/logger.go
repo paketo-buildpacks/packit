@@ -7,14 +7,14 @@ import (
 )
 
 // A Logger provides a standard logging interface for doing basic low level
-// logging task as well as debug logging.
+// logging tasks as well as debug logging.
 type Logger struct {
 	writer io.Writer
 	LeveledLogger
 	Debug LeveledLogger
 }
 
-// NewLogger take a writer and return a Logger that writes to the given
+// NewLogger takes a writer and returns a Logger that writes to the given
 // writer. The default writter sends all debug logging to io.Discard.
 func NewLogger(writer io.Writer) Logger {
 	return Logger{
@@ -24,7 +24,7 @@ func NewLogger(writer io.Writer) Logger {
 	}
 }
 
-// WithLevel takes in a log level string configures the log level of the
+// WithLevel takes in a log level string and configures the log level of the
 // logger. To enable debug logging the log level must be set to "DEFAULT".
 func (l Logger) WithLevel(level string) Logger {
 	switch level {
@@ -53,7 +53,7 @@ type LeveledLogger struct {
 	subdetail  io.Writer
 }
 
-// NewLeveledLogger take a writer and return a LeveledLogger that writes to the given
+// NewLeveledLogger takes a writer and returns a LeveledLogger that writes to the given
 // writer.
 func NewLeveledLogger(writer io.Writer) LeveledLogger {
 	return LeveledLogger{
