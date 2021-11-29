@@ -244,3 +244,26 @@ func ExampleLogger() {
 	//
 	// Next line
 }
+
+func ExampleLogger_WithLevel() {
+	logger := scribe.NewLogger(os.Stdout)
+
+	logger.Title("First line")
+	logger.Debug.Title("Debug line")
+	logger.Title("Next line")
+	logger.Break()
+
+	logger = logger.WithLevel("DEBUG")
+
+	logger.Title("First line")
+	logger.Debug.Title("Debug line")
+	logger.Title("Next line")
+
+	// Output:
+	// First line
+	// Next line
+	//
+	// First line
+	// Debug line
+	// Next line
+}
