@@ -80,6 +80,7 @@ api = "0.6"
 	homepage = "some-homepage"
 	description = "some-description"
 	keywords = ["some-keyword"]
+	sbom-formats = ["some-sbom-format", "some-other-sbom-format"]
   clear-env = false
 
 	[[buildpack.licenses]]
@@ -142,6 +143,7 @@ api = "0.6"
 				Homepage:    "some-homepage",
 				Description: "some-description",
 				Keywords:    []string{"some-keyword"},
+				SBOMFormats: []string{"some-sbom-format", "some-other-sbom-format"},
 				Licenses: []packit.BuildpackInfoLicense{
 					{
 						Type: "some-license-type",
@@ -426,6 +428,7 @@ api = "0.6"
 					Homepage:    "some-homepage",
 					Description: "some-description",
 					Keywords:    []string{"some-keyword"},
+					SBOMFormats: []string{"some-sbom-format", "some-other-sbom-format"},
 					Licenses: []packit.BuildpackInfoLicense{
 						{
 							Type: "some-license-type",
