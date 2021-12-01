@@ -13,9 +13,9 @@ func TestVacation(t *testing.T) {
 	suite("LinkSorting", testLinkSorting)
 	suite("NopArchive", testNopArchive)
 	suite("TarArchive", testTarArchive)
-	suite("TarBzip2Archive", testTarBzip2Archive)
-	suite("TarGzipArchive", testTarGzipArchive)
-	suite("TarXZArchive", testTarXZArchive)
+	suite("Bzip2Archive", testBzip2Archive)
+	suite("GzipArchive", testGzipArchive)
+	suite("XZArchive", testXZArchive)
 	suite("ZipArchive", testZipArchive)
 	suite.Run(t)
 }

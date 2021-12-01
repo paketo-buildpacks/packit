@@ -15,15 +15,15 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-func testTarXZArchive(t *testing.T, context spec.G, it spec.S) {
+func testXZArchive(t *testing.T, context spec.G, it spec.S) {
 	var (
 		Expect = NewWithT(t).Expect
 	)
 
 	context("Decompress", func() {
 		var (
-			tempDir      string
-			tarXZArchive vacation.TarXZArchive
+			tempDir   string
+			xzArchive vacation.XZArchive
 		)
 
 		it.Before(func() {
@@ -63,7 +63,7 @@ func testTarXZArchive(t *testing.T, context spec.G, it spec.S) {
 			Expect(tw.Close()).To(Succeed())
 			Expect(xzw.Close()).To(Succeed())
 
-			tarXZArchive = vacation.NewTarXZArchive(bytes.NewReader(buffer.Bytes()))
+			xzArchive = vacation.NewXZArchive(bytes.NewReader(buffer.Bytes()))
 
 		})
 
@@ -73,7 +73,7 @@ func testTarXZArchive(t *testing.T, context spec.G, it spec.S) {
 
 		it("unpackages the archive into the path", func() {
 			var err error
-			err = tarXZArchive.Decompress(tempDir)
+			err = xzArchive.Decompress(tempDir)
 			Expect(err).ToNot(HaveOccurred())
 
 			files, err := filepath.Glob(fmt.Sprintf("%s/*", tempDir))
@@ -100,7 +100,7 @@ func testTarXZArchive(t *testing.T, context spec.G, it spec.S) {
 
 		it("unpackages the archive into the path but also strips the first component", func() {
 			var err error
-			err = tarXZArchive.StripComponents(1).Decompress(tempDir)
+			err = xzArchive.StripComponents(1).Decompress(tempDir)
 			Expect(err).ToNot(HaveOccurred())
 
 			files, err := filepath.Glob(fmt.Sprintf("%s/*", tempDir))
@@ -117,7 +117,7 @@ func testTarXZArchive(t *testing.T, context spec.G, it spec.S) {
 		context("failure cases", func() {
 			context("when it fails to create a xz reader", func() {
 				it("returns an error", func() {
-					readyArchive := vacation.NewTarXZArchive(bytes.NewBuffer([]byte(`something`)))
+					readyArchive := vacation.NewXZArchive(bytes.NewBuffer([]byte(`something`)))
 
 					err := readyArchive.Decompress(tempDir)
 					Expect(err).To(MatchError(ContainSubstring("failed to create xz reader")))

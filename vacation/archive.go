@@ -58,13 +58,15 @@ func (a Archive) Decompress(destination string) error {
 	case "application/x-tar":
 		decompressor = NewTarArchive(bufferedReader).StripComponents(a.components)
 	case "application/gzip":
-		decompressor = NewTarGzipArchive(bufferedReader).StripComponents(a.components)
+		decompressor = NewGzipArchive(bufferedReader).StripComponents(a.components).WithName(a.name)
 	case "application/x-xz":
-		decompressor = NewTarXZArchive(bufferedReader).StripComponents(a.components)
+		decompressor = NewXZArchive(bufferedReader).StripComponents(a.components)
 	case "application/x-bzip2":
-		decompressor = NewTarBzip2Archive(bufferedReader).StripComponents(a.components)
+		decompressor = NewBzip2Archive(bufferedReader).StripComponents(a.components)
 	case "application/zip":
 		decompressor = NewZipArchive(bufferedReader).StripComponents(a.components)
+	case "application/x-executable":
+		decompressor = NewExecutable(bufferedReader, a.name)
 	case "text/plain; charset=utf-8", "application/jar":
 		destination = filepath.Join(destination, a.name)
 		decompressor = NewNopArchive(bufferedReader)
