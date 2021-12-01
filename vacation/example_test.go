@@ -348,7 +348,7 @@ func ExampleTarGzipArchive() {
 	}
 	defer os.RemoveAll(destination)
 
-	archive := vacation.NewTarGzipArchive(bytes.NewReader(buffer.Bytes()))
+	archive := vacation.NewGzipArchive(bytes.NewReader(buffer.Bytes()))
 	if err := archive.Decompress(destination); err != nil {
 		log.Fatal(err)
 	}
@@ -411,7 +411,7 @@ func ExampleTarGzipArchive_StripComponents() {
 	}
 	defer os.RemoveAll(destination)
 
-	archive := vacation.NewTarGzipArchive(bytes.NewReader(buffer.Bytes())).StripComponents(1)
+	archive := vacation.NewGzipArchive(bytes.NewReader(buffer.Bytes())).StripComponents(1)
 	if err := archive.Decompress(destination); err != nil {
 		log.Fatal(err)
 	}
@@ -475,7 +475,7 @@ func ExampleTarXZArchive() {
 	}
 	defer os.RemoveAll(destination)
 
-	archive := vacation.NewTarXZArchive(bytes.NewReader(buffer.Bytes()))
+	archive := vacation.NewXZArchive(bytes.NewReader(buffer.Bytes()))
 	if err := archive.Decompress(destination); err != nil {
 		log.Fatal(err)
 	}
@@ -542,7 +542,7 @@ func ExampleTarXZArchive_StripComponents() {
 	}
 	defer os.RemoveAll(destination)
 
-	archive := vacation.NewTarXZArchive(bytes.NewReader(buffer.Bytes())).StripComponents(1)
+	archive := vacation.NewXZArchive(bytes.NewReader(buffer.Bytes())).StripComponents(1)
 	if err := archive.Decompress(destination); err != nil {
 		log.Fatal(err)
 	}
@@ -611,7 +611,7 @@ func ExampleTarBzip2Archive() {
 	}
 	defer os.RemoveAll(destination)
 
-	archive := vacation.NewTarBzip2Archive(bytes.NewReader(buffer.Bytes()))
+	archive := vacation.NewBzip2Archive(bytes.NewReader(buffer.Bytes()))
 	if err := archive.Decompress(destination); err != nil {
 		log.Fatal(err)
 	}
@@ -683,7 +683,7 @@ func ExampleTarBzip2Archive_StripComponents() {
 	}
 	defer os.RemoveAll(destination)
 
-	archive := vacation.NewTarBzip2Archive(bytes.NewReader(buffer.Bytes())).StripComponents(1)
+	archive := vacation.NewBzip2Archive(bytes.NewReader(buffer.Bytes())).StripComponents(1)
 	if err := archive.Decompress(destination); err != nil {
 		log.Fatal(err)
 	}

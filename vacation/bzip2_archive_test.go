@@ -15,7 +15,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-func testTarBzip2Archive(t *testing.T, context spec.G, it spec.S) {
+func testBzip2Archive(t *testing.T, context spec.G, it spec.S) {
 	var (
 		Expect = NewWithT(t).Expect
 	)
@@ -23,7 +23,7 @@ func testTarBzip2Archive(t *testing.T, context spec.G, it spec.S) {
 	context("Decompress", func() {
 		var (
 			tempDir         string
-			tarBzip2Archive vacation.TarBzip2Archive
+			bzip2Archive vacation.Bzip2Archive
 		)
 
 		it.Before(func() {
@@ -68,7 +68,7 @@ func testTarBzip2Archive(t *testing.T, context spec.G, it spec.S) {
 			Expect(tw.Close()).To(Succeed())
 			Expect(bz.Close()).To(Succeed())
 
-			tarBzip2Archive = vacation.NewTarBzip2Archive(bytes.NewReader(buffer.Bytes()))
+			bzip2Archive = vacation.NewBzip2Archive(bytes.NewReader(buffer.Bytes()))
 		})
 
 		it.After(func() {

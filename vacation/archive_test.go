@@ -5,6 +5,9 @@ import (
 	"archive/zip"
 	"bytes"
 	"compress/gzip"
+	"encoding/base64"
+	"io/fs"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -343,6 +346,50 @@ func testArchive(t *testing.T, context spec.G, it spec.S) {
 				Expect(files).To(ConsistOf([]string{
 					filepath.Join(tempDir, "some-nested-file"),
 				}))
+			})
+		})
+
+		context("when passed the reader of an executable file", func() {
+			var (
+				archive vacation.Archive
+				tempDir string
+				// Encoding of a very small elf executable from https://github.com/mathiasbynens/small
+				encodedContents = []byte(`f0VMRgEBAQAAAAAAAAAAAAIAAwABAAAAGUDNgCwAAAAAAAAAAAAAADQAIAABAAAAAAAAAABAzYAAQM2ATAAAAEwAAAAFAAAAABAAAA==`)
+				literalContents []byte
+				fileName        = "exe"
+			)
+
+			it.Before(func() {
+				var err error
+				tempDir, err = os.MkdirTemp("", "vacation")
+				Expect(err).NotTo(HaveOccurred())
+
+				literalContents, err = ioutil.ReadAll(base64.NewDecoder(base64.StdEncoding, bytes.NewBuffer(encodedContents)))
+				Expect(err).NotTo(HaveOccurred())
+
+				archive = vacation.NewArchive(bytes.NewBuffer(literalContents)).WithName(fileName)
+			})
+
+			it.After(func() {
+				Expect(os.RemoveAll(tempDir)).To(Succeed())
+			})
+
+			it("writes the executable in the bin dir", func() {
+				err := archive.Decompress(tempDir)
+				Expect(err).NotTo(HaveOccurred())
+
+				content, err := os.ReadFile(filepath.Join(tempDir, "bin", fileName))
+				Expect(err).NotTo(HaveOccurred())
+				Expect(content).To(Equal(literalContents))
+			})
+
+			it("gives the executable execute permission", func() {
+				err := archive.Decompress(tempDir)
+				Expect(err).NotTo(HaveOccurred())
+
+				info, err := os.Stat(filepath.Join(tempDir, "bin", fileName))
+				Expect(err).NotTo(HaveOccurred())
+				Expect(info.Mode()).To(Equal(fs.FileMode(0755)))
 			})
 		})
 
