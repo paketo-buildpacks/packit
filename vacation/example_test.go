@@ -313,7 +313,7 @@ func ExampleTarArchive_StripComponents() {
 	// some-other-dir/some-file
 }
 
-func ExampleTarGzipArchive() {
+func ExampleGzipArchive() {
 	buffer := bytes.NewBuffer(nil)
 	gw := gzip.NewWriter(buffer)
 	tw := tar.NewWriter(gw)
@@ -376,7 +376,7 @@ func ExampleTarGzipArchive() {
 	// third
 }
 
-func ExampleTarGzipArchive_StripComponents() {
+func ExampleGzipArchive_StripComponents() {
 	buffer := bytes.NewBuffer(nil)
 	gw := gzip.NewWriter(buffer)
 	tw := tar.NewWriter(gw)
@@ -436,7 +436,7 @@ func ExampleTarGzipArchive_StripComponents() {
 	// some-other-dir/some-file
 }
 
-func ExampleTarXZArchive() {
+func ExampleXZArchive() {
 	buffer := bytes.NewBuffer(nil)
 	xw, err := xz.NewWriter(buffer)
 	if err != nil {
@@ -503,7 +503,7 @@ func ExampleTarXZArchive() {
 	// third
 }
 
-func ExampleTarXZArchive_StripComponents() {
+func ExampleXZArchive_StripComponents() {
 	buffer := bytes.NewBuffer(nil)
 	xw, err := xz.NewWriter(buffer)
 	if err != nil {
@@ -567,7 +567,7 @@ func ExampleTarXZArchive_StripComponents() {
 	// some-other-dir/some-file
 }
 
-func ExampleTarBzip2Archive() {
+func ExampleBzip2Archive() {
 	buffer := bytes.NewBuffer(nil)
 
 	// Using the dsnet library because the Go compression library does not
@@ -639,7 +639,7 @@ func ExampleTarBzip2Archive() {
 	// third
 }
 
-func ExampleTarBzip2Archive_StripComponents() {
+func ExampleBzip2Archive_StripComponents() {
 	buffer := bytes.NewBuffer(nil)
 
 	// Using the dsnet library because the Go compression library does not
