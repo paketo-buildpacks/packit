@@ -6,31 +6,37 @@ import (
 	"io"
 )
 
-// A TarGzipArchive decompresses gziped tar files from an input stream.
-type TarGzipArchive struct {
+// A GzipArchive decompresses gzipped files from an input stream.
+type GzipArchive struct {
 	reader     io.Reader
 	components int
+	name string
 }
 
-// NewTarGzipArchive returns a new TarGzipArchive that reads from inputReader.
-func NewTarGzipArchive(inputReader io.Reader) TarGzipArchive {
-	return TarGzipArchive{reader: inputReader}
+// NewGzipArchive returns a new GzipArchive that reads from inputReader.
+func NewGzipArchive(inputReader io.Reader) GzipArchive {
+	return GzipArchive{reader: inputReader}
 }
 
-// Decompress reads from TarGzipArchive and writes files into the destination
+// Decompress reads from GzipArchive and writes files into the destination
 // specified.
-func (gz TarGzipArchive) Decompress(destination string) error {
+func (gz GzipArchive) Decompress(destination string) error {
 	gzr, err := gzip.NewReader(gz.reader)
 	if err != nil {
 		return fmt.Errorf("failed to create gzip reader: %w", err)
 	}
 
-	return NewArchive(gzr).StripComponents(gz.components).Decompress(destination)
+	return NewArchive(gzr).WithName(gz.name).StripComponents(gz.components).Decompress(destination)
 }
 
 // StripComponents behaves like the --strip-components flag on tar command
 // removing the first n levels from the final decompression destination.
-func (gz TarGzipArchive) StripComponents(components int) TarGzipArchive {
+func (gz GzipArchive) StripComponents(components int) GzipArchive {
 	gz.components = components
+	return gz
+}
+
+func (gz GzipArchive) WithName(name string) GzipArchive {
+	gz.name = name
 	return gz
 }

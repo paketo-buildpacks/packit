@@ -15,7 +15,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-func testTarGzipArchive(t *testing.T, context spec.G, it spec.S) {
+func testGzipArchive(t *testing.T, context spec.G, it spec.S) {
 	var (
 		Expect = NewWithT(t).Expect
 	)
@@ -23,7 +23,7 @@ func testTarGzipArchive(t *testing.T, context spec.G, it spec.S) {
 	context("Decompress", func() {
 		var (
 			tempDir        string
-			tarGzipArchive vacation.TarGzipArchive
+			gzipArchive vacation.GzipArchive
 		)
 
 		it.Before(func() {
@@ -61,7 +61,7 @@ func testTarGzipArchive(t *testing.T, context spec.G, it spec.S) {
 			Expect(tw.Close()).To(Succeed())
 			Expect(gw.Close()).To(Succeed())
 
-			tarGzipArchive = vacation.NewTarGzipArchive(bytes.NewReader(buffer.Bytes()))
+			gzipArchive = vacation.NewGzipArchive(bytes.NewReader(buffer.Bytes()))
 
 		})
 
@@ -71,7 +71,7 @@ func testTarGzipArchive(t *testing.T, context spec.G, it spec.S) {
 
 		it("unpackages the archive into the path", func() {
 			var err error
-			err = tarGzipArchive.Decompress(tempDir)
+			err = gzipArchive.Decompress(tempDir)
 			Expect(err).ToNot(HaveOccurred())
 
 			files, err := filepath.Glob(fmt.Sprintf("%s/*", tempDir))
@@ -98,7 +98,7 @@ func testTarGzipArchive(t *testing.T, context spec.G, it spec.S) {
 
 		it("unpackages the archive into the path but also strips the first component", func() {
 			var err error
-			err = tarGzipArchive.StripComponents(1).Decompress(tempDir)
+			err = gzipArchive.StripComponents(1).Decompress(tempDir)
 			Expect(err).ToNot(HaveOccurred())
 
 			files, err := filepath.Glob(fmt.Sprintf("%s/*", tempDir))
@@ -114,7 +114,7 @@ func testTarGzipArchive(t *testing.T, context spec.G, it spec.S) {
 		context("failure cases", func() {
 			context("when it fails to create a grip reader", func() {
 				it("returns an error", func() {
-					readyArchive := vacation.NewTarGzipArchive(bytes.NewBuffer([]byte(`something`)))
+					readyArchive := vacation.NewGzipArchive(bytes.NewBuffer([]byte(`something`)))
 
 					err := readyArchive.Decompress(tempDir)
 					Expect(err).To(MatchError(ContainSubstring("failed to create gzip reader")))
