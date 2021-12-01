@@ -34,6 +34,9 @@ func (e Executable) Decompress(destination string) error {
 	}
 
 	err = os.Chmod(filepath.Join(destination, "bin", e.name), 0755)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
