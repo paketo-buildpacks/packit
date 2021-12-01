@@ -46,6 +46,7 @@ func testConfig(t *testing.T, context spec.G, it spec.S) {
 							URI:  "some-license-uri",
 						},
 					},
+					SBOMFormats: []string{"some-sbom-format"},
 				},
 				Stacks: []cargo.ConfigStack{
 					{
@@ -117,6 +118,7 @@ api = "0.6"
 	clear-env = true
 	description = "some-buildpack-description"
 	keywords = [ "some-buildpack-keyword" ]
+	sbom-formats = [ "some-sbom-format" ]
 
 [[buildpack.licenses]]
   type = "some-license-type"
@@ -374,6 +376,7 @@ api = "0.6"
 	clear-env = true
 	description = "some-buildpack-description"
 	keywords = [ "some-buildpack-keyword" ]
+	sbom-formats = [ "some-sbom-format" ]
 
 [[buildpack.licenses]]
 	type = "some-license-type"
@@ -443,6 +446,7 @@ api = "0.6"
 							URI:  "some-license-uri",
 						},
 					},
+					SBOMFormats: []string{"some-sbom-format"},
 				},
 				Stacks: []cargo.ConfigStack{
 					{
