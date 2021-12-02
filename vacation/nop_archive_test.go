@@ -35,8 +35,17 @@ func testNopArchive(t *testing.T, context spec.G, it spec.S) {
 			Expect(os.RemoveAll(tempDir)).To(Succeed())
 		})
 
-		it("copies the contents of the reader to the destination", func() {
-			err := archive.Decompress(filepath.Join(tempDir, "some-file"))
+		it("copies the contents of the reader to the destination with a default name", func() {
+			err := archive.Decompress(filepath.Join(tempDir))
+			Expect(err).NotTo(HaveOccurred())
+
+			content, err := os.ReadFile(filepath.Join(tempDir, "artifact"))
+			Expect(err).NotTo(HaveOccurred())
+			Expect(content).To(Equal([]byte(`some contents`)))
+		})
+
+		it("copies the contents of the reader to the destination with a given name", func() {
+			err := archive.WithName("some-file").Decompress(filepath.Join(tempDir))
 			Expect(err).NotTo(HaveOccurred())
 
 			content, err := os.ReadFile(filepath.Join(tempDir, "some-file"))

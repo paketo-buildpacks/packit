@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"fmt"
 	"io"
-	"path/filepath"
 
 	"github.com/gabriel-vasile/mimetype"
 )
@@ -25,7 +24,6 @@ type Archive struct {
 func NewArchive(inputReader io.Reader) Archive {
 	return Archive{
 		reader: inputReader,
-		name:   "artifact",
 	}
 }
 
@@ -34,8 +32,7 @@ func NewArchive(inputReader io.Reader) Archive {
 //
 // Archive decompression will also handle files that are types "text/plain;
 // charset=utf-8" and write the contents of the input stream to a file name
-// specified by the `Archive.WithName()` option (or defaults to "artifact")
-// in the destination directory.
+// specified by the `Archive.WithName()` option in the destination directory.
 func (a Archive) Decompress(destination string) error {
 	// Convert reader into a buffered read so that the header can be peeked to
 	// determine the type.
@@ -60,16 +57,15 @@ func (a Archive) Decompress(destination string) error {
 	case "application/gzip":
 		decompressor = NewGzipArchive(bufferedReader).StripComponents(a.components).WithName(a.name)
 	case "application/x-xz":
-		decompressor = NewXZArchive(bufferedReader).StripComponents(a.components)
+		decompressor = NewXZArchive(bufferedReader).StripComponents(a.components).WithName(a.name)
 	case "application/x-bzip2":
-		decompressor = NewBzip2Archive(bufferedReader).StripComponents(a.components)
+		decompressor = NewBzip2Archive(bufferedReader).StripComponents(a.components).WithName(a.name)
 	case "application/zip":
 		decompressor = NewZipArchive(bufferedReader).StripComponents(a.components)
 	case "application/x-executable":
-		decompressor = NewExecutable(bufferedReader, a.name)
+		decompressor = NewExecutable(bufferedReader).WithName(a.name)
 	case "text/plain; charset=utf-8", "application/jar":
-		destination = filepath.Join(destination, a.name)
-		decompressor = NewNopArchive(bufferedReader)
+		decompressor = NewNopArchive(bufferedReader).WithName(a.name)
 	default:
 		return fmt.Errorf("unsupported archive type: %s", mime.String())
 	}
