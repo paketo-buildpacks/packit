@@ -15,7 +15,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-func testTarBzip2Archive(t *testing.T, context spec.G, it spec.S) {
+func testBzip2Archive(t *testing.T, context spec.G, it spec.S) {
 	var (
 		Expect = NewWithT(t).Expect
 	)
@@ -23,7 +23,7 @@ func testTarBzip2Archive(t *testing.T, context spec.G, it spec.S) {
 	context("Decompress", func() {
 		var (
 			tempDir         string
-			tarBzip2Archive vacation.TarBzip2Archive
+			bzip2Archive vacation.Bzip2Archive
 		)
 
 		it.Before(func() {
@@ -68,7 +68,7 @@ func testTarBzip2Archive(t *testing.T, context spec.G, it spec.S) {
 			Expect(tw.Close()).To(Succeed())
 			Expect(bz.Close()).To(Succeed())
 
-			tarBzip2Archive = vacation.NewTarBzip2Archive(bytes.NewReader(buffer.Bytes()))
+			bzip2Archive = vacation.NewBzip2Archive(bytes.NewReader(buffer.Bytes()))
 		})
 
 		it.After(func() {
@@ -77,7 +77,7 @@ func testTarBzip2Archive(t *testing.T, context spec.G, it spec.S) {
 
 		it("unpackages the archive into the path", func() {
 			var err error
-			err = tarBzip2Archive.Decompress(tempDir)
+			err = bzip2Archive.Decompress(tempDir)
 			Expect(err).ToNot(HaveOccurred())
 
 			files, err := filepath.Glob(fmt.Sprintf("%s/*", tempDir))
@@ -104,7 +104,7 @@ func testTarBzip2Archive(t *testing.T, context spec.G, it spec.S) {
 
 		it("unpackages the archive into the path but also strips the first component", func() {
 			var err error
-			err = tarBzip2Archive.StripComponents(1).Decompress(tempDir)
+			err = bzip2Archive.StripComponents(1).Decompress(tempDir)
 			Expect(err).ToNot(HaveOccurred())
 
 			files, err := filepath.Glob(fmt.Sprintf("%s/*", tempDir))
