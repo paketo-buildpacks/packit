@@ -10,7 +10,7 @@ import (
 type GzipArchive struct {
 	reader     io.Reader
 	components int
-	name string
+	name       string
 }
 
 // NewGzipArchive returns a new GzipArchive that reads from inputReader.
@@ -36,6 +36,8 @@ func (gz GzipArchive) StripComponents(components int) GzipArchive {
 	return gz
 }
 
+// WithName provides a way of overriding the name of the file
+// that the decompressed file will be copied into.
 func (gz GzipArchive) WithName(name string) GzipArchive {
 	gz.name = name
 	return gz
