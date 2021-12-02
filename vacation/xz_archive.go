@@ -11,6 +11,7 @@ import (
 type XZArchive struct {
 	reader     io.Reader
 	components int
+	name       string
 }
 
 // NewXZArchive returns a new XZArchive that reads from inputReader.
@@ -26,12 +27,19 @@ func (xzArchive XZArchive) Decompress(destination string) error {
 		return fmt.Errorf("failed to create xz reader: %w", err)
 	}
 
-	return NewArchive(xzr).StripComponents(xzArchive.components).Decompress(destination)
+	return NewArchive(xzr).WithName(xzArchive.name).StripComponents(xzArchive.components).Decompress(destination)
 }
 
 // StripComponents behaves like the --strip-components flag on tar command
 // removing the first n levels from the final decompression destination.
 func (xzArchive XZArchive) StripComponents(components int) XZArchive {
 	xzArchive.components = components
+	return xzArchive
+}
+
+// WithName provides a way of overriding the name of the file
+// that the decompressed file will be copied into.
+func (xzArchive XZArchive) WithName(name string) XZArchive {
+	xzArchive.name = name
 	return xzArchive
 }

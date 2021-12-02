@@ -316,30 +316,12 @@ func ExampleTarArchive_StripComponents() {
 func ExampleGzipArchive() {
 	buffer := bytes.NewBuffer(nil)
 	gw := gzip.NewWriter(buffer)
-	tw := tar.NewWriter(gw)
 
-	files := []ArchiveFile{
-		{Name: "some-dir/"},
-		{Name: "some-dir/some-other-dir/"},
-		{Name: "some-dir/some-other-dir/some-file", Content: []byte("some-dir/some-other-dir/some-file")},
-		{Name: "first", Content: []byte("first")},
-		{Name: "second", Content: []byte("second")},
-		{Name: "third", Content: []byte("third")},
+	_, err := gw.Write([]byte(`Gzip file contents`))
+	if err != nil {
+		log.Fatal(err)
 	}
 
-	for _, file := range files {
-		err := tw.WriteHeader(&tar.Header{Name: file.Name, Mode: 0755, Size: int64(len(file.Content))})
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		_, err = tw.Write(file.Content)
-		if err != nil {
-			log.Fatal(err)
-		}
-	}
-
-	tw.Close()
 	gw.Close()
 
 	destination, err := os.MkdirTemp("", "destination")
@@ -348,32 +330,20 @@ func ExampleGzipArchive() {
 	}
 	defer os.RemoveAll(destination)
 
-	archive := vacation.NewGzipArchive(bytes.NewReader(buffer.Bytes()))
+	archive := vacation.NewGzipArchive(bytes.NewReader(buffer.Bytes())).WithName("gzip-file")
 	if err := archive.Decompress(destination); err != nil {
 		log.Fatal(err)
 	}
 
-	err = filepath.Walk(destination, func(path string, info os.FileInfo, err error) error {
-		if !info.IsDir() {
-			rel, err := filepath.Rel(destination, path)
-			if err != nil {
-				log.Fatal(err)
-			}
-
-			fmt.Printf("%s\n", rel)
-			return nil
-		}
-		return nil
-	})
+	content, err := os.ReadFile(filepath.Join(destination, "gzip-file"))
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	fmt.Println(string(content))
+
 	// Output:
-	// first
-	// second
-	// some-dir/some-other-dir/some-file
-	// third
+	// Gzip file contents
 }
 
 func ExampleGzipArchive_StripComponents() {
@@ -443,30 +413,11 @@ func ExampleXZArchive() {
 		log.Fatal(err)
 	}
 
-	tw := tar.NewWriter(xw)
-
-	files := []ArchiveFile{
-		{Name: "some-dir/"},
-		{Name: "some-dir/some-other-dir/"},
-		{Name: "some-dir/some-other-dir/some-file", Content: []byte("some-dir/some-other-dir/some-file")},
-		{Name: "first", Content: []byte("first")},
-		{Name: "second", Content: []byte("second")},
-		{Name: "third", Content: []byte("third")},
+	_, err = xw.Write([]byte(`XZ file contents`))
+	if err != nil {
+		log.Fatal(err)
 	}
 
-	for _, file := range files {
-		err := tw.WriteHeader(&tar.Header{Name: file.Name, Mode: 0755, Size: int64(len(file.Content))})
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		_, err = tw.Write(file.Content)
-		if err != nil {
-			log.Fatal(err)
-		}
-	}
-
-	tw.Close()
 	xw.Close()
 
 	destination, err := os.MkdirTemp("", "destination")
@@ -475,32 +426,20 @@ func ExampleXZArchive() {
 	}
 	defer os.RemoveAll(destination)
 
-	archive := vacation.NewXZArchive(bytes.NewReader(buffer.Bytes()))
+	archive := vacation.NewXZArchive(bytes.NewReader(buffer.Bytes())).WithName("xz-file")
 	if err := archive.Decompress(destination); err != nil {
 		log.Fatal(err)
 	}
 
-	err = filepath.Walk(destination, func(path string, info os.FileInfo, err error) error {
-		if !info.IsDir() {
-			rel, err := filepath.Rel(destination, path)
-			if err != nil {
-				log.Fatal(err)
-			}
-
-			fmt.Printf("%s\n", rel)
-			return nil
-		}
-		return nil
-	})
+	contents, err := os.ReadFile(filepath.Join(destination, "xz-file"))
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	fmt.Println(string(contents))
+
 	// Output:
-	// first
-	// second
-	// some-dir/some-other-dir/some-file
-	// third
+	// XZ file contents
 }
 
 func ExampleXZArchive_StripComponents() {
@@ -579,30 +518,11 @@ func ExampleBzip2Archive() {
 		log.Fatal(err)
 	}
 
-	tw := tar.NewWriter(bz)
-
-	files := []ArchiveFile{
-		{Name: "some-dir/"},
-		{Name: "some-dir/some-other-dir/"},
-		{Name: "some-dir/some-other-dir/some-file", Content: []byte("some-dir/some-other-dir/some-file")},
-		{Name: "first", Content: []byte("first")},
-		{Name: "second", Content: []byte("second")},
-		{Name: "third", Content: []byte("third")},
+	_, err = bz.Write([]byte(`Bzip2 file contents`))
+	if err != nil {
+		log.Fatal(err)
 	}
 
-	for _, file := range files {
-		err := tw.WriteHeader(&tar.Header{Name: file.Name, Mode: 0755, Size: int64(len(file.Content))})
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		_, err = tw.Write(file.Content)
-		if err != nil {
-			log.Fatal(err)
-		}
-	}
-
-	tw.Close()
 	bz.Close()
 
 	destination, err := os.MkdirTemp("", "destination")
@@ -611,32 +531,20 @@ func ExampleBzip2Archive() {
 	}
 	defer os.RemoveAll(destination)
 
-	archive := vacation.NewBzip2Archive(bytes.NewReader(buffer.Bytes()))
+	archive := vacation.NewBzip2Archive(bytes.NewReader(buffer.Bytes())).WithName("bzip2-file")
 	if err := archive.Decompress(destination); err != nil {
 		log.Fatal(err)
 	}
 
-	err = filepath.Walk(destination, func(path string, info os.FileInfo, err error) error {
-		if !info.IsDir() {
-			rel, err := filepath.Rel(destination, path)
-			if err != nil {
-				log.Fatal(err)
-			}
-
-			fmt.Printf("%s\n", rel)
-			return nil
-		}
-		return nil
-	})
+	contents, err := os.ReadFile(filepath.Join(destination, "bzip2-file"))
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	fmt.Println(string(contents))
+
 	// Output:
-	// first
-	// second
-	// some-dir/some-other-dir/some-file
-	// third
+	// Bzip2 file contents
 }
 
 func ExampleBzip2Archive_StripComponents() {
