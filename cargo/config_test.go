@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/paketo-buildpacks/packit"
 	"github.com/paketo-buildpacks/packit/cargo"
 	"github.com/sclevine/spec"
 
@@ -32,7 +33,7 @@ func testConfig(t *testing.T, context spec.G, it spec.S) {
 
 			err = cargo.EncodeConfig(buffer, cargo.Config{
 				API: "0.6",
-				Buildpack: cargo.ConfigBuildpack{
+				Buildpack: packit.BuildpackInfo{
 					ID:          "some-buildpack-id",
 					Name:        "some-buildpack-name",
 					Version:     "some-buildpack-version",
@@ -40,7 +41,7 @@ func testConfig(t *testing.T, context spec.G, it spec.S) {
 					ClearEnv:    true,
 					Description: "some-buildpack-description",
 					Keywords:    []string{"some-buildpack-keyword"},
-					Licenses: []cargo.ConfigBuildpackLicense{
+					Licenses: []packit.BuildpackInfoLicense{
 						{
 							Type: "some-license-type",
 							URI:  "some-license-uri",
@@ -179,12 +180,12 @@ api = "0.6"
 
 				err = cargo.EncodeConfig(buffer, cargo.Config{
 					API: "0.6",
-					Buildpack: cargo.ConfigBuildpack{
+					Buildpack: packit.BuildpackInfo{
 						ID:       "some-buildpack-id",
 						Name:     "some-buildpack-name",
 						Version:  "some-buildpack-version",
 						Homepage: "some-homepage-link",
-						Licenses: []cargo.ConfigBuildpackLicense{
+						Licenses: []packit.BuildpackInfoLicense{
 							{
 								Type: "some-license-type",
 								URI:  "some-license-uri",
@@ -214,11 +215,11 @@ api = "0.6"
 								DeprecationDate: &deprecationDate,
 								ID:              "some-dependency",
 								Licenses: []interface{}{
-									cargo.ConfigBuildpackLicense{
+									packit.BuildpackInfoLicense{
 										Type: "fancy-license",
 										URI:  "some-license-uri",
 									},
-									cargo.ConfigBuildpackLicense{
+									packit.BuildpackInfoLicense{
 										Type: "fancy-license-2",
 										URI:  "some-license-uri",
 									},
@@ -432,7 +433,7 @@ api = "0.6"
 			Expect(cargo.DecodeConfig(tomlBuffer, &config)).To(Succeed())
 			Expect(config).To(Equal(cargo.Config{
 				API: "0.6",
-				Buildpack: cargo.ConfigBuildpack{
+				Buildpack: packit.BuildpackInfo{
 					ID:          "some-buildpack-id",
 					Name:        "some-buildpack-name",
 					Version:     "some-buildpack-version",
@@ -440,7 +441,7 @@ api = "0.6"
 					ClearEnv:    true,
 					Description: "some-buildpack-description",
 					Keywords:    []string{"some-buildpack-keyword"},
-					Licenses: []cargo.ConfigBuildpackLicense{
+					Licenses: []packit.BuildpackInfoLicense{
 						{
 							Type: "some-license-type",
 							URI:  "some-license-uri",
@@ -581,12 +582,12 @@ api = "0.2"
 				Expect(cargo.DecodeConfig(tomlBuffer, &config)).To(Succeed())
 				Expect(config).To(Equal(cargo.Config{
 					API: "0.2",
-					Buildpack: cargo.ConfigBuildpack{
+					Buildpack: packit.BuildpackInfo{
 						ID:       "some-buildpack-id",
 						Name:     "some-buildpack-name",
 						Version:  "some-buildpack-version",
 						Homepage: "some-homepage-link",
-						Licenses: []cargo.ConfigBuildpackLicense{
+						Licenses: []packit.BuildpackInfoLicense{
 							{
 								Type: "some-license-type",
 								URI:  "some-license-uri",

@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/paketo-buildpacks/packit"
 	"github.com/paketo-buildpacks/packit/cargo"
 	"github.com/sclevine/spec"
 
@@ -65,7 +66,7 @@ pre-package = "some-pre-package-script.sh"
 			Expect(err).NotTo(HaveOccurred())
 			Expect(config).To(Equal(cargo.Config{
 				API: "0.2",
-				Buildpack: cargo.ConfigBuildpack{
+				Buildpack: packit.BuildpackInfo{
 					ID:      "some-buildpack-id",
 					Name:    "some-buildpack-name",
 					Version: "some-buildpack-version",

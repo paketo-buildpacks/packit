@@ -7,40 +7,20 @@ import (
 	"time"
 
 	"github.com/BurntSushi/toml"
+	"github.com/paketo-buildpacks/packit"
 )
 
 type Config struct {
-	API       string          `toml:"api"       json:"api,omitempty"`
-	Buildpack ConfigBuildpack `toml:"buildpack" json:"buildpack,omitempty"`
-	Metadata  ConfigMetadata  `toml:"metadata"  json:"metadata,omitempty"`
-	Stacks    []ConfigStack   `toml:"stacks"    json:"stacks,omitempty"`
-	Order     []ConfigOrder   `toml:"order"     json:"order,omitempty"`
+	API       string               `toml:"api"       json:"api,omitempty"`
+	Buildpack packit.BuildpackInfo `toml:"buildpack" json:"buildpack,omitempty"`
+	Metadata  ConfigMetadata       `toml:"metadata"  json:"metadata,omitempty"`
+	Stacks    []ConfigStack        `toml:"stacks"    json:"stacks,omitempty"`
+	Order     []ConfigOrder        `toml:"order"     json:"order,omitempty"`
 }
 
 type ConfigStack struct {
 	ID     string   `toml:"id"     json:"id,omitempty"`
 	Mixins []string `toml:"mixins" json:"mixins,omitempty"`
-}
-
-type ConfigBuildpack struct {
-	ID          string                   `toml:"id"                    json:"id,omitempty"`
-	Name        string                   `toml:"name"                  json:"name,omitempty"`
-	Version     string                   `toml:"version"               json:"version,omitempty"`
-	Homepage    string                   `toml:"homepage,omitempty"    json:"homepage,omitempty"`
-	ClearEnv    bool                     `toml:"clear-env,omitempty"   json:"clear-env,omitempty"`
-	Description string                   `toml:"description,omitempty" json:"description,omitempty"`
-	Keywords    []string                 `toml:"keywords,omitempty"    json:"keywords,omitempty"`
-	Licenses    []ConfigBuildpackLicense `toml:"licenses,omitempty"    json:"licenses,omitempty"`
-	SBOMFormats []string                 `toml:"sbom-formats,omitempty"    json:"sbom-formats,omitempty"`
-
-	// Deprecated: This field is not part of the official buildpack.toml spec and
-	// will therefore be removed in the next major release
-	SHA256 string `toml:"-" json:"-"`
-}
-
-type ConfigBuildpackLicense struct {
-	Type string `toml:"type" json:"type"`
-	URI  string `toml:"uri"  json:"uri"`
 }
 
 type ConfigMetadata struct {
