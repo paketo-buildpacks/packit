@@ -9,7 +9,6 @@ import (
 
 func TestUnitScribe(t *testing.T) {
 	suite := spec.New("scribe", spec.Report(report.Terminal{}))
-	suite("Bar", testBar)
 	suite("Color", testColor)
 	suite("Emitter", testEmitter)
 	suite("FormattedList", testFormattedList)

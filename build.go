@@ -60,9 +60,6 @@ type BuildContext struct {
 type BuildResult struct {
 	// Plan is the set of refinements to the Buildpack Plan that were performed
 	// during the build phase.
-	//
-	// Deprecated: Use LaunchMetadata or BuildMetadata instead. For more information
-	// see https://buildpacks.io/docs/reference/spec/migration/buildpack-api-0.4-0.5/
 	Plan BuildpackPlan
 
 	// Layers is a list of layers that will be persisted by the lifecycle at the
