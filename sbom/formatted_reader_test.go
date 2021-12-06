@@ -41,6 +41,8 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 		Expect(err).NotTo(HaveOccurred())
 
 		Expect(buffer.String()).To(MatchJSON(fmt.Sprintf(`{
+			"bomFormat": "CycloneDX",
+			"specVersion": "1.3",
 			"version": 1,
 			"serialNumber": "%s",
 			"metadata": {
@@ -55,8 +57,7 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 				"component": {
 					"type": "file",
 					"name": "testdata/",
-					"version": "",
-					"licenses": null
+					"version": ""
 				}
 			},
 			"components": [
@@ -64,42 +65,36 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 					"type": "library",
 					"name": "collapse-white-space",
 					"version": "2.0.0",
-					"licenses": null,
 					"purl": "pkg:npm/collapse-white-space@2.0.0"
 				},
 				{
 					"type": "library",
 					"name": "end-of-stream",
 					"version": "1.4.4",
-					"licenses": null,
 					"purl": "pkg:npm/end-of-stream@1.4.4"
 				},
 				{
 					"type": "library",
 					"name": "insert-css",
 					"version": "2.0.0",
-					"licenses": null,
 					"purl": "pkg:npm/insert-css@2.0.0"
 				},
 				{
 					"type": "library",
 					"name": "once",
 					"version": "1.4.0",
-					"licenses": null,
 					"purl": "pkg:npm/once@1.4.0"
 				},
 				{
 					"type": "library",
 					"name": "pump",
 					"version": "3.0.0",
-					"licenses": null,
 					"purl": "pkg:npm/pump@3.0.0"
 				},
 				{
 					"type": "library",
 					"name": "wrappy",
 					"version": "1.0.2",
-					"licenses": null,
 					"purl": "pkg:npm/wrappy@1.0.2"
 				}
 			]
@@ -136,7 +131,7 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 			"documentNamespace": "%s",
 			"packages": [
 				{
-					"SPDXID": "SPDXRef-Package-npm-collapse-white-space-2.0.0",
+					"SPDXID": "SPDXRef-32427d6153854661",
 					"name": "collapse-white-space",
 					"licenseConcluded": "NONE",
 					"downloadLocation": "NOASSERTION",
@@ -213,7 +208,7 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 					"versionInfo": "2.0.0"
 				},
 				{
-					"SPDXID": "SPDXRef-Package-npm-end-of-stream-1.4.4",
+					"SPDXID": "SPDXRef-3a9cd5afdee12f9e",
 					"name": "end-of-stream",
 					"licenseConcluded": "NONE",
 					"downloadLocation": "NOASSERTION",
@@ -290,7 +285,7 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 					"versionInfo": "1.4.4"
 				},
 				{
-					"SPDXID": "SPDXRef-Package-npm-insert-css-2.0.0",
+					"SPDXID": "SPDXRef-1a6a787a32934992",
 					"name": "insert-css",
 					"licenseConcluded": "NONE",
 					"downloadLocation": "NOASSERTION",
@@ -347,7 +342,7 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 					"versionInfo": "2.0.0"
 				},
 				{
-					"SPDXID": "SPDXRef-Package-npm-once-1.4.0",
+					"SPDXID": "SPDXRef-4705ae55f7cf3d30",
 					"name": "once",
 					"licenseConcluded": "NONE",
 					"downloadLocation": "NOASSERTION",
@@ -374,7 +369,7 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 					"versionInfo": "1.4.0"
 				},
 				{
-					"SPDXID": "SPDXRef-Package-npm-pump-3.0.0",
+					"SPDXID": "SPDXRef-cbd84c0e95ea71a3",
 					"name": "pump",
 					"licenseConcluded": "NONE",
 					"downloadLocation": "NOASSERTION",
@@ -401,7 +396,7 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 					"versionInfo": "3.0.0"
 				},
 				{
-					"SPDXID": "SPDXRef-Package-npm-wrappy-1.0.2",
+					"SPDXID": "SPDXRef-7f69702d44cabe6",
 					"name": "wrappy",
 					"licenseConcluded": "NONE",
 					"downloadLocation": "NOASSERTION",
@@ -439,7 +434,7 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 		Expect(buffer.String()).To(MatchJSON(`{
 			"artifacts": [
 				{
-					"id": "b5116577839f53ee",
+					"id": "32427d6153854661",
 					"name": "collapse-white-space",
 					"version": "2.0.0",
 					"type": "npm",
@@ -470,7 +465,7 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 					"metadata": null
 				},
 				{
-					"id": "76de38f5dc172765",
+					"id": "3a9cd5afdee12f9e",
 					"name": "end-of-stream",
 					"version": "1.4.4",
 					"type": "npm",
@@ -501,7 +496,7 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 					"metadata": null
 				},
 				{
-					"id": "f5ac627dd1855cc2",
+					"id": "1a6a787a32934992",
 					"name": "insert-css",
 					"version": "2.0.0",
 					"type": "npm",
@@ -528,7 +523,7 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 					"metadata": null
 				},
 				{
-					"id": "4969a085850a55e4",
+					"id": "4705ae55f7cf3d30",
 					"name": "once",
 					"version": "1.4.0",
 					"type": "npm",
@@ -549,7 +544,7 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 					"metadata": null
 				},
 				{
-					"id": "fce9bafbedd6e2a2",
+					"id": "cbd84c0e95ea71a3",
 					"name": "pump",
 					"version": "3.0.0",
 					"type": "npm",
@@ -570,7 +565,7 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 					"metadata": null
 				},
 				{
-					"id": "f1a20b83d0b6877e",
+					"id": "7f69702d44cabe6",
 					"name": "wrappy",
 					"version": "1.0.2",
 					"type": "npm",
@@ -602,12 +597,12 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 				"idLike": ""
 			},
 			"descriptor": {
-				"name": "syft",
-				"version": "[not provided]"
+				"name": "",
+				"version": ""
 			},
 			"schema": {
-				"version": "1.1.0",
-				"url": "https://raw.githubusercontent.com/anchore/syft/main/schema/json/schema-1.1.0.json"
+				"version": "2.0.0",
+				"url": "https://raw.githubusercontent.com/anchore/syft/main/schema/json/schema-2.0.0.json"
 			}
 		}`))
 	})

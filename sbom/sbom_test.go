@@ -79,12 +79,12 @@ func testSBOM(t *testing.T, context spec.G, it spec.S) {
 					"idLike": ""
 				},
 				"descriptor": {
-					"name": "syft",
-					"version": "[not provided]"
+					"name": "",
+					"version": ""
 				},
 				"schema": {
-					"version": "1.1.0",
-					"url": "https://raw.githubusercontent.com/anchore/syft/main/schema/json/schema-1.1.0.json"
+					"version": "2.0.0",
+					"url": "https://raw.githubusercontent.com/anchore/syft/main/schema/json/schema-2.0.0.json"
 				}
 			}`))
 
@@ -106,6 +106,8 @@ func testSBOM(t *testing.T, context spec.G, it spec.S) {
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(cdx.String()).To(MatchJSON(fmt.Sprintf(`{
+				"bomFormat": "CycloneDX",
+				"specVersion": "1.3",
 				"version": 1,
 				"serialNumber": "%s",
 				"metadata": {
@@ -120,8 +122,7 @@ func testSBOM(t *testing.T, context spec.G, it spec.S) {
 					"component": {
 						"type": "file",
 						"name": "some-path",
-						"version": "",
-						"licenses": null
+						"version": ""
 					}
 				},
 				"components": [
@@ -131,7 +132,9 @@ func testSBOM(t *testing.T, context spec.G, it spec.S) {
 						"version": "1.16.9",
 						"licenses": [
 							{
-								"name": "BSD-3-Clause"
+								"license": {
+									"name": "BSD-3-Clause"
+								}
 							}
 						],
 						"purl": "pkg:generic/go@go1.16.9?checksum=0a1cc7fd7bd20448f71ebed64d846138850d5099b18cf5cc10a4fc45160d8c3d&download_url=https://dl.google.com/go/go1.16.9.src.tar.gz"
@@ -172,7 +175,7 @@ func testSBOM(t *testing.T, context spec.G, it spec.S) {
 				"documentNamespace": "%s",
 				"packages": [
 					{
-						"SPDXID": "SPDXRef-Package--Go-1.16.9",
+						"SPDXID": "SPDXRef-b0a2cd11c0e13e43",
 						"name": "Go",
 						"licenseConcluded": "BSD-3-Clause",
 						"downloadLocation": "NOASSERTION",
