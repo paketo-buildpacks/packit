@@ -185,13 +185,6 @@ func (s Service) Deliver(dependency Dependency, cnbPath, layerPath, platformPath
 	return nil
 }
 
-// Install will invoke Deliver with a hardcoded value of /platform for the platform path.
-//
-// Deprecated: Use Deliver instead.
-func (s Service) Install(dependency Dependency, cnbPath, layerPath string) error {
-	return s.Deliver(dependency, cnbPath, layerPath, "/platform")
-}
-
 // GenerateBillOfMaterials will generate a list of BOMEntry values given a
 // collection of Dependency values.
 //

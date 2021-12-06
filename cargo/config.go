@@ -32,10 +32,6 @@ type ConfigBuildpack struct {
 	Keywords    []string                 `toml:"keywords,omitempty"    json:"keywords,omitempty"`
 	Licenses    []ConfigBuildpackLicense `toml:"licenses,omitempty"    json:"licenses,omitempty"`
 	SBOMFormats []string                 `toml:"sbom-formats,omitempty"    json:"sbom-formats,omitempty"`
-
-	// Deprecated: This field is not part of the official buildpack.toml spec and
-	// will therefore be removed in the next major release
-	SHA256 string `toml:"-" json:"-"`
 }
 
 type ConfigBuildpackLicense struct {
