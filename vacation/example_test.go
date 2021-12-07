@@ -11,7 +11,7 @@ import (
 	"path/filepath"
 
 	dsnetBzip2 "github.com/dsnet/compress/bzip2"
-	"github.com/paketo-buildpacks/packit/vacation"
+	"github.com/paketo-buildpacks/packit/v2/vacation"
 	"github.com/ulikunitz/xz"
 )
 

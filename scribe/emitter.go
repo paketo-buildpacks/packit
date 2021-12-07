@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/paketo-buildpacks/packit"
-	"github.com/paketo-buildpacks/packit/postal"
+	"github.com/paketo-buildpacks/packit/v2"
+	"github.com/paketo-buildpacks/packit/v2/postal"
 )
 
 // An Emitter embeds the scribe.Logger type to provide an interface for

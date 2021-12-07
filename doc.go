@@ -24,7 +24,7 @@
 //   	"os"
 //   	"path/filepath"
 //
-//   	"github.com/paketo-buildpacks/packit"
+//   	"github.com/paketo-buildpacks/packit/v2"
 //   )
 //
 //   func main() {
@@ -96,7 +96,7 @@
 //
 //   package main
 //
-//   import "github.com/paketo-buildpacks/packit"
+//   import "github.com/paketo-buildpacks/packit/v2"
 //
 //   func main() {
 //   	// The build phase includes the yarn cli in a new layer that is made
@@ -162,7 +162,7 @@
 //
 //   package main
 //
-//   import "github.com/paketo-buildpacks/packit"
+//   import "github.com/paketo-buildpacks/packit/v2"
 //
 //   func main() {
 //   	detect := func(context packit.DetectContext) (packit.DetectResult, error) {

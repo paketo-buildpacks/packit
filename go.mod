@@ -1,4 +1,4 @@
-module github.com/paketo-buildpacks/packit
+module github.com/paketo-buildpacks/packit/v2
 
 go 1.16
 

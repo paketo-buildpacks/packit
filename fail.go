@@ -1,6 +1,6 @@
 package packit
 
-import "github.com/paketo-buildpacks/packit/internal"
+import "github.com/paketo-buildpacks/packit/v2/internal"
 
 // Fail is a sentinal value that can be used to indicate a failure to detect
 // during the detect phase. Fail implements the Error interface and should be

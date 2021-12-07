@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/paketo-buildpacks/packit/vacation"
+	"github.com/paketo-buildpacks/packit/v2/vacation"
 	"github.com/sclevine/spec"
 
 	. "github.com/onsi/gomega"
@@ -22,7 +22,7 @@ func testGzipArchive(t *testing.T, context spec.G, it spec.S) {
 
 	context("Decompress", func() {
 		var (
-			tempDir        string
+			tempDir     string
 			gzipArchive vacation.GzipArchive
 		)
 
