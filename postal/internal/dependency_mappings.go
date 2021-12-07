@@ -2,7 +2,8 @@ package internal
 
 import (
 	"fmt"
-	"github.com/paketo-buildpacks/packit/servicebindings"
+
+	"github.com/paketo-buildpacks/packit/v2/servicebindings"
 )
 
 //go:generate faux --interface BindingResolver --output fakes/binding_resolver.go

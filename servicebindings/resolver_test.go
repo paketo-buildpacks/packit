@@ -5,10 +5,10 @@ import (
 	"path/filepath"
 	"testing"
 
-	. "github.com/onsi/gomega"
+	"github.com/paketo-buildpacks/packit/v2/servicebindings"
 	"github.com/sclevine/spec"
 
-	"github.com/paketo-buildpacks/packit/servicebindings"
+	. "github.com/onsi/gomega"
 )
 
 func testResolver(t *testing.T, context spec.G, it spec.S) {

@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	dsnetBzip2 "github.com/dsnet/compress/bzip2"
-	"github.com/paketo-buildpacks/packit/vacation"
+	"github.com/paketo-buildpacks/packit/v2/vacation"
 	"github.com/sclevine/spec"
 
 	. "github.com/onsi/gomega"
@@ -22,7 +22,7 @@ func testBzip2Archive(t *testing.T, context spec.G, it spec.S) {
 
 	context("Decompress", func() {
 		var (
-			tempDir         string
+			tempDir      string
 			bzip2Archive vacation.Bzip2Archive
 		)
 

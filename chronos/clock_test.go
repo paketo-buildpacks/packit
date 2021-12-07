@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/paketo-buildpacks/packit/chronos"
+	"github.com/paketo-buildpacks/packit/v2/chronos"
 	"github.com/sclevine/spec"
 
 	. "github.com/onsi/gomega"

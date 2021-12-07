@@ -1,6 +1,6 @@
 # packit
 
-[![GoDoc](https://img.shields.io/badge/pkg.go.dev-doc-blue)](http://pkg.go.dev/github.com/paketo-buildpacks/packit)
+[![GoDoc](https://img.shields.io/badge/pkg.go.dev-doc-blue)](http://pkg.go.dev/github.com/paketo-buildpacks/packit/v2)
 
 Package packit provides primitives for implementing a Cloud Native Buildpack
 according to the specification:
@@ -29,7 +29,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/paketo-buildpacks/packit"
+	"github.com/paketo-buildpacks/packit/v2"
 )
 
 func main() {
@@ -103,7 +103,7 @@ application source code.
 ```go
 package main
 
-import "github.com/paketo-buildpacks/packit"
+import "github.com/paketo-buildpacks/packit/v2"
 
 func main() {
 	// The build phase includes the yarn cli in a new layer that is made
@@ -171,7 +171,7 @@ example that combines a simple detect and build into a single main program.
 ```go
 package main
 
-import "github.com/paketo-buildpacks/packit"
+import "github.com/paketo-buildpacks/packit/v2"
 
 func main() {
 	detect := func(context packit.DetectContext) (packit.DetectResult, error) {

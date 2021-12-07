@@ -1,6 +1,6 @@
 package sbom
 
-import "github.com/paketo-buildpacks/packit"
+import "github.com/paketo-buildpacks/packit/v2"
 
 // Formatter implements the packit.SBOMFormatter interface.
 type Formatter struct {

@@ -7,10 +7,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/sclevine/spec"
-
 	"github.com/onsi/gomega/gexec"
-	"github.com/paketo-buildpacks/packit/pexec"
+	"github.com/paketo-buildpacks/packit/v2/pexec"
+	"github.com/sclevine/spec"
 
 	. "github.com/onsi/gomega"
 )
@@ -127,7 +126,7 @@ func testPexec(t *testing.T, context spec.G, it spec.S) {
 					Expect(os.Setenv("PATH", existingPath)).To(Succeed())
 
 					var err error
-					errorCLI, err = gexec.Build("github.com/paketo-buildpacks/packit/fakes/some-executable", "-ldflags", "-X main.fail=true")
+					errorCLI, err = gexec.Build("github.com/paketo-buildpacks/packit/v2/fakes/some-executable", "-ldflags", "-X main.fail=true")
 					Expect(err).NotTo(HaveOccurred())
 
 					path = os.Getenv("PATH")

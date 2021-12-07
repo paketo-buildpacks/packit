@@ -5,7 +5,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/paketo-buildpacks/packit"
+	"github.com/paketo-buildpacks/packit/v2"
 )
 
 // A FormattedMap is a wrapper for map[string]interface{} to extend functionality.

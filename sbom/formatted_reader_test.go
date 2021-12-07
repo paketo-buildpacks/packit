@@ -7,7 +7,7 @@ import (
 	"io"
 	"testing"
 
-	"github.com/paketo-buildpacks/packit/sbom"
+	"github.com/paketo-buildpacks/packit/v2/sbom"
 	"github.com/sclevine/spec"
 
 	. "github.com/onsi/gomega"

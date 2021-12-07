@@ -14,13 +14,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/paketo-buildpacks/packit"
-	"github.com/paketo-buildpacks/packit/postal"
-	"github.com/paketo-buildpacks/packit/postal/fakes"
+	"github.com/paketo-buildpacks/packit/v2"
+	"github.com/paketo-buildpacks/packit/v2/postal"
+	"github.com/paketo-buildpacks/packit/v2/postal/fakes"
 	"github.com/sclevine/spec"
 
 	//nolint Ignore SA1019, usage of deprecated package within a deprecated test case
-	"github.com/paketo-buildpacks/packit/paketosbom"
+	"github.com/paketo-buildpacks/packit/v2/paketosbom"
 
 	. "github.com/onsi/gomega"
 )

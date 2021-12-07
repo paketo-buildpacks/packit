@@ -4,8 +4,8 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/paketo-buildpacks/packit"
-	"github.com/paketo-buildpacks/packit/draft"
+	"github.com/paketo-buildpacks/packit/v2"
+	"github.com/paketo-buildpacks/packit/v2/draft"
 	"github.com/sclevine/spec"
 
 	. "github.com/onsi/gomega"
