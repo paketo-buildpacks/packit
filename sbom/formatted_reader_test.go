@@ -601,8 +601,8 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 				"version": ""
 			},
 			"schema": {
-				"version": "2.0.0",
-				"url": "https://raw.githubusercontent.com/anchore/syft/main/schema/json/schema-2.0.0.json"
+				"version": "2.0.1",
+				"url": "https://raw.githubusercontent.com/anchore/syft/main/schema/json/schema-2.0.1.json"
 			}
 		}`))
 	})
