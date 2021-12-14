@@ -5,7 +5,7 @@ go 1.16
 require (
 	github.com/BurntSushi/toml v0.4.1
 	github.com/Masterminds/semver/v3 v3.1.1
-	github.com/anchore/syft v0.32.0
+	github.com/anchore/syft v0.32.1
 	github.com/dsnet/compress v0.0.2-0.20210315054119-f66993602bf5
 	github.com/gabriel-vasile/mimetype v1.4.0
 	github.com/mattn/go-runewidth v0.0.12 // indirect
