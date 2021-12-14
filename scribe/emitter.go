@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/paketo-buildpacks/packit/v2"
+	"github.com/buildpacks/libcnb"
 	"github.com/paketo-buildpacks/packit/v2/postal"
 )
 
@@ -32,7 +32,7 @@ func NewEmitter(output io.Writer) Emitter {
 // dependency, it will also print a deprecation warning and an EOL warning
 // based if the given dependency is set to be deprecated within the next 30 or
 // is past that window.
-func (e Emitter) SelectedDependency(entry packit.BuildpackPlanEntry, dependency postal.Dependency, now time.Time) {
+func (e Emitter) SelectedDependency(entry libcnb.BuildpackPlanEntry, dependency postal.Dependency, now time.Time) {
 	source, ok := entry.Metadata["version-source"].(string)
 	if !ok {
 		source = "<unknown>"
@@ -56,7 +56,7 @@ func (e Emitter) SelectedDependency(entry packit.BuildpackPlanEntry, dependency 
 
 // Candidates takes a priority sorted list of buildpack plan entries and prints
 // out a formatted table in priority order removing any duplicate entries.
-func (e Emitter) Candidates(entries []packit.BuildpackPlanEntry) {
+func (e Emitter) Candidates(entries []libcnb.BuildpackPlanEntry) {
 	e.Subprocess("Candidate version sources (in priority order):")
 
 	var (
@@ -103,7 +103,7 @@ Entries:
 // enivronment varables and prints out a formatted table including the type
 // name, whether or not it is a default process, the command, arguments, and
 // any process specific environment variables.
-func (e Emitter) LaunchProcesses(processes []packit.Process, processEnvs ...map[string]packit.Environment) {
+func (e Emitter) LaunchProcesses(processes []libcnb.Process, processEnvs ...map[string]libcnb.Environment) {
 	e.Process("Assigning launch processes:")
 
 	var (
@@ -130,15 +130,15 @@ func (e Emitter) LaunchProcesses(processes []packit.Process, processEnvs ...map[
 		pad := typePadding + len(process.Command) - len(pType)
 		p := fmt.Sprintf("%s: %*s", pType, pad, process.Command)
 
-		if process.Args != nil {
-			p += " " + strings.Join(process.Args, " ")
+		if process.Arguments != nil {
+			p += " " + strings.Join(process.Arguments, " ")
 		}
 
 		e.Subprocess(p)
 
 		// This ensures that the process environment variable is always the same no
 		// matter the order of the process envs map list
-		processEnv := packit.Environment{}
+		processEnv := libcnb.Environment{}
 		for _, pEnvs := range processEnvs {
 			if env, ok := pEnvs[process.Type]; ok {
 				for key, value := range env {
@@ -157,22 +157,22 @@ func (e Emitter) LaunchProcesses(processes []packit.Process, processEnvs ...map[
 
 // EnvironmentVariables take a layer and prints out a formatted table of the
 // build and launch time environment variables set in the layer.
-func (e Emitter) EnvironmentVariables(layer packit.Layer) {
-	buildEnv := packit.Environment{}
-	launchEnv := packit.Environment{}
+func (e Emitter) EnvironmentVariables(layer libcnb.Layer) {
+	buildEnv := libcnb.Environment{}
+	launchEnv := libcnb.Environment{}
 
 	// Makes deep local copy of the env map on the layer
-	for key, value := range layer.BuildEnv {
+	for key, value := range layer.BuildEnvironment {
 		buildEnv[key] = value
 	}
 
-	for key, value := range layer.LaunchEnv {
+	for key, value := range layer.LaunchEnvironment {
 		launchEnv[key] = value
 	}
 
 	// Merge the shared env map with the launch and build to remove CNB spec
 	// specific terminiology from the output
-	for key, value := range layer.SharedEnv {
+	for key, value := range layer.SharedEnvironment {
 		buildEnv[key] = value
 		launchEnv[key] = value
 	}

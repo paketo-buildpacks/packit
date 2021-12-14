@@ -7,7 +7,7 @@ import (
 	"regexp"
 	"sort"
 
-	"github.com/paketo-buildpacks/packit/v2"
+	"github.com/buildpacks/libcnb"
 )
 
 // A Planner sorts buildpack plan entries using a given list of priorities. A
@@ -33,8 +33,8 @@ func NewPlanner() Planner {
 // If nil is passed for the value of the priority list then the function will
 // just return the first filtered entry from the list of the entries that were
 // passed into the function initially.
-func (p Planner) Resolve(name string, entries []packit.BuildpackPlanEntry, priorities []interface{}) (packit.BuildpackPlanEntry, []packit.BuildpackPlanEntry) {
-	var filteredEntries []packit.BuildpackPlanEntry
+func (p Planner) Resolve(name string, entries []libcnb.BuildpackPlanEntry, priorities []interface{}) (libcnb.BuildpackPlanEntry, []libcnb.BuildpackPlanEntry) {
+	var filteredEntries []libcnb.BuildpackPlanEntry
 	for _, e := range entries {
 		if e.Name == name {
 			filteredEntries = append(filteredEntries, e)
@@ -42,7 +42,7 @@ func (p Planner) Resolve(name string, entries []packit.BuildpackPlanEntry, prior
 	}
 
 	if len(filteredEntries) == 0 {
-		return packit.BuildpackPlanEntry{}, nil
+		return libcnb.BuildpackPlanEntry{}, nil
 	}
 
 	sort.Slice(filteredEntries, func(i, j int) bool {
@@ -87,7 +87,7 @@ func (p Planner) Resolve(name string, entries []packit.BuildpackPlanEntry, prior
 // returns the OR result of the launch and build keys for all of the buildpack
 // plan entries with the specified name. The first return is the value of the
 // OR launch the second return value is OR build.
-func (p Planner) MergeLayerTypes(name string, entries []packit.BuildpackPlanEntry) (bool, bool) {
+func (p Planner) MergeLayerTypes(name string, entries []libcnb.BuildpackPlanEntry) (bool, bool) {
 	var launch, build bool
 	for _, e := range entries {
 		if e.Name == name {

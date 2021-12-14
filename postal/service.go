@@ -7,17 +7,13 @@ import (
 	"regexp"
 	"sort"
 	"strings"
-	"time"
 
 	"github.com/Masterminds/semver/v3"
-	"github.com/paketo-buildpacks/packit/v2"
 	"github.com/paketo-buildpacks/packit/v2/cargo"
 	"github.com/paketo-buildpacks/packit/v2/postal/internal"
 	"github.com/paketo-buildpacks/packit/v2/servicebindings"
 	"github.com/paketo-buildpacks/packit/v2/vacation"
-
 	//nolint Ignore SA1019, usage of deprecated package within a deprecated test case
-	"github.com/paketo-buildpacks/packit/v2/paketosbom"
 )
 
 //go:generate faux --interface Transport --output fakes/transport.go
@@ -183,54 +179,4 @@ func (s Service) Deliver(dependency Dependency, cnbPath, layerPath, platformPath
 	}
 
 	return nil
-}
-
-// GenerateBillOfMaterials will generate a list of BOMEntry values given a
-// collection of Dependency values.
-//
-// Deprecated: use sbom.GenerateFromDependency instead.
-func (s Service) GenerateBillOfMaterials(dependencies ...Dependency) []packit.BOMEntry {
-	var entries []packit.BOMEntry
-	for _, dependency := range dependencies {
-		paketoBomMetadata := paketosbom.BOMMetadata{
-			Checksum: paketosbom.BOMChecksum{
-				Algorithm: paketosbom.SHA256,
-				Hash:      dependency.SHA256,
-			},
-			URI:     dependency.URI,
-			Version: dependency.Version,
-			Source: paketosbom.BOMSource{
-				Checksum: paketosbom.BOMChecksum{
-					Algorithm: paketosbom.SHA256,
-					Hash:      dependency.SourceSHA256,
-				},
-				URI: dependency.Source,
-			},
-		}
-
-		if dependency.CPE != "" {
-			paketoBomMetadata.CPE = dependency.CPE
-		}
-
-		if (dependency.DeprecationDate != time.Time{}) {
-			paketoBomMetadata.DeprecationDate = dependency.DeprecationDate
-		}
-
-		if dependency.Licenses != nil {
-			paketoBomMetadata.Licenses = dependency.Licenses
-		}
-
-		if dependency.PURL != "" {
-			paketoBomMetadata.PURL = dependency.PURL
-		}
-
-		entry := packit.BOMEntry{
-			Name:     dependency.Name,
-			Metadata: paketoBomMetadata,
-		}
-
-		entries = append(entries, entry)
-	}
-
-	return entries
 }

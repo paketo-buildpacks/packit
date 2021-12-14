@@ -6,7 +6,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/paketo-buildpacks/packit/v2"
+	"github.com/buildpacks/libcnb"
 	"github.com/paketo-buildpacks/packit/v2/postal"
 	"github.com/paketo-buildpacks/packit/v2/scribe"
 )
@@ -42,7 +42,7 @@ func ExampleEmitter_SelectedDependency() {
 		log.Fatal(err)
 	}
 
-	entry := packit.BuildpackPlanEntry{
+	entry := libcnb.BuildpackPlanEntry{
 		Metadata: map[string]interface{}{"version-source": "some-source"},
 	}
 
@@ -74,7 +74,7 @@ func ExampleEmitter_SelectedDependency() {
 func ExampleEmitter_Candidates() {
 	emitter := scribe.NewEmitter(os.Stdout)
 
-	emitter.Candidates([]packit.BuildpackPlanEntry{
+	emitter.Candidates([]libcnb.BuildpackPlanEntry{
 		{
 			Metadata: map[string]interface{}{
 				"version-source": "some-source",
@@ -98,7 +98,7 @@ func ExampleEmitter_Candidates() {
 func ExampleEmitter_LaunchProcesses() {
 	emitter := scribe.NewEmitter(os.Stdout)
 
-	processes := []packit.Process{
+	processes := []libcnb.Process{
 		{
 			Type:    "some-type",
 			Command: "some-command",
@@ -109,20 +109,20 @@ func ExampleEmitter_LaunchProcesses() {
 			Default: true,
 		},
 		{
-			Type:    "some-other-type",
-			Command: "some-other-command",
-			Args:    []string{"some", "args"},
+			Type:      "some-other-type",
+			Command:   "some-other-command",
+			Arguments: []string{"some", "args"},
 		},
 	}
 
-	processEnvs := []map[string]packit.Environment{
+	processEnvs := []map[string]libcnb.Environment{
 		{
-			"web": packit.Environment{
+			"web": libcnb.Environment{
 				"WEB_VAR.default": "some-env",
 			},
 		},
 		{
-			"web": packit.Environment{
+			"web": libcnb.Environment{
 				"ANOTHER_WEB_VAR.default": "another-env",
 			},
 		},
@@ -148,18 +148,18 @@ func ExampleEmitter_LaunchProcesses() {
 func ExampleEmitter_EnvironmentVariables() {
 	emitter := scribe.NewEmitter(os.Stdout)
 
-	emitter.EnvironmentVariables(packit.Layer{
-		BuildEnv: packit.Environment{
+	emitter.EnvironmentVariables(libcnb.Layer{
+		BuildEnvironment: libcnb.Environment{
 			"NODE_HOME.default":    "/some/path",
 			"NODE_ENV.default":     "some-env",
 			"NODE_VERBOSE.default": "some-bool",
 		},
-		LaunchEnv: packit.Environment{
+		LaunchEnvironment: libcnb.Environment{
 			"NODE_HOME.default":    "/some/path",
 			"NODE_ENV.default":     "another-env",
 			"NODE_VERBOSE.default": "another-bool",
 		},
-		SharedEnv: packit.Environment{
+		SharedEnvironment: libcnb.Environment{
 			"SHARED_ENV.default": "shared-env",
 		},
 	})
@@ -206,7 +206,7 @@ func ExampleFormattedMap() {
 }
 
 func ExampleNewFormattedMapFromEnvironment() {
-	fmt.Println(scribe.NewFormattedMapFromEnvironment(packit.Environment{
+	fmt.Println(scribe.NewFormattedMapFromEnvironment(libcnb.Environment{
 		"OVERRIDE.override": "some-value",
 		"DEFAULT.default":   "some-value",
 		"PREPEND.prepend":   "some-value",

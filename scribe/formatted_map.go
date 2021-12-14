@@ -5,7 +5,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/paketo-buildpacks/packit/v2"
+	"github.com/buildpacks/libcnb"
 )
 
 // A FormattedMap is a wrapper for map[string]interface{} to extend functionality.
@@ -46,7 +46,7 @@ func (m FormattedMap) String() string {
 
 // NewFormattedMapFromEnvironment take an environment and returns a
 // FormattedMap with the appropriate environment variable information added.
-func NewFormattedMapFromEnvironment(environment packit.Environment) FormattedMap {
+func NewFormattedMapFromEnvironment(environment libcnb.Environment) FormattedMap {
 	envMap := FormattedMap{}
 	for key, value := range environment {
 		parts := strings.SplitN(key, ".", 2)

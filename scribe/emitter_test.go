@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/paketo-buildpacks/packit/v2"
+	"github.com/buildpacks/libcnb"
 	"github.com/paketo-buildpacks/packit/v2/postal"
 	"github.com/paketo-buildpacks/packit/v2/scribe"
 	"github.com/sclevine/spec"
@@ -30,14 +30,14 @@ func testEmitter(t *testing.T, context spec.G, it spec.S) {
 	context("SelectedDependency", func() {
 		var (
 			now        time.Time
-			entry      packit.BuildpackPlanEntry
+			entry      libcnb.BuildpackPlanEntry
 			dependency postal.Dependency
 		)
 
 		it.Before(func() {
 			now = time.Now()
 
-			entry = packit.BuildpackPlanEntry{
+			entry = libcnb.BuildpackPlanEntry{
 				Metadata: map[string]interface{}{"version-source": "some-source"},
 			}
 
@@ -57,7 +57,7 @@ func testEmitter(t *testing.T, context spec.G, it spec.S) {
 
 		context("when the version source is missing", func() {
 			it("prints details about the selected dependency", func() {
-				emitter.SelectedDependency(packit.BuildpackPlanEntry{}, dependency, now)
+				emitter.SelectedDependency(libcnb.BuildpackPlanEntry{}, dependency, now)
 				Expect(buffer.String()).To(ContainLines(
 					"    Selected Some Dependency version (using <unknown>): some-version",
 					"",
@@ -71,7 +71,7 @@ func testEmitter(t *testing.T, context spec.G, it spec.S) {
 				Expect(err).NotTo(HaveOccurred())
 				now = deprecationDate.Add(-29 * 24 * time.Hour)
 
-				entry = packit.BuildpackPlanEntry{
+				entry = libcnb.BuildpackPlanEntry{
 					Metadata: map[string]interface{}{"version-source": "some-source"},
 				}
 				dependency = postal.Dependency{
@@ -99,7 +99,7 @@ func testEmitter(t *testing.T, context spec.G, it spec.S) {
 				Expect(err).NotTo(HaveOccurred())
 				now = deprecationDate
 
-				entry = packit.BuildpackPlanEntry{
+				entry = libcnb.BuildpackPlanEntry{
 					Metadata: map[string]interface{}{"version-source": "some-source"},
 				}
 
@@ -127,7 +127,7 @@ func testEmitter(t *testing.T, context spec.G, it spec.S) {
 				Expect(err).NotTo(HaveOccurred())
 				now = deprecationDate.Add(24 * time.Hour)
 
-				entry = packit.BuildpackPlanEntry{
+				entry = libcnb.BuildpackPlanEntry{
 					Metadata: map[string]interface{}{"version-source": "some-source"},
 				}
 				dependency = postal.Dependency{
@@ -151,7 +151,7 @@ func testEmitter(t *testing.T, context spec.G, it spec.S) {
 
 	context("Candidates", func() {
 		it("logs the candidate entries", func() {
-			emitter.Candidates([]packit.BuildpackPlanEntry{
+			emitter.Candidates([]libcnb.BuildpackPlanEntry{
 				{
 					Metadata: map[string]interface{}{
 						"version-source": "some-source",
@@ -174,7 +174,7 @@ func testEmitter(t *testing.T, context spec.G, it spec.S) {
 
 		context("when there are deuplicate version sources with the same version", func() {
 			it("logs the candidate entries and removes duplicates", func() {
-				emitter.Candidates([]packit.BuildpackPlanEntry{
+				emitter.Candidates([]libcnb.BuildpackPlanEntry{
 					{
 						Metadata: map[string]interface{}{
 							"version-source": "some-source",
@@ -224,10 +224,10 @@ func testEmitter(t *testing.T, context spec.G, it spec.S) {
 	})
 
 	context("LaunchProcesses", func() {
-		var processes []packit.Process
+		var processes []libcnb.Process
 
 		it.Before(func() {
-			processes = []packit.Process{
+			processes = []libcnb.Process{
 				{
 					Type:    "some-type",
 					Command: "some-command",
@@ -238,9 +238,9 @@ func testEmitter(t *testing.T, context spec.G, it spec.S) {
 					Default: true,
 				},
 				{
-					Type:    "some-other-type",
-					Command: "some-other-command",
-					Args:    []string{"some", "args"},
+					Type:      "some-other-type",
+					Command:   "some-other-command",
+					Arguments: []string{"some", "args"},
 				},
 			}
 		})
@@ -258,17 +258,17 @@ func testEmitter(t *testing.T, context spec.G, it spec.S) {
 		})
 
 		context("when passed process specific environment variables", func() {
-			var processEnvs []map[string]packit.Environment
+			var processEnvs []map[string]libcnb.Environment
 
 			it.Before(func() {
-				processEnvs = []map[string]packit.Environment{
+				processEnvs = []map[string]libcnb.Environment{
 					{
-						"web": packit.Environment{
+						"web": libcnb.Environment{
 							"WEB_VAR.default": "some-env",
 						},
 					},
 					{
-						"web": packit.Environment{
+						"web": libcnb.Environment{
 							"ANOTHER_WEB_VAR.default": "another-env",
 						},
 					},
@@ -293,18 +293,18 @@ func testEmitter(t *testing.T, context spec.G, it spec.S) {
 
 	context("EnvironmentVariables", func() {
 		it("prints a list of environment variables available during launch and build", func() {
-			emitter.EnvironmentVariables(packit.Layer{
-				BuildEnv: packit.Environment{
+			emitter.EnvironmentVariables(libcnb.Layer{
+				BuildEnvironment: libcnb.Environment{
 					"NODE_HOME.default":    "/some/path",
 					"NODE_ENV.default":     "some-env",
 					"NODE_VERBOSE.default": "some-bool",
 				},
-				LaunchEnv: packit.Environment{
+				LaunchEnvironment: libcnb.Environment{
 					"NODE_HOME.default":    "/some/path",
 					"NODE_ENV.default":     "another-env",
 					"NODE_VERBOSE.default": "another-bool",
 				},
-				SharedEnv: packit.Environment{
+				SharedEnvironment: libcnb.Environment{
 					"SHARED_ENV.default": "shared-env",
 				},
 			})
@@ -327,8 +327,8 @@ func testEmitter(t *testing.T, context spec.G, it spec.S) {
 
 		context("when one of the environments is empty it only prints the one that has set vars", func() {
 			it("prints a list of environment variables available during launch", func() {
-				emitter.EnvironmentVariables(packit.Layer{
-					LaunchEnv: packit.Environment{
+				emitter.EnvironmentVariables(libcnb.Layer{
+					LaunchEnvironment: libcnb.Environment{
 						"NODE_HOME.default":    "/some/path",
 						"NODE_ENV.default":     "another-env",
 						"NODE_VERBOSE.default": "another-bool",
@@ -347,8 +347,8 @@ func testEmitter(t *testing.T, context spec.G, it spec.S) {
 			})
 
 			it("prints a list of environment variables available during build", func() {
-				emitter.EnvironmentVariables(packit.Layer{
-					BuildEnv: packit.Environment{
+				emitter.EnvironmentVariables(libcnb.Layer{
+					BuildEnvironment: libcnb.Environment{
 						"NODE_HOME.default":    "/some/path",
 						"NODE_ENV.default":     "some-env",
 						"NODE_VERBOSE.default": "some-bool",

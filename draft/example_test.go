@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"regexp"
 
-	"github.com/paketo-buildpacks/packit/v2"
+	"github.com/buildpacks/libcnb"
 	"github.com/paketo-buildpacks/packit/v2/draft"
 )
 
 func ExamplePlanner_Resolve() {
-	buildpackPlanEntries := []packit.BuildpackPlanEntry{
+	buildpackPlanEntries := []libcnb.BuildpackPlanEntry{
 		{
 			Name: "fred",
 		},
@@ -39,7 +39,7 @@ func ExamplePlanner_Resolve() {
 
 	entry, entries := planner.Resolve("fred", buildpackPlanEntries, priorities)
 
-	printEntry := func(e packit.BuildpackPlanEntry) {
+	printEntry := func(e libcnb.BuildpackPlanEntry) {
 		var source string
 		source, ok := e.Metadata["version-source"].(string)
 		if !ok {
@@ -65,7 +65,7 @@ func ExamplePlanner_Resolve() {
 }
 
 func ExamplePlanner_MergeLayerTypes() {
-	buildpackPlanEntries := []packit.BuildpackPlanEntry{
+	buildpackPlanEntries := []libcnb.BuildpackPlanEntry{
 		{
 			Name: "fred",
 		},

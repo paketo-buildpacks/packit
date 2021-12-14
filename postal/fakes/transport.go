@@ -7,7 +7,7 @@ import (
 
 type Transport struct {
 	DropCall struct {
-		mutex     sync.Mutex
+		sync.Mutex
 		CallCount int
 		Receives  struct {
 			Root string
@@ -22,8 +22,8 @@ type Transport struct {
 }
 
 func (f *Transport) Drop(param1 string, param2 string) (io.ReadCloser, error) {
-	f.DropCall.mutex.Lock()
-	defer f.DropCall.mutex.Unlock()
+	f.DropCall.Lock()
+	defer f.DropCall.Unlock()
 	f.DropCall.CallCount++
 	f.DropCall.Receives.Root = param1
 	f.DropCall.Receives.Uri = param2

@@ -3,7 +3,7 @@ package scribe_test
 import (
 	"testing"
 
-	"github.com/paketo-buildpacks/packit/v2"
+	"github.com/buildpacks/libcnb"
 	"github.com/paketo-buildpacks/packit/v2/scribe"
 	"github.com/sclevine/spec"
 
@@ -26,7 +26,7 @@ func testFormattedMap(t *testing.T, context spec.G, it spec.S) {
 	context("NewFormattedMapFromEnvironment", func() {
 		context("when the operation is override", func() {
 			it("prints the env in a well formatted map", func() {
-				Expect(scribe.NewFormattedMapFromEnvironment(packit.Environment{
+				Expect(scribe.NewFormattedMapFromEnvironment(libcnb.Environment{
 					"OVERRIDE.override": "some-value",
 					"DEFAULT.default":   "some-value",
 					"PREPEND.prepend":   "some-value",

@@ -4,7 +4,7 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/paketo-buildpacks/packit/v2"
+	"github.com/buildpacks/libcnb"
 	"github.com/paketo-buildpacks/packit/v2/draft"
 	"github.com/sclevine/spec"
 
@@ -31,7 +31,7 @@ func testPlanner(t *testing.T, context spec.G, it spec.S) {
 
 	context("ResolveEntries", func() {
 		it("resolves the best plan entry", func() {
-			entry, entries := planner.Resolve("node", []packit.BuildpackPlanEntry{
+			entry, entries := planner.Resolve("node", []libcnb.BuildpackPlanEntry{
 				{
 					Name: "node",
 					Metadata: map[string]interface{}{
@@ -61,7 +61,7 @@ func testPlanner(t *testing.T, context spec.G, it spec.S) {
 				},
 			}, priorities)
 
-			Expect(entry).To(Equal(packit.BuildpackPlanEntry{
+			Expect(entry).To(Equal(libcnb.BuildpackPlanEntry{
 				Name: "node",
 				Metadata: map[string]interface{}{
 					"version":        "some-version",
@@ -69,7 +69,7 @@ func testPlanner(t *testing.T, context spec.G, it spec.S) {
 				},
 			}))
 
-			Expect(entries).To(Equal([]packit.BuildpackPlanEntry{
+			Expect(entries).To(Equal([]libcnb.BuildpackPlanEntry{
 				{
 					Name: "node",
 					Metadata: map[string]interface{}{
@@ -95,7 +95,7 @@ func testPlanner(t *testing.T, context spec.G, it spec.S) {
 
 		context("the priorities are nil", func() {
 			it("returns the first entry in the filtered map", func() {
-				entry, entries := planner.Resolve("node", []packit.BuildpackPlanEntry{
+				entry, entries := planner.Resolve("node", []libcnb.BuildpackPlanEntry{
 					{
 						Name: "node",
 						Metadata: map[string]interface{}{
@@ -125,7 +125,7 @@ func testPlanner(t *testing.T, context spec.G, it spec.S) {
 					},
 				}, nil)
 
-				Expect(entry).To(Equal(packit.BuildpackPlanEntry{
+				Expect(entry).To(Equal(libcnb.BuildpackPlanEntry{
 					Name: "node",
 					Metadata: map[string]interface{}{
 						"version":        "another-version",
@@ -133,7 +133,7 @@ func testPlanner(t *testing.T, context spec.G, it spec.S) {
 					},
 				}))
 
-				Expect(entries).To(Equal([]packit.BuildpackPlanEntry{
+				Expect(entries).To(Equal([]libcnb.BuildpackPlanEntry{
 					{
 						Name: "node",
 						Metadata: map[string]interface{}{
@@ -160,7 +160,7 @@ func testPlanner(t *testing.T, context spec.G, it spec.S) {
 
 		context("there are no entries matching the given name", func() {
 			it("returns no entries", func() {
-				_, entries := planner.Resolve("some-name", []packit.BuildpackPlanEntry{
+				_, entries := planner.Resolve("some-name", []libcnb.BuildpackPlanEntry{
 					{
 						Name: "node",
 						Metadata: map[string]interface{}{
@@ -204,7 +204,7 @@ func testPlanner(t *testing.T, context spec.G, it spec.S) {
 			})
 
 			it("returns no entries", func() {
-				entry, entries := planner.Resolve("dotnet-runtime", []packit.BuildpackPlanEntry{
+				entry, entries := planner.Resolve("dotnet-runtime", []libcnb.BuildpackPlanEntry{
 					{
 						Name: "dotnet-runtime",
 						Metadata: map[string]interface{}{
@@ -227,14 +227,14 @@ func testPlanner(t *testing.T, context spec.G, it spec.S) {
 					},
 				}, priorities)
 
-				Expect(entry).To(Equal(packit.BuildpackPlanEntry{
+				Expect(entry).To(Equal(libcnb.BuildpackPlanEntry{
 					Name: "dotnet-runtime",
 					Metadata: map[string]interface{}{
 						"version":        "another-version",
 						"version-source": "myapp.vbproj",
 					},
 				}))
-				Expect(entries).To(Equal([]packit.BuildpackPlanEntry{
+				Expect(entries).To(Equal([]libcnb.BuildpackPlanEntry{
 					{
 						Name: "dotnet-runtime",
 						Metadata: map[string]interface{}{
@@ -262,7 +262,7 @@ func testPlanner(t *testing.T, context spec.G, it spec.S) {
 
 	context("MergeLayerTypes", func() {
 		it("resolves the layer types from plan metadata", func() {
-			launch, build := planner.MergeLayerTypes("node", []packit.BuildpackPlanEntry{
+			launch, build := planner.MergeLayerTypes("node", []libcnb.BuildpackPlanEntry{
 				{
 					Name: "node",
 					Metadata: map[string]interface{}{
@@ -298,7 +298,7 @@ func testPlanner(t *testing.T, context spec.G, it spec.S) {
 
 		context("if there are flags set in irrelevant entries", func() {
 			it("resolves the layer types from plan metadata and ignores the irrelevant", func() {
-				launch, build := planner.MergeLayerTypes("node", []packit.BuildpackPlanEntry{
+				launch, build := planner.MergeLayerTypes("node", []libcnb.BuildpackPlanEntry{
 					{
 						Name: "node",
 						Metadata: map[string]interface{}{
