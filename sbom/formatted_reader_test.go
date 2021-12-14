@@ -131,7 +131,7 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 			"documentNamespace": "%s",
 			"packages": [
 				{
-					"SPDXID": "SPDXRef-32427d6153854661",
+					"SPDXID": "SPDXRef-8cb201e31f86deb7",
 					"name": "collapse-white-space",
 					"licenseConcluded": "NONE",
 					"downloadLocation": "NOASSERTION",
@@ -204,11 +204,11 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 					],
 					"filesAnalyzed": false,
 					"licenseDeclared": "NONE",
-					"sourceInfo": "acquired package info from installed node module manifest file: testdata/package-lock.json",
+					"sourceInfo": "acquired package info from installed node module manifest file: package-lock.json",
 					"versionInfo": "2.0.0"
 				},
 				{
-					"SPDXID": "SPDXRef-3a9cd5afdee12f9e",
+					"SPDXID": "SPDXRef-1d5b8a47b0a05689",
 					"name": "end-of-stream",
 					"licenseConcluded": "NONE",
 					"downloadLocation": "NOASSERTION",
@@ -281,11 +281,11 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 					],
 					"filesAnalyzed": false,
 					"licenseDeclared": "NONE",
-					"sourceInfo": "acquired package info from installed node module manifest file: testdata/package-lock.json",
+					"sourceInfo": "acquired package info from installed node module manifest file: package-lock.json",
 					"versionInfo": "1.4.4"
 				},
 				{
-					"SPDXID": "SPDXRef-1a6a787a32934992",
+					"SPDXID": "SPDXRef-fa3e7e7a7b2d55de",
 					"name": "insert-css",
 					"licenseConcluded": "NONE",
 					"downloadLocation": "NOASSERTION",
@@ -338,11 +338,11 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 					],
 					"filesAnalyzed": false,
 					"licenseDeclared": "NONE",
-					"sourceInfo": "acquired package info from installed node module manifest file: testdata/package-lock.json",
+					"sourceInfo": "acquired package info from installed node module manifest file: package-lock.json",
 					"versionInfo": "2.0.0"
 				},
 				{
-					"SPDXID": "SPDXRef-4705ae55f7cf3d30",
+					"SPDXID": "SPDXRef-76656a4e0fba5618",
 					"name": "once",
 					"licenseConcluded": "NONE",
 					"downloadLocation": "NOASSERTION",
@@ -365,11 +365,11 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 					],
 					"filesAnalyzed": false,
 					"licenseDeclared": "NONE",
-					"sourceInfo": "acquired package info from installed node module manifest file: testdata/package-lock.json",
+					"sourceInfo": "acquired package info from installed node module manifest file: package-lock.json",
 					"versionInfo": "1.4.0"
 				},
 				{
-					"SPDXID": "SPDXRef-cbd84c0e95ea71a3",
+					"SPDXID": "SPDXRef-18f9a28462e28c2e",
 					"name": "pump",
 					"licenseConcluded": "NONE",
 					"downloadLocation": "NOASSERTION",
@@ -392,11 +392,11 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 					],
 					"filesAnalyzed": false,
 					"licenseDeclared": "NONE",
-					"sourceInfo": "acquired package info from installed node module manifest file: testdata/package-lock.json",
+					"sourceInfo": "acquired package info from installed node module manifest file: package-lock.json",
 					"versionInfo": "3.0.0"
 				},
 				{
-					"SPDXID": "SPDXRef-7f69702d44cabe6",
+					"SPDXID": "SPDXRef-6125f0accc5f06cf",
 					"name": "wrappy",
 					"licenseConcluded": "NONE",
 					"downloadLocation": "NOASSERTION",
@@ -419,7 +419,7 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 					],
 					"filesAnalyzed": false,
 					"licenseDeclared": "NONE",
-					"sourceInfo": "acquired package info from installed node module manifest file: testdata/package-lock.json",
+					"sourceInfo": "acquired package info from installed node module manifest file: package-lock.json",
 					"versionInfo": "1.0.2"
 				}
 			]
@@ -434,14 +434,14 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 		Expect(buffer.String()).To(MatchJSON(`{
 			"artifacts": [
 				{
-					"id": "32427d6153854661",
+					"id": "8cb201e31f86deb7",
 					"name": "collapse-white-space",
 					"version": "2.0.0",
 					"type": "npm",
 					"foundBy": "javascript-lock-cataloger",
 					"locations": [
 						{
-							"path": "testdata/package-lock.json"
+							"path": "package-lock.json"
 						}
 					],
 					"licenses": [],
@@ -465,14 +465,14 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 					"metadata": null
 				},
 				{
-					"id": "3a9cd5afdee12f9e",
+					"id": "1d5b8a47b0a05689",
 					"name": "end-of-stream",
 					"version": "1.4.4",
 					"type": "npm",
 					"foundBy": "javascript-lock-cataloger",
 					"locations": [
 						{
-							"path": "testdata/package-lock.json"
+							"path": "package-lock.json"
 						}
 					],
 					"licenses": [],
@@ -496,14 +496,14 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 					"metadata": null
 				},
 				{
-					"id": "1a6a787a32934992",
+					"id": "fa3e7e7a7b2d55de",
 					"name": "insert-css",
 					"version": "2.0.0",
 					"type": "npm",
 					"foundBy": "javascript-lock-cataloger",
 					"locations": [
 						{
-							"path": "testdata/package-lock.json"
+							"path": "package-lock.json"
 						}
 					],
 					"licenses": [],
@@ -523,14 +523,14 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 					"metadata": null
 				},
 				{
-					"id": "4705ae55f7cf3d30",
+					"id": "76656a4e0fba5618",
 					"name": "once",
 					"version": "1.4.0",
 					"type": "npm",
 					"foundBy": "javascript-lock-cataloger",
 					"locations": [
 						{
-							"path": "testdata/package-lock.json"
+							"path": "package-lock.json"
 						}
 					],
 					"licenses": [],
@@ -544,14 +544,14 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 					"metadata": null
 				},
 				{
-					"id": "cbd84c0e95ea71a3",
+					"id": "18f9a28462e28c2e",
 					"name": "pump",
 					"version": "3.0.0",
 					"type": "npm",
 					"foundBy": "javascript-lock-cataloger",
 					"locations": [
 						{
-							"path": "testdata/package-lock.json"
+							"path": "package-lock.json"
 						}
 					],
 					"licenses": [],
@@ -565,14 +565,14 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 					"metadata": null
 				},
 				{
-					"id": "7f69702d44cabe6",
+					"id": "6125f0accc5f06cf",
 					"name": "wrappy",
 					"version": "1.0.2",
 					"type": "npm",
 					"foundBy": "javascript-lock-cataloger",
 					"locations": [
 						{
-							"path": "testdata/package-lock.json"
+							"path": "package-lock.json"
 						}
 					],
 					"licenses": [],
