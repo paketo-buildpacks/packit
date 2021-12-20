@@ -47,10 +47,21 @@ func testSBOM(t *testing.T, context spec.G, it spec.S) {
 				}
 			}
 
-			Expect(syft.String()).To(MatchJSON(`{
+			type artifact struct {
+				ID string `json:"id"`
+			}
+
+			var syftOutput struct {
+				Artifacts []artifact `json:"artifacts"`
+			}
+
+			err = json.Unmarshal(syft.Bytes(), &syftOutput)
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(syft.String()).To(MatchJSON(fmt.Sprintf(`{
 				"artifacts": [
 					{
-						"id": "b0a2cd11c0e13e43",
+						"id": "%s",
 						"name": "Go",
 						"version": "1.16.9",
 						"type": "",
@@ -86,7 +97,7 @@ func testSBOM(t *testing.T, context spec.G, it spec.S) {
 					"version": "2.0.1",
 					"url": "https://raw.githubusercontent.com/anchore/syft/main/schema/json/schema-2.0.1.json"
 				}
-			}`))
+			}`, syftOutput.Artifacts[0].ID)))
 
 			cdx := bytes.NewBuffer(nil)
 			for _, format := range formats {
@@ -150,11 +161,16 @@ func testSBOM(t *testing.T, context spec.G, it spec.S) {
 				}
 			}
 
+			type packages struct {
+				SPDXID string `json:"SPDXID"`
+			}
+
 			var spdxOutput struct {
 				CreationInfo struct {
 					Created string `json:"created"`
 				} `json:"creationInfo"`
-				DocumentNamespace string `json:"documentNamespace"`
+				DocumentNamespace string     `json:"documentNamespace"`
+				Packages          []packages `json:"packages"`
 			}
 			err = json.Unmarshal(spdx.Bytes(), &spdxOutput)
 			Expect(err).NotTo(HaveOccurred())
@@ -175,7 +191,7 @@ func testSBOM(t *testing.T, context spec.G, it spec.S) {
 				"documentNamespace": "%s",
 				"packages": [
 					{
-						"SPDXID": "SPDXRef-b0a2cd11c0e13e43",
+						"SPDXID": "%s",
 						"name": "Go",
 						"licenseConcluded": "BSD-3-Clause",
 						"downloadLocation": "NOASSERTION",
@@ -197,7 +213,7 @@ func testSBOM(t *testing.T, context spec.G, it spec.S) {
 						"versionInfo": "1.16.9"
 					}
 				]
-			}`, spdxOutput.CreationInfo.Created, spdxOutput.DocumentNamespace)))
+			}`, spdxOutput.CreationInfo.Created, spdxOutput.DocumentNamespace, spdxOutput.Packages[0].SPDXID)))
 		})
 
 		context("failure cases", func() {
