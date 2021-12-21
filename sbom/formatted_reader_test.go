@@ -106,11 +106,16 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 		_, err := io.Copy(buffer, sbom.NewFormattedReader(bom, sbom.SPDXFormat))
 		Expect(err).NotTo(HaveOccurred())
 
+		type packages struct {
+			SPDXID string `json:"SPDXID"`
+		}
+
 		var output struct {
 			CreationInfo struct {
 				Created string `json:"created"`
 			} `json:"creationInfo"`
-			DocumentNamespace string `json:"documentNamespace"`
+			DocumentNamespace string     `json:"documentNamespace"`
+			Packages          []packages `json:"packages"`
 		}
 		err = json.Unmarshal(buffer.Bytes(), &output)
 		Expect(err).NotTo(HaveOccurred())
@@ -131,7 +136,7 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 			"documentNamespace": "%s",
 			"packages": [
 				{
-					"SPDXID": "SPDXRef-8cb201e31f86deb7",
+					"SPDXID": "%s",
 					"name": "collapse-white-space",
 					"licenseConcluded": "NONE",
 					"downloadLocation": "NOASSERTION",
@@ -208,7 +213,7 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 					"versionInfo": "2.0.0"
 				},
 				{
-					"SPDXID": "SPDXRef-1d5b8a47b0a05689",
+					"SPDXID": "%s",
 					"name": "end-of-stream",
 					"licenseConcluded": "NONE",
 					"downloadLocation": "NOASSERTION",
@@ -285,7 +290,7 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 					"versionInfo": "1.4.4"
 				},
 				{
-					"SPDXID": "SPDXRef-fa3e7e7a7b2d55de",
+					"SPDXID": "%s",
 					"name": "insert-css",
 					"licenseConcluded": "NONE",
 					"downloadLocation": "NOASSERTION",
@@ -342,7 +347,7 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 					"versionInfo": "2.0.0"
 				},
 				{
-					"SPDXID": "SPDXRef-76656a4e0fba5618",
+					"SPDXID": "%s",
 					"name": "once",
 					"licenseConcluded": "NONE",
 					"downloadLocation": "NOASSERTION",
@@ -369,7 +374,7 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 					"versionInfo": "1.4.0"
 				},
 				{
-					"SPDXID": "SPDXRef-18f9a28462e28c2e",
+					"SPDXID": "%s",
 					"name": "pump",
 					"licenseConcluded": "NONE",
 					"downloadLocation": "NOASSERTION",
@@ -396,7 +401,7 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 					"versionInfo": "3.0.0"
 				},
 				{
-					"SPDXID": "SPDXRef-6125f0accc5f06cf",
+					"SPDXID": "%s",
 					"name": "wrappy",
 					"licenseConcluded": "NONE",
 					"downloadLocation": "NOASSERTION",
@@ -423,7 +428,15 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 					"versionInfo": "1.0.2"
 				}
 			]
-		}`, output.CreationInfo.Created, output.DocumentNamespace)))
+		}`, output.CreationInfo.Created,
+			output.DocumentNamespace,
+			output.Packages[0].SPDXID,
+			output.Packages[1].SPDXID,
+			output.Packages[2].SPDXID,
+			output.Packages[3].SPDXID,
+			output.Packages[4].SPDXID,
+			output.Packages[5].SPDXID,
+		)))
 	})
 
 	it("writes the SBOM in Syft format", func() {
@@ -431,10 +444,21 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 		_, err := io.Copy(buffer, sbom.NewFormattedReader(bom, sbom.SyftFormat))
 		Expect(err).NotTo(HaveOccurred())
 
-		Expect(buffer.String()).To(MatchJSON(`{
+		type artifact struct {
+			ID string `json:"id"`
+		}
+
+		var syftOutput struct {
+			Artifacts []artifact `json:"artifacts"`
+		}
+
+		err = json.Unmarshal(buffer.Bytes(), &syftOutput)
+		Expect(err).NotTo(HaveOccurred())
+
+		Expect(buffer.String()).To(MatchJSON(fmt.Sprintf(`{
 			"artifacts": [
 				{
-					"id": "8cb201e31f86deb7",
+					"id": "%s",
 					"name": "collapse-white-space",
 					"version": "2.0.0",
 					"type": "npm",
@@ -465,7 +489,7 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 					"metadata": null
 				},
 				{
-					"id": "1d5b8a47b0a05689",
+					"id": "%s",
 					"name": "end-of-stream",
 					"version": "1.4.4",
 					"type": "npm",
@@ -496,7 +520,7 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 					"metadata": null
 				},
 				{
-					"id": "fa3e7e7a7b2d55de",
+					"id": "%s",
 					"name": "insert-css",
 					"version": "2.0.0",
 					"type": "npm",
@@ -523,7 +547,7 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 					"metadata": null
 				},
 				{
-					"id": "76656a4e0fba5618",
+					"id": "%s",
 					"name": "once",
 					"version": "1.4.0",
 					"type": "npm",
@@ -544,7 +568,7 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 					"metadata": null
 				},
 				{
-					"id": "18f9a28462e28c2e",
+					"id": "%s",
 					"name": "pump",
 					"version": "3.0.0",
 					"type": "npm",
@@ -565,7 +589,7 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 					"metadata": null
 				},
 				{
-					"id": "6125f0accc5f06cf",
+					"id": "%s",
 					"name": "wrappy",
 					"version": "1.0.2",
 					"type": "npm",
@@ -604,7 +628,13 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 				"version": "2.0.1",
 				"url": "https://raw.githubusercontent.com/anchore/syft/main/schema/json/schema-2.0.1.json"
 			}
-		}`))
+		}`, syftOutput.Artifacts[0].ID,
+			syftOutput.Artifacts[1].ID,
+			syftOutput.Artifacts[2].ID,
+			syftOutput.Artifacts[3].ID,
+			syftOutput.Artifacts[4].ID,
+			syftOutput.Artifacts[5].ID,
+		)))
 	})
 
 	context("Read", func() {
