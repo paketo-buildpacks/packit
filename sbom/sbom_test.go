@@ -53,6 +53,10 @@ func testSBOM(t *testing.T, context spec.G, it spec.S) {
 
 			var syftOutput struct {
 				Artifacts []artifact `json:"artifacts"`
+				Schema    struct {
+					Version string `json:"version"`
+					URL     string `json:"url"`
+				} `json:"schema"`
 			}
 
 			err = json.Unmarshal(syft.Bytes(), &syftOutput)
@@ -94,10 +98,10 @@ func testSBOM(t *testing.T, context spec.G, it spec.S) {
 					"version": ""
 				},
 				"schema": {
-					"version": "2.0.1",
-					"url": "https://raw.githubusercontent.com/anchore/syft/main/schema/json/schema-2.0.1.json"
+					"version": "%s",
+					"url": "%s"
 				}
-			}`, syftOutput.Artifacts[0].ID)))
+			}`, syftOutput.Artifacts[0].ID, syftOutput.Schema.Version, syftOutput.Schema.URL)))
 
 			cdx := bytes.NewBuffer(nil)
 			for _, format := range formats {
