@@ -30,21 +30,7 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 		_, err := io.Copy(buffer, sbom.NewFormattedReader(bom, sbom.CycloneDXFormat))
 		Expect(err).NotTo(HaveOccurred())
 
-		type component struct {
-			Name string `json:"name"`
-		}
-
-		var cdxOutput struct {
-			BOMFormat   string `json:"bomFormat"`
-			SpecVersion string `json:"specVersion"`
-			Metadata    struct {
-				Component struct {
-					Type string `json:"type"`
-					Name string `json:"name"`
-				} `json:"component"`
-			} `json:"metadata"`
-			Components []component `json:"components"`
-		}
+		var cdxOutput cdxOutput
 
 		err = json.Unmarshal(buffer.Bytes(), &cdxOutput)
 		Expect(err).NotTo(HaveOccurred(), buffer.String())
@@ -53,14 +39,12 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 		Expect(cdxOutput.SpecVersion).To(Equal("1.3"), buffer.String())
 		Expect(cdxOutput.Metadata.Component.Type).To(Equal("file"), buffer.String())
 		Expect(cdxOutput.Metadata.Component.Name).To(Equal("testdata/"), buffer.String())
-		Expect(cdxOutput.Components).To(ContainElements([]component{
-			{Name: "collapse-white-space"},
-			{Name: "end-of-stream"},
-			{Name: "insert-css"},
-			{Name: "once"},
-			{Name: "pump"},
-			{Name: "wrappy"},
-		}), buffer.String())
+		Expect(cdxOutput.Components[0].Name).To(Equal("collapse-white-space"), buffer.String())
+		Expect(cdxOutput.Components[1].Name).To(Equal("end-of-stream"), buffer.String())
+		Expect(cdxOutput.Components[2].Name).To(Equal("insert-css"), buffer.String())
+		Expect(cdxOutput.Components[3].Name).To(Equal("once"), buffer.String())
+		Expect(cdxOutput.Components[4].Name).To(Equal("pump"), buffer.String())
+		Expect(cdxOutput.Components[5].Name).To(Equal("wrappy"), buffer.String())
 	})
 
 	it("writes the SBOM in SPDX format", func() {
@@ -68,27 +52,18 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 		_, err := io.Copy(buffer, sbom.NewFormattedReader(bom, sbom.SPDXFormat))
 		Expect(err).NotTo(HaveOccurred())
 
-		type pkg struct {
-			Name string `json:"name"`
-		}
-
-		var spdxOutput struct {
-			Packages    []pkg  `json:"packages"`
-			SPDXVersion string `json:"spdxVersion"`
-		}
+		var spdxOutput spdxOutput
 
 		err = json.Unmarshal(buffer.Bytes(), &spdxOutput)
 		Expect(err).NotTo(HaveOccurred(), buffer.String())
 
 		Expect(spdxOutput.SPDXVersion).To(Equal("SPDX-2.2"), buffer.String())
-		Expect(spdxOutput.Packages).To(ContainElements([]pkg{
-			{Name: "collapse-white-space"},
-			{Name: "end-of-stream"},
-			{Name: "insert-css"},
-			{Name: "once"},
-			{Name: "pump"},
-			{Name: "wrappy"},
-		}), buffer.String())
+		Expect(spdxOutput.Packages[0].Name).To(Equal("collapse-white-space"), buffer.String())
+		Expect(spdxOutput.Packages[1].Name).To(Equal("end-of-stream"), buffer.String())
+		Expect(spdxOutput.Packages[2].Name).To(Equal("insert-css"), buffer.String())
+		Expect(spdxOutput.Packages[3].Name).To(Equal("once"), buffer.String())
+		Expect(spdxOutput.Packages[4].Name).To(Equal("pump"), buffer.String())
+		Expect(spdxOutput.Packages[5].Name).To(Equal("wrappy"), buffer.String())
 	})
 
 	it("writes the SBOM in Syft format", func() {
@@ -96,20 +71,7 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 		_, err := io.Copy(buffer, sbom.NewFormattedReader(bom, sbom.SyftFormat))
 		Expect(err).NotTo(HaveOccurred())
 
-		type artifact struct {
-			Name string `json:"name"`
-		}
-
-		var syftOutput struct {
-			Artifacts []artifact `json:"artifacts"`
-			Source    struct {
-				Type   string `json:"type"`
-				Target string `json:"target"`
-			} `json:"source"`
-			Schema struct {
-				Version string `json:"version"`
-			} `json:"schema"`
-		}
+		var syftOutput syftOutput
 
 		err = json.Unmarshal(buffer.Bytes(), &syftOutput)
 		Expect(err).NotTo(HaveOccurred(), buffer.String())
@@ -117,14 +79,12 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 		Expect(syftOutput.Schema.Version).To(MatchRegexp(`2\.0\.\d+`), buffer.String())
 		Expect(syftOutput.Source.Type).To(Equal("directory"), buffer.String())
 		Expect(syftOutput.Source.Target).To(Equal("testdata/"), buffer.String())
-		Expect(syftOutput.Artifacts).To(ContainElements([]artifact{
-			{Name: "collapse-white-space"},
-			{Name: "end-of-stream"},
-			{Name: "insert-css"},
-			{Name: "once"},
-			{Name: "pump"},
-			{Name: "wrappy"},
-		}), buffer.String())
+		Expect(syftOutput.Artifacts[0].Name).To(Equal("collapse-white-space"), buffer.String())
+		Expect(syftOutput.Artifacts[1].Name).To(Equal("end-of-stream"), buffer.String())
+		Expect(syftOutput.Artifacts[2].Name).To(Equal("insert-css"), buffer.String())
+		Expect(syftOutput.Artifacts[3].Name).To(Equal("once"), buffer.String())
+		Expect(syftOutput.Artifacts[4].Name).To(Equal("pump"), buffer.String())
+		Expect(syftOutput.Artifacts[5].Name).To(Equal("wrappy"), buffer.String())
 	})
 
 	context("Read", func() {
