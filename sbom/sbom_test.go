@@ -3,7 +3,6 @@ package sbom_test
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"io"
 	"testing"
 
@@ -47,61 +46,20 @@ func testSBOM(t *testing.T, context spec.G, it spec.S) {
 				}
 			}
 
-			type artifact struct {
-				ID string `json:"id"`
-			}
-
-			var syftOutput struct {
-				Artifacts []artifact `json:"artifacts"`
-				Schema    struct {
-					Version string `json:"version"`
-					URL     string `json:"url"`
-				} `json:"schema"`
-			}
+			var syftOutput syftOutput
 
 			err = json.Unmarshal(syft.Bytes(), &syftOutput)
-			Expect(err).NotTo(HaveOccurred())
+			Expect(err).NotTo(HaveOccurred(), syft.String())
 
-			Expect(syft.String()).To(MatchJSON(fmt.Sprintf(`{
-				"artifacts": [
-					{
-						"id": "%s",
-						"name": "Go",
-						"version": "1.16.9",
-						"type": "",
-						"foundBy": "",
-						"locations": [],
-						"licenses": [
-							"BSD-3-Clause"
-						],
-						"language": "",
-						"cpes": [
-							"cpe:2.3:a:golang:go:1.16.9:*:*:*:*:*:*:*"
-						],
-						"purl": "pkg:generic/go@go1.16.9?checksum=0a1cc7fd7bd20448f71ebed64d846138850d5099b18cf5cc10a4fc45160d8c3d&download_url=https://dl.google.com/go/go1.16.9.src.tar.gz",
-						"metadataType": "",
-						"metadata": null
-					}
-				],
-				"artifactRelationships": [],
-				"source": {
-					"type": "directory",
-					"target": "some-path"
-				},
-				"distro": {
-					"name": "",
-					"version": "",
-					"idLike": ""
-				},
-				"descriptor": {
-					"name": "",
-					"version": ""
-				},
-				"schema": {
-					"version": "%s",
-					"url": "%s"
-				}
-			}`, syftOutput.Artifacts[0].ID, syftOutput.Schema.Version, syftOutput.Schema.URL)))
+			goArtifact := syftOutput.Artifacts[0]
+			Expect(goArtifact.Name).To(Equal("Go"), syft.String())
+			Expect(goArtifact.Version).To(Equal("1.16.9"), syft.String())
+			Expect(goArtifact.Licenses).To(Equal([]string{"BSD-3-Clause"}), syft.String())
+			Expect(goArtifact.CPEs).To(Equal([]string{"cpe:2.3:a:golang:go:1.16.9:*:*:*:*:*:*:*"}), syft.String())
+			Expect(goArtifact.PURL).To(Equal("pkg:generic/go@go1.16.9?checksum=0a1cc7fd7bd20448f71ebed64d846138850d5099b18cf5cc10a4fc45160d8c3d&download_url=https://dl.google.com/go/go1.16.9.src.tar.gz"), syft.String())
+			Expect(syftOutput.Source.Type).To(Equal("directory"), syft.String())
+			Expect(syftOutput.Source.Target).To(Equal("some-path"), syft.String())
+			Expect(syftOutput.Schema.Version).To(MatchRegexp(`2\.0\.\d+`), syft.String())
 
 			cdx := bytes.NewBuffer(nil)
 			for _, format := range formats {
@@ -111,51 +69,23 @@ func testSBOM(t *testing.T, context spec.G, it spec.S) {
 				}
 			}
 
-			var cdxOutput struct {
-				SerialNumber string `json:"serialNumber"`
-				Metadata     struct {
-					Timestamp string `json:"timestamp"`
-				} `json:"metadata"`
-			}
-			err = json.Unmarshal(cdx.Bytes(), &cdxOutput)
-			Expect(err).NotTo(HaveOccurred())
+			var cdxOutput cdxOutput
 
-			Expect(cdx.String()).To(MatchJSON(fmt.Sprintf(`{
-				"bomFormat": "CycloneDX",
-				"specVersion": "1.3",
-				"version": 1,
-				"serialNumber": "%s",
-				"metadata": {
-					"timestamp": "%s",
-					"tools": [
-						{
-							"vendor": "anchore",
-							"name": "syft",
-							"version": "[not provided]"
-						}
-					],
-					"component": {
-						"type": "file",
-						"name": "some-path",
-						"version": ""
-					}
-				},
-				"components": [
-					{
-						"type": "library",
-						"name": "Go",
-						"version": "1.16.9",
-						"licenses": [
-							{
-								"license": {
-									"name": "BSD-3-Clause"
-								}
-							}
-						],
-						"purl": "pkg:generic/go@go1.16.9?checksum=0a1cc7fd7bd20448f71ebed64d846138850d5099b18cf5cc10a4fc45160d8c3d&download_url=https://dl.google.com/go/go1.16.9.src.tar.gz"
-					}
-				]
-			}`, cdxOutput.SerialNumber, cdxOutput.Metadata.Timestamp)))
+			err = json.Unmarshal(cdx.Bytes(), &cdxOutput)
+			Expect(err).NotTo(HaveOccurred(), cdx.String())
+
+			Expect(cdxOutput.BOMFormat).To(Equal("CycloneDX"))
+			Expect(cdxOutput.SpecVersion).To(Equal("1.3"))
+
+			goComponent := cdxOutput.Components[0]
+			Expect(goComponent.Name).To(Equal("Go"), cdx.String())
+			Expect(goComponent.Version).To(Equal("1.16.9"), cdx.String())
+			Expect(goComponent.Licenses).To(HaveLen(1), cdx.String())
+			Expect(goComponent.Licenses[0].License.Name).To(Equal("BSD-3-Clause"), cdx.String())
+			Expect(goComponent.PURL).To(Equal("pkg:generic/go@go1.16.9?checksum=0a1cc7fd7bd20448f71ebed64d846138850d5099b18cf5cc10a4fc45160d8c3d&download_url=https://dl.google.com/go/go1.16.9.src.tar.gz"), cdx.String())
+
+			Expect(cdxOutput.Metadata.Component.Type).To(Equal("file"), cdx.String())
+			Expect(cdxOutput.Metadata.Component.Name).To(Equal("some-path"), cdx.String())
 
 			spdx := bytes.NewBuffer(nil)
 			for _, format := range formats {
@@ -165,59 +95,29 @@ func testSBOM(t *testing.T, context spec.G, it spec.S) {
 				}
 			}
 
-			type packages struct {
-				SPDXID string `json:"SPDXID"`
-			}
+			var spdxOutput spdxOutput
 
-			var spdxOutput struct {
-				CreationInfo struct {
-					Created string `json:"created"`
-				} `json:"creationInfo"`
-				DocumentNamespace string     `json:"documentNamespace"`
-				Packages          []packages `json:"packages"`
-			}
 			err = json.Unmarshal(spdx.Bytes(), &spdxOutput)
 			Expect(err).NotTo(HaveOccurred())
+			Expect(err).NotTo(HaveOccurred(), spdx.String())
 
-			Expect(spdx.String()).To(MatchJSON(fmt.Sprintf(`{
-				"SPDXID": "SPDXRef-DOCUMENT",
-				"name": "some-path",
-				"spdxVersion": "SPDX-2.2",
-				"creationInfo": {
-					"created": "%s",
-					"creators": [
-						"Organization: Anchore, Inc",
-						"Tool: syft-[not provided]"
-					],
-					"licenseListVersion": "3.15"
-				},
-				"dataLicense": "CC0-1.0",
-				"documentNamespace": "%s",
-				"packages": [
-					{
-						"SPDXID": "%s",
-						"name": "Go",
-						"licenseConcluded": "BSD-3-Clause",
-						"downloadLocation": "NOASSERTION",
-						"externalRefs": [
-							{
-								"referenceCategory": "SECURITY",
-								"referenceLocator": "cpe:2.3:a:golang:go:1.16.9:*:*:*:*:*:*:*",
-								"referenceType": "cpe23Type"
-							},
-							{
-								"referenceCategory": "PACKAGE_MANAGER",
-								"referenceLocator": "pkg:generic/go@go1.16.9?checksum=0a1cc7fd7bd20448f71ebed64d846138850d5099b18cf5cc10a4fc45160d8c3d&download_url=https://dl.google.com/go/go1.16.9.src.tar.gz",
-								"referenceType": "purl"
-							}
-						],
-						"filesAnalyzed": false,
-						"licenseDeclared": "BSD-3-Clause",
-						"sourceInfo": "acquired package info from the following paths: ",
-						"versionInfo": "1.16.9"
-					}
-				]
-			}`, spdxOutput.CreationInfo.Created, spdxOutput.DocumentNamespace, spdxOutput.Packages[0].SPDXID)))
+			Expect(spdxOutput.SPDXVersion).To(Equal("SPDX-2.2"), spdx.String())
+
+			goPackage := spdxOutput.Packages[0]
+			Expect(goPackage.Name).To(Equal("Go"), spdx.String())
+			Expect(goPackage.Version).To(Equal("1.16.9"), spdx.String())
+			Expect(goPackage.LicenseConcluded).To(Equal("BSD-3-Clause"), spdx.String())
+			Expect(goPackage.LicenseDeclared).To(Equal("BSD-3-Clause"), spdx.String())
+			Expect(goPackage.ExternalRefs).To(ContainElement(externalRef{
+				Category: "SECURITY",
+				Locator:  "cpe:2.3:a:golang:go:1.16.9:*:*:*:*:*:*:*",
+				Type:     "cpe23Type",
+			}), spdx.String())
+			Expect(goPackage.ExternalRefs).To(ContainElement(externalRef{
+				Category: "PACKAGE_MANAGER",
+				Locator:  "pkg:generic/go@go1.16.9?checksum=0a1cc7fd7bd20448f71ebed64d846138850d5099b18cf5cc10a4fc45160d8c3d&download_url=https://dl.google.com/go/go1.16.9.src.tar.gz",
+				Type:     "purl",
+			}), spdx.String())
 		})
 
 		context("failure cases", func() {
