@@ -69,20 +69,6 @@ func testSBOM(t *testing.T, context spec.G, it spec.S) {
 				}
 			}
 
-			type license struct {
-				License struct {
-					Name string `json:"name"`
-				} `json:"license"`
-			}
-
-			type component struct {
-				Type     string    `json:"type"`
-				Name     string    `json:"name"`
-				Version  string    `json:"version"`
-				Licenses []license `json:"licenses"`
-				PURL     string    `json:"purl"`
-			}
-
 			var cdxOutput cdxOutput
 
 			err = json.Unmarshal(cdx.Bytes(), &cdxOutput)
