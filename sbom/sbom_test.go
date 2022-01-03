@@ -46,24 +46,7 @@ func testSBOM(t *testing.T, context spec.G, it spec.S) {
 				}
 			}
 
-			type artifact struct {
-				Name     string   `json:"name"`
-				Version  string   `json:"version"`
-				Licenses []string `json:"licenses"`
-				CPEs     []string `json:"cpes"`
-				PURL     string   `json:"purl"`
-			}
-
-			var syftOutput struct {
-				Artifacts []artifact `json:"artifacts"`
-				Source    struct {
-					Type   string `json:"type"`
-					Target string `json:"target"`
-				} `json:"source"`
-				Schema struct {
-					Version string `json:"version"`
-				} `json:"schema"`
-			}
+			var syftOutput syftOutput
 
 			err = json.Unmarshal(syft.Bytes(), &syftOutput)
 			Expect(err).NotTo(HaveOccurred(), syft.String())
@@ -100,17 +83,7 @@ func testSBOM(t *testing.T, context spec.G, it spec.S) {
 				PURL     string    `json:"purl"`
 			}
 
-			var cdxOutput struct {
-				BOMFormat   string `json:"bomFormat"`
-				SpecVersion string `json:"specVersion"`
-				Metadata    struct {
-					Component struct {
-						Type string `json:"type"`
-						Name string `json:"name"`
-					} `json:"component"`
-				} `json:"metadata"`
-				Components []component `json:"components"`
-			}
+			var cdxOutput cdxOutput
 
 			err = json.Unmarshal(cdx.Bytes(), &cdxOutput)
 			Expect(err).NotTo(HaveOccurred(), cdx.String())
@@ -136,24 +109,8 @@ func testSBOM(t *testing.T, context spec.G, it spec.S) {
 				}
 			}
 
-			type externalRef struct {
-				Category string `json:"referenceCategory"`
-				Locator  string `json:"referenceLocator"`
-				Type     string `json:"referenceType"`
-			}
+			var spdxOutput spdxOutput
 
-			type pkg struct {
-				ExternalRefs     []externalRef `json:"externalRefs"`
-				LicenseConcluded string        `json:"licenseConcluded"`
-				LicenseDeclared  string        `json:"licenseDeclared"`
-				Name             string        `json:"name"`
-				Version          string        `json:"versionInfo"`
-			}
-
-			var spdxOutput struct {
-				Packages    []pkg  `json:"packages"`
-				SPDXVersion string `json:"spdxVersion"`
-			}
 			err = json.Unmarshal(spdx.Bytes(), &spdxOutput)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(err).NotTo(HaveOccurred(), spdx.String())
