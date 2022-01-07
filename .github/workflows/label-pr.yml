@@ -3,6 +3,7 @@ on:
   pull_request:
     branches:
     - main
+    - v2
 
 concurrency: pr_labels
 

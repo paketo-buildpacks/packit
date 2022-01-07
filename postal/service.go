@@ -10,14 +10,14 @@ import (
 	"time"
 
 	"github.com/Masterminds/semver/v3"
-	"github.com/paketo-buildpacks/packit"
-	"github.com/paketo-buildpacks/packit/cargo"
-	"github.com/paketo-buildpacks/packit/postal/internal"
-	"github.com/paketo-buildpacks/packit/servicebindings"
-	"github.com/paketo-buildpacks/packit/vacation"
+	"github.com/paketo-buildpacks/packit/v2"
+	"github.com/paketo-buildpacks/packit/v2/cargo"
+	"github.com/paketo-buildpacks/packit/v2/postal/internal"
+	"github.com/paketo-buildpacks/packit/v2/servicebindings"
+	"github.com/paketo-buildpacks/packit/v2/vacation"
 
 	//nolint Ignore SA1019, usage of deprecated package within a deprecated test case
-	"github.com/paketo-buildpacks/packit/paketosbom"
+	"github.com/paketo-buildpacks/packit/v2/paketosbom"
 )
 
 //go:generate faux --interface Transport --output fakes/transport.go

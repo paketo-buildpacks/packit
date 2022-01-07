@@ -5,7 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/paketo-buildpacks/packit/internal"
+	"github.com/paketo-buildpacks/packit/v2/internal"
 )
 
 // Run combines the invocation of both build and detect into a single entry

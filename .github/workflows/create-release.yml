@@ -3,7 +3,7 @@ name: Create Release
 on:
   push:
     branches:
-    - main
+    - v2
   workflow_dispatch:
     inputs:
       version:

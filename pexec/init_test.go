@@ -17,14 +17,14 @@ var (
 	fakeCLI      string
 )
 
-func TestUnitExec(t *testing.T) {
+func TestUnitPexec(t *testing.T) {
 	var Expect = NewWithT(t).Expect
 
 	suite := spec.New("packit/pexec", spec.Report(report.Terminal{}))
 	suite("pexec", testPexec)
 
 	var err error
-	fakeCLI, err = gexec.Build("github.com/paketo-buildpacks/packit/fakes/some-executable")
+	fakeCLI, err = gexec.Build("github.com/paketo-buildpacks/packit/v2/fakes/some-executable")
 	Expect(err).NotTo(HaveOccurred())
 
 	existingPath = os.Getenv("PATH")

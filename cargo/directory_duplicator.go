@@ -1,6 +1,6 @@
 package cargo
 
-import "github.com/paketo-buildpacks/packit/fs"
+import "github.com/paketo-buildpacks/packit/v2/fs"
 
 type DirectoryDuplicator struct{}
 

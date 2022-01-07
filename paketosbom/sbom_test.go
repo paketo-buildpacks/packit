@@ -8,7 +8,7 @@ import (
 	. "github.com/onsi/gomega"
 
 	//nolint Ignore SA1019, usage of deprecated package within a deprecated test case
-	"github.com/paketo-buildpacks/packit/paketosbom"
+	"github.com/paketo-buildpacks/packit/v2/paketosbom"
 )
 
 func testPaketoSBOM(t *testing.T, context spec.G, it spec.S) {
