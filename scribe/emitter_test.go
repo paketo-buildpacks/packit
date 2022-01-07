@@ -149,6 +149,38 @@ func testEmitter(t *testing.T, context spec.G, it spec.S) {
 		})
 	})
 
+	context("WithLevel", func() {
+		context("default", func() {
+			it("output includes debug level logs", func() {
+				emitter.Title("non-debug title")
+				emitter.Debug.Title("debug title")
+
+				Expect(buffer.String()).To(ContainLines(
+					"non-debug title",
+				))
+				Expect(buffer.String()).ToNot(ContainLines(
+					"debug title",
+				))
+			})
+		})
+
+		context("DEBUG", func() {
+			it.Before(func() {
+				emitter = emitter.WithLevel("DEBUG")
+			})
+
+			it("output includes debug level logs", func() {
+				emitter.Title("non-debug title")
+				emitter.Debug.Title("debug title")
+
+				Expect(buffer.String()).To(ContainLines(
+					"non-debug title",
+					"debug title",
+				))
+			})
+		})
+	})
+
 	context("Candidates", func() {
 		it("logs the candidate entries", func() {
 			emitter.Candidates([]packit.BuildpackPlanEntry{

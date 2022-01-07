@@ -26,6 +26,13 @@ func NewEmitter(output io.Writer) Emitter {
 	}
 }
 
+// WithLevel takes in a log level string and configures the underlying Logger
+// log level. To enable debug logging the log level must be set to "DEBUG".
+func (e Emitter) WithLevel(level string) Emitter {
+	e.Logger = e.Logger.WithLevel(level)
+	return e
+}
+
 // SelectedDependency takes in a buildpack plan entry, a postal dependency, and
 // the current time, and prints out a message giving the name and version of
 // the dependency as well as the source of the request for that given
