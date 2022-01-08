@@ -205,6 +205,19 @@ func testResolver(t *testing.T, context spec.G, it spec.S) {
 
 			err = os.WriteFile(filepath.Join(bindingRoot, "binding-2", "password"), nil, os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
+
+			err = os.MkdirAll(filepath.Join(bindingRoot, "binding-3"), os.ModePerm)
+			Expect(err).NotTo(HaveOccurred())
+
+			err = os.WriteFile(filepath.Join(bindingRoot, "binding-3", "type"), []byte("\n type-3\n"), os.ModePerm)
+			Expect(err).NotTo(HaveOccurred())
+
+			err = os.WriteFile(filepath.Join(bindingRoot, "binding-3", "provider"), []byte("\tprovider-3\n"), os.ModePerm)
+			Expect(err).NotTo(HaveOccurred())
+
+			err = os.WriteFile(filepath.Join(bindingRoot, "binding-3", "value"), nil, os.ModePerm)
+			Expect(err).NotTo(HaveOccurred())
+
 		})
 
 		it.After(func() {
@@ -254,6 +267,23 @@ func testResolver(t *testing.T, context spec.G, it spec.S) {
 						Entries: map[string]*servicebindings.Entry{
 							"username": servicebindings.NewEntry(filepath.Join(bindingRoot, "binding-1B", "username")),
 							"password": servicebindings.NewEntry(filepath.Join(bindingRoot, "binding-1B", "password")),
+						},
+					},
+				))
+			})
+
+			it("resolves by type/provider files that contains whitespace", func() {
+				bindings, err := resolver.Resolve("type-3", "provider-3", "")
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(bindings).To(ConsistOf(
+					servicebindings.Binding{
+						Name:     "binding-3",
+						Path:     filepath.Join(bindingRoot, "binding-3"),
+						Type:     "type-3",
+						Provider: "provider-3",
+						Entries: map[string]*servicebindings.Entry{
+							"value": servicebindings.NewEntry(filepath.Join(bindingRoot, "binding-3", "value")),
 						},
 					},
 				))
