@@ -165,6 +165,7 @@ func loadBinding(bindingRoot, name string) (Binding, error) {
 	if err != nil {
 		return Binding{}, err
 	}
+	binding.Type = strings.TrimSpace(binding.Type)
 	delete(entries, "type")
 
 	provider, ok := entries["provider"]
@@ -173,6 +174,7 @@ func loadBinding(bindingRoot, name string) (Binding, error) {
 		if err != nil {
 			return Binding{}, err
 		}
+		binding.Provider = strings.TrimSpace(binding.Provider)
 		delete(entries, "provider")
 	}
 
@@ -202,6 +204,7 @@ func loadLegacyBinding(bindingRoot, name string) (Binding, error) {
 	if err != nil {
 		return Binding{}, err
 	}
+	binding.Type = strings.TrimSpace(binding.Type)
 	delete(metadata, "kind")
 
 	provider, ok := metadata["provider"]
@@ -212,6 +215,7 @@ func loadLegacyBinding(bindingRoot, name string) (Binding, error) {
 	if err != nil {
 		return Binding{}, err
 	}
+	binding.Provider = strings.TrimSpace(binding.Provider)
 	delete(metadata, "provider")
 
 	binding.Entries = metadata
