@@ -5,6 +5,7 @@ import (
 
 	"github.com/anchore/syft/syft"
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/pkg/cataloger"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
 	"github.com/paketo-buildpacks/packit/v2/postal"
@@ -24,7 +25,13 @@ func Generate(path string) (SBOM, error) {
 		return SBOM{}, err
 	}
 
-	catalog, _, distro, err := syft.CatalogPackages(&src, source.UnknownScope)
+	config := cataloger.Config{
+		Search: cataloger.SearchConfig{
+			Scope: source.UnknownScope,
+		},
+	}
+
+	catalog, _, distro, err := syft.CatalogPackages(&src, config)
 	if err != nil {
 		return SBOM{}, err
 	}
