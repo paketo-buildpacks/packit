@@ -63,7 +63,7 @@ func parseBuildpack(path, name string) ([]Dependency, string, error) {
 			Dependencies    []Dependency      `toml:"dependencies"`
 		} `toml:"metadata"`
 	}
-	_, err = toml.DecodeReader(file, &buildpack)
+	_, err = toml.NewDecoder(file).Decode(&buildpack)
 	if err != nil {
 		return nil, "", fmt.Errorf("failed to parse buildpack.toml: %w", err)
 	}
