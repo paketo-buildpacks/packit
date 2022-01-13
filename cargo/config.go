@@ -101,7 +101,7 @@ func EncodeConfig(writer io.Writer, config Config) error {
 
 func DecodeConfig(reader io.Reader, config *Config) error {
 	var c map[string]interface{}
-	_, err := toml.DecodeReader(reader, &c)
+	_, err := toml.NewDecoder(reader).Decode(&c)
 	if err != nil {
 		return err
 	}
