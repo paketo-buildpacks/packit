@@ -31,7 +31,7 @@ func Generate(path string) (SBOM, error) {
 		},
 	}
 
-	catalog, _, distro, err := syft.CatalogPackages(&src, config)
+	catalog, _, release, err := syft.CatalogPackages(&src, config)
 	if err != nil {
 		return SBOM{}, err
 	}
@@ -39,8 +39,8 @@ func Generate(path string) (SBOM, error) {
 	return SBOM{
 		syft: sbom.SBOM{
 			Artifacts: sbom.Artifacts{
-				PackageCatalog: catalog,
-				Distro:         distro,
+				PackageCatalog:    catalog,
+				LinuxDistribution: release,
 			},
 			Source: src.Metadata,
 		},
