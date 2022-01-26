@@ -76,7 +76,7 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 		err = json.Unmarshal(buffer.Bytes(), &syftOutput)
 		Expect(err).NotTo(HaveOccurred(), buffer.String())
 
-		Expect(syftOutput.Schema.Version).To(MatchRegexp(`2\.0\.\d+`), buffer.String())
+		Expect(syftOutput.Schema.Version).To(MatchRegexp(`\d+\.\d+\.\d+`), buffer.String())
 		Expect(syftOutput.Source.Type).To(Equal("directory"), buffer.String())
 		Expect(syftOutput.Source.Target).To(Equal("testdata/"), buffer.String())
 		Expect(syftOutput.Artifacts[0].Name).To(Equal("collapse-white-space"), buffer.String())

@@ -59,7 +59,7 @@ func testSBOM(t *testing.T, context spec.G, it spec.S) {
 			Expect(goArtifact.PURL).To(Equal("pkg:generic/go@go1.16.9?checksum=0a1cc7fd7bd20448f71ebed64d846138850d5099b18cf5cc10a4fc45160d8c3d&download_url=https://dl.google.com/go/go1.16.9.src.tar.gz"), syft.String())
 			Expect(syftOutput.Source.Type).To(Equal("directory"), syft.String())
 			Expect(syftOutput.Source.Target).To(Equal("some-path"), syft.String())
-			Expect(syftOutput.Schema.Version).To(MatchRegexp(`2\.0\.\d+`), syft.String())
+			Expect(syftOutput.Schema.Version).To(MatchRegexp(`\d+\.\d+\.\d+`), syft.String())
 
 			cdx := bytes.NewBuffer(nil)
 			for _, format := range formats {
@@ -81,7 +81,7 @@ func testSBOM(t *testing.T, context spec.G, it spec.S) {
 			Expect(goComponent.Name).To(Equal("Go"), cdx.String())
 			Expect(goComponent.Version).To(Equal("1.16.9"), cdx.String())
 			Expect(goComponent.Licenses).To(HaveLen(1), cdx.String())
-			Expect(goComponent.Licenses[0].License.Name).To(Equal("BSD-3-Clause"), cdx.String())
+			Expect(goComponent.Licenses[0].License.ID).To(Equal("BSD-3-Clause"), cdx.String())
 			Expect(goComponent.PURL).To(Equal("pkg:generic/go@go1.16.9?checksum=0a1cc7fd7bd20448f71ebed64d846138850d5099b18cf5cc10a4fc45160d8c3d&download_url=https://dl.google.com/go/go1.16.9.src.tar.gz"), cdx.String())
 
 			Expect(cdxOutput.Metadata.Component.Type).To(Equal("file"), cdx.String())
