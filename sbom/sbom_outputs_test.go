@@ -4,7 +4,7 @@ package sbom_test
 
 type license struct {
 	License struct {
-		Name string `json:"name"`
+		ID string `json:"id"`
 	} `json:"license"`
 }
 
