@@ -196,3 +196,20 @@ func (e Emitter) EnvironmentVariables(layer packit.Layer) {
 		e.Break()
 	}
 }
+
+// GeneratingSBOM takes a path to a directory and logs that an SBOM is
+// being generated for that directory.
+func (e Emitter) GeneratingSBOM(path string) {
+	e.Process("Generating SBOM for directory %s", path)
+}
+
+// FormattingSBOM takes a list of SBOM formats and logs that an SBOM is
+// generated in each format. Note: Only logs when the emitter is in DEBUG
+// mode.
+func (e Emitter) FormattingSBOM(formats ...string) {
+	e.Debug.Process("Writing SBOM in the following format(s):")
+	for _, f := range formats {
+		e.Debug.Subprocess(f)
+	}
+	e.Debug.Break()
+}
