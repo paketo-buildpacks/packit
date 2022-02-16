@@ -399,4 +399,34 @@ func testEmitter(t *testing.T, context spec.G, it spec.S) {
 			})
 		})
 	})
+	context("GeneratingSBOM", func() {
+		it("prints the correct log line with the inputted path", func() {
+			emitter.GeneratingSBOM("some-directory")
+
+			Expect(buffer.String()).To(ContainSubstring("Generating SBOM for directory some-directory"))
+		})
+	})
+	context("FormattingSBOM", func() {
+		context("when log level is INFO", func() {
+			it("does not print anything", func() {
+				emitter.FormattingSBOM("format1", "format2")
+
+				Expect(buffer.String()).To(BeEmpty())
+			})
+			context("when the log level is DEBUG", func() {
+				it.Before(func() {
+					emitter = scribe.NewEmitter(buffer).WithLevel("DEBUG")
+				})
+				it("lists the inputted SBOM formats", func() {
+					emitter.FormattingSBOM("format1", "format2")
+
+					Expect(buffer.String()).To(ContainLines(
+						"  Writing SBOM in the following format(s):",
+						"    format1",
+						"    format2",
+					))
+				})
+			})
+		})
+	})
 }
