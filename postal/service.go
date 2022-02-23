@@ -1,6 +1,7 @@
 package postal
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"path/filepath"
@@ -179,7 +180,7 @@ func (s Service) Deliver(dependency Dependency, cnbPath, layerPath, platformPath
 	}
 
 	if !ok {
-		return fmt.Errorf("checksum does not match: %s", err)
+		return errors.New("failed to validate dependency: checksum does not match")
 	}
 
 	return nil

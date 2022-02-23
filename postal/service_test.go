@@ -616,7 +616,7 @@ version = "this is super not semver"
 						"",
 					)
 
-					Expect(err).To(MatchError(ContainSubstring("checksum does not match")))
+					Expect(err).To(MatchError("validation error: checksum does not match"))
 				})
 			})
 
