@@ -572,6 +572,17 @@ version = "this is super not semver"
 		})
 
 		context("failure cases", func() {
+			context("when dependency mapping resolver fails", func() {
+				it.Before(func() {
+					mappingResolver.FindDependencyMappingCall.Returns.Error = fmt.Errorf("some dependency mapping error")
+				})
+				it("fails to find dependency mappings", func() {
+					err := deliver()
+
+					Expect(err).To(MatchError(ContainSubstring("some dependency mapping error")))
+				})
+			})
+
 			context("when the transport cannot fetch a dependency", func() {
 				it.Before(func() {
 					transport.DropCall.Returns.Error = errors.New("there was an error")
@@ -684,15 +695,64 @@ version = "this is super not semver"
 					Expect(err).To(MatchError(ContainSubstring("failed to extract symlink")))
 				})
 			})
-		})
-		context("when dependency mapping resolver fails", func() {
-			it.Before(func() {
-				mappingResolver.FindDependencyMappingCall.Returns.Error = fmt.Errorf("some dependency mapping error")
-			})
-			it("fails to find dependency mappings", func() {
-				err := deliver()
 
-				Expect(err).To(MatchError(ContainSubstring("some dependency mapping error")))
+			context("when the has additional data in the byte stream", func() {
+				it.Before(func() {
+					var err error
+					layerPath, err = os.MkdirTemp("", "path")
+					Expect(err).NotTo(HaveOccurred())
+
+					buffer := bytes.NewBuffer(nil)
+					tw := tar.NewWriter(buffer)
+
+					file := "some-file"
+					Expect(tw.WriteHeader(&tar.Header{Name: file, Mode: 0755, Size: int64(len(file))})).To(Succeed())
+					_, err = tw.Write([]byte(file))
+					Expect(err).NotTo(HaveOccurred())
+
+					Expect(tw.Close()).To(Succeed())
+
+					sum := sha256.Sum256(buffer.Bytes())
+					dependencySHA = hex.EncodeToString(sum[:])
+
+					// Empty block is tricking tar reader into think that we have reached
+					// EOF becuase we have surpassed the maximum block header size
+					var block [1024]byte
+					_, err = buffer.Write(block[:])
+					Expect(err).NotTo(HaveOccurred())
+
+					_, err = buffer.WriteString("additional data")
+					Expect(err).NotTo(HaveOccurred())
+
+					transport.DropCall.Returns.ReadCloser = io.NopCloser(buffer)
+
+					deliver = func() error {
+						return service.Deliver(
+							postal.Dependency{
+								ID:      "some-entry",
+								Stacks:  []string{"some-stack"},
+								URI:     "https://dependencies.example.com/dependencies/some-file-name.txt",
+								SHA256:  dependencySHA,
+								Version: "1.2.3",
+							},
+							"some-cnb-path",
+							layerPath,
+							"some-platform-dir",
+						)
+					}
+				})
+
+				it.After(func() {
+					Expect(os.RemoveAll(layerPath)).To(Succeed())
+				})
+
+				it("returns an error", func() {
+					err := deliver()
+					Expect(err).To(MatchError("failed to validate dependency: checksum does not match"))
+
+					Expect(transport.DropCall.Receives.Root).To(Equal("some-cnb-path"))
+					Expect(transport.DropCall.Receives.Uri).To(Equal("https://dependencies.example.com/dependencies/some-file-name.txt"))
+				})
 			})
 		})
 	})
