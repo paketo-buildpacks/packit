@@ -2,6 +2,7 @@ package internal
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/paketo-buildpacks/packit/v2/servicebindings"
 )
@@ -30,7 +31,12 @@ func (d DependencyMappingResolver) FindDependencyMapping(sha256, platformDir str
 
 	for _, binding := range bindings {
 		if uri, ok := binding.Entries[sha256]; ok {
-			return uri.ReadString()
+			content, err := uri.ReadString()
+			if err != nil {
+				return "", err
+			}
+
+			return strings.TrimSpace(content), nil
 		}
 	}
 

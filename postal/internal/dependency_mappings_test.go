@@ -25,7 +25,7 @@ func testDependencyMappings(t *testing.T, context spec.G, it spec.S) {
 	it.Before(func() {
 		tmpDir, err = os.MkdirTemp("", "dependency-mappings")
 		Expect(err).NotTo(HaveOccurred())
-		Expect(os.WriteFile(filepath.Join(tmpDir, "entry-data"), []byte("dependency-mapping-entry.tgz"), os.ModePerm))
+		Expect(os.WriteFile(filepath.Join(tmpDir, "entry-data"), []byte("\n\tdependency-mapping-entry.tgz\n"), os.ModePerm))
 
 		bindingResolver = &fakes.BindingResolver{}
 		resolver = internal.NewDependencyMappingResolver(bindingResolver)
