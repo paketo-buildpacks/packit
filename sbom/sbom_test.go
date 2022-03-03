@@ -51,6 +51,8 @@ func testSBOM(t *testing.T, context spec.G, it spec.S) {
 			err = json.Unmarshal(syft.Bytes(), &syftOutput)
 			Expect(err).NotTo(HaveOccurred(), syft.String())
 
+			Expect(syftOutput.Schema.Version).To(MatchRegexp(`3\.\d+\.\d+`), syft.String())
+
 			goArtifact := syftOutput.Artifacts[0]
 			Expect(goArtifact.Name).To(Equal("Go"), syft.String())
 			Expect(goArtifact.Version).To(Equal("1.16.9"), syft.String())
@@ -59,7 +61,6 @@ func testSBOM(t *testing.T, context spec.G, it spec.S) {
 			Expect(goArtifact.PURL).To(Equal("pkg:generic/go@go1.16.9?checksum=0a1cc7fd7bd20448f71ebed64d846138850d5099b18cf5cc10a4fc45160d8c3d&download_url=https://dl.google.com/go/go1.16.9.src.tar.gz"), syft.String())
 			Expect(syftOutput.Source.Type).To(Equal("directory"), syft.String())
 			Expect(syftOutput.Source.Target).To(Equal("some-path"), syft.String())
-			Expect(syftOutput.Schema.Version).To(MatchRegexp(`\d+\.\d+\.\d+`), syft.String())
 
 			cdx := bytes.NewBuffer(nil)
 			for _, format := range formats {
