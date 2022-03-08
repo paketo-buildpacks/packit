@@ -7,7 +7,7 @@ import (
 	"sync"
 
 	"github.com/anchore/syft/syft"
-	"github.com/anchore/syft/syft/format"
+	"github.com/anchore/syft/syft/sbom"
 )
 
 // FormattedReader outputs the SBoM in a specified format.
@@ -31,19 +31,19 @@ func (f *FormattedReader) Read(b []byte) (int, error) {
 	defer f.m.Unlock()
 
 	if f.reader == nil {
-		var option format.Option
+		var id sbom.FormatID
 		switch f.format {
 		case CycloneDXFormat:
-			option = format.CycloneDxJSONOption
+			id = syft.CycloneDxJSONFormatID
 		case SPDXFormat:
-			option = format.SPDXJSONOption
+			id = syft.SPDXJSONFormatID
 		case SyftFormat:
-			option = format.JSONOption
+			id = syft.JSONFormatID
 		default:
-			option = format.UnknownFormatOption
+			return 0, fmt.Errorf("failed to format sbom: unsupported format %q", f.format)
 		}
 
-		output, err := syft.Encode(f.sbom.syft, option)
+		output, err := syft.Encode(f.sbom.syft, syft.FormatByID(id))
 		if err != nil {
 			return 0, fmt.Errorf("failed to format sbom: %w", err)
 		}
