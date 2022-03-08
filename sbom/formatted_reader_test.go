@@ -96,7 +96,7 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 				it("returns an error", func() {
 					formatter := sbom.NewFormattedReader(sbom.SBOM{}, sbom.Format("unknown-format"))
 					_, err := formatter.Read(make([]byte, 10))
-					Expect(err).To(MatchError("failed to format sbom: unsupported format: UnknownFormatOption"))
+					Expect(err).To(MatchError("failed to format sbom: unsupported format \"unknown-format\""))
 				})
 			})
 		})
