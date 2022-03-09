@@ -21,7 +21,8 @@ func testPexec(t *testing.T, context spec.G, it spec.S) {
 		tmpDir         string
 		stdout, stderr *bytes.Buffer
 
-		executable pexec.Executable
+		executable     pexec.Executable
+		executableName string
 	)
 
 	it.Before(func() {
@@ -35,7 +36,8 @@ func testPexec(t *testing.T, context spec.G, it spec.S) {
 		stdout = bytes.NewBuffer(nil)
 		stderr = bytes.NewBuffer(nil)
 
-		executable = pexec.NewExecutable(filepath.Base(fakeCLI))
+		executableName = filepath.Base(fakeCLI)
+		executable = pexec.NewExecutable(executableName)
 	})
 
 	it.After(func() {
@@ -151,4 +153,9 @@ func testPexec(t *testing.T, context spec.G, it spec.S) {
 		})
 	})
 
+	context("Name", func() {
+		it("returns the name", func() {
+			Expect(executable.Name()).To(Equal(executableName))
+		})
+	})
 }

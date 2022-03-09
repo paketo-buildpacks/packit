@@ -22,6 +22,10 @@ func NewExecutable(name string) Executable {
 	}
 }
 
+func (e Executable) Name() string {
+	return e.name
+}
+
 // Execute invokes the executable with a set of Execution arguments.
 func (e Executable) Execute(execution Execution) error {
 	envPath := os.Getenv("PATH")
