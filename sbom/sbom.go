@@ -1,3 +1,5 @@
+// Package sbom implements standardized SBoM tooling that allows multiple SBoM
+// formats to be generated from the same scanning information.
 package sbom
 
 import (
