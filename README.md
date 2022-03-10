@@ -1,6 +1,6 @@
 # packit
 
-[![GoDoc](https://img.shields.io/badge/pkg.go.dev-doc-blue)](http://pkg.go.dev/github.com/paketo-buildpacks/packit/v2)
+[![GoDoc](https://img.shields.io/badge/pkg.go.dev-doc-blue)](http://pkg.go.dev/.)
 
 Package packit provides primitives for implementing a Cloud Native Buildpack
 according to the specification:
@@ -213,17 +213,19 @@ the types and functions declared herein.
 
 * [matchers](./matchers)
 
+* [paketosbom](./paketosbom): Package paketosbom implements a standardized SBoM format that can be used in Paketo Buildpacks.
+
 * [pexec](./pexec): Package pexec provides a mechanism for invoking a program executable with a varying set of arguments.
 
 * [postal](./postal): Package postal provides a service for resolving and installing dependencies for a buildpack.
 
-* [scribe](./scribe)
+* [sbom](./sbom)
+
+* [scribe](./scribe): Package scribe provides a set of interfaces to allow buildpack authors to control their logs on varying levels of granularity.
+
+* [servicebindings](./servicebindings)
 
 * [vacation](./vacation): Package vacation provides a set of functions that enable input stream decompression logic from several popular decompression formats.
-
-## `jam` CLI
-
-The `jam` CLI has been moved into its [own dedicated repository](https://github.com/paketo-buildpacks/jam). For new `jam` releases, please visit the `jam` repositories [release page](https://github.com/paketo-buildpacks/jam/releases).
 
 ---
 Readme created from Go doc with [goreadme](https://github.com/posener/goreadme)
