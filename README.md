@@ -1,6 +1,6 @@
 # packit
 
-[![GoDoc](https://img.shields.io/badge/pkg.go.dev-doc-blue)](http://pkg.go.dev/.)
+[![GoDoc](https://img.shields.io/badge/pkg.go.dev-doc-blue)](http://pkg.go.dev/github.com/paketo-buildpacks/packit/v2)
 
 Package packit provides primitives for implementing a Cloud Native Buildpack
 according to the specification:
