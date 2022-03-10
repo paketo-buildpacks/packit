@@ -219,11 +219,11 @@ the types and functions declared herein.
 
 * [postal](./postal): Package postal provides a service for resolving and installing dependencies for a buildpack.
 
-* [sbom](./sbom)
+* [sbom](./sbom): Package sbom implements standardized SBoM tooling that allows multiple SBoM formats to be generated from the same scanning information.
 
 * [scribe](./scribe): Package scribe provides a set of interfaces to allow buildpack authors to control their logs on varying levels of granularity.
 
-* [servicebindings](./servicebindings)
+* [servicebindings](./servicebindings): Package servicebindings provides a service for inspecting and retrieving data from service binding.
 
 * [vacation](./vacation): Package vacation provides a set of functions that enable input stream decompression logic from several popular decompression formats.
 
