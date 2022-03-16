@@ -30,25 +30,26 @@ func WithIndent(indent int) Option {
 // A Writer conforms to the io.Writer interface and allows for configuration of
 // output from the writter such as the color or indentation through Options.
 type Writer struct {
-	writer io.Writer
-	color  Color
-	indent int
+	writer    io.Writer
+	color     Color
+	indent    int
+	linestart bool
 }
 
 // NewWriter takes a Writer and Options and returns a Writer that will format
 // output according to the options given.
-func NewWriter(writer io.Writer, options ...Option) Writer {
-	w := Writer{writer: writer}
+func NewWriter(writer io.Writer, options ...Option) *Writer {
+	w := Writer{writer: writer, linestart: true}
 	for _, option := range options {
 		w = option(w)
 	}
 
-	return w
+	return &w
 }
 
 // Write takes the given byte array and formats it in accordance with the
 // options on the writer and then outputs that formated text.
-func (w Writer) Write(b []byte) (int, error) {
+func (w *Writer) Write(b []byte) (int, error) {
 	var (
 		prefix, suffix []byte
 		reset          = []byte("\r")
@@ -69,14 +70,20 @@ func (w Writer) Write(b []byte) (int, error) {
 	lines := bytes.Split(b, newline)
 
 	var indentedLines [][]byte
-	for _, line := range lines {
-		for i := 0; i < w.indent; i++ {
-			line = append([]byte("  "), line...)
+	for index, line := range lines {
+		if !(index == 0 && !w.linestart) {
+			for i := 0; i < w.indent; i++ {
+				line = append([]byte("  "), line...)
+			}
 		}
 		indentedLines = append(indentedLines, line)
 	}
 
 	b = bytes.Join(indentedLines, newline)
+
+	if n > 0 {
+		w.linestart = false
+	}
 
 	if w.color != nil {
 		b = []byte(w.color(string(b)))
@@ -88,6 +95,7 @@ func (w Writer) Write(b []byte) (int, error) {
 
 	if suffix != nil {
 		b = append(b, suffix...)
+		w.linestart = true
 	}
 
 	_, err := w.writer.Write(b)

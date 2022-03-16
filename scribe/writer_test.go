@@ -16,7 +16,7 @@ func testWriter(t *testing.T, context spec.G, it spec.S) {
 	context("Writer", func() {
 		var (
 			buffer *bytes.Buffer
-			writer scribe.Writer
+			writer *scribe.Writer
 		)
 
 		it.Before(func() {
@@ -52,6 +52,21 @@ func testWriter(t *testing.T, context spec.G, it spec.S) {
 					_, err := writer.Write([]byte("some-text\nother-text"))
 					Expect(err).NotTo(HaveOccurred())
 					Expect(buffer.String()).To(Equal("    some-text\n    other-text"))
+				})
+
+				context("when sequential write inputs are not newline terminated", func() {
+					it("handles the indentation correctly", func() {
+						_, err := writer.Write([]byte("some-text"))
+						Expect(err).NotTo(HaveOccurred())
+
+						_, err = writer.Write([]byte(" followed by other-text\n"))
+						Expect(err).NotTo(HaveOccurred())
+
+						_, err = writer.Write([]byte("followed by\neven-more-text\n"))
+						Expect(err).NotTo(HaveOccurred())
+
+						Expect(buffer.String()).To(Equal("    some-text followed by other-text\n    followed by\n    even-more-text\n"))
+					})
 				})
 			})
 
