@@ -4,6 +4,7 @@ package sbom
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/anchore/syft/syft"
 	"github.com/anchore/syft/syft/pkg"
@@ -22,9 +23,21 @@ type SBOM struct {
 
 // Generate returns a populated SBOM given a path to a directory to scan.
 func Generate(path string) (SBOM, error) {
-	src, err := source.NewFromDirectory(path)
+	info, err := os.Stat(path)
 	if err != nil {
 		return SBOM{}, err
+	}
+
+	var src source.Source
+	if info.IsDir() {
+		src, err = source.NewFromDirectory(path)
+		if err != nil {
+			return SBOM{}, err
+		}
+	} else {
+		var cleanup func()
+		src, cleanup = source.NewFromFile(path)
+		defer cleanup()
 	}
 
 	config := cataloger.Config{

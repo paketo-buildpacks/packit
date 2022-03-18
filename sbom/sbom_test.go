@@ -16,6 +16,55 @@ import (
 func testSBOM(t *testing.T, context spec.G, it spec.S) {
 	var Expect = NewWithT(t).Expect
 
+	context("Generate", func() {
+		context("when given a directory", func() {
+			it("generates an SBOM for that directory", func() {
+				bom, err := sbom.Generate("testdata/")
+				Expect(err).NotTo(HaveOccurred())
+
+				formatter, err := bom.InFormats(sbom.SyftFormat)
+				Expect(err).NotTo(HaveOccurred())
+
+				syft := bytes.NewBuffer(nil)
+				_, err = io.Copy(syft, formatter.Formats()[0].Content)
+				Expect(err).NotTo(HaveOccurred())
+
+				var syftOutput syftOutput
+				err = json.Unmarshal(syft.Bytes(), &syftOutput)
+				Expect(err).NotTo(HaveOccurred(), syft.String())
+				Expect(syftOutput.Source.Type).To(Equal("directory"), syft.String())
+			})
+		})
+
+		context("when given a file", func() {
+			it("generates an SBOM for that file", func() {
+				bom, err := sbom.Generate("testdata/package-lock.json")
+				Expect(err).NotTo(HaveOccurred())
+
+				formatter, err := bom.InFormats(sbom.SyftFormat)
+				Expect(err).NotTo(HaveOccurred())
+
+				syft := bytes.NewBuffer(nil)
+				_, err = io.Copy(syft, formatter.Formats()[0].Content)
+				Expect(err).NotTo(HaveOccurred())
+
+				var syftOutput syftOutput
+				err = json.Unmarshal(syft.Bytes(), &syftOutput)
+				Expect(err).NotTo(HaveOccurred(), syft.String())
+				Expect(syftOutput.Source.Type).To(Equal("file"), syft.String())
+			})
+		})
+
+		context("failure cases", func() {
+			context("when given a nonexistent path", func() {
+				it("returns an error", func() {
+					_, err := sbom.Generate("no/such/path")
+					Expect(err).To(MatchError(ContainSubstring("no such file or directory")))
+				})
+			})
+		})
+	})
+
 	context("GenerateFromDependency", func() {
 		it("generates a SBOM from a dependency", func() {
 			bom, err := sbom.GenerateFromDependency(postal.Dependency{
