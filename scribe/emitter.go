@@ -200,7 +200,7 @@ func (e Emitter) EnvironmentVariables(layer packit.Layer) {
 // GeneratingSBOM takes a path to a directory and logs that an SBOM is
 // being generated for that directory.
 func (e Emitter) GeneratingSBOM(path string) {
-	e.Process("Generating SBOM for directory %s", path)
+	e.Process("Generating SBOM for %s", path)
 }
 
 // FormattingSBOM takes a list of SBOM formats and logs that an SBOM is
