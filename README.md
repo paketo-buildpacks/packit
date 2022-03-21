@@ -205,8 +205,6 @@ the types and functions declared herein.
 
 * [chronos](./chronos): Package chronos provides clock functionality that can be useful when developing and testing Cloud Native Buildpacks.
 
-* [commands](./commands): Package commands helps with adding `exec.d` executables within Cloud Native Buildpacks.
-
 * [draft](./draft): Package draft provides a service for resolving the priority of buildpack plan entries as well as consilidating build and launch requirements.
 
 * [fakes](./fakes)

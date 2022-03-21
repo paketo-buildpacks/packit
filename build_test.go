@@ -3,6 +3,8 @@ package packit_test
 import (
 	"errors"
 	"fmt"
+	"github.com/paketo-buildpacks/packit/v2/fs"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -1075,6 +1077,156 @@ api = "0.5"
 					Expect(err).NotTo(HaveOccurred())
 					Expect(string(contents)).To(Equal(fmt.Sprintf("%s-value", modifier)))
 				}
+			})
+		})
+	})
+
+	context("when layers have Exec.D executables", func() {
+		var (
+			exe0           string
+			checkExists    func(string)
+			checkNotExists func()
+		)
+
+		it.Before(func() {
+			temp, err := os.CreateTemp(cnbDir, "exec-d")
+			Expect(err).NotTo(HaveOccurred())
+			exe0 = temp.Name()
+
+			checkExists = func(baseName string) {
+				fullName := filepath.Join(layersDir, "layer-with-exec-d-stuff", "exec.d", baseName)
+				exists, err := fs.Exists(fullName)
+				Expect(exists).To(Equal(true), fmt.Sprintf("file %s not found", fullName))
+				Expect(err).NotTo(HaveOccurred())
+			}
+
+			checkNotExists = func() {
+				fullName := filepath.Join(layersDir, "layer-with-exec-d-stuff", "exec.d")
+				exists, err := fs.Exists(fullName)
+				Expect(exists).To(Equal(false), fmt.Sprintf("file %s should not be found", fullName))
+				Expect(err).NotTo(HaveOccurred())
+			}
+		})
+
+		context("when the api version is greater than 0.4", func() {
+			it.Before(func() {
+				bpTOML := []byte(`
+api = "0.5"
+[buildpack]
+  id = "some-id"
+  name = "some-name"
+  version = "some-version"
+  clear-env = false
+				`)
+				Expect(os.WriteFile(filepath.Join(cnbDir, "buildpack.toml"), bpTOML, 0600)).To(Succeed())
+				Expect(os.WriteFile(filepath.Join(envCnbDir, "buildpack.toml"), bpTOML, 0600)).To(Succeed())
+				Expect(os.Chmod(planPath, 0444)).To(Succeed())
+			})
+
+			it("puts the Exec.D executables in the exec.d directory", func() {
+				packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
+					return packit.BuildResult{
+						Layers: []packit.Layer{
+							{
+								Path:  filepath.Join(ctx.Layers.Path, "layer-with-exec-d-stuff"),
+								ExecD: []string{exe0},
+							},
+						},
+					}, nil
+				}, packit.WithArgs([]string{binaryPath, layersDir, platformDir, planPath}))
+
+				checkExists(fmt.Sprintf("0-%s", filepath.Base(exe0)))
+			})
+
+			it("does not create an exec.d directory when ExecD is empty", func() {
+				packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
+					return packit.BuildResult{
+						Layers: []packit.Layer{
+							{
+								Path:  filepath.Join(ctx.Layers.Path, "layer-with-exec-d-stuff"),
+								ExecD: []string{},
+							},
+						},
+					}, nil
+				}, packit.WithArgs([]string{binaryPath, layersDir, platformDir, planPath}))
+
+				checkNotExists()
+			})
+
+			it("prepends a padded integer for lexical ordering", func() {
+				N := 101
+
+				var exes []string
+				for i := 0; i < N; i++ {
+					command, err := ioutil.TempFile(cnbDir, "command")
+					Expect(err).NotTo(HaveOccurred())
+
+					exes = append(exes, command.Name())
+				}
+
+				packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
+					return packit.BuildResult{
+						Layers: []packit.Layer{
+							{
+								Path:  filepath.Join(ctx.Layers.Path, "layer-with-exec-d-stuff"),
+								ExecD: exes,
+							},
+						},
+					}, nil
+				}, packit.WithArgs([]string{binaryPath, layersDir, platformDir, planPath}))
+
+				checkExists(fmt.Sprintf("000-%s", filepath.Base(exes[0])))
+				checkExists(fmt.Sprintf("010-%s", filepath.Base(exes[10])))
+				checkExists(fmt.Sprintf("100-%s", filepath.Base(exes[100])))
+			})
+		})
+
+		context("when the api version is less than 0.5", func() {
+			it.Before(func() {
+				bpTOML := []byte(`
+api = "0.4"
+[buildpack]
+  id = "some-id"
+  name = "some-name"
+  version = "some-version"
+  clear-env = false
+				`)
+				Expect(os.WriteFile(filepath.Join(cnbDir, "buildpack.toml"), bpTOML, 0600)).To(Succeed())
+				Expect(os.WriteFile(filepath.Join(envCnbDir, "buildpack.toml"), bpTOML, 0600)).To(Succeed())
+				Expect(os.Chmod(planPath, 0444)).To(Succeed())
+			})
+
+			it("should not do anything", func() {
+				packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
+					return packit.BuildResult{
+						Layers: []packit.Layer{
+							{
+								Path:  filepath.Join(ctx.Layers.Path, "layer-with-exec-d-stuff"),
+								ExecD: []string{exe0},
+							},
+						},
+					}, nil
+				}, packit.WithArgs([]string{binaryPath, layersDir, platformDir, planPath}))
+
+				checkNotExists()
+			})
+		})
+
+		context("failure cases", func() {
+			it("throws a specific error when executable not found", func() {
+
+				packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
+					return packit.BuildResult{
+						Layers: []packit.Layer{
+							{
+								Path:  filepath.Join(ctx.Layers.Path, "layer-with-exec-d-stuff"),
+								ExecD: []string{"foobar"},
+							},
+						},
+					}, nil
+				}, packit.WithArgs([]string{binaryPath, layersDir, platformDir, planPath}), packit.WithExitHandler(exitHandler))
+
+				Expect(exitHandler.ErrorCall.Receives.Error).To(MatchError("file foobar does not exist. Be sure to include it in the buildpack.toml"))
 			})
 		})
 	})
