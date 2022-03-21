@@ -68,6 +68,25 @@ type Layer struct {
 	// SBOM is a type that implements SBOMFormatter and declares the formats that
 	// bill-of-materials should be output for the layer SBoM.
 	SBOM SBOMFormatter
+
+	// ExecD references Exec.D scripts or executables by fully-qualified file path.
+	// These will be executed in `alphabetically ascending order by file name` as per the buildpack launch mechanism.
+	// See https://github.com/buildpacks/spec/blob/main/buildpack.md#launch.
+	// The listed executables will be given a numerical prefix so that they will be executed in the slice order.
+	// E.g. []string{"/helper", "/bin/command", "/${cnbPath}/other-process"} will result in:
+	// - <layers>/${Name}/exec.d/0-helper
+	// - <layers>/${Name}/exec.d/1-command
+	// - <layers>/${Name}/exec.d/2-other-process
+	// Do not forget to add these files to the `buildpack.toml` so they are available.
+	// If enough executables are given, this function will pad the prefix with zeros so that they are in the correct
+	// alphabetically ascending order.
+	// E.g. []string{"/cmd0", ... , "/cmd10", ..., "/cmd100"} will result in:
+	// - <layers>/${Name}/exec.d/000-cmd0
+	// - <layers>/${Name}/exec.d/010-cmd10
+	// - <layers>/${Name}/exec.d/100-cmd100
+	// ExecD is only recognized when the buildpack API is v0.5+
+	// https://buildpacks.io/docs/reference/spec/migration/buildpack-api-0.4-0.5/#execd
+	ExecD []string
 }
 
 // Reset clears the state of a layer such that the layer can be replaced with

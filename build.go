@@ -3,6 +3,8 @@ package packit
 import (
 	"errors"
 	"fmt"
+	"github.com/paketo-buildpacks/packit/v2/fs"
+	"math"
 	"os"
 	"path/filepath"
 	"sort"
@@ -231,6 +233,35 @@ func Build(f BuildFunc, options ...Option) {
 			} else {
 				config.exitHandler.Error(fmt.Errorf("%s.sbom.* output is only supported with Buildpack API v0.7 or higher", layer.Name))
 				return
+			}
+		}
+
+		if (apiVersion.GreaterThan(apiV05) || apiVersion.Equal(apiV05)) && len(layer.ExecD) > 0 {
+			execdDir := filepath.Join(layer.Path, "exec.d")
+			err = os.MkdirAll(execdDir, os.ModePerm)
+			if err != nil {
+				config.exitHandler.Error(err)
+				return
+			}
+
+			lexicalWidth := 1 + int(math.Log10(float64(len(layer.ExecD))))
+
+			for i, exe := range layer.ExecD {
+				if exists, err := fs.Exists(exe); !exists {
+					config.exitHandler.Error(fmt.Errorf("file %s does not exist. Be sure to include it in the buildpack.toml", exe))
+					return
+				} else if err != nil {
+					config.exitHandler.Error(err)
+					return
+				}
+
+				destination := filepath.Join(execdDir, fmt.Sprintf("%0*d-%s", lexicalWidth, i, filepath.Base(exe)))
+
+				err = fs.Copy(exe, destination)
+				if err != nil {
+					config.exitHandler.Error(err)
+					return
+				}
 			}
 		}
 	}
