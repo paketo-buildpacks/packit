@@ -3,7 +3,6 @@ package packit_test
 import (
 	"errors"
 	"fmt"
-	"github.com/paketo-buildpacks/packit/v2/fs"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -1083,29 +1082,13 @@ api = "0.5"
 
 	context("when layers have Exec.D executables", func() {
 		var (
-			exe0           string
-			checkExists    func(string)
-			checkNotExists func()
+			exe0 string
 		)
 
 		it.Before(func() {
 			temp, err := os.CreateTemp(cnbDir, "exec-d")
 			Expect(err).NotTo(HaveOccurred())
 			exe0 = temp.Name()
-
-			checkExists = func(baseName string) {
-				fullName := filepath.Join(layersDir, "layer-with-exec-d-stuff", "exec.d", baseName)
-				exists, err := fs.Exists(fullName)
-				Expect(exists).To(Equal(true), fmt.Sprintf("file %s not found", fullName))
-				Expect(err).NotTo(HaveOccurred())
-			}
-
-			checkNotExists = func() {
-				fullName := filepath.Join(layersDir, "layer-with-exec-d-stuff", "exec.d")
-				exists, err := fs.Exists(fullName)
-				Expect(exists).To(Equal(false), fmt.Sprintf("file %s should not be found", fullName))
-				Expect(err).NotTo(HaveOccurred())
-			}
 		})
 
 		context("when the api version is greater than 0.4", func() {
@@ -1135,7 +1118,7 @@ api = "0.5"
 					}, nil
 				}, packit.WithArgs([]string{binaryPath, layersDir, platformDir, planPath}))
 
-				checkExists(fmt.Sprintf("0-%s", filepath.Base(exe0)))
+				Expect(filepath.Join(layersDir, "layer-with-exec-d-stuff", "exec.d", fmt.Sprintf("0-%s", filepath.Base(exe0)))).To(BeARegularFile())
 			})
 
 			it("does not create an exec.d directory when ExecD is empty", func() {
@@ -1150,7 +1133,7 @@ api = "0.5"
 					}, nil
 				}, packit.WithArgs([]string{binaryPath, layersDir, platformDir, planPath}))
 
-				checkNotExists()
+				Expect(filepath.Join(layersDir, "layer-with-exec-d-stuff", "exec.d")).NotTo(BeARegularFile())
 			})
 
 			it("prepends a padded integer for lexical ordering", func() {
@@ -1175,9 +1158,9 @@ api = "0.5"
 					}, nil
 				}, packit.WithArgs([]string{binaryPath, layersDir, platformDir, planPath}))
 
-				checkExists(fmt.Sprintf("000-%s", filepath.Base(exes[0])))
-				checkExists(fmt.Sprintf("010-%s", filepath.Base(exes[10])))
-				checkExists(fmt.Sprintf("100-%s", filepath.Base(exes[100])))
+				Expect(filepath.Join(layersDir, "layer-with-exec-d-stuff", "exec.d", fmt.Sprintf("000-%s", filepath.Base(exes[0])))).To(BeARegularFile())
+				Expect(filepath.Join(layersDir, "layer-with-exec-d-stuff", "exec.d", fmt.Sprintf("010-%s", filepath.Base(exes[10])))).To(BeARegularFile())
+				Expect(filepath.Join(layersDir, "layer-with-exec-d-stuff", "exec.d", fmt.Sprintf("100-%s", filepath.Base(exes[100])))).To(BeARegularFile())
 			})
 		})
 
@@ -1208,7 +1191,7 @@ api = "0.4"
 					}, nil
 				}, packit.WithArgs([]string{binaryPath, layersDir, platformDir, planPath}))
 
-				checkNotExists()
+				Expect(filepath.Join(layersDir, "layer-with-exec-d-stuff", "exec.d")).NotTo(BeARegularFile())
 			})
 		})
 
