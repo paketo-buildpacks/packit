@@ -65,11 +65,12 @@ func (a Archive) Decompress(destination string) error {
 		decompressor = NewBzip2Archive(bufferedReader).StripComponents(a.components).WithName(a.name)
 	case "application/zip":
 		decompressor = NewZipArchive(bufferedReader).StripComponents(a.components)
-	case "application/x-executable",
-		"text/plain; charset=utf-8",
+	case "application/x-executable":
+		decompressor = NewExecutable(bufferedReader).WithName(a.name)
+	case "text/plain; charset=utf-8",
 		"application/jar",
 		"application/octet-stream":
-		decompressor = NewExecutable(bufferedReader).WithName(a.name)
+		decompressor = NewNopArchive(bufferedReader).WithName(a.name)
 	default:
 		return fmt.Errorf("unsupported archive type: %s", mime.String())
 	}
