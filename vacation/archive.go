@@ -30,9 +30,13 @@ func NewArchive(inputReader io.Reader) Archive {
 // Decompress reads from Archive, determines the archive type of the input
 // stream, and writes files into the destination specified.
 //
-// Archive decompression will also handle files that are types "text/plain;
-// charset=utf-8" and write the contents of the input stream to a file name
-// specified by the `Archive.WithName()` option in the destination directory.
+// Archive decompression will also handle files that are types
+// - "application/x-executable"
+// - "text/plain; charset=utf-8"
+// - "application/jar"
+// - "application/octet-stream"
+// and write the contents of the input stream to a file name specified by the
+// `Archive.WithName()` option in the destination directory.
 func (a Archive) Decompress(destination string) error {
 	// Convert reader into a buffered read so that the header can be peeked to
 	// determine the type.
@@ -48,8 +52,7 @@ func (a Archive) Decompress(destination string) error {
 
 	mime := mimetype.Detect(header)
 
-	// This switch case is reponsible for determining what the decompression
-	// strategy should be.
+	// This switch case is responsible for determining the decompression strategy
 	var decompressor Decompressor
 	switch mime.String() {
 	case "application/x-tar":
@@ -62,10 +65,11 @@ func (a Archive) Decompress(destination string) error {
 		decompressor = NewBzip2Archive(bufferedReader).StripComponents(a.components).WithName(a.name)
 	case "application/zip":
 		decompressor = NewZipArchive(bufferedReader).StripComponents(a.components)
-	case "application/x-executable":
+	case "application/x-executable",
+		"text/plain; charset=utf-8",
+		"application/jar",
+		"application/octet-stream":
 		decompressor = NewExecutable(bufferedReader).WithName(a.name)
-	case "text/plain; charset=utf-8", "application/jar":
-		decompressor = NewNopArchive(bufferedReader).WithName(a.name)
 	default:
 		return fmt.Errorf("unsupported archive type: %s", mime.String())
 	}
