@@ -93,16 +93,20 @@ func GenerateFromDependency(dependency postal.Dependency, path string) (SBOM, er
 }
 
 // InFormats returns a Formatter containing mappings for the given Formats.
-func (s SBOM) InFormats(formats ...string) (Formatter, error) {
-	var fs []Format
-	for _, f := range formats {
-		format := Format(f)
-		if format.Extension() == "" {
-			return Formatter{}, fmt.Errorf("%q is not a supported SBOM format", f)
+func (s SBOM) InFormats(mediaTypes ...string) (Formatter, error) {
+	var fs []sbom.FormatID
+	for _, m := range mediaTypes {
+		format, err := formatByMediaType(m)
+		if err != nil {
+			return Formatter{}, err
 		}
 
-		fs = append(fs, format)
+		if format.Extension() == "" {
+			return Formatter{}, fmt.Errorf("unable to determine file extension for SBOM format '%s'", format.ID())
+		}
+
+		fs = append(fs, format.ID())
 	}
 
-	return Formatter{sbom: s, formats: fs}, nil
+	return Formatter{sbom: s, formatIDs: fs}, nil
 }

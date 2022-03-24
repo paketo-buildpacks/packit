@@ -14,14 +14,15 @@ import (
 type FormattedReader struct {
 	m      sync.Mutex
 	sbom   SBOM
-	format Format
+	format sbom.FormatID
 	reader io.Reader
 }
 
 // NewFormattedReader creates an instance of FormattedReader given an SBOM and
 // Format.
 func NewFormattedReader(s SBOM, f Format) *FormattedReader {
-	return &FormattedReader{sbom: s, format: f}
+	// type conversion to maintain backward compatibility of constructor
+	return &FormattedReader{sbom: s, format: sbom.FormatID(f)}
 }
 
 // Read implements the io.Reader interface to output the contents of the
@@ -31,20 +32,17 @@ func (f *FormattedReader) Read(b []byte) (int, error) {
 	defer f.m.Unlock()
 
 	if f.reader == nil {
-		var id sbom.FormatID
-		switch f.format {
-		case CycloneDXFormat:
-			id = syft.CycloneDxJSONFormatID
-		case SPDXFormat:
-			id = syft.SPDXJSONFormatID
-		case SyftFormat:
-			id = syft.JSONFormatID
-		default:
-			return 0, fmt.Errorf("failed to format sbom: unsupported format %q", f.format)
+		// To maintain backward compatibility for users passing the exported consts
+		// CycloneDXFormat, SPDXFormat, and SyftFormat into this function
+		// wrap f.format in ensureFormatID
+		format, err := sbomFormatByID(ensureFormatID(string(f.format)))
+		if err != nil {
+			return 0, fmt.Errorf("failed to format sbom: %w", err)
 		}
 
-		output, err := syft.Encode(f.sbom.syft, syft.FormatByID(id))
+		output, err := syft.Encode(f.sbom.syft, format)
 		if err != nil {
+			// not tested
 			return 0, fmt.Errorf("failed to format sbom: %w", err)
 		}
 
@@ -52,4 +50,19 @@ func (f *FormattedReader) Read(b []byte) (int, error) {
 	}
 
 	return f.reader.Read(b)
+}
+
+// Converts from exported strings CycloneDXFormat, SPDXFormat, and SyftFormat
+// (whose values are actually media types) into corresponding FormatIDs
+func ensureFormatID(mediaType string) sbom.FormatID {
+	switch mediaType {
+	case CycloneDXFormat:
+		return syft.CycloneDxJSONFormatID
+	case SPDXFormat:
+		return syft.SPDXJSONFormatID
+	case SyftFormat:
+		return syft.JSONFormatID
+	default:
+		return sbom.FormatID(mediaType)
+	}
 }
