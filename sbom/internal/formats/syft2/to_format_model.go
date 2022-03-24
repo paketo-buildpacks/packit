@@ -23,7 +23,7 @@ import (
 
 func ToFormatModel(s sbom.SBOM) model.Document {
 	src, err := toSourceModel(s.Source)
-	if err != nil {
+	if err != nil { //nolint:staticcheck
 		// log.Warnf("unable to create syft-json source object: %+v", err)
 	}
 

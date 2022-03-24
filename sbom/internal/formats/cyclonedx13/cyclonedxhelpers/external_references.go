@@ -67,6 +67,7 @@ func encodeExternalReferences(p pkg.Package) *[]cyclonedx.ExternalReference {
 	return nil
 }
 
+//nolint:unused
 func decodeExternalReferences(c *cyclonedx.Component, metadata interface{}) {
 	if c.ExternalReferences == nil {
 		return
@@ -90,6 +91,7 @@ func decodeExternalReferences(c *cyclonedx.Component, metadata interface{}) {
 	}
 }
 
+//nolint:unused
 func findExternalRef(c *cyclonedx.Component, typ cyclonedx.ExternalReferenceType) *cyclonedx.ExternalReference {
 	if c.ExternalReferences != nil {
 		for _, r := range *c.ExternalReferences {
@@ -101,6 +103,7 @@ func findExternalRef(c *cyclonedx.Component, typ cyclonedx.ExternalReferenceType
 	return nil
 }
 
+//nolint:unused
 func refURL(c *cyclonedx.Component, typ cyclonedx.ExternalReferenceType) string {
 	if r := findExternalRef(c, typ); r != nil {
 		return r.URL
@@ -108,6 +111,7 @@ func refURL(c *cyclonedx.Component, typ cyclonedx.ExternalReferenceType) string 
 	return ""
 }
 
+//nolint:unused
 func refComment(c *cyclonedx.Component, typ cyclonedx.ExternalReferenceType) string {
 	if r := findExternalRef(c, typ); r != nil {
 		return r.Comment

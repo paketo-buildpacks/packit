@@ -59,14 +59,6 @@ func (f sbomFormat) Extension() string {
 	}
 }
 
-func formatIDs() (ids []sbom.FormatID) {
-	for _, f := range additionalFormats {
-		ids = append(ids, f.ID())
-	}
-	ids = append(syft.FormatIDs(), ids...)
-	return ids
-}
-
 func formatByMediaType(mediaType string) (sbomFormat, error) {
 	baseType, params, err := mime.ParseMediaType(mediaType)
 	if err != nil {

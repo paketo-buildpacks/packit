@@ -161,7 +161,7 @@ func toBomDescriptorComponent(srcMetadata source.Metadata) *cyclonedx.Component 
 	switch srcMetadata.Scheme {
 	case source.ImageScheme:
 		bomRef, err := artifact.IDByHash(srcMetadata.ImageMetadata.ID)
-		if err != nil {
+		if err != nil { //nolint:staticcheck
 			// log.Warnf("unable to get fingerprint of image metadata=%s: %+v", srcMetadata.ImageMetadata.ID, err)
 		}
 		return &cyclonedx.Component{
@@ -172,7 +172,7 @@ func toBomDescriptorComponent(srcMetadata source.Metadata) *cyclonedx.Component 
 		}
 	case source.DirectoryScheme, source.FileScheme:
 		bomRef, err := artifact.IDByHash(srcMetadata.Path)
-		if err != nil {
+		if err != nil { //nolint:staticcheck
 			// log.Warnf("unable to get fingerprint of source metadata path=%s: %+v", srcMetadata.Path, err)
 		}
 		return &cyclonedx.Component{

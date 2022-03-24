@@ -45,6 +45,7 @@ func hasMetadata(p pkg.Package) bool {
 	return p.Metadata != nil
 }
 
+//nolint:unused,deadcode
 func decodeComponent(c *cyclonedx.Component) *pkg.Package {
 	values := map[string]string{}
 	for _, p := range *c.Properties {
@@ -71,12 +72,14 @@ func decodeComponent(c *cyclonedx.Component) *pkg.Package {
 	return p
 }
 
+//nolint:unused
 func decodeLocations(vals map[string]string) []source.Location {
 	v := common.Decode(reflect.TypeOf([]source.Location{}), vals, "syft:location", CycloneDXFields)
 	out, _ := v.([]source.Location)
 	return out
 }
 
+//nolint:unused
 func decodePackageMetadata(vals map[string]string, c *cyclonedx.Component, typ pkg.MetadataType) interface{} {
 	if typ != "" && c.Properties != nil {
 		metaTyp, ok := pkg.MetadataTypeByName[typ]
