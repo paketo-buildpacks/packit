@@ -30,6 +30,7 @@ func encodeCPEs(p pkg.Package) (out []cyclonedx.Property) {
 	return
 }
 
+//nolint:unused
 func decodeCPEs(c *cyclonedx.Component) (out []pkg.CPE) {
 	if c.CPE != "" {
 		cp, err := pkg.NewCPE(c.CPE)

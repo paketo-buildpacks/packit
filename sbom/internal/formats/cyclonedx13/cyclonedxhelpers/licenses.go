@@ -24,6 +24,7 @@ func encodeLicenses(p pkg.Package) *cyclonedx.Licenses {
 	return nil
 }
 
+//nolint:unused
 func decodeLicenses(c *cyclonedx.Component) (out []string) {
 	if c.Licenses != nil {
 		for _, l := range *c.Licenses {

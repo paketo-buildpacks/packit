@@ -18,6 +18,7 @@ func encodePublisher(p pkg.Package) string {
 	return ""
 }
 
+//nolint:unused
 func decodePublisher(publisher string, metadata interface{}) {
 	switch meta := metadata.(type) {
 	case *pkg.ApkMetadata:
