@@ -247,18 +247,13 @@ func Build(f BuildFunc, options ...Option) {
 			lexicalWidth := 1 + int(math.Log10(float64(len(layer.ExecD))))
 
 			for i, exe := range layer.ExecD {
-				if exists, err := fs.Exists(exe); !exists {
-					config.exitHandler.Error(fmt.Errorf("file %s does not exist. Be sure to include it in the buildpack.toml", exe))
-					return
-				} else if err != nil {
-					config.exitHandler.Error(err)
-					return
-				}
+				err = fs.Copy(exe, filepath.Join(execdDir, fmt.Sprintf("%0*d-%s", lexicalWidth, i, filepath.Base(exe))))
 
-				destination := filepath.Join(execdDir, fmt.Sprintf("%0*d-%s", lexicalWidth, i, filepath.Base(exe)))
-
-				err = fs.Copy(exe, destination)
 				if err != nil {
+					if errors.Is(err, os.ErrNotExist) {
+						err = fmt.Errorf("file %s does not exist. Be sure to include it in the buildpack.toml", exe)
+					}
+
 					config.exitHandler.Error(err)
 					return
 				}
