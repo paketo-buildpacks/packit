@@ -51,6 +51,7 @@ jobs:
       with:
         repo: ${{ github.repository }}
         token: ${{ github.token }}
+        ref-name: ${{ github.ref_name }}
     - name: Set Release Tag
       id: tag
       run: |
