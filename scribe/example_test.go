@@ -136,7 +136,7 @@ func ExampleEmitter_LaunchProcesses() {
 	//     some-type:       some-command
 	//     web (default):   web-command
 	//     some-other-type: some-other-command some args
-
+	//
 	//   Assigning launch processes:
 	//     some-type:       some-command
 	//     web (default):   web-command
