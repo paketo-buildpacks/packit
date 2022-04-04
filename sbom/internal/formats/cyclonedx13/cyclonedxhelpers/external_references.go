@@ -2,7 +2,6 @@ package cyclonedxhelpers
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/paketo-buildpacks/packit/v2/sbom/internal/formats/cyclonedx13/cyclonedx"
@@ -65,56 +64,4 @@ func encodeExternalReferences(p pkg.Package) *[]cyclonedx.ExternalReference {
 		return &refs
 	}
 	return nil
-}
-
-//nolint:unused
-func decodeExternalReferences(c *cyclonedx.Component, metadata interface{}) {
-	if c.ExternalReferences == nil {
-		return
-	}
-	switch meta := metadata.(type) {
-	case *pkg.ApkMetadata:
-		meta.URL = refURL(c, cyclonedx.ERTypeDistribution)
-	case *pkg.CargoPackageMetadata:
-		meta.Source = refURL(c, cyclonedx.ERTypeDistribution)
-	case *pkg.NpmPackageJSONMetadata:
-		meta.URL = refURL(c, cyclonedx.ERTypeDistribution)
-		meta.Homepage = refURL(c, cyclonedx.ERTypeWebsite)
-	case *pkg.GemMetadata:
-		meta.Homepage = refURL(c, cyclonedx.ERTypeWebsite)
-	case *pkg.PythonPackageMetadata:
-		if meta.DirectURLOrigin == nil {
-			meta.DirectURLOrigin = &pkg.PythonDirectURLOriginInfo{}
-		}
-		meta.DirectURLOrigin.URL = refURL(c, cyclonedx.ERTypeVCS)
-		meta.DirectURLOrigin.CommitID = strings.TrimPrefix(refComment(c, cyclonedx.ERTypeVCS), "commit: ")
-	}
-}
-
-//nolint:unused
-func findExternalRef(c *cyclonedx.Component, typ cyclonedx.ExternalReferenceType) *cyclonedx.ExternalReference {
-	if c.ExternalReferences != nil {
-		for _, r := range *c.ExternalReferences {
-			if r.Type == typ {
-				return &r
-			}
-		}
-	}
-	return nil
-}
-
-//nolint:unused
-func refURL(c *cyclonedx.Component, typ cyclonedx.ExternalReferenceType) string {
-	if r := findExternalRef(c, typ); r != nil {
-		return r.URL
-	}
-	return ""
-}
-
-//nolint:unused
-func refComment(c *cyclonedx.Component, typ cyclonedx.ExternalReferenceType) string {
-	if r := findExternalRef(c, typ); r != nil {
-		return r.Comment
-	}
-	return ""
 }

@@ -10,13 +10,3 @@ func encodeGroup(p pkg.Package) string {
 	}
 	return ""
 }
-
-//nolint:unused
-func decodeGroup(group string, metadata interface{}) {
-	if meta, ok := metadata.(*pkg.JavaMetadata); ok {
-		if meta.PomProperties == nil {
-			meta.PomProperties = &pkg.PomProperties{}
-		}
-		meta.PomProperties.GroupID = group
-	}
-}
