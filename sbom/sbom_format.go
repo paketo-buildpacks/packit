@@ -8,21 +8,25 @@ import (
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/paketo-buildpacks/packit/v2/sbom/internal/formats/cyclonedx13"
 	"github.com/paketo-buildpacks/packit/v2/sbom/internal/formats/syft2"
+	"github.com/paketo-buildpacks/packit/v2/sbom/internal/formats/syft301"
 )
 
 // TODO: refactor the version lookup part
 var syftFormats map[string]sbom.FormatID = map[string]sbom.FormatID{
-	"latest": syft.JSONFormatID,
-	"2.0.2":  syft2.ID,
+	"default": syft301.ID,
+	"3.0.1":   syft301.ID,
+	"2.0.2":   syft2.ID,
 }
 
 var cyclonedxFormats map[string]sbom.FormatID = map[string]sbom.FormatID{
-	"latest": syft.CycloneDxJSONFormatID,
-	"1.3":    cyclonedx13.ID,
+	"default": cyclonedx13.ID,
+	"1.4":     syft.CycloneDxJSONFormatID,
+	"1.3":     cyclonedx13.ID,
 }
 
 var spdxFormats map[string]sbom.FormatID = map[string]sbom.FormatID{
-	"latest": syft.SPDXJSONFormatID,
+	"default": syft.SPDXJSONFormatID,
+	"2.2":     syft.SPDXJSONFormatID,
 }
 
 var additionalFormats []sbomFormat
@@ -31,6 +35,7 @@ func init() {
 	additionalFormats = []sbomFormat{
 		newSBOMFormat(cyclonedx13.Format()),
 		newSBOMFormat(syft2.Format()),
+		newSBOMFormat(syft301.Format()),
 	}
 }
 
@@ -52,7 +57,7 @@ func (f sbomFormat) Extension() string {
 		return "cdx.json"
 	case syft.SPDXJSONFormatID:
 		return "spdx.json"
-	case syft.JSONFormatID, syft2.ID:
+	case syft.JSONFormatID, syft2.ID, syft301.ID:
 		return "syft.json"
 	default:
 		return ""
@@ -67,7 +72,7 @@ func formatByMediaType(mediaType string) (sbomFormat, error) {
 	// TODO: semver version parsing?
 	version, ok := params["version"]
 	if !ok {
-		version = "latest"
+		version = "default"
 	}
 	var selected sbom.FormatID
 	switch baseType {
