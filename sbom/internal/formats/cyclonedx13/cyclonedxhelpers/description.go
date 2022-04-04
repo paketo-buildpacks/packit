@@ -13,13 +13,3 @@ func encodeDescription(p pkg.Package) string {
 	}
 	return ""
 }
-
-//nolint:unused
-func decodeDescription(description string, metadata interface{}) {
-	switch meta := metadata.(type) {
-	case *pkg.ApkMetadata:
-		meta.Description = description
-	case *pkg.NpmPackageJSONMetadata:
-		meta.Description = description
-	}
-}
