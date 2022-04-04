@@ -96,21 +96,21 @@ func testSBOM(t *testing.T, context spec.G, it spec.S) {
 				}
 			}
 
-			var syftLatestOutput syftOutput
+			var syftDefaultOutput syftOutput
 
-			err = json.Unmarshal(syft.Bytes(), &syftLatestOutput)
+			err = json.Unmarshal(syft.Bytes(), &syftDefaultOutput)
 			Expect(err).NotTo(HaveOccurred(), syft.String())
 
-			Expect(syftLatestOutput.Schema.Version).To(MatchRegexp(`3\.\d+\.\d+`), syft.String())
+			Expect(syftDefaultOutput.Schema.Version).To(Equal(`3.0.1`), syft.String())
 
-			goArtifact := syftLatestOutput.Artifacts[0]
+			goArtifact := syftDefaultOutput.Artifacts[0]
 			Expect(goArtifact.Name).To(Equal("Go"), syft.String())
 			Expect(goArtifact.Version).To(Equal("1.16.9"), syft.String())
 			Expect(goArtifact.Licenses).To(Equal([]string{"BSD-3-Clause"}), syft.String())
 			Expect(goArtifact.CPEs).To(Equal([]string{"cpe:2.3:a:golang:go:1.16.9:*:*:*:*:*:*:*"}), syft.String())
 			Expect(goArtifact.PURL).To(Equal("pkg:generic/go@go1.16.9?checksum=0a1cc7fd7bd20448f71ebed64d846138850d5099b18cf5cc10a4fc45160d8c3d&download_url=https://dl.google.com/go/go1.16.9.src.tar.gz"), syft.String())
-			Expect(syftLatestOutput.Source.Type).To(Equal("directory"), syft.String())
-			Expect(syftLatestOutput.Source.Target).To(Equal("some-path"), syft.String())
+			Expect(syftDefaultOutput.Source.Type).To(Equal("directory"), syft.String())
+			Expect(syftDefaultOutput.Source.Target).To(Equal("some-path"), syft.String())
 
 			cdx := bytes.NewBuffer(nil)
 			for _, format := range formats {
@@ -120,23 +120,23 @@ func testSBOM(t *testing.T, context spec.G, it spec.S) {
 				}
 			}
 
-			var cdxLatestOutput cdxOutput
+			var cdxDefaultOutput cdxOutput
 
-			err = json.Unmarshal(cdx.Bytes(), &cdxLatestOutput)
+			err = json.Unmarshal(cdx.Bytes(), &cdxDefaultOutput)
 			Expect(err).NotTo(HaveOccurred(), cdx.String())
 
-			Expect(cdxLatestOutput.BOMFormat).To(Equal("CycloneDX"))
-			Expect(cdxLatestOutput.SpecVersion).To(Equal("1.4"))
+			Expect(cdxDefaultOutput.BOMFormat).To(Equal("CycloneDX"))
+			Expect(cdxDefaultOutput.SpecVersion).To(Equal("1.3"))
 
-			goComponent := cdxLatestOutput.Components[0]
+			goComponent := cdxDefaultOutput.Components[0]
 			Expect(goComponent.Name).To(Equal("Go"), cdx.String())
 			Expect(goComponent.Version).To(Equal("1.16.9"), cdx.String())
 			Expect(goComponent.Licenses).To(HaveLen(1), cdx.String())
 			Expect(goComponent.Licenses[0].License.ID).To(Equal("BSD-3-Clause"), cdx.String())
 			Expect(goComponent.PURL).To(Equal("pkg:generic/go@go1.16.9?checksum=0a1cc7fd7bd20448f71ebed64d846138850d5099b18cf5cc10a4fc45160d8c3d&download_url=https://dl.google.com/go/go1.16.9.src.tar.gz"), cdx.String())
 
-			Expect(cdxLatestOutput.Metadata.Component.Type).To(Equal("file"), cdx.String())
-			Expect(cdxLatestOutput.Metadata.Component.Name).To(Equal("some-path"), cdx.String())
+			Expect(cdxDefaultOutput.Metadata.Component.Type).To(Equal("file"), cdx.String())
+			Expect(cdxDefaultOutput.Metadata.Component.Name).To(Equal("some-path"), cdx.String())
 
 			spdx := bytes.NewBuffer(nil)
 			for _, format := range formats {
@@ -146,15 +146,15 @@ func testSBOM(t *testing.T, context spec.G, it spec.S) {
 				}
 			}
 
-			var spdxLatestOutput spdxOutput
+			var spdxDefaultOutput spdxOutput
 
-			err = json.Unmarshal(spdx.Bytes(), &spdxLatestOutput)
+			err = json.Unmarshal(spdx.Bytes(), &spdxDefaultOutput)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(err).NotTo(HaveOccurred(), spdx.String())
 
-			Expect(spdxLatestOutput.SPDXVersion).To(Equal("SPDX-2.2"), spdx.String())
+			Expect(spdxDefaultOutput.SPDXVersion).To(Equal("SPDX-2.2"), spdx.String())
 
-			goPackage := spdxLatestOutput.Packages[0]
+			goPackage := spdxDefaultOutput.Packages[0]
 			Expect(goPackage.Name).To(Equal("Go"), spdx.String())
 			Expect(goPackage.Version).To(Equal("1.16.9"), spdx.String())
 			Expect(goPackage.LicenseConcluded).To(Equal("BSD-3-Clause"), spdx.String())
@@ -217,7 +217,7 @@ func testSBOM(t *testing.T, context spec.G, it spec.S) {
 			Expect(syft2Output.Source.Target).To(Equal("some-path"), syft.String())
 		})
 
-		it("generates a SBOM from a dependency in CycloneDX 1.3 JSON", func() {
+		it("generates a SBOM from a dependency in CycloneDX 1.4 JSON", func() {
 			bom, err := sbom.GenerateFromDependency(postal.Dependency{
 				CPE:          "cpe:2.3:a:golang:go:1.16.9:*:*:*:*:*:*:*",
 				ID:           "go",
@@ -233,7 +233,7 @@ func testSBOM(t *testing.T, context spec.G, it spec.S) {
 			}, "some-path")
 			Expect(err).NotTo(HaveOccurred())
 
-			formatter, err := bom.InFormats(fmt.Sprintf("%s;version=1.3", sbom.CycloneDXFormat))
+			formatter, err := bom.InFormats(fmt.Sprintf("%s;version=1.4", sbom.CycloneDXFormat))
 			Expect(err).NotTo(HaveOccurred())
 
 			formats := formatter.Formats()
@@ -246,23 +246,23 @@ func testSBOM(t *testing.T, context spec.G, it spec.S) {
 				}
 			}
 
-			var cdx13Output cdxOutput
+			var cdx14Output cdxOutput
 
-			err = json.Unmarshal(cdx.Bytes(), &cdx13Output)
+			err = json.Unmarshal(cdx.Bytes(), &cdx14Output)
 			Expect(err).NotTo(HaveOccurred(), cdx.String())
 
-			Expect(cdx13Output.BOMFormat).To(Equal("CycloneDX"))
-			Expect(cdx13Output.SpecVersion).To(Equal("1.3"))
+			Expect(cdx14Output.BOMFormat).To(Equal("CycloneDX"))
+			Expect(cdx14Output.SpecVersion).To(Equal("1.4"))
 
-			goComponent := cdx13Output.Components[0]
+			goComponent := cdx14Output.Components[0]
 			Expect(goComponent.Name).To(Equal("Go"), cdx.String())
 			Expect(goComponent.Version).To(Equal("1.16.9"), cdx.String())
 			Expect(goComponent.Licenses).To(HaveLen(1), cdx.String())
 			Expect(goComponent.Licenses[0].License.ID).To(Equal("BSD-3-Clause"), cdx.String())
 			Expect(goComponent.PURL).To(Equal("pkg:generic/go@go1.16.9?checksum=0a1cc7fd7bd20448f71ebed64d846138850d5099b18cf5cc10a4fc45160d8c3d&download_url=https://dl.google.com/go/go1.16.9.src.tar.gz"), cdx.String())
 
-			Expect(cdx13Output.Metadata.Component.Type).To(Equal("file"), cdx.String())
-			Expect(cdx13Output.Metadata.Component.Name).To(Equal("some-path"), cdx.String())
+			Expect(cdx14Output.Metadata.Component.Type).To(Equal("file"), cdx.String())
+			Expect(cdx14Output.Metadata.Component.Name).To(Equal("some-path"), cdx.String())
 		})
 
 		context("failure cases", func() {
