@@ -3,7 +3,7 @@ module github.com/paketo-buildpacks/packit/v2
 go 1.16
 
 require (
-	github.com/BurntSushi/toml v1.0.0
+	github.com/BurntSushi/toml v1.1.0
 	github.com/Masterminds/semver/v3 v3.1.1
 	github.com/anchore/syft v0.41.1
 	github.com/dsnet/compress v0.0.2-0.20210315054119-f66993602bf5
