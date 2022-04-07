@@ -6,8 +6,8 @@ import (
 	"io"
 	"testing"
 
+	"github.com/anchore/syft/syft"
 	"github.com/paketo-buildpacks/packit/v2/sbom"
-	"github.com/paketo-buildpacks/packit/v2/sbom/internal/formats/cyclonedx13"
 	"github.com/paketo-buildpacks/packit/v2/sbom/internal/formats/syft2"
 	"github.com/sclevine/spec"
 
@@ -27,32 +27,9 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 		Expect(err).NotTo(HaveOccurred())
 	})
 
-	it("writes the SBOM in latest CycloneDX format", func() {
+	it("writes the SBOM in the default CycloneDX format", func() {
 		buffer := bytes.NewBuffer(nil)
 		_, err := io.Copy(buffer, sbom.NewFormattedReader(bom, sbom.CycloneDXFormat))
-		Expect(err).NotTo(HaveOccurred())
-
-		var cdxOutput cdxOutput
-
-		err = json.Unmarshal(buffer.Bytes(), &cdxOutput)
-		Expect(err).NotTo(HaveOccurred(), buffer.String())
-
-		Expect(cdxOutput.BOMFormat).To(Equal("CycloneDX"), buffer.String())
-		Expect(cdxOutput.SpecVersion).To(Equal("1.4"), buffer.String())
-
-		Expect(cdxOutput.Metadata.Component.Type).To(Equal("file"), buffer.String())
-		Expect(cdxOutput.Metadata.Component.Name).To(Equal("testdata/"), buffer.String())
-		Expect(cdxOutput.Components[0].Name).To(Equal("collapse-white-space"), buffer.String())
-		Expect(cdxOutput.Components[1].Name).To(Equal("end-of-stream"), buffer.String())
-		Expect(cdxOutput.Components[2].Name).To(Equal("insert-css"), buffer.String())
-		Expect(cdxOutput.Components[3].Name).To(Equal("once"), buffer.String())
-		Expect(cdxOutput.Components[4].Name).To(Equal("pump"), buffer.String())
-		Expect(cdxOutput.Components[5].Name).To(Equal("wrappy"), buffer.String())
-	})
-
-	it("writes the SBOM in CycloneDX 1.3 format", func() {
-		buffer := bytes.NewBuffer(nil)
-		_, err := io.Copy(buffer, sbom.NewFormattedReader(bom, sbom.Format(cyclonedx13.ID)))
 		Expect(err).NotTo(HaveOccurred())
 
 		var cdxOutput cdxOutput
@@ -73,7 +50,30 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 		Expect(cdxOutput.Components[5].Name).To(Equal("wrappy"), buffer.String())
 	})
 
-	it("writes the SBOM in the latest SPDX format", func() {
+	it("writes the SBOM in the latest CycloneDX format (1.4)", func() {
+		buffer := bytes.NewBuffer(nil)
+		_, err := io.Copy(buffer, sbom.NewFormattedReader(bom, sbom.Format(syft.CycloneDxJSONFormatID)))
+		Expect(err).NotTo(HaveOccurred())
+
+		var cdxOutput cdxOutput
+
+		err = json.Unmarshal(buffer.Bytes(), &cdxOutput)
+		Expect(err).NotTo(HaveOccurred(), buffer.String())
+
+		Expect(cdxOutput.BOMFormat).To(Equal("CycloneDX"), buffer.String())
+		Expect(cdxOutput.SpecVersion).To(Equal("1.4"), buffer.String())
+
+		Expect(cdxOutput.Metadata.Component.Type).To(Equal("file"), buffer.String())
+		Expect(cdxOutput.Metadata.Component.Name).To(Equal("testdata/"), buffer.String())
+		Expect(cdxOutput.Components[0].Name).To(Equal("collapse-white-space"), buffer.String())
+		Expect(cdxOutput.Components[1].Name).To(Equal("end-of-stream"), buffer.String())
+		Expect(cdxOutput.Components[2].Name).To(Equal("insert-css"), buffer.String())
+		Expect(cdxOutput.Components[3].Name).To(Equal("once"), buffer.String())
+		Expect(cdxOutput.Components[4].Name).To(Equal("pump"), buffer.String())
+		Expect(cdxOutput.Components[5].Name).To(Equal("wrappy"), buffer.String())
+	})
+
+	it("writes the SBOM in the default SPDX format", func() {
 		buffer := bytes.NewBuffer(nil)
 		_, err := io.Copy(buffer, sbom.NewFormattedReader(bom, sbom.SPDXFormat))
 		Expect(err).NotTo(HaveOccurred())
@@ -93,7 +93,7 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 		Expect(spdxOutput.Packages[5].Name).To(Equal("wrappy"), buffer.String())
 	})
 
-	it("writes the SBOM in the latest syft format", func() {
+	it("writes the SBOM in the default syft format", func() {
 		buffer := bytes.NewBuffer(nil)
 		_, err := io.Copy(buffer, sbom.NewFormattedReader(bom, sbom.SyftFormat))
 		Expect(err).NotTo(HaveOccurred())
@@ -103,7 +103,7 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 		err = json.Unmarshal(buffer.Bytes(), &syftOutput)
 		Expect(err).NotTo(HaveOccurred(), buffer.String())
 
-		Expect(syftOutput.Schema.Version).To(MatchRegexp(`3\.\d+\.\d+`), buffer.String())
+		Expect(syftOutput.Schema.Version).To(Equal(`3.0.1`), buffer.String())
 
 		Expect(syftOutput.Source.Type).To(Equal("directory"), buffer.String())
 		Expect(syftOutput.Source.Target).To(Equal("testdata/"), buffer.String())
@@ -126,6 +126,28 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 		Expect(err).NotTo(HaveOccurred(), buffer.String())
 
 		Expect(syftOutput.Schema.Version).To(Equal("2.0.2"), buffer.String())
+
+		Expect(syftOutput.Source.Type).To(Equal("directory"), buffer.String())
+		Expect(syftOutput.Source.Target).To(Equal("testdata/"), buffer.String())
+		Expect(syftOutput.Artifacts[0].Name).To(Equal("collapse-white-space"), buffer.String())
+		Expect(syftOutput.Artifacts[1].Name).To(Equal("end-of-stream"), buffer.String())
+		Expect(syftOutput.Artifacts[2].Name).To(Equal("insert-css"), buffer.String())
+		Expect(syftOutput.Artifacts[3].Name).To(Equal("once"), buffer.String())
+		Expect(syftOutput.Artifacts[4].Name).To(Equal("pump"), buffer.String())
+		Expect(syftOutput.Artifacts[5].Name).To(Equal("wrappy"), buffer.String())
+	})
+
+	it("writes the SBOM in the latest Syft format (3.*)", func() {
+		buffer := bytes.NewBuffer(nil)
+		_, err := io.Copy(buffer, sbom.NewFormattedReader(bom, sbom.Format(syft.JSONFormatID)))
+		Expect(err).NotTo(HaveOccurred())
+
+		var syftOutput syftOutput
+
+		err = json.Unmarshal(buffer.Bytes(), &syftOutput)
+		Expect(err).NotTo(HaveOccurred(), buffer.String())
+
+		Expect(syftOutput.Schema.Version).To(MatchRegexp(`3\.\d+\.\d+`), buffer.String())
 
 		Expect(syftOutput.Source.Type).To(Equal("directory"), buffer.String())
 		Expect(syftOutput.Source.Target).To(Equal("testdata/"), buffer.String())

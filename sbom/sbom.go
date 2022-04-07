@@ -96,7 +96,7 @@ func GenerateFromDependency(dependency postal.Dependency, path string) (SBOM, er
 func (s SBOM) InFormats(mediaTypes ...string) (Formatter, error) {
 	var fs []sbom.FormatID
 	for _, m := range mediaTypes {
-		format, err := formatByMediaType(m)
+		format, err := sbomFormatByMediaType(m)
 		if err != nil {
 			return Formatter{}, err
 		}
