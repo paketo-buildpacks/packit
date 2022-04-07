@@ -12,17 +12,28 @@ import (
 
 // FormattedReader outputs the SBoM in a specified format.
 type FormattedReader struct {
-	m      sync.Mutex
-	sbom   SBOM
-	format sbom.FormatID
-	reader io.Reader
+	m           sync.Mutex
+	sbom        SBOM
+	rawFormatID string
+	format      sbom.Format
+	reader      io.Reader
 }
 
 // NewFormattedReader creates an instance of FormattedReader given an SBOM and
 // Format.
 func NewFormattedReader(s SBOM, f Format) *FormattedReader {
-	// type conversion to maintain backward compatibility of constructor
-	return &FormattedReader{sbom: s, format: sbom.FormatID(f)}
+	// For backward compatibility, caller can pass f as a format ID like
+	// "cyclonedx-1.3-json" or as a media type like
+	// 'application/vnd.cyclonedx+json'
+	sbomFormat, err := sbomFormatByID(sbom.FormatID(f))
+	if err != nil {
+		sbomFormat, err = sbomFormatByMediaType(string(f))
+		if err != nil {
+			// Defer throwing an error until Read() is called
+			return &FormattedReader{sbom: s, rawFormatID: string(f), format: nil}
+		}
+	}
+	return &FormattedReader{sbom: s, rawFormatID: string(sbomFormat.ID()), format: sbomFormat}
 }
 
 // Read implements the io.Reader interface to output the contents of the
@@ -32,15 +43,11 @@ func (f *FormattedReader) Read(b []byte) (int, error) {
 	defer f.m.Unlock()
 
 	if f.reader == nil {
-		// To maintain backward compatibility for users passing the exported consts
-		// CycloneDXFormat, SPDXFormat, and SyftFormat into this function
-		// wrap f.format in ensureFormatID
-		format, err := sbomFormatByID(ensureFormatID(string(f.format)))
-		if err != nil {
-			return 0, fmt.Errorf("failed to format sbom: %w", err)
+		if f.format == nil {
+			return 0, fmt.Errorf("failed to format sbom: '%s' is not a valid SBOM format identifier", f.rawFormatID)
 		}
 
-		output, err := syft.Encode(f.sbom.syft, format)
+		output, err := syft.Encode(f.sbom.syft, f.format)
 		if err != nil {
 			// not tested
 			return 0, fmt.Errorf("failed to format sbom: %w", err)
@@ -50,19 +57,4 @@ func (f *FormattedReader) Read(b []byte) (int, error) {
 	}
 
 	return f.reader.Read(b)
-}
-
-// Converts from exported strings CycloneDXFormat, SPDXFormat, and SyftFormat
-// (whose values are actually media types) into corresponding FormatIDs
-func ensureFormatID(mediaType string) sbom.FormatID {
-	switch mediaType {
-	case CycloneDXFormat:
-		return syft.CycloneDxJSONFormatID
-	case SPDXFormat:
-		return syft.SPDXJSONFormatID
-	case SyftFormat:
-		return syft.JSONFormatID
-	default:
-		return sbom.FormatID(mediaType)
-	}
 }

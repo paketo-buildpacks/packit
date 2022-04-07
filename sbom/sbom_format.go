@@ -64,7 +64,7 @@ func (f sbomFormat) Extension() string {
 	}
 }
 
-func formatByMediaType(mediaType string) (sbomFormat, error) {
+func sbomFormatByMediaType(mediaType string) (sbomFormat, error) {
 	baseType, params, err := mime.ParseMediaType(mediaType)
 	if err != nil {
 		return sbomFormat{}, fmt.Errorf("failed to parse SBOM media type: %w", err)
