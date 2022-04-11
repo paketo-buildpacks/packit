@@ -21,6 +21,10 @@ type SBOM struct {
 	syft sbom.SBOM
 }
 
+func NewSBOM(syft sbom.SBOM) SBOM {
+	return SBOM{syft: syft}
+}
+
 // Generate returns a populated SBOM given a path to a directory to scan.
 func Generate(path string) (SBOM, error) {
 	info, err := os.Stat(path)

@@ -7,6 +7,7 @@ import (
 	"io"
 	"testing"
 
+	syftsbom "github.com/anchore/syft/syft/sbom"
 	"github.com/paketo-buildpacks/packit/v2/postal"
 	"github.com/paketo-buildpacks/packit/v2/sbom"
 	"github.com/sclevine/spec"
@@ -16,6 +17,24 @@ import (
 
 func testSBOM(t *testing.T, context spec.G, it spec.S) {
 	var Expect = NewWithT(t).Expect
+
+	context("NewSBOM", func() {
+		it("constructs an SBOM given a syft.SBOM", func() {
+			bom := sbom.NewSBOM(syftsbom.SBOM{})
+			formatter, err := bom.InFormats(sbom.SyftFormat)
+			Expect(err).NotTo(HaveOccurred())
+
+			buffer := bytes.NewBuffer(nil)
+			_, err = io.Copy(buffer, formatter.Formats()[0].Content)
+			Expect(err).NotTo(HaveOccurred())
+
+			var output syftOutput
+			err = json.NewDecoder(buffer).Decode(&output)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(output.Schema.Version).To(Equal(`3.0.1`), buffer.String())
+			Expect(output.Artifacts).To(HaveLen(0))
+		})
+	})
 
 	context("Generate", func() {
 		context("when given a directory", func() {
@@ -98,7 +117,7 @@ func testSBOM(t *testing.T, context spec.G, it spec.S) {
 
 			var syftDefaultOutput syftOutput
 
-			err = json.Unmarshal(syft.Bytes(), &syftDefaultOutput)
+			err = json.NewDecoder(syft).Decode(&syftDefaultOutput)
 			Expect(err).NotTo(HaveOccurred(), syft.String())
 
 			Expect(syftDefaultOutput.Schema.Version).To(Equal(`3.0.1`), syft.String())
