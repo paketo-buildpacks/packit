@@ -86,6 +86,11 @@ func ExampleEmitter_Candidates() {
 				"version": "other-version",
 			},
 		},
+		{
+			Metadata: map[string]interface{}{
+				"version": "other-version",
+			},
+		},
 	})
 
 	// Output:

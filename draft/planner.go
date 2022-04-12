@@ -8,6 +8,7 @@ import (
 	"sort"
 
 	"github.com/paketo-buildpacks/packit/v2"
+	"github.com/paketo-buildpacks/packit/v2/planning"
 )
 
 // A Planner sorts buildpack plan entries using a given list of priorities. A
@@ -46,12 +47,10 @@ func (p Planner) Resolve(name string, entries []packit.BuildpackPlanEntry, prior
 	}
 
 	sort.Slice(filteredEntries, func(i, j int) bool {
-		leftSource := filteredEntries[i].Metadata["version-source"]
-		left, _ := leftSource.(string)
+		left := planning.NewMetadata(filteredEntries[i].Metadata).VersionSource
 		leftPriority := -1
 
-		rightSource := filteredEntries[j].Metadata["version-source"]
-		right, _ := rightSource.(string)
+		right := planning.NewMetadata(filteredEntries[j].Metadata).VersionSource
 		rightPriority := -1
 
 		for index, match := range priorities {

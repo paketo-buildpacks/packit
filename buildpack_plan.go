@@ -14,7 +14,7 @@ type BuildpackPlan struct {
 // BuildpackPlanEntry is a representation of a single buildpack plan entry
 // specified by the lifecycle.
 type BuildpackPlanEntry struct {
-	// Name is the name of the dependency the the buildpack should provide.
+	// Name is the name of the dependency that the buildpack should provide.
 	Name string `toml:"name"`
 
 	// Metadata is an unspecified field allowing buildpacks to communicate extra

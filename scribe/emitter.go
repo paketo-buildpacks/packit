@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/paketo-buildpacks/packit/v2"
+	"github.com/paketo-buildpacks/packit/v2/planning"
 	"github.com/paketo-buildpacks/packit/v2/postal"
 )
 
@@ -40,8 +41,8 @@ func (e Emitter) WithLevel(level string) Emitter {
 // based if the given dependency is set to be deprecated within the next 30 or
 // is past that window.
 func (e Emitter) SelectedDependency(entry packit.BuildpackPlanEntry, dependency postal.Dependency, now time.Time) {
-	source, ok := entry.Metadata["version-source"].(string)
-	if !ok {
+	source := planning.NewMetadata(entry.Metadata).VersionSource
+	if source == "" {
 		source = "<unknown>"
 	}
 
@@ -67,47 +68,40 @@ func (e Emitter) Candidates(entries []packit.BuildpackPlanEntry) {
 	e.Subprocess("Candidate version sources (in priority order):")
 
 	var (
-		sources [][2]string
+		sources []planning.Metadata
 		maxLen  int
 	)
 
 Entries:
 	for _, entry := range entries {
-		versionSource, ok := entry.Metadata["version-source"].(string)
-		if !ok {
-			versionSource = "<unknown>"
+		metadata := planning.NewMetadata(entry.Metadata)
+		if metadata.VersionSource == "" {
+			metadata.VersionSource = "<unknown>"
 		}
 
-		if len(versionSource) > maxLen {
-			maxLen = len(versionSource)
+		if len(metadata.VersionSource) > maxLen {
+			maxLen = len(metadata.VersionSource)
 		}
-
-		version, ok := entry.Metadata["version"].(string)
-		if !ok {
-			version = ""
-		}
-
-		source := [2]string{versionSource, version}
 
 		// Removes any duplicate entries
 		for _, s := range sources {
-			if s == source {
+			if s.Version == metadata.Version && s.VersionSource == metadata.VersionSource {
 				continue Entries
 			}
 		}
 
-		sources = append(sources, source)
+		sources = append(sources, metadata)
 	}
 
 	for _, source := range sources {
-		e.Action(("%-" + strconv.Itoa(maxLen) + "s -> %q"), source[0], source[1])
+		e.Action("%-"+strconv.Itoa(maxLen)+"s -> %q", source.VersionSource, source.Version)
 	}
 
 	e.Break()
 }
 
 // LaunchProcesses take a list of processes and a map of process specific
-// enivronment varables and prints out a formatted table including the type
+// environment variables and prints out a formatted table including the type
 // name, whether or not it is a default process, the command, arguments, and
 // any process specific environment variables.
 func (e Emitter) LaunchProcesses(processes []packit.Process, processEnvs ...map[string]packit.Environment) {
