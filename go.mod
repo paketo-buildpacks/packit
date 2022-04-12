@@ -1,6 +1,6 @@
 module github.com/paketo-buildpacks/packit/v2
 
-go 1.17
+go 1.18
 
 require (
 	github.com/BurntSushi/toml v1.1.0
