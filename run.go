@@ -6,12 +6,17 @@ import (
 	"path/filepath"
 
 	"github.com/paketo-buildpacks/packit/v2/internal"
+	"github.com/paketo-buildpacks/packit/v2/planning"
 )
 
 // Run combines the invocation of both build and detect into a single entry
 // point. Calling Run from an executable with a name matching "build" or
 // "detect" will result in the matching DetectFunc or BuildFunc being called.
 func Run(detect DetectFunc, build BuildFunc, options ...Option) {
+	RunOf(detect, build, options...)
+}
+
+func RunOf[T interface{} | planning.Metadata](detect DetectFuncOf[T], build BuildFunc, options ...Option) {
 	config := OptionConfig{
 		exitHandler: internal.NewExitHandler(),
 		args:        os.Args,
@@ -25,7 +30,7 @@ func Run(detect DetectFunc, build BuildFunc, options ...Option) {
 
 	switch phase {
 	case "detect":
-		Detect(detect, options...)
+		DetectOf(detect, options...)
 
 	case "build":
 		Build(build, options...)

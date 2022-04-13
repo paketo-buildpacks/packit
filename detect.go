@@ -7,12 +7,15 @@ import (
 
 	"github.com/BurntSushi/toml"
 	"github.com/paketo-buildpacks/packit/v2/internal"
+	"github.com/paketo-buildpacks/packit/v2/planning"
 )
 
 // DetectFunc is the definition of a callback that can be invoked when the
 // Detect function is executed. Buildpack authors should implement a DetectFunc
 // that performs the specific detect phase operations for a buildpack.
-type DetectFunc func(DetectContext) (DetectResult, error)
+type DetectFunc = DetectFuncOf[interface{}]
+
+type DetectFuncOf[T interface{} | planning.Metadata] func(DetectContext) (DetectResultOf[T], error)
 
 // DetectContext provides the contextual details that are made available by the
 // buildpack lifecycle during the detect phase. This context is populated by
@@ -44,16 +47,22 @@ type DetectContext struct {
 // phase for a given buildpack. This result, returned in a DetectFunc callback,
 // will be parsed and persisted by the Detect function and returned to the
 // lifecycle at the end of the detect phase execution.
-type DetectResult struct {
+type DetectResult = DetectResultOf[interface{}]
+
+type DetectResultOf[T interface{} | planning.Metadata] struct {
 	// Plan is the set of Build Plan provisions and requirements that are
 	// detected during the detect phase of the lifecycle.
-	Plan BuildPlan
+	Plan BuildPlanOf[T]
 }
 
 // Detect is an implementation of the detect phase according to the Cloud
 // Native Buildpacks specification. Calling this function with a DetectFunc
 // will perform the detect phase process.
 func Detect(f DetectFunc, options ...Option) {
+	DetectOf(f, options...)
+}
+
+func DetectOf[T interface{} | planning.Metadata](f DetectFuncOf[T], options ...Option) {
 	config := OptionConfig{
 		exitHandler: internal.NewExitHandler(),
 		args:        os.Args,
