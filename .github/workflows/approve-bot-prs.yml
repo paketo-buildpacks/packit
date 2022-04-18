@@ -64,6 +64,6 @@ jobs:
     - name: Enable Auto-Merge
       if: steps.human-commits.outputs.human_commits == 'false' && steps.unverified-commits.outputs.unverified_commits == 'false'
       run: |
-        gh pr merge ${{ needs.download.outputs.pr-number }} --auto --squash
+        gh pr merge ${{ needs.download.outputs.pr-number }} --auto --rebase
       env:
         GITHUB_TOKEN: ${{ secrets.PAKETO_BOT_GITHUB_TOKEN }}
