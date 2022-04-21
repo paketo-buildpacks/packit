@@ -75,7 +75,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 		Expect(err).NotTo(HaveOccurred())
 
 		bpTOML := []byte(`
-api = "0.7"
+api = "0.8"
 [buildpack]
   id = "some-id"
   name = "some-name"
@@ -866,6 +866,38 @@ api = "0.6"
 			})
 		})
 
+		context("when the process specifies a working directory", func() {
+			it("persists a launch.toml", func() {
+				packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
+					return packit.BuildResult{
+						Launch: packit.LaunchMetadata{
+							Processes: []packit.Process{
+								{
+									Type:             "some-type",
+									Command:          "some-command",
+									Args:             []string{"some-arg"},
+									Direct:           true,
+									WorkingDirectory: "some-working-dir",
+								},
+							},
+						},
+					}, nil
+				}, packit.WithArgs([]string{binaryPath, layersDir, platformDir, planPath}))
+
+				contents, err := os.ReadFile(filepath.Join(layersDir, "launch.toml"))
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(string(contents)).To(MatchTOML(`
+					[[processes]]
+						type = "some-type"
+						command = "some-command"
+						args = ["some-arg"]
+						direct = true
+						working-directory = "some-working-dir"
+				`))
+			})
+		})
+
 		context("when the api version is less than 0.6", func() {
 			it.Before(func() {
 				Expect(os.WriteFile(filepath.Join(cnbDir, "buildpack.toml"), []byte(`
@@ -896,6 +928,40 @@ api = "0.5"
 				}, packit.WithArgs([]string{binaryPath, layersDir, platformDir, planPath}), packit.WithExitHandler(exitHandler))
 
 				Expect(exitHandler.ErrorCall.Receives.Error).To(MatchError(ContainSubstring("processes can only be marked as default with Buildpack API v0.6 or higher")))
+			})
+		})
+
+		context("when the api version is less than 0.8", func() {
+			it.Before(func() {
+				Expect(os.WriteFile(filepath.Join(cnbDir, "buildpack.toml"), []byte(`
+api = "0.7"
+[buildpack]
+  id = "some-id"
+  name = "some-name"
+  version = "some-version"
+  clear-env = false
+`), 0600)).To(Succeed())
+			})
+
+			it("errors", func() {
+				packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
+					return packit.BuildResult{
+						Launch: packit.LaunchMetadata{
+							Processes: []packit.Process{
+								{
+									Type:             "some-type",
+									Command:          "some-command",
+									Args:             []string{"some-arg"},
+									Direct:           true,
+									Default:          true,
+									WorkingDirectory: "some-working-dir",
+								},
+							},
+						},
+					}, nil
+				}, packit.WithArgs([]string{binaryPath, layersDir, platformDir, planPath}), packit.WithExitHandler(exitHandler))
+
+				Expect(exitHandler.ErrorCall.Receives.Error).To(MatchError(ContainSubstring("processes can only have a specific working directory with Buildpack API v0.8 or higher")))
 			})
 		})
 	})
