@@ -83,10 +83,15 @@ func Detect(f DetectFunc, options ...Option) {
 		return
 	}
 
+	platformPath, ok := os.LookupEnv("CNB_PLATFORM_DIR")
+	if !ok {
+		platformPath = config.args[1]
+	}
+
 	result, err := f(DetectContext{
 		WorkingDir: dir,
 		Platform: Platform{
-			Path: config.args[1],
+			Path: platformPath,
 		},
 		CNBPath:       cnbPath,
 		BuildpackInfo: buildpackInfo.Buildpack,
@@ -97,7 +102,12 @@ func Detect(f DetectFunc, options ...Option) {
 		return
 	}
 
-	file, err := os.OpenFile(config.args[2], os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0644)
+	planPath, ok := os.LookupEnv("CNB_BUILD_PLAN_PATH")
+	if !ok {
+		planPath = config.args[2]
+	}
+
+	file, err := os.OpenFile(planPath, os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0644)
 	if err != nil {
 		config.exitHandler.Error(err)
 		return

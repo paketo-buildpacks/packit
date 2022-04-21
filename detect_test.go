@@ -24,7 +24,6 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 		tmpDir      string
 		platformDir string
 		cnbDir      string
-		cnbEnvDir   string
 		binaryPath  string
 		stackID     string
 		planDir     string
@@ -55,10 +54,6 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 		stackID = "io.packit.test.stack"
 		Expect(os.Setenv("CNB_STACK_ID", stackID)).To(Succeed())
 
-		//Separate, but valid CNB dir for testing env parsing
-		cnbEnvDir, err = os.MkdirTemp("", "cnbEnv")
-		Expect(err).NotTo(HaveOccurred())
-
 		binaryPath = filepath.Join(cnbDir, "bin", "detect")
 
 		bpTOMLContent := []byte(`
@@ -70,7 +65,6 @@ api = "0.5"
   clear-env = false
 `)
 		Expect(os.WriteFile(filepath.Join(cnbDir, "buildpack.toml"), bpTOMLContent, 0600)).To(Succeed())
-		Expect(os.WriteFile(filepath.Join(cnbEnvDir, "buildpack.toml"), bpTOMLContent, 0600)).To(Succeed())
 
 		planDir, err = os.MkdirTemp("", "buildplan.toml")
 		Expect(err).NotTo(HaveOccurred())
@@ -242,7 +236,7 @@ api = "0.5"
 
 	context("when CNB_BUILDPACK_DIR is set", func() {
 		it.Before(func() {
-			Expect(os.Setenv("CNB_BUILDPACK_DIR", cnbEnvDir)).To(Succeed())
+			Expect(os.Setenv("CNB_BUILDPACK_DIR", cnbDir)).To(Succeed())
 		})
 
 		it.After(func() {
@@ -256,11 +250,11 @@ api = "0.5"
 				context = ctx
 
 				return packit.DetectResult{}, nil
-			}, packit.WithArgs([]string{binaryPath, platformDir, planPath}))
+			}, packit.WithArgs([]string{"env-var-override", platformDir, planPath}))
 
 			Expect(context).To(Equal(packit.DetectContext{
 				WorkingDir: tmpDir,
-				CNBPath:    cnbEnvDir,
+				CNBPath:    cnbDir,
 				Platform: packit.Platform{
 					Path: platformDir,
 				},
@@ -271,6 +265,104 @@ api = "0.5"
 				},
 				Stack: stackID,
 			}))
+		})
+	})
+
+	context("when CNB_PLATFORM_DIR is set", func() {
+		it.Before(func() {
+			Expect(os.Setenv("CNB_PLATFORM_DIR", platformDir)).To(Succeed())
+		})
+
+		it.After(func() {
+			Expect(os.Unsetenv("CNB_PLATFORM_DIR")).To(Succeed())
+		})
+
+		it("the Detect context receives the correct value", func() {
+			var context packit.DetectContext
+
+			packit.Detect(func(ctx packit.DetectContext) (packit.DetectResult, error) {
+				context = ctx
+
+				return packit.DetectResult{}, nil
+			}, packit.WithArgs([]string{binaryPath, "env-var-override", planPath}))
+
+			Expect(context).To(Equal(packit.DetectContext{
+				WorkingDir: tmpDir,
+				CNBPath:    cnbDir,
+				Platform: packit.Platform{
+					Path: platformDir,
+				},
+				BuildpackInfo: packit.BuildpackInfo{
+					ID:      "some-id",
+					Name:    "some-name",
+					Version: "some-version",
+				},
+				Stack: stackID,
+			}))
+		})
+	})
+
+	context("when CNB_BUILD_PLAN_PATH is set", func() {
+		it.Before(func() {
+			Expect(os.Setenv("CNB_BUILD_PLAN_PATH", planPath)).To(Succeed())
+		})
+
+		it.After(func() {
+			Expect(os.Unsetenv("CNB_BUILD_PLAN_PATH")).To(Succeed())
+		})
+
+		it("the Detect context receives the correct value", func() {
+			var context packit.DetectContext
+
+			packit.Detect(func(ctx packit.DetectContext) (packit.DetectResult, error) {
+				context = ctx
+
+				return packit.DetectResult{
+					Plan: packit.BuildPlan{
+						Provides: []packit.BuildPlanProvision{
+							{Name: "some-provision"},
+						},
+						Requires: []packit.BuildPlanRequirement{
+							{
+								Name: "some-requirement",
+								Metadata: map[string]string{
+									"version":  "some-version",
+									"some-key": "some-value",
+								},
+							},
+						},
+					},
+				}, nil
+			}, packit.WithArgs([]string{binaryPath, platformDir, "env-var-override"}))
+
+			Expect(context).To(Equal(packit.DetectContext{
+				WorkingDir: tmpDir,
+				CNBPath:    cnbDir,
+				Platform: packit.Platform{
+					Path: platformDir,
+				},
+				BuildpackInfo: packit.BuildpackInfo{
+					ID:      "some-id",
+					Name:    "some-name",
+					Version: "some-version",
+				},
+				Stack: stackID,
+			}))
+
+			contents, err := os.ReadFile(planPath)
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(string(contents)).To(MatchTOML(`
+[[provides]]
+  name = "some-provision"
+
+[[requires]]
+  name = "some-requirement"
+
+[requires.metadata]
+  version = "some-version"
+  some-key = "some-value"
+`))
 		})
 	})
 
