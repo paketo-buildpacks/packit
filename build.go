@@ -3,12 +3,13 @@ package packit
 import (
 	"errors"
 	"fmt"
-	"github.com/paketo-buildpacks/packit/v2/fs"
 	"math"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
+
+	"github.com/paketo-buildpacks/packit/v2/fs"
 
 	"github.com/BurntSushi/toml"
 	"github.com/Masterminds/semver/v3"
@@ -133,6 +134,7 @@ func Build(f BuildFunc, options ...Option) {
 
 	apiV05, _ := semver.NewVersion("0.5")
 	apiV06, _ := semver.NewVersion("0.6")
+	apiV08, _ := semver.NewVersion("0.8")
 	apiVersion, err := semver.NewVersion(buildpackInfo.APIVersion)
 	if err != nil {
 		config.exitHandler.Error(err)
@@ -284,6 +286,15 @@ func Build(f BuildFunc, options ...Option) {
 			for _, process := range launch.Processes {
 				if process.Default {
 					config.exitHandler.Error(errors.New("processes can only be marked as default with Buildpack API v0.6 or higher"))
+					return
+				}
+			}
+		}
+
+		if apiVersion.LessThan(apiV08) {
+			for _, process := range launch.Processes {
+				if process.WorkingDirectory != "" {
+					config.exitHandler.Error(errors.New("processes can only have a specific working directory with Buildpack API v0.8 or higher"))
 					return
 				}
 			}
