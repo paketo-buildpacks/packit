@@ -97,16 +97,15 @@ func Build(f BuildFunc, options ...Option) {
 		config = option(config)
 	}
 
-	var (
-		layersPath   = config.args[1]
-		platformPath = config.args[2]
-		planPath     = config.args[3]
-	)
-
 	pwd, err := os.Getwd()
 	if err != nil {
 		config.exitHandler.Error(err)
 		return
+	}
+
+	planPath, ok := os.LookupEnv("CNB_BP_PLAN_PATH")
+	if !ok {
+		planPath = config.args[3]
 	}
 
 	var plan BuildpackPlan
@@ -119,6 +118,16 @@ func Build(f BuildFunc, options ...Option) {
 	cnbPath, ok := os.LookupEnv("CNB_BUILDPACK_DIR")
 	if !ok {
 		cnbPath = filepath.Clean(strings.TrimSuffix(config.args[0], filepath.Join("bin", "build")))
+	}
+
+	layersPath, ok := os.LookupEnv("CNB_LAYERS_DIR")
+	if !ok {
+		layersPath = config.args[1]
+	}
+
+	platformPath, ok := os.LookupEnv("CNB_PLATFORM_DIR")
+	if !ok {
+		platformPath = config.args[2]
 	}
 
 	var buildpackInfo struct {
