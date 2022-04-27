@@ -22,4 +22,9 @@ type Process struct {
 
 	// Default indicates if this process should be the default when launched.
 	Default bool `toml:"default,omitempty"`
+
+	// WorkingDirectory indicates if this process should be run in a working
+	// directory other than the application directory. This can either be an
+	// absolute path or one relative to the default application directory.
+	WorkingDirectory string `toml:"working-directory,omitempty"`
 }

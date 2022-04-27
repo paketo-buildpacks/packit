@@ -11,7 +11,7 @@ require (
 	github.com/anchore/syft v0.44.1
 	github.com/dsnet/compress v0.0.2-0.20210315054119-f66993602bf5
 	github.com/gabriel-vasile/mimetype v1.4.0
-	github.com/google/go-cmp v0.5.7
+	github.com/google/go-cmp v0.5.8
 	github.com/google/uuid v1.3.0
 	github.com/onsi/gomega v1.19.0
 	github.com/pelletier/go-toml v1.9.5
