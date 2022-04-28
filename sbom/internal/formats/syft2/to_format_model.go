@@ -225,10 +225,15 @@ func toDistroModel(d *linux.Release) model.Distro {
 		return model.Distro{}
 	}
 
+	idLike := d.ID
+	if len(d.IDLike) > 0 {
+		// TODO: (packit) Is picking the 1st from this list the right thing to do?
+		idLike = d.IDLike[0]
+	}
+
 	return model.Distro{
 		Name:    d.ID,
 		Version: d.Version,
-		// TODO: (packit) Is picking the 1st from this list the right thing to do?
-		IDLike: d.IDLike[0],
+		IDLike:  idLike,
 	}
 }
