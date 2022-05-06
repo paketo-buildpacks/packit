@@ -15,5 +15,6 @@ func TestSBOM(t *testing.T) {
 	suite("Formatter", testFormatter)
 	suite("FormattedReader", testFormattedReader)
 	suite("SBOM", testSBOM)
+	suite("Autobom", testAutobom)
 	suite.Run(t)
 }
