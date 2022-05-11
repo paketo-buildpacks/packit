@@ -3,8 +3,8 @@ package vacation_test
 import (
 	"bytes"
 	"encoding/base64"
+	"io"
 	"io/fs"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -32,7 +32,7 @@ func testExecutable(t *testing.T, context spec.G, it spec.S) {
 			tempDir, err = os.MkdirTemp("", "vacation")
 			Expect(err).NotTo(HaveOccurred())
 
-			literalContents, err = ioutil.ReadAll(base64.NewDecoder(base64.StdEncoding, bytes.NewBuffer(encodedContents)))
+			literalContents, err = io.ReadAll(base64.NewDecoder(base64.StdEncoding, bytes.NewBuffer(encodedContents)))
 			Expect(err).NotTo(HaveOccurred())
 
 			archive = vacation.NewExecutable(bytes.NewBuffer(literalContents))

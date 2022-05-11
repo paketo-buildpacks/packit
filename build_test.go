@@ -3,7 +3,6 @@ package packit_test
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -1379,7 +1378,7 @@ api = "0.5"
 
 				var exes []string
 				for i := 0; i < N; i++ {
-					command, err := ioutil.TempFile(cnbDir, "command")
+					command, err := os.CreateTemp(cnbDir, "command")
 					Expect(err).NotTo(HaveOccurred())
 
 					exes = append(exes, command.Name())
