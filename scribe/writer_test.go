@@ -70,27 +70,54 @@ func testWriter(t *testing.T, context spec.G, it spec.S) {
 				})
 			})
 
+			context("when the writer has a prefix", func() {
+				it.Before(func() {
+					writer = scribe.NewWriter(buffer, scribe.WithPrefix("[some-prefix] "))
+				})
+
+				it("prints to the writer with the given prefix", func() {
+					_, err := writer.Write([]byte("some-text\nother-text"))
+					Expect(err).NotTo(HaveOccurred())
+					Expect(buffer.String()).To(Equal("[some-prefix] some-text\n[some-prefix] other-text"))
+				})
+
+				context("when sequential write inputs are not newline terminated", func() {
+					it("handles the indentation correctly", func() {
+						_, err := writer.Write([]byte("some-text"))
+						Expect(err).NotTo(HaveOccurred())
+
+						_, err = writer.Write([]byte(" followed by other-text\n"))
+						Expect(err).NotTo(HaveOccurred())
+
+						_, err = writer.Write([]byte("followed by\neven-more-text\n"))
+						Expect(err).NotTo(HaveOccurred())
+
+						Expect(buffer.String()).To(Equal("[some-prefix] some-text followed by other-text\n[some-prefix] followed by\n[some-prefix] even-more-text\n"))
+					})
+				})
+			})
+
 			context("when the writer has a return prefix", func() {
 				it.Before(func() {
-					writer = scribe.NewWriter(buffer, scribe.WithColor(scribe.RedColor), scribe.WithIndent(2))
+					writer = scribe.NewWriter(buffer, scribe.WithColor(scribe.RedColor), scribe.WithIndent(2), scribe.WithPrefix("[some-prefix] "))
 				})
 
 				it("prints to the writer with the correct indentation", func() {
 					_, err := writer.Write([]byte("\rsome-text"))
 					Expect(err).NotTo(HaveOccurred())
-					Expect(buffer.String()).To(Equal("\r\x1b[0;38;5;1m    some-text\x1b[0m"))
+					Expect(buffer.String()).To(Equal("\r\x1b[0;38;5;1m    [some-prefix] some-text\x1b[0m"))
 				})
 			})
 
 			context("when the writer has a newline suffix", func() {
 				it.Before(func() {
-					writer = scribe.NewWriter(buffer, scribe.WithColor(scribe.RedColor), scribe.WithIndent(2))
+					writer = scribe.NewWriter(buffer, scribe.WithColor(scribe.RedColor), scribe.WithIndent(2), scribe.WithPrefix("[some-prefix] "))
 				})
 
 				it("prints to the writer with the correct indentation", func() {
 					_, err := writer.Write([]byte("some-text\n"))
 					Expect(err).NotTo(HaveOccurred())
-					Expect(buffer.String()).To(Equal("\x1b[0;38;5;1m    some-text\x1b[0m\n"))
+					Expect(buffer.String()).To(Equal("\x1b[0;38;5;1m    [some-prefix] some-text\x1b[0m\n"))
 				})
 			})
 
