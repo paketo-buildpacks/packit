@@ -27,12 +27,23 @@ func WithIndent(indent int) Option {
 	}
 }
 
+// WithPrefix takes a prefix string and returns an Option which can be passed
+// in while creating a new Writer to configure a prefix to be prepended to the
+// output of the Writer.
+func WithPrefix(prefix string) Option {
+	return func(l Writer) Writer {
+		l.prefix = prefix
+		return l
+	}
+}
+
 // A Writer conforms to the io.Writer interface and allows for configuration of
 // output from the writter such as the color or indentation through Options.
 type Writer struct {
 	writer    io.Writer
 	color     Color
 	indent    int
+	prefix    string
 	linestart bool
 }
 
@@ -72,6 +83,8 @@ func (w *Writer) Write(b []byte) (int, error) {
 	var indentedLines [][]byte
 	for index, line := range lines {
 		if !(index == 0 && !w.linestart) {
+			line = append([]byte(w.prefix), line...)
+
 			for i := 0; i < w.indent; i++ {
 				line = append([]byte("  "), line...)
 			}
