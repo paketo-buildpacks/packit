@@ -10,7 +10,7 @@ require (
 	github.com/anchore/stereoscope v0.0.0-20220628191509-5bd627c0f9ce
 	github.com/anchore/syft v0.50.0
 	github.com/dsnet/compress v0.0.2-0.20210315054119-f66993602bf5
-	github.com/gabriel-vasile/mimetype v1.4.0
+	github.com/gabriel-vasile/mimetype v1.4.1
 	github.com/google/go-cmp v0.5.8
 	github.com/google/uuid v1.3.0
 	github.com/onsi/gomega v1.19.0
