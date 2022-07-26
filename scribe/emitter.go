@@ -231,4 +231,5 @@ func (e Emitter) BuildConfiguration(envVars map[string]string) {
 	formatted := NewFormattedMapFromEnvironment(envVars)
 	e.Debug.Process("Build configuration:")
 	e.Debug.Subprocess(formatted.String())
+	e.Debug.Break()
 }
