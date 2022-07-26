@@ -399,6 +399,33 @@ func testEmitter(t *testing.T, context spec.G, it spec.S) {
 			})
 		})
 	})
+	context("LayerFlags", func() {
+		context("when log level is INFO", func() {
+			it("prints information about launch, cache, build flags on layer", func() {
+				emitter.LayerFlags(packit.Layer{Name: "some-layer"})
+				Expect(buffer.String()).To(BeEmpty())
+			})
+		})
+		context("when log level is DEBUG", func() {
+			it.Before(func() {
+				emitter = scribe.NewEmitter(buffer).WithLevel("DEBUG")
+			})
+			it("prints information about launch, cache, build flags on layer", func() {
+				emitter.LayerFlags(packit.Layer{
+					Name:   "some-layer",
+					Launch: false,
+					Build:  true,
+					Cache:  false,
+				})
+				Expect(buffer.String()).To(ContainLines(
+					"  Setting up layer 'some-layer'",
+					"    Available at app launch: false",
+					"    Available to other buildpacks: true",
+					"    Cached for rebuilds: false",
+				))
+			})
+		})
+	})
 
 	context("GeneratingSBOM", func() {
 		it("prints the correct log line with the inputted path", func() {
@@ -426,6 +453,33 @@ func testEmitter(t *testing.T, context spec.G, it spec.S) {
 						"  Writing SBOM in the following format(s):",
 						"    format1",
 						"    format2",
+					))
+				})
+			})
+		})
+	})
+
+	context("BuildConfiguration", func() {
+		context("when log level is INFO", func() {
+			it("does not print anything", func() {
+				emitter.BuildConfiguration(map[string]string{"ENV_VAR": "value"})
+				Expect(buffer.String()).To(BeEmpty())
+			})
+
+			context("when the log level is DEBUG", func() {
+				it.Before(func() {
+					emitter = scribe.NewEmitter(buffer).WithLevel("DEBUG")
+				})
+
+				it("lists the environment variables of the build configuration and their values", func() {
+					emitter.BuildConfiguration(map[string]string{
+						"OTHER_ENV_VAR": "another-value",
+						"ENV_VAR":       "value",
+					})
+					Expect(buffer.String()).To(ContainLines(
+						"  Build configuration:",
+						`    ENV_VAR       -> "value"`,
+						`    OTHER_ENV_VAR -> "another-value"`,
 					))
 				})
 			})
