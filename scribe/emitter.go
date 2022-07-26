@@ -162,7 +162,7 @@ func (e Emitter) LaunchProcesses(processes []packit.Process, processEnvs ...map[
 	e.Break()
 }
 
-// EnvironmentVariables take a layer and prints out a formatted table of the
+// EnvironmentVariables takes a layer and prints out a formatted table of the
 // build and launch time environment variables set in the layer.
 func (e Emitter) EnvironmentVariables(layer packit.Layer) {
 	buildEnv := packit.Environment{}
@@ -197,6 +197,16 @@ func (e Emitter) EnvironmentVariables(layer packit.Layer) {
 	}
 }
 
+// LayerFlags takes a layer and prints out the state of the build, launch,
+// and cache layer flags in human-readable language.
+func (e Emitter) LayerFlags(layer packit.Layer) {
+	e.Debug.Process("Setting up layer '%s'", layer.Name)
+	e.Debug.Subprocess("Available at app launch: %t", layer.Launch)
+	e.Debug.Subprocess("Available to other buildpacks: %t", layer.Build)
+	e.Debug.Subprocess("Cached for rebuilds: %t", layer.Cache)
+	e.Debug.Break()
+}
+
 // GeneratingSBOM takes a path to a directory and logs that an SBOM is
 // being generated for that directory.
 func (e Emitter) GeneratingSBOM(path string) {
@@ -212,4 +222,13 @@ func (e Emitter) FormattingSBOM(formats ...string) {
 		e.Debug.Subprocess(f)
 	}
 	e.Debug.Break()
+}
+
+// BuildConfiguration takes a map representing environment variables
+// that will configure a buildpack build and prints them in a formatted
+// table.
+func (e Emitter) BuildConfiguration(envVars map[string]string) {
+	formatted := NewFormattedMapFromEnvironment(envVars)
+	e.Debug.Process("Build configuration:")
+	e.Debug.Subprocess(formatted.String())
 }

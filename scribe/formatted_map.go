@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"sort"
 	"strings"
-
-	"github.com/paketo-buildpacks/packit/v2"
 )
 
 // A FormattedMap is a wrapper for map[string]interface{} to extend functionality.
@@ -46,10 +44,15 @@ func (m FormattedMap) String() string {
 
 // NewFormattedMapFromEnvironment take an environment and returns a
 // FormattedMap with the appropriate environment variable information added.
-func NewFormattedMapFromEnvironment(environment packit.Environment) FormattedMap {
+func NewFormattedMapFromEnvironment(environment map[string]string) FormattedMap {
 	envMap := FormattedMap{}
 	for key, value := range environment {
 		parts := strings.SplitN(key, ".", 2)
+
+		if len(parts) < 2 {
+			envMap[key] = value
+			continue
+		}
 
 		switch {
 		case parts[1] == "override" || parts[1] == "default":
