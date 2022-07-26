@@ -24,7 +24,7 @@ func testFormattedMap(t *testing.T, context spec.G, it spec.S) {
 	})
 
 	context("NewFormattedMapFromEnvironment", func() {
-		context("when the operation is override", func() {
+		context("for all packit env var operations", func() {
 			it("prints the env in a well formatted map", func() {
 				Expect(scribe.NewFormattedMapFromEnvironment(packit.Environment{
 					"OVERRIDE.override": "some-value",
@@ -38,6 +38,17 @@ func testFormattedMap(t *testing.T, context spec.G, it spec.S) {
 					"DEFAULT":  "some-value",
 					"PREPEND":  "some-value:$PREPEND",
 					"APPEND":   "$APPEND:some-value",
+				}))
+			})
+		})
+		context("for a standard string map", func() {
+			it("prints the env in a well formatted map", func() {
+				Expect(scribe.NewFormattedMapFromEnvironment(map[string]string{
+					"SOME_ENV_VAR":       "some-value",
+					"SOME_OTHER_ENV_VAR": "some-other-value",
+				})).To(Equal(scribe.FormattedMap{
+					"SOME_ENV_VAR":       "some-value",
+					"SOME_OTHER_ENV_VAR": "some-other-value",
 				}))
 			})
 		})
