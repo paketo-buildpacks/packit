@@ -2,6 +2,7 @@ package scribe
 
 import (
 	"fmt"
+	"regexp"
 	"sort"
 	"strings"
 )
@@ -49,18 +50,25 @@ func NewFormattedMapFromEnvironment(environment map[string]string) FormattedMap 
 	for key, value := range environment {
 		parts := strings.SplitN(key, ".", 2)
 
-		if len(parts) < 2 {
+		// this regex checks that map keys contain valid env var name characters,
+		// per https://pubs.opengroup.org/onlinepubs/9699919799/
+		// guards against this bug https://github.com/Netflix/go-env/issues/23, and
+		// other misuse of the input map
+		validEnvVarRegex := regexp.MustCompile(`^[a-zA-Z_]{1,}[a-zA-Z0-9_]*$`)
+		if len(parts) < 2 && validEnvVarRegex.MatchString(key) {
 			envMap[key] = value
 			continue
 		}
 
-		switch {
-		case parts[1] == "override" || parts[1] == "default":
-			envMap[parts[0]] = value
-		case parts[1] == "prepend":
-			envMap[parts[0]] = strings.Join([]string{value, "$" + parts[0]}, environment[parts[0]+".delim"])
-		case parts[1] == "append":
-			envMap[parts[0]] = strings.Join([]string{"$" + parts[0], value}, environment[parts[0]+".delim"])
+		if validEnvVarRegex.MatchString(parts[0]) {
+			switch {
+			case parts[1] == "override" || parts[1] == "default":
+				envMap[parts[0]] = value
+			case parts[1] == "prepend":
+				envMap[parts[0]] = strings.Join([]string{value, "$" + parts[0]}, environment[parts[0]+".delim"])
+			case parts[1] == "append":
+				envMap[parts[0]] = strings.Join([]string{"$" + parts[0], value}, environment[parts[0]+".delim"])
+			}
 		}
 	}
 
