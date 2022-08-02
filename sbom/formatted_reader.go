@@ -2,6 +2,7 @@ package sbom
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"sync"
@@ -51,6 +52,30 @@ func (f *FormattedReader) Read(b []byte) (int, error) {
 		if err != nil {
 			// not tested
 			return 0, fmt.Errorf("failed to format sbom: %w", err)
+		}
+
+		// Makes CycloneDX SBOM more reproducible, see
+		// https://github.com/paketo-buildpacks/packit/issues/367 for more details.
+		if f.format.ID() == "cyclonedx-1.3-json" || f.format.ID() == "cyclonedx-1-json" {
+			var cycloneDXOutput map[string]interface{}
+			err = json.Unmarshal(output, &cycloneDXOutput)
+			if err != nil {
+				return 0, fmt.Errorf("failed to modify SPDX SBOM for reproducibility: %w", err)
+			}
+			for k := range cycloneDXOutput {
+				if k == "metadata" {
+					metadata := cycloneDXOutput[k].(map[string]interface{})
+					delete(metadata, "timestamp")
+					cycloneDXOutput[k] = metadata
+				}
+				if k == "serialNumber" {
+					delete(cycloneDXOutput, k)
+				}
+			}
+			output, err = json.Marshal(cycloneDXOutput)
+			if err != nil {
+				return 0, fmt.Errorf("failed to modify CycloneDX SBOM for reproducibility: %w", err)
+			}
 		}
 
 		f.reader = bytes.NewBuffer(output)

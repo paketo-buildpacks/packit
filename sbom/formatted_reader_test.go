@@ -39,7 +39,10 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 
 		Expect(cdxOutput.BOMFormat).To(Equal("CycloneDX"), buffer.String())
 		Expect(cdxOutput.SpecVersion).To(Equal("1.3"), buffer.String())
+		Expect(cdxOutput.SerialNumber).To(Equal(""), buffer.String())
 
+		Expect(cdxOutput.Metadata.Timestamp).To(Equal(""), buffer.String())
+		Expect(cdxOutput.Metadata.Component.Type).To(Equal("file"), buffer.String())
 		Expect(cdxOutput.Metadata.Component.Type).To(Equal("file"), buffer.String())
 		Expect(cdxOutput.Metadata.Component.Name).To(Equal("testdata/"), buffer.String())
 		Expect(cdxOutput.Components[0].Name).To(Equal("collapse-white-space"), buffer.String())
@@ -62,7 +65,9 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 
 		Expect(cdxOutput.BOMFormat).To(Equal("CycloneDX"), buffer.String())
 		Expect(cdxOutput.SpecVersion).To(Equal("1.4"), buffer.String())
+		Expect(cdxOutput.SerialNumber).To(Equal(""), buffer.String())
 
+		Expect(cdxOutput.Metadata.Timestamp).To(Equal(""), buffer.String())
 		Expect(cdxOutput.Metadata.Component.Type).To(Equal("file"), buffer.String())
 		Expect(cdxOutput.Metadata.Component.Name).To(Equal("testdata/"), buffer.String())
 		Expect(cdxOutput.Components[0].Name).To(Equal("collapse-white-space"), buffer.String())
