@@ -14,7 +14,7 @@ import (
 	"github.com/paketo-buildpacks/packit/v2/postal"
 )
 
-const UnknownDependencyCPE = "cpe:2.3:-:-:-:-:-:-:-:-:-:-:-"
+const UnknownCPE = "cpe:2.3:-:-:-:-:-:-:-:-:-:-:-"
 
 // SBOM holds the internal representation of the generated software
 // bill-of-materials. This type can be combined with a FormattedReader to
@@ -73,7 +73,7 @@ func Generate(path string) (SBOM, error) {
 // application image.
 func GenerateFromDependency(dependency postal.Dependency, path string) (SBOM, error) {
 	if dependency.CPE == "" {
-		dependency.CPE = UnknownDependencyCPE
+		dependency.CPE = UnknownCPE
 	}
 
 	cpe, err := pkg.NewCPE(dependency.CPE)
