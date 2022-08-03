@@ -17,9 +17,11 @@ type component struct {
 }
 
 type cdxOutput struct {
-	BOMFormat   string `json:"bomFormat"`
-	SpecVersion string `json:"specVersion"`
-	Metadata    struct {
+	BOMFormat    string `json:"bomFormat"`
+	SpecVersion  string `json:"specVersion"`
+	SerialNumber string `json:"serialNumber"`
+	Metadata     struct {
+		Timestamp string `json:"timestamp"`
 		Component struct {
 			Type string `json:"type"`
 			Name string `json:"name"`
