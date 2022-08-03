@@ -32,6 +32,9 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 		_, err := io.Copy(buffer, sbom.NewFormattedReader(bom, sbom.CycloneDXFormat))
 		Expect(err).NotTo(HaveOccurred())
 
+		format := syft.IdentifyFormat(buffer.Bytes())
+		Expect(format.ID()).To(Equal(syft.CycloneDxJSONFormatID))
+
 		var cdxOutput cdxOutput
 
 		err = json.Unmarshal(buffer.Bytes(), &cdxOutput)
@@ -57,6 +60,9 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 		buffer := bytes.NewBuffer(nil)
 		_, err := io.Copy(buffer, sbom.NewFormattedReader(bom, sbom.Format(syft.CycloneDxJSONFormatID)))
 		Expect(err).NotTo(HaveOccurred())
+
+		format := syft.IdentifyFormat(buffer.Bytes())
+		Expect(format.ID()).To(Equal(syft.CycloneDxJSONFormatID))
 
 		var cdxOutput cdxOutput
 
