@@ -325,7 +325,7 @@ func testSBOM(t *testing.T, context spec.G, it spec.S) {
 				Expect(syftDefaultOutput.Source.Type).To(Equal("directory"), syft.String())
 				Expect(syftDefaultOutput.Source.Target).To(Equal("some-path"), syft.String())
 				Expect(goArtifact.PURL).To(BeEmpty())
-				Expect(goArtifact.CPEs).To(Equal([]string{"cpe:2.3:*:*:*:*:*:*:*:*:*:*:*"}))
+				Expect(goArtifact.CPEs).To(Equal([]string{"cpe:2.3:-:-:-:-:-:-:-:-:-:-:-"}))
 
 				cdx := bytes.NewBuffer(nil)
 				for _, format := range formats {
@@ -374,7 +374,7 @@ func testSBOM(t *testing.T, context spec.G, it spec.S) {
 				Expect(goPackage.LicenseDeclared).To(Equal("BSD-3-Clause"), spdx.String())
 				Expect(goPackage.ExternalRefs).To(Equal([]externalRef{{
 					Category: "SECURITY",
-					Locator:  "cpe:2.3:*:*:*:*:*:*:*:*:*:*:*",
+					Locator:  "cpe:2.3:-:-:-:-:-:-:-:-:-:-:-",
 					Type:     "cpe23Type",
 				}}), spdx.String())
 			})
