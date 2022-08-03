@@ -138,36 +138,56 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 				Expect(os.Setenv("SOURCE_DATE_EPOCH", original)).To(Succeed())
 			})
 
-			it("produces an SBOM with the given timestamp", func() {
-				buffer := bytes.NewBuffer(nil)
-				_, err := io.Copy(buffer, sbom.NewFormattedReader(bom, sbom.SPDXFormat))
-				Expect(err).NotTo(HaveOccurred())
+			context("when the timestamp is valid", func() {
+				it.Before(func() {
+					Expect(os.Setenv("SOURCE_DATE_EPOCH", "1659551872")).To(Succeed())
+				})
 
-				var spdxOutput spdxOutput
+				it("produces an SBOM with the given timestamp", func() {
+					buffer := bytes.NewBuffer(nil)
+					_, err := io.Copy(buffer, sbom.NewFormattedReader(bom, sbom.SPDXFormat))
+					Expect(err).NotTo(HaveOccurred())
 
-				err = json.Unmarshal(buffer.Bytes(), &spdxOutput)
-				Expect(err).NotTo(HaveOccurred(), buffer.String())
+					var spdxOutput spdxOutput
 
-				Expect(spdxOutput.SPDXVersion).To(Equal("SPDX-2.2"), buffer.String())
+					err = json.Unmarshal(buffer.Bytes(), &spdxOutput)
+					Expect(err).NotTo(HaveOccurred(), buffer.String())
 
-				Expect(spdxOutput.Packages[0].Name).To(Equal("collapse-white-space"), buffer.String())
-				Expect(spdxOutput.Packages[1].Name).To(Equal("end-of-stream"), buffer.String())
-				Expect(spdxOutput.Packages[2].Name).To(Equal("insert-css"), buffer.String())
-				Expect(spdxOutput.Packages[3].Name).To(Equal("once"), buffer.String())
-				Expect(spdxOutput.Packages[4].Name).To(Equal("pump"), buffer.String())
-				Expect(spdxOutput.Packages[5].Name).To(Equal("wrappy"), buffer.String())
+					Expect(spdxOutput.SPDXVersion).To(Equal("SPDX-2.2"), buffer.String())
 
-				// Ensure documentNamespace and creationInfo.created have reproducible values
-				Expect(spdxOutput.DocumentNamespace).To(Equal("https://paketo.io/packit/dir/testdata-37a75df4-7cb2-5384-820a-d9ac961acccb"), buffer.String())
-				Expect(spdxOutput.CreationInfo.Created).To(Equal(time.Unix(1659551872, 0).UTC()), buffer.String())
+					Expect(spdxOutput.Packages[0].Name).To(Equal("collapse-white-space"), buffer.String())
+					Expect(spdxOutput.Packages[1].Name).To(Equal("end-of-stream"), buffer.String())
+					Expect(spdxOutput.Packages[2].Name).To(Equal("insert-css"), buffer.String())
+					Expect(spdxOutput.Packages[3].Name).To(Equal("once"), buffer.String())
+					Expect(spdxOutput.Packages[4].Name).To(Equal("pump"), buffer.String())
+					Expect(spdxOutput.Packages[5].Name).To(Equal("wrappy"), buffer.String())
 
-				rerunBuffer := bytes.NewBuffer(nil)
-				_, err = io.Copy(rerunBuffer, sbom.NewFormattedReader(bom, sbom.SPDXFormat))
-				Expect(err).NotTo(HaveOccurred())
-				Expect(rerunBuffer).To(Equal(buffer))
+					// Ensure documentNamespace and creationInfo.created have reproducible values
+					Expect(spdxOutput.DocumentNamespace).To(Equal("https://paketo.io/packit/dir/testdata-37a75df4-7cb2-5384-820a-d9ac961acccb"), buffer.String())
+					Expect(spdxOutput.CreationInfo.Created).To(Equal(time.Unix(1659551872, 0).UTC()), buffer.String())
+
+					rerunBuffer := bytes.NewBuffer(nil)
+					_, err = io.Copy(rerunBuffer, sbom.NewFormattedReader(bom, sbom.SPDXFormat))
+					Expect(err).NotTo(HaveOccurred())
+					Expect(rerunBuffer).To(Equal(buffer))
+				})
+
+				context("failure cases", func() {
+					context("when the timestamp is valid", func() {
+						it.Before(func() {
+							Expect(os.Setenv("SOURCE_DATE_EPOCH", "not-a-valid-timestamp")).To(Succeed())
+						})
+
+						it("returns an error", func() {
+							buffer := bytes.NewBuffer(nil)
+							_, err := io.Copy(buffer, sbom.NewFormattedReader(bom, sbom.SPDXFormat))
+							Expect(err).To(MatchError(ContainSubstring("failed to parse SOURCE_DATE_EPOCH")))
+						})
+					})
+				})
 			})
 		})
-	})
+	}, spec.Sequential())
 
 	it("writes the SBOM in the default syft format", func() {
 		buffer := bytes.NewBuffer(nil)
