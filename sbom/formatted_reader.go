@@ -123,10 +123,10 @@ func (f *FormattedReader) Read(b []byte) (int, error) {
 				}
 				if k == "creationInfo" {
 					creationInfo := spdxOutput["creationInfo"].(map[string]interface{})
+                                         creationInfo["created"] = time.Time{} // This is the zero-valued time
+
 					source_date_epoch := os.Getenv("SOURCE_DATE_EPOCH")
-					if source_date_epoch == "" {
-						creationInfo["created"] = time.Time{} // This is the zero-valued time
-					} else {
+					if source_date_epoch != "" {
 						sde, err := strconv.ParseInt(source_date_epoch, 10, 64)
 						if err != nil {
 							// not tested
