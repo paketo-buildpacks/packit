@@ -70,9 +70,14 @@ func Generate(path string) (SBOM, error) {
 // and the directory path where the dependency will be located within the
 // application image.
 func GenerateFromDependency(dependency postal.Dependency, path string) (SBOM, error) {
-	cpe, err := pkg.NewCPE(dependency.CPE)
-	if err != nil {
-		return SBOM{}, err
+	cpe := pkg.CPE{}
+
+	if dependency.CPE != "" {
+		var err error
+		cpe, err = pkg.NewCPE(dependency.CPE)
+		if err != nil {
+			return SBOM{}, err
+		}
 	}
 
 	catalog := pkg.NewCatalog(pkg.Package{
