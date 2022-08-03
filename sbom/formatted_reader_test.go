@@ -102,6 +102,9 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 			_, err := io.Copy(buffer, sbom.NewFormattedReader(bom, sbom.SPDXFormat))
 			Expect(err).NotTo(HaveOccurred())
 
+			format := syft.IdentifyFormat(buffer.Bytes())
+			Expect(format.ID()).To(Equal(syft.SPDXJSONFormatID))
+
 			var spdxOutput spdxOutput
 
 			err = json.Unmarshal(buffer.Bytes(), &spdxOutput)
@@ -152,6 +155,9 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 
 					err = json.Unmarshal(buffer.Bytes(), &spdxOutput)
 					Expect(err).NotTo(HaveOccurred(), buffer.String())
+
+					format := syft.IdentifyFormat(buffer.Bytes())
+					Expect(format.ID()).To(Equal(syft.SPDXJSONFormatID))
 
 					Expect(spdxOutput.SPDXVersion).To(Equal("SPDX-2.2"), buffer.String())
 
