@@ -131,7 +131,7 @@ func (f *FormattedReader) Read(b []byte) (int, error) {
 						if err != nil {
 							return 0, fmt.Errorf("failed to parse SOURCE_DATE_EPOCH: %w", err)
 						}
-						creationInfo["created"] = time.Unix(sde, 0)
+						creationInfo["created"] = time.Unix(sde, 0).UTC()
 					}
 					spdxOutput[k] = creationInfo
 				}
