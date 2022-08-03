@@ -54,6 +54,11 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 		Expect(cdxOutput.Components[3].Name).To(Equal("once"), buffer.String())
 		Expect(cdxOutput.Components[4].Name).To(Equal("pump"), buffer.String())
 		Expect(cdxOutput.Components[5].Name).To(Equal("wrappy"), buffer.String())
+
+		rerunBuffer := bytes.NewBuffer(nil)
+		_, err = io.Copy(rerunBuffer, sbom.NewFormattedReader(bom, sbom.CycloneDXFormat))
+		Expect(err).NotTo(HaveOccurred())
+		Expect(rerunBuffer).To(Equal(buffer))
 	})
 
 	it("writes the SBOM in the latest CycloneDX format (1.4)", func() {
@@ -82,6 +87,11 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 		Expect(cdxOutput.Components[3].Name).To(Equal("once"), buffer.String())
 		Expect(cdxOutput.Components[4].Name).To(Equal("pump"), buffer.String())
 		Expect(cdxOutput.Components[5].Name).To(Equal("wrappy"), buffer.String())
+
+		rerunBuffer := bytes.NewBuffer(nil)
+		_, err = io.Copy(rerunBuffer, sbom.NewFormattedReader(bom, sbom.Format(syft.CycloneDxJSONFormatID)))
+		Expect(err).NotTo(HaveOccurred())
+		Expect(rerunBuffer).To(Equal(buffer))
 	})
 
 	it("writes the SBOM in the default SPDX format", func() {
@@ -124,6 +134,11 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 		Expect(syftOutput.Artifacts[3].Name).To(Equal("once"), buffer.String())
 		Expect(syftOutput.Artifacts[4].Name).To(Equal("pump"), buffer.String())
 		Expect(syftOutput.Artifacts[5].Name).To(Equal("wrappy"), buffer.String())
+
+		rerunBuffer := bytes.NewBuffer(nil)
+		_, err = io.Copy(rerunBuffer, sbom.NewFormattedReader(bom, sbom.SyftFormat))
+		Expect(err).NotTo(HaveOccurred())
+		Expect(rerunBuffer).To(Equal(buffer))
 	})
 
 	it("writes the SBOM in Syft 2.0.2 format", func() {
@@ -146,6 +161,11 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 		Expect(syftOutput.Artifacts[3].Name).To(Equal("once"), buffer.String())
 		Expect(syftOutput.Artifacts[4].Name).To(Equal("pump"), buffer.String())
 		Expect(syftOutput.Artifacts[5].Name).To(Equal("wrappy"), buffer.String())
+
+		rerunBuffer := bytes.NewBuffer(nil)
+		_, err = io.Copy(rerunBuffer, sbom.NewFormattedReader(bom, sbom.Format(syft2.ID)))
+		Expect(err).NotTo(HaveOccurred())
+		Expect(rerunBuffer).To(Equal(buffer))
 	})
 
 	it("writes the SBOM in the latest Syft format (3.*)", func() {
@@ -168,6 +188,11 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 		Expect(syftOutput.Artifacts[3].Name).To(Equal("once"), buffer.String())
 		Expect(syftOutput.Artifacts[4].Name).To(Equal("pump"), buffer.String())
 		Expect(syftOutput.Artifacts[5].Name).To(Equal("wrappy"), buffer.String())
+
+		rerunBuffer := bytes.NewBuffer(nil)
+		_, err = io.Copy(rerunBuffer, sbom.NewFormattedReader(bom, sbom.Format(syft.JSONFormatID)))
+		Expect(err).NotTo(HaveOccurred())
+		Expect(rerunBuffer).To(Equal(buffer))
 	})
 
 	context("Read", func() {
