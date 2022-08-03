@@ -60,7 +60,7 @@ func (f *FormattedReader) Read(b []byte) (int, error) {
 			var cycloneDXOutput map[string]interface{}
 			err = json.Unmarshal(output, &cycloneDXOutput)
 			if err != nil {
-				return 0, fmt.Errorf("failed to modify SPDX SBOM for reproducibility: %w", err)
+				return 0, fmt.Errorf("failed to modify CycloneDX SBOM for reproducibility: %w", err)
 			}
 			for k := range cycloneDXOutput {
 				if k == "metadata" {
