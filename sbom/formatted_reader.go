@@ -2,13 +2,22 @@ package sbom
 
 import (
 	"bytes"
+	"encoding/binary"
 	"encoding/json"
 	"fmt"
 	"io"
+	"net/url"
+	"os"
+	"path/filepath"
+	"strconv"
+	"strings"
 	"sync"
+	"time"
 
 	"github.com/anchore/syft/syft"
 	"github.com/anchore/syft/syft/sbom"
+	"github.com/google/uuid"
+	"github.com/mitchellh/hashstructure/v2"
 )
 
 // FormattedReader outputs the SBoM in a specified format.
@@ -75,6 +84,62 @@ func (f *FormattedReader) Read(b []byte) (int, error) {
 			output, err = json.Marshal(cycloneDXOutput)
 			if err != nil {
 				return 0, fmt.Errorf("failed to modify CycloneDX SBOM for reproducibility: %w", err)
+			}
+		}
+
+		// Makes SPDX SBOM more reproducible, see
+		// https://github.com/paketo-buildpacks/packit/issues/368 for more details.
+		if f.format.ID() == "spdx-2-json" {
+			hash, err := hashstructure.Hash(f.sbom.syft, hashstructure.FormatV2, nil)
+			if err != nil {
+				// not tested
+				return 0, fmt.Errorf("failed to modify SPDX SBOM for reproducibility: %w", err)
+			}
+			hashBytes := make([]byte, binary.MaxVarintLen64)
+			binary.PutUvarint(hashBytes, hash)
+
+			var spdxOutput map[string]interface{}
+
+			err = json.Unmarshal(output, &spdxOutput)
+			if err != nil {
+				return 0, fmt.Errorf("failed to modify SPDX SBOM for reproducibility: %w", err)
+			}
+			for k := range spdxOutput {
+				if k == "documentNamespace" {
+					uri, err := url.Parse(spdxOutput[k].(string))
+					if err != nil {
+						// not tested
+						return 0, err
+					}
+
+					uri.Host = "paketo.io"
+					uri.Path = strings.Replace(uri.Path, "syft", "packit", 1)
+					oldBase := filepath.Base(uri.Path)
+					source, _, _ := strings.Cut(oldBase, "-")
+					newBase := fmt.Sprintf("%s-%s", source, uuid.NewSHA1(uuid.NameSpaceURL, hashBytes))
+					uri.Path = strings.Replace(uri.Path, oldBase, newBase, 1)
+
+					spdxOutput[k] = uri.String()
+				}
+				if k == "creationInfo" {
+					creationInfo := spdxOutput["creationInfo"].(map[string]interface{})
+					source_date_epoch := os.Getenv("SOURCE_DATE_EPOCH")
+					if source_date_epoch == "" {
+						creationInfo["created"] = time.Time{} // This is the zero-valued time
+					} else {
+						sde, err := strconv.ParseInt(source_date_epoch, 10, 64)
+						if err != nil {
+							// not tested
+							return 0, fmt.Errorf("failed to parse SOURCE_DATE_EPOCH: %w", err)
+						}
+						creationInfo["created"] = time.Unix(sde, 0)
+					}
+					spdxOutput[k] = creationInfo
+				}
+			}
+			output, err = json.Marshal(spdxOutput)
+			if err != nil {
+				return 0, fmt.Errorf("failed to modify SPDX SBOM for reproducibility: %w", err)
 			}
 		}
 

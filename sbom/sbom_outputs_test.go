@@ -1,5 +1,7 @@
 package sbom_test
 
+import "time"
+
 /* A set of structs that are used to unmarshal SBOM JSON output in tests */
 
 type license struct {
@@ -64,6 +66,10 @@ type pkg struct {
 }
 
 type spdxOutput struct {
-	Packages    []pkg  `json:"packages"`
-	SPDXVersion string `json:"spdxVersion"`
+	Packages          []pkg  `json:"packages"`
+	SPDXVersion       string `json:"spdxVersion"`
+	DocumentNamespace string `json:"documentNamespace"`
+	CreationInfo      struct {
+		Created time.Time `json:"created"`
+	} `json:"creationInfo"`
 }
