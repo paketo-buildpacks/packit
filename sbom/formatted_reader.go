@@ -71,16 +71,14 @@ func (f *FormattedReader) Read(b []byte) (int, error) {
 			if err != nil {
 				return 0, fmt.Errorf("failed to modify CycloneDX SBOM for reproducibility: %w", err)
 			}
-			for k := range cycloneDXOutput {
-				if k == "metadata" {
-					metadata := cycloneDXOutput[k].(map[string]interface{})
-					delete(metadata, "timestamp")
-					cycloneDXOutput[k] = metadata
-				}
-				if k == "serialNumber" {
-					delete(cycloneDXOutput, k)
-				}
+
+			if metadata, ok := cycloneDXOutput["metadata"].(map[string]interface{}); ok {
+				delete(metadata, "timestamp")
+				cycloneDXOutput["metadata"] = metadata
 			}
+
+			delete(cycloneDXOutput, "serialNumber")
+
 			output, err = json.Marshal(cycloneDXOutput)
 			if err != nil {
 				return 0, fmt.Errorf("failed to modify CycloneDX SBOM for reproducibility: %w", err)
@@ -104,38 +102,37 @@ func (f *FormattedReader) Read(b []byte) (int, error) {
 			if err != nil {
 				return 0, fmt.Errorf("failed to modify SPDX SBOM for reproducibility: %w", err)
 			}
-			for k := range spdxOutput {
-				if k == "documentNamespace" {
-					uri, err := url.Parse(spdxOutput[k].(string))
-					if err != nil {
-						// not tested
-						return 0, err
-					}
-
-					uri.Host = "paketo.io"
-					uri.Path = strings.Replace(uri.Path, "syft", "packit", 1)
-					oldBase := filepath.Base(uri.Path)
-					source, _, _ := strings.Cut(oldBase, "-")
-					newBase := fmt.Sprintf("%s-%s", source, uuid.NewSHA1(uuid.NameSpaceURL, hashBytes))
-					uri.Path = strings.Replace(uri.Path, oldBase, newBase, 1)
-
-					spdxOutput[k] = uri.String()
+			if namespace, ok := spdxOutput["documentNamespace"].(string); ok {
+				uri, err := url.Parse(namespace)
+				if err != nil {
+					// not tested
+					return 0, err
 				}
-				if k == "creationInfo" {
-					creationInfo := spdxOutput["creationInfo"].(map[string]interface{})
-					creationInfo["created"] = time.Time{} // This is the zero-valued time
 
-					source_date_epoch := os.Getenv("SOURCE_DATE_EPOCH")
-					if source_date_epoch != "" {
-						sde, err := strconv.ParseInt(source_date_epoch, 10, 64)
-						if err != nil {
-							return 0, fmt.Errorf("failed to parse SOURCE_DATE_EPOCH: %w", err)
-						}
-						creationInfo["created"] = time.Unix(sde, 0).UTC()
-					}
-					spdxOutput[k] = creationInfo
-				}
+				uri.Host = "paketo.io"
+				uri.Path = strings.Replace(uri.Path, "syft", "packit", 1)
+				oldBase := filepath.Base(uri.Path)
+				source, _, _ := strings.Cut(oldBase, "-")
+				newBase := fmt.Sprintf("%s-%s", source, uuid.NewSHA1(uuid.NameSpaceURL, hashBytes))
+				uri.Path = strings.Replace(uri.Path, oldBase, newBase, 1)
+
+				spdxOutput["documentNamespace"] = uri.String()
 			}
+
+			if creationInfo, ok := spdxOutput["creationInfo"].(map[string]interface{}); ok {
+				creationInfo["created"] = time.Time{} // This is the zero-valued time
+
+				source_date_epoch := os.Getenv("SOURCE_DATE_EPOCH")
+				if source_date_epoch != "" {
+					sde, err := strconv.ParseInt(source_date_epoch, 10, 64)
+					if err != nil {
+						return 0, fmt.Errorf("failed to parse SOURCE_DATE_EPOCH: %w", err)
+					}
+					creationInfo["created"] = time.Unix(sde, 0).UTC()
+				}
+				spdxOutput["creationInfo"] = creationInfo
+			}
+
 			output, err = json.Marshal(spdxOutput)
 			if err != nil {
 				return 0, fmt.Errorf("failed to modify SPDX SBOM for reproducibility: %w", err)
