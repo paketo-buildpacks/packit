@@ -5,10 +5,17 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net/url"
+	"os"
+	"path/filepath"
+	"strconv"
+	"strings"
 	"sync"
+	"time"
 
 	"github.com/anchore/syft/syft"
 	"github.com/anchore/syft/syft/sbom"
+	"github.com/google/uuid"
 )
 
 // FormattedReader outputs the SBoM in a specified format.
@@ -62,19 +69,73 @@ func (f *FormattedReader) Read(b []byte) (int, error) {
 			if err != nil {
 				return 0, fmt.Errorf("failed to modify CycloneDX SBOM for reproducibility: %w", err)
 			}
-			for k := range cycloneDXOutput {
-				if k == "metadata" {
-					metadata := cycloneDXOutput[k].(map[string]interface{})
-					delete(metadata, "timestamp")
-					cycloneDXOutput[k] = metadata
-				}
-				if k == "serialNumber" {
-					delete(cycloneDXOutput, k)
-				}
+
+			if metadata, ok := cycloneDXOutput["metadata"].(map[string]interface{}); ok {
+				delete(metadata, "timestamp")
+				cycloneDXOutput["metadata"] = metadata
 			}
+
+			delete(cycloneDXOutput, "serialNumber")
+
 			output, err = json.Marshal(cycloneDXOutput)
 			if err != nil {
 				return 0, fmt.Errorf("failed to modify CycloneDX SBOM for reproducibility: %w", err)
+			}
+		}
+
+		// Makes SPDX SBOM more reproducible, see
+		// https://github.com/paketo-buildpacks/packit/issues/368 for more details.
+		if f.format.ID() == "spdx-2-json" {
+			var spdxOutput map[string]interface{}
+
+			err = json.Unmarshal(output, &spdxOutput)
+			if err != nil {
+				return 0, fmt.Errorf("failed to modify SPDX SBOM for reproducibility: %w", err)
+			}
+
+			// Makes the creationInfo reproducible so a hash can be taken for the
+			// documentNamespace
+			if creationInfo, ok := spdxOutput["creationInfo"].(map[string]interface{}); ok {
+				creationInfo["created"] = time.Time{} // This is the zero-valued time
+
+				sourceDateEpoch := os.Getenv("SOURCE_DATE_EPOCH")
+				if sourceDateEpoch != "" {
+					sde, err := strconv.ParseInt(sourceDateEpoch, 10, 64)
+					if err != nil {
+						return 0, fmt.Errorf("failed to parse SOURCE_DATE_EPOCH: %w", err)
+					}
+					creationInfo["created"] = time.Unix(sde, 0).UTC()
+				}
+				spdxOutput["creationInfo"] = creationInfo
+			}
+
+			if namespace, ok := spdxOutput["documentNamespace"].(string); ok {
+				delete(spdxOutput, "documentNamespace")
+
+				data, err := json.Marshal(spdxOutput)
+				if err != nil {
+					return 0, fmt.Errorf("failed to checksum SPDX document: %w", err)
+				}
+
+				uri, err := url.Parse(namespace)
+				if err != nil {
+					// not tested
+					return 0, err
+				}
+
+				uri.Host = "paketo.io"
+				uri.Path = strings.Replace(uri.Path, "syft", "packit", 1)
+				oldBase := filepath.Base(uri.Path)
+				source, _, _ := strings.Cut(oldBase, "-")
+				newBase := fmt.Sprintf("%s-%s", source, uuid.NewSHA1(uuid.NameSpaceURL, data))
+				uri.Path = strings.Replace(uri.Path, oldBase, newBase, 1)
+
+				spdxOutput["documentNamespace"] = uri.String()
+			}
+
+			output, err = json.Marshal(spdxOutput)
+			if err != nil {
+				return 0, fmt.Errorf("failed to modify SPDX SBOM for reproducibility: %w", err)
 			}
 		}
 
