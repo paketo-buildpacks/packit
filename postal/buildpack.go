@@ -73,7 +73,7 @@ func parseBuildpack(path, name string) ([]Dependency, string, error) {
 
 func stacksInclude(stacks []string, stack string) bool {
 	for _, s := range stacks {
-		if s == stack {
+		if s == stack || s == "*" {
 			return true
 		}
 	}
