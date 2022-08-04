@@ -2,7 +2,6 @@ package sbom
 
 import (
 	"bytes"
-	"encoding/binary"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -17,7 +16,6 @@ import (
 	"github.com/anchore/syft/syft"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/google/uuid"
-	"github.com/mitchellh/hashstructure/v2"
 )
 
 // FormattedReader outputs the SBoM in a specified format.
@@ -88,37 +86,15 @@ func (f *FormattedReader) Read(b []byte) (int, error) {
 		// Makes SPDX SBOM more reproducible, see
 		// https://github.com/paketo-buildpacks/packit/issues/368 for more details.
 		if f.format.ID() == "spdx-2-json" {
-			hash, err := hashstructure.Hash(f.sbom.syft, hashstructure.FormatV2, nil)
-			if err != nil {
-				// not tested
-				return 0, fmt.Errorf("failed to modify SPDX SBOM for reproducibility: %w", err)
-			}
-			hashBytes := make([]byte, binary.MaxVarintLen64)
-			binary.PutUvarint(hashBytes, hash)
-
 			var spdxOutput map[string]interface{}
 
 			err = json.Unmarshal(output, &spdxOutput)
 			if err != nil {
 				return 0, fmt.Errorf("failed to modify SPDX SBOM for reproducibility: %w", err)
 			}
-			if namespace, ok := spdxOutput["documentNamespace"].(string); ok {
-				uri, err := url.Parse(namespace)
-				if err != nil {
-					// not tested
-					return 0, err
-				}
 
-				uri.Host = "paketo.io"
-				uri.Path = strings.Replace(uri.Path, "syft", "packit", 1)
-				oldBase := filepath.Base(uri.Path)
-				source, _, _ := strings.Cut(oldBase, "-")
-				newBase := fmt.Sprintf("%s-%s", source, uuid.NewSHA1(uuid.NameSpaceURL, hashBytes))
-				uri.Path = strings.Replace(uri.Path, oldBase, newBase, 1)
-
-				spdxOutput["documentNamespace"] = uri.String()
-			}
-
+			// Makes the creationInfo reproducible to a hash can be taken for the
+			// documentNamespace
 			if creationInfo, ok := spdxOutput["creationInfo"].(map[string]interface{}); ok {
 				creationInfo["created"] = time.Time{} // This is the zero-valued time
 
@@ -131,6 +107,30 @@ func (f *FormattedReader) Read(b []byte) (int, error) {
 					creationInfo["created"] = time.Unix(sde, 0).UTC()
 				}
 				spdxOutput["creationInfo"] = creationInfo
+			}
+
+			if namespace, ok := spdxOutput["documentNamespace"].(string); ok {
+				delete(spdxOutput, "documentNamespace")
+
+				data, err := json.Marshal(spdxOutput)
+				if err != nil {
+					return 0, fmt.Errorf("failed to checksum SPDX document: %w", err)
+				}
+
+				uri, err := url.Parse(namespace)
+				if err != nil {
+					// not tested
+					return 0, err
+				}
+
+				uri.Host = "paketo.io"
+				uri.Path = strings.Replace(uri.Path, "syft", "packit", 1)
+				oldBase := filepath.Base(uri.Path)
+				source, _, _ := strings.Cut(oldBase, "-")
+				newBase := fmt.Sprintf("%s-%s", source, uuid.NewSHA1(uuid.NameSpaceURL, data))
+				uri.Path = strings.Replace(uri.Path, oldBase, newBase, 1)
+
+				spdxOutput["documentNamespace"] = uri.String()
 			}
 
 			output, err = json.Marshal(spdxOutput)
