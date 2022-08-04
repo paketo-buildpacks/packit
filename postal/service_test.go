@@ -86,6 +86,14 @@ stacks = ["some-stack"]
 uri = "some-uri"
 version = "4.5.6"
 strip-components = 1
+
+[[metadata.dependencies]]
+id = "some-other-entry"
+sha256 = "some-sha"
+stacks = ["*"]
+uri = "some-uri"
+version = "4.5.6"
+strip-components = 1
 `)
 		Expect(err).NotTo(HaveOccurred())
 
@@ -113,6 +121,21 @@ strip-components = 1
 				SHA256:          "some-sha",
 				Version:         "1.2.3",
 			}))
+		})
+
+		context("when the dependency has a wildcard stack", func() {
+			it("is compatible with all stack ids", func() {
+				dependency, err := service.Resolve(path, "some-other-entry", "", "random-stack")
+				Expect(err).NotTo(HaveOccurred())
+				Expect(dependency).To(Equal(postal.Dependency{
+					ID:              "some-other-entry",
+					Stacks:          []string{"*"},
+					URI:             "some-uri",
+					SHA256:          "some-sha",
+					Version:         "4.5.6",
+					StripComponents: 1,
+				}))
+			})
 		})
 
 		context("when there is NOT a default version", func() {
