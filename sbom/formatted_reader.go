@@ -93,14 +93,14 @@ func (f *FormattedReader) Read(b []byte) (int, error) {
 				return 0, fmt.Errorf("failed to modify SPDX SBOM for reproducibility: %w", err)
 			}
 
-			// Makes the creationInfo reproducible to a hash can be taken for the
+			// Makes the creationInfo reproducible so a hash can be taken for the
 			// documentNamespace
 			if creationInfo, ok := spdxOutput["creationInfo"].(map[string]interface{}); ok {
 				creationInfo["created"] = time.Time{} // This is the zero-valued time
 
-				source_date_epoch := os.Getenv("SOURCE_DATE_EPOCH")
-				if source_date_epoch != "" {
-					sde, err := strconv.ParseInt(source_date_epoch, 10, 64)
+				sourceDateEpoch := os.Getenv("SOURCE_DATE_EPOCH")
+				if sourceDateEpoch != "" {
+					sde, err := strconv.ParseInt(sourceDateEpoch, 10, 64)
 					if err != nil {
 						return 0, fmt.Errorf("failed to parse SOURCE_DATE_EPOCH: %w", err)
 					}
