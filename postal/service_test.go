@@ -45,6 +45,8 @@ func testService(t *testing.T, context spec.G, it spec.S) {
 		_, err = file.WriteString(`
 [[metadata.dependencies]]
 deprecation_date = 2022-04-01T00:00:00Z
+cpe = "some-cpe"
+cpes = ["some-cpe", "other-cpe"]
 id = "some-entry"
 sha256 = "some-sha"
 stacks = ["some-stack"]
@@ -53,6 +55,7 @@ version = "1.2.3"
 
 [[metadata.dependencies]]
 id = "some-other-entry"
+cpes = ["some-cpe", "other-cpe"]
 sha256 = "some-other-sha"
 stacks = ["some-stack"]
 uri = "some-uri"
@@ -67,6 +70,8 @@ version = "1.2.5"
 
 [[metadata.dependencies]]
 id = "some-random-entry"
+cpe = "some-cpe"
+cpes = ["some-cpe", "other-cpe"]
 sha256 = "some-random-sha"
 stacks = ["other-random-stack"]
 uri = "some-uri"
@@ -114,6 +119,8 @@ strip-components = 1
 			dependency, err := service.Resolve(path, "some-entry", "1.2.*", "some-stack")
 			Expect(err).NotTo(HaveOccurred())
 			Expect(dependency).To(Equal(postal.Dependency{
+				CPE:             "some-cpe",
+				CPEs:            []string{"some-cpe", "other-cpe"},
 				DeprecationDate: deprecationDate,
 				ID:              "some-entry",
 				Stacks:          []string{"some-stack"},
@@ -178,6 +185,8 @@ strip-components = 1
 					Expect(err).NotTo(HaveOccurred())
 					Expect(dependency).To(Equal(postal.Dependency{
 						DeprecationDate: deprecationDate,
+						CPE:             "some-cpe",
+						CPEs:            []string{"some-cpe", "other-cpe"},
 						ID:              "some-entry",
 						Stacks:          []string{"some-stack"},
 						URI:             "some-uri",
@@ -195,6 +204,8 @@ strip-components = 1
 					dependency, err := service.Resolve(path, "some-entry", "~> 1.1", "some-stack")
 					Expect(err).NotTo(HaveOccurred())
 					Expect(dependency).To(Equal(postal.Dependency{
+						CPE:             "some-cpe",
+						CPEs:            []string{"some-cpe", "other-cpe"},
 						DeprecationDate: deprecationDate,
 						ID:              "some-entry",
 						Stacks:          []string{"some-stack"},
@@ -213,6 +224,8 @@ strip-components = 1
 					dependency, err := service.Resolve(path, "some-entry", "~> 1", "some-stack")
 					Expect(err).NotTo(HaveOccurred())
 					Expect(dependency).To(Equal(postal.Dependency{
+						CPE:             "some-cpe",
+						CPEs:            []string{"some-cpe", "other-cpe"},
 						DeprecationDate: deprecationDate,
 						ID:              "some-entry",
 						Stacks:          []string{"some-stack"},
