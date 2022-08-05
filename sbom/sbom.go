@@ -14,6 +14,9 @@ import (
 	"github.com/paketo-buildpacks/packit/v2/postal"
 )
 
+// UnknownCPE is a Common Platform Enumeration (CPE) that uses the NA (Not
+// applicable) logical operator for all components of its name. It is designed
+// not to match with other CPEs, to avoid false positive CPE matches.
 const UnknownCPE = "cpe:2.3:-:-:-:-:-:-:-:-:-:-:-"
 
 // SBOM holds the internal representation of the generated software
