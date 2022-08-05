@@ -12,6 +12,8 @@ import (
 type Dependency struct {
 	// CPE is the Common Platform Enumerator for the dependency. Used in legacy
 	// image label SBOM (GenerateBillOfMaterials).
+	//
+	// Deprecated: use CPEs instead.
 	CPE string `toml:"cpe"`
 
 	// CPEs are the Common Platform Enumerators for the dependency. Used in Syft
