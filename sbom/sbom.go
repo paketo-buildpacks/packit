@@ -14,6 +14,11 @@ import (
 	"github.com/paketo-buildpacks/packit/v2/postal"
 )
 
+// UnknownCPE is a Common Platform Enumeration (CPE) that uses the NA (Not
+// applicable) logical operator for all components of its name. It is designed
+// not to match with other CPEs, to avoid false positive CPE matches.
+const UnknownCPE = "cpe:2.3:-:-:-:-:-:-:-:-:-:-:-"
+
 // SBOM holds the internal representation of the generated software
 // bill-of-materials. This type can be combined with a FormattedReader to
 // output the SBoM in a number of file formats.
@@ -70,6 +75,10 @@ func Generate(path string) (SBOM, error) {
 // and the directory path where the dependency will be located within the
 // application image.
 func GenerateFromDependency(dependency postal.Dependency, path string) (SBOM, error) {
+	if dependency.CPE == "" {
+		dependency.CPE = UnknownCPE
+	}
+
 	cpe, err := pkg.NewCPE(dependency.CPE)
 	if err != nil {
 		return SBOM{}, err
