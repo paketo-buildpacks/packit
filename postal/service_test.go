@@ -885,6 +885,48 @@ version = "this is super not semver"
 					},
 				}))
 			})
+			context("and there are CPEs", func() {
+				it("uses CPE, ignores CPEs, for backward compatibility", func() {
+					entries := service.GenerateBillOfMaterials(
+						postal.Dependency{
+							CPE:          "some-cpe",
+							CPEs:         []string{"some-other-cpe"},
+							ID:           "some-entry",
+							Name:         "Some Entry",
+							SHA256:       "some-sha",
+							Source:       "some-source",
+							SourceSHA256: "some-source-sha",
+							Stacks:       []string{"some-stack"},
+							URI:          "some-uri",
+							Version:      "1.2.3",
+						},
+					)
+
+					Expect(entries).To(Equal([]packit.BOMEntry{
+						{
+							Name: "Some Entry",
+							Metadata: paketosbom.BOMMetadata{
+								CPE: "some-cpe",
+								Checksum: paketosbom.BOMChecksum{
+									Algorithm: paketosbom.SHA256,
+									Hash:      "some-sha",
+								},
+								Source: paketosbom.BOMSource{
+									Checksum: paketosbom.BOMChecksum{
+										Algorithm: paketosbom.SHA256,
+										Hash:      "some-source-sha",
+									},
+									URI: "some-source",
+								},
+
+								URI:     "some-uri",
+								Version: "1.2.3",
+							},
+						},
+					}))
+				})
+
+			})
 		})
 
 		context("when there is a deprecation date", func() {

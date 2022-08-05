@@ -379,6 +379,55 @@ func testSBOM(t *testing.T, context spec.G, it spec.S) {
 				}}), spdx.String())
 			})
 		})
+		context("when the input dependency has CPEs and CPE", func() {
+			it("uses CPEs, not CPE", func() {
+				bom, err := sbom.GenerateFromDependency(postal.Dependency{
+					CPE:          "cpe:2.3:a:golang:go:1.16.9:*:*:*:*:*:*:*",
+					CPEs:         []string{"cpe:2.3:a:some:other:cpe:*:*:*:*:*:*:*", "cpe:2.3:a:another:cpe:to:include:*:*:*:*:*:*"},
+					ID:           "go",
+					Licenses:     []string{"BSD-3-Clause"},
+					Name:         "Go",
+					SHA256:       "ca9ef23a5db944b116102b87c1ae9344b27e011dae7157d2f1e501abd39e9829",
+					Source:       "https://dl.google.com/go/go1.16.9.src.tar.gz",
+					SourceSHA256: "0a1cc7fd7bd20448f71ebed64d846138850d5099b18cf5cc10a4fc45160d8c3d",
+					Stacks:       []string{"io.buildpacks.stacks.bionic", "io.paketo.stacks.tiny"},
+					URI:          "https://deps.paketo.io/go/go_go1.16.9_linux_x64_bionic_ca9ef23a.tgz",
+					Version:      "1.16.9",
+				}, "some-path")
+				Expect(err).NotTo(HaveOccurred())
+
+				formatter, err := bom.InFormats(sbom.SyftFormat, sbom.CycloneDXFormat, sbom.SPDXFormat)
+				Expect(err).NotTo(HaveOccurred())
+
+				formats := formatter.Formats()
+
+				syft := bytes.NewBuffer(nil)
+				for _, format := range formats {
+					if format.Extension == "syft.json" {
+						_, err = io.Copy(syft, format.Content)
+						Expect(err).NotTo(HaveOccurred())
+					}
+				}
+
+				var syftDefaultOutput syftOutput
+				err = json.NewDecoder(syft).Decode(&syftDefaultOutput)
+				Expect(err).NotTo(HaveOccurred(), syft.String())
+
+				Expect(syftDefaultOutput.Schema.Version).To(Equal(`3.0.1`), syft.String())
+
+				goArtifact := syftDefaultOutput.Artifacts[0]
+				Expect(goArtifact.Name).To(Equal("Go"), syft.String())
+				Expect(goArtifact.Version).To(Equal("1.16.9"), syft.String())
+				Expect(goArtifact.Licenses).To(Equal([]string{"BSD-3-Clause"}), syft.String())
+				Expect(syftDefaultOutput.Source.Type).To(Equal("directory"), syft.String())
+				Expect(syftDefaultOutput.Source.Target).To(Equal("some-path"), syft.String())
+				Expect(goArtifact.PURL).To(BeEmpty())
+				Expect(goArtifact.CPEs).To(Equal([]string{
+					"cpe:2.3:a:some:other:cpe:*:*:*:*:*:*:*",
+					"cpe:2.3:a:another:cpe:to:include:*:*:*:*:*:*",
+				}))
+			})
+		})
 
 		context("failure cases", func() {
 			context("when the CPE is invalid", func() {

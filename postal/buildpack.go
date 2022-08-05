@@ -10,8 +10,13 @@ import (
 
 // Dependency is a representation of a buildpack dependency.
 type Dependency struct {
-	// CPE is the Common Platform Enumerator for the dependency.
+	// CPE is the Common Platform Enumerator for the dependency. Used in legacy
+	// image label SBOM (GenerateBillOfMaterials).
 	CPE string `toml:"cpe"`
+
+	// CPEs are the Common Platform Enumerators for the dependency. Used in Syft
+	// and SPDX JSON SBOMs. If unset, falls back to CPE.
+	CPEs []string `toml:"cpes"`
 
 	// DeprecationDate is the data upon which this dependency is considered deprecated.
 	DeprecationDate time.Time `toml:"deprecation_date"`

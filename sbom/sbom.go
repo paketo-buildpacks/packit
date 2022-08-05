@@ -78,17 +78,24 @@ func GenerateFromDependency(dependency postal.Dependency, path string) (SBOM, er
 	if dependency.CPE == "" {
 		dependency.CPE = UnknownCPE
 	}
+	if len(dependency.CPEs) == 0 {
+		dependency.CPEs = []string{dependency.CPE}
+	}
 
-	cpe, err := pkg.NewCPE(dependency.CPE)
-	if err != nil {
-		return SBOM{}, err
+	var cpes []pkg.CPE
+	for _, cpeString := range dependency.CPEs {
+		cpe, err := pkg.NewCPE(cpeString)
+		if err != nil {
+			return SBOM{}, err
+		}
+		cpes = append(cpes, cpe)
 	}
 
 	catalog := pkg.NewCatalog(pkg.Package{
 		Name:     dependency.Name,
 		Version:  dependency.Version,
 		Licenses: dependency.Licenses,
-		CPEs:     []pkg.CPE{cpe},
+		CPEs:     cpes,
 		PURL:     dependency.PURL,
 	})
 
