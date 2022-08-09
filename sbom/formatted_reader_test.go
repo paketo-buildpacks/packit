@@ -39,9 +39,9 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 
 		// Ensures pretty printing
 		Expect(buffer.String()).To(ContainSubstring(`{
-	"bomFormat": "CycloneDX",
-	"components": [
-		{`))
+  "bomFormat": "CycloneDX",
+  "components": [
+    {`))
 
 		var cdxOutput cdxOutput
 
@@ -79,9 +79,9 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 
 		// Ensures pretty printing
 		Expect(buffer.String()).To(ContainSubstring(`{
-	"bomFormat": "CycloneDX",
-	"components": [
-		{`))
+  "bomFormat": "CycloneDX",
+  "components": [
+    {`))
 
 		var cdxOutput cdxOutput
 
@@ -119,8 +119,8 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 
 			// Ensures pretty printing
 			Expect(buffer.String()).To(ContainSubstring(`{
-	"SPDXID": "SPDXRef-DOCUMENT",
-	"creationInfo": {`))
+ "SPDXID": "SPDXRef-DOCUMENT",
+ "creationInfo": {`))
 
 			var spdxOutput spdxOutput
 
