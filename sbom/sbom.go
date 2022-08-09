@@ -75,10 +75,13 @@ func Generate(path string) (SBOM, error) {
 // and the directory path where the dependency will be located within the
 // application image.
 func GenerateFromDependency(dependency postal.Dependency, path string) (SBOM, error) {
+
+	//nolint Ignore SA1019, informed usage of deprecated package
 	if dependency.CPE == "" {
 		dependency.CPE = UnknownCPE
 	}
 	if len(dependency.CPEs) == 0 {
+		//nolint Ignore SA1019, informed usage of deprecated package
 		dependency.CPEs = []string{dependency.CPE}
 	}
 
