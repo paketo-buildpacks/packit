@@ -77,7 +77,7 @@ func (f *FormattedReader) Read(b []byte) (int, error) {
 
 			delete(cycloneDXOutput, "serialNumber")
 
-			output, err = json.Marshal(cycloneDXOutput)
+			output, err = json.MarshalIndent(cycloneDXOutput, "", "\t")
 			if err != nil {
 				return 0, fmt.Errorf("failed to modify CycloneDX SBOM for reproducibility: %w", err)
 			}
@@ -133,7 +133,7 @@ func (f *FormattedReader) Read(b []byte) (int, error) {
 				spdxOutput["documentNamespace"] = uri.String()
 			}
 
-			output, err = json.Marshal(spdxOutput)
+			output, err = json.MarshalIndent(spdxOutput, "", "\t")
 			if err != nil {
 				return 0, fmt.Errorf("failed to modify SPDX SBOM for reproducibility: %w", err)
 			}
