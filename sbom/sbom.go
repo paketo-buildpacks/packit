@@ -74,6 +74,8 @@ func Generate(path string) (SBOM, error) {
 // GenerateFromDependency returns a populated SBOM given a postal.Dependency
 // and the directory path where the dependency will be located within the
 // application image.
+
+//nolint Ignore SA1019, informed usage of deprecated package
 func GenerateFromDependency(dependency postal.Dependency, path string) (SBOM, error) {
 
 	//nolint Ignore SA1019, informed usage of deprecated package

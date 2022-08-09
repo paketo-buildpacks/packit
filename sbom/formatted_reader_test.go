@@ -37,6 +37,12 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 		format := syft.IdentifyFormat(buffer.Bytes())
 		Expect(format.ID()).To(Equal(syft.CycloneDxJSONFormatID))
 
+		// Ensures pretty printing
+		Expect(buffer.String()).To(ContainSubstring(`{
+  "bomFormat": "CycloneDX",
+  "components": [
+    {`))
+
 		var cdxOutput cdxOutput
 
 		err = json.Unmarshal(buffer.Bytes(), &cdxOutput)
@@ -71,6 +77,12 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 		format := syft.IdentifyFormat(buffer.Bytes())
 		Expect(format.ID()).To(Equal(syft.CycloneDxJSONFormatID))
 
+		// Ensures pretty printing
+		Expect(buffer.String()).To(ContainSubstring(`{
+  "bomFormat": "CycloneDX",
+  "components": [
+    {`))
+
 		var cdxOutput cdxOutput
 
 		err = json.Unmarshal(buffer.Bytes(), &cdxOutput)
@@ -104,6 +116,11 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 
 			format := syft.IdentifyFormat(buffer.Bytes())
 			Expect(format.ID()).To(Equal(syft.SPDXJSONFormatID))
+
+			// Ensures pretty printing
+			Expect(buffer.String()).To(ContainSubstring(`{
+ "SPDXID": "SPDXRef-DOCUMENT",
+ "creationInfo": {`))
 
 			var spdxOutput spdxOutput
 
@@ -226,6 +243,12 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 		buffer := bytes.NewBuffer(nil)
 		_, err := io.Copy(buffer, sbom.NewFormattedReader(bom, sbom.Format(syft2.ID)))
 		Expect(err).NotTo(HaveOccurred())
+
+		// Ensures pretty printing
+		Expect(buffer.String()).To(ContainSubstring(`{
+ "artifacts": [
+  {
+   "id":`))
 
 		var syftOutput syftOutput
 
