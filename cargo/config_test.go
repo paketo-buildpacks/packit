@@ -76,6 +76,7 @@ func testConfig(t *testing.T, context spec.G, it spec.S) {
 							Source:          "source",
 							SourceSHA256:    "source-shasum",
 							Stacks:          []string{"io.buildpacks.stacks.bionic", "org.cloudfoundry.stacks.tiny"},
+							StripComponents: 1,
 							URI:             "http://some-url",
 							Version:         "1.2.3",
 						},
@@ -142,6 +143,7 @@ api = "0.6"
 	source = "source"
   source_sha256 = "source-shasum"
   stacks = ["io.buildpacks.stacks.bionic", "org.cloudfoundry.stacks.tiny"]
+  strip-components = 1
   uri = "http://some-url"
   version = "1.2.3"
 
@@ -402,6 +404,7 @@ api = "0.6"
 	source = "source"
   source_sha256 = "source-shasum"
   stacks = ["io.buildpacks.stacks.bionic", "org.cloudfoundry.stacks.tiny"]
+	strip-components = 1
   uri = "http://some-url"
   version = "1.2.3"
 
@@ -466,17 +469,18 @@ api = "0.6"
 					PrePackage: "some-pre-package-script.sh",
 					Dependencies: []cargo.ConfigMetadataDependency{
 						{
-							CPE:          "some-cpe",
-							PURL:         "some-purl",
-							ID:           "some-dependency",
-							Licenses:     []interface{}{"fancy-license", "fancy-license-2"},
-							Name:         "Some Dependency",
-							SHA256:       "shasum",
-							Source:       "source",
-							SourceSHA256: "source-shasum",
-							Stacks:       []string{"io.buildpacks.stacks.bionic", "org.cloudfoundry.stacks.tiny"},
-							URI:          "http://some-url",
-							Version:      "1.2.3",
+							CPE:             "some-cpe",
+							PURL:            "some-purl",
+							ID:              "some-dependency",
+							Licenses:        []interface{}{"fancy-license", "fancy-license-2"},
+							Name:            "Some Dependency",
+							SHA256:          "shasum",
+							Source:          "source",
+							SourceSHA256:    "source-shasum",
+							Stacks:          []string{"io.buildpacks.stacks.bionic", "org.cloudfoundry.stacks.tiny"},
+							StripComponents: 1,
+							URI:             "http://some-url",
+							Version:         "1.2.3",
 						},
 					},
 					DependencyConstraints: []cargo.ConfigMetadataDependencyConstraint{
