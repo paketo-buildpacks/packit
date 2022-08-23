@@ -59,6 +59,7 @@ type ConfigMetadataDependency struct {
 	Source          string        `toml:"source"           json:"source,omitempty"`
 	SourceSHA256    string        `toml:"source_sha256"    json:"source_sha256,omitempty"`
 	Stacks          []string      `toml:"stacks"           json:"stacks,omitempty"`
+	StripComponents int           `toml:"strip-components" json:"strip-components,omitempty"`
 	URI             string        `toml:"uri"              json:"uri,omitempty"`
 	Version         string        `toml:"version"          json:"version,omitempty"`
 }
@@ -92,6 +93,11 @@ func EncodeConfig(writer io.Writer, config Config) error {
 	}
 
 	c, err = convertPatches(config.Metadata.DependencyConstraints, c)
+	if err != nil {
+		return err
+	}
+
+	c, err = convertStripComponents(config.Metadata.Dependencies, c)
 	if err != nil {
 		return err
 	}
@@ -236,6 +242,35 @@ func convertPatches(constraints []ConfigMetadataDependencyConstraint, c map[stri
 				return nil, fmt.Errorf("failure to assert type: unexpected data")
 			}
 			dependencyConstraint.(map[string]interface{})["patches"] = int(floatPatches)
+		}
+	}
+	return c, nil
+}
+
+// Accomplishes the same this as the convertPatches function but for strip components in the dependencies list.
+func convertStripComponents(dependencies []ConfigMetadataDependency, c map[string]interface{}) (map[string]interface{}, error) {
+	if len(dependencies) > 0 {
+		metadata, ok := c["metadata"].(map[string]interface{})
+		if !ok {
+			return nil, fmt.Errorf("failure to assert type: unexpected data in metadata")
+		}
+
+		dependencies, ok := metadata["dependencies"].([]interface{})
+		if !ok {
+			return nil, fmt.Errorf("failure to assert type: unexpected data in constraints")
+		}
+
+		for _, dependency := range dependencies {
+			stripComponents, ok := dependency.(map[string]interface{})["strip-components"]
+			if !ok {
+				return c, nil
+			}
+
+			floatStripComponents, ok := stripComponents.(float64)
+			if !ok {
+				return nil, fmt.Errorf("failure to assert type: unexpected data")
+			}
+			dependency.(map[string]interface{})["strip-components"] = int(floatStripComponents)
 		}
 	}
 	return c, nil
