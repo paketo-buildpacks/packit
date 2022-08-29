@@ -137,7 +137,7 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 			Expect(spdxOutput.Packages[5].Name).To(Equal("wrappy"), buffer.String())
 
 			// Ensure documentNamespace and creationInfo.created have reproducible values
-			Expect(spdxOutput.DocumentNamespace).To(Equal("https://paketo.io/packit/dir/testdata-04e37d2c-9d0c-54b0-ab88-8fa36abad217"), buffer.String())
+			Expect(spdxOutput.DocumentNamespace).To(Equal("https://paketo.io/packit/dir/testdata-5eb1cfc4-105b-5002-b80e-04a3f4cef71b"), buffer.String())
 			Expect(spdxOutput.CreationInfo.Created).To(BeZero(), buffer.String())
 
 			rerunBuffer := bytes.NewBuffer(nil)
@@ -186,7 +186,7 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 					Expect(spdxOutput.Packages[5].Name).To(Equal("wrappy"), buffer.String())
 
 					// Ensure documentNamespace and creationInfo.created have reproducible values
-					Expect(spdxOutput.DocumentNamespace).To(Equal("https://paketo.io/packit/dir/testdata-9b828127-aae0-54c2-bb2e-0f2f7a349906"), buffer.String())
+					Expect(spdxOutput.DocumentNamespace).To(Equal("https://paketo.io/packit/dir/testdata-e4c3c453-ddc9-5920-995f-5a1a8472b6e8"), buffer.String())
 					Expect(spdxOutput.CreationInfo.Created).To(Equal(time.Unix(1659551872, 0).UTC()), buffer.String())
 
 					rerunBuffer := bytes.NewBuffer(nil)
