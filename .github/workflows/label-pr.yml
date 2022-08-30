@@ -3,7 +3,7 @@ on:
   pull_request_target:
     branches:
     - main
-    - v2
+    - v*
     types:
     - synchronize
     - opened
