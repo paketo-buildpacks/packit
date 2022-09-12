@@ -5,6 +5,7 @@
 .github/workflows/approve-bot-pr.yml
 .github/workflows/codeql-analysis.yml
 .github/workflows/lint.yml
+.github/workflows/update-github-config.yml
 .github/workflows/create-draft-release.yml
 .github/workflows/test-pull-request.yml
 .github/workflows/lint-yaml.yml
