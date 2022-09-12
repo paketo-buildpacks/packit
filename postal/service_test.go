@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"crypto/sha256"
+	"crypto/sha512"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -355,6 +356,7 @@ version = "this is super not semver"
 	context("Deliver", func() {
 		var (
 			dependencySHA string
+			hash512       string
 			layerPath     string
 			deliver       func() error
 		)
@@ -394,6 +396,9 @@ version = "this is super not semver"
 
 			sum := sha256.Sum256(buffer.Bytes())
 			dependencySHA = hex.EncodeToString(sum[:])
+
+			sum512 := sha512.Sum512(buffer.Bytes())
+			hash512 = hex.EncodeToString(sum512[:])
 
 			transport.DropCall.Returns.ReadCloser = io.NopCloser(buffer)
 
@@ -439,6 +444,50 @@ version = "this is super not semver"
 			info, err := os.Stat(filepath.Join(layerPath, "first"))
 			Expect(err).NotTo(HaveOccurred())
 			Expect(info.Mode()).To(Equal(os.FileMode(0755)))
+		})
+
+		context("when using the checksum field", func() {
+			it.Before(func() {
+				deliver = func() error {
+					return service.Deliver(
+						postal.Dependency{
+							ID:       "some-entry",
+							Stacks:   []string{"some-stack"},
+							URI:      "some-entry.tgz",
+							Checksum: fmt.Sprintf("sha512:%s", hash512),
+							Version:  "1.2.3",
+						},
+						"some-cnb-path",
+						layerPath,
+						"some-platform-dir",
+					)
+				}
+			})
+
+			it("downloads the dependency and unpackages it into the path", func() {
+				err := deliver()
+
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(transport.DropCall.Receives.Root).To(Equal("some-cnb-path"))
+				Expect(transport.DropCall.Receives.Uri).To(Equal("some-entry.tgz"))
+				Expect(mappingResolver.FindDependencyMappingCall.Receives.PlatformDir).To(Equal("some-platform-dir"))
+
+				files, err := filepath.Glob(fmt.Sprintf("%s/*", layerPath))
+				Expect(err).NotTo(HaveOccurred())
+				Expect(files).To(ConsistOf([]string{
+					filepath.Join(layerPath, "first"),
+					filepath.Join(layerPath, "second"),
+					filepath.Join(layerPath, "third"),
+					filepath.Join(layerPath, "some-dir"),
+					filepath.Join(layerPath, "symlink"),
+				}))
+
+				info, err := os.Stat(filepath.Join(layerPath, "first"))
+				Expect(err).NotTo(HaveOccurred())
+				Expect(info.Mode()).To(Equal(os.FileMode(0755)))
+
+			})
 		})
 
 		context("when the dependency has a strip-components value set", func() {
@@ -628,6 +677,31 @@ version = "this is super not semver"
 					err := deliver()
 
 					Expect(err).To(MatchError("failed to fetch dependency: there was an error"))
+				})
+			})
+
+			context("when there is a problem with the checksum", func() {
+				it.Before(func() {
+					deliver = func() error {
+						return service.Deliver(
+							postal.Dependency{
+								ID:       "some-entry",
+								Stacks:   []string{"some-stack"},
+								URI:      "some-entry.tgz",
+								Checksum: fmt.Sprintf("magic:%s", hash512),
+								Version:  "1.2.3",
+							},
+							"some-cnb-path",
+							layerPath,
+							"some-platform-dir",
+						)
+					}
+				})
+
+				it("fails to create a validated reader", func() {
+					err := deliver()
+
+					Expect(err).To(MatchError(ContainSubstring(`unsupported algorithm "magic"`)))
 				})
 			})
 

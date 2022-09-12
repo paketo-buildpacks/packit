@@ -66,6 +66,7 @@ func testConfig(t *testing.T, context spec.G, it spec.S) {
 					PrePackage:   "some-pre-package-script.sh",
 					Dependencies: []cargo.ConfigMetadataDependency{
 						{
+							Checksum:        "sha256:some-sum",
 							CPE:             "some-cpe",
 							PURL:            "some-purl",
 							DeprecationDate: &deprecationDate,
@@ -74,6 +75,7 @@ func testConfig(t *testing.T, context spec.G, it spec.S) {
 							Name:            "Some Dependency",
 							SHA256:          "shasum",
 							Source:          "source",
+							SourceChecksum:  "sha256:source-shasum",
 							SourceSHA256:    "source-shasum",
 							Stacks:          []string{"io.buildpacks.stacks.bionic", "org.cloudfoundry.stacks.tiny"},
 							StripComponents: 1,
@@ -133,6 +135,7 @@ api = "0.6"
 	some-dependency = "1.2.x"
 
 [[metadata.dependencies]]
+	checksum = "sha256:some-sum"
   cpe = "some-cpe"
   purl = "some-purl"
   deprecation_date = "2020-06-01T00:00:00Z"
@@ -141,6 +144,7 @@ api = "0.6"
   name = "Some Dependency"
   sha256 = "shasum"
 	source = "source"
+	source-checksum = "sha256:source-shasum"
   source_sha256 = "source-shasum"
   stacks = ["io.buildpacks.stacks.bionic", "org.cloudfoundry.stacks.tiny"]
   strip-components = 1
@@ -211,6 +215,7 @@ api = "0.6"
 						PrePackage:   "some-pre-package-script.sh",
 						Dependencies: []cargo.ConfigMetadataDependency{
 							{
+								Checksum:        "sha256:some-sum",
 								CPE:             "some-cpe",
 								PURL:            "some-purl",
 								DeprecationDate: &deprecationDate,
@@ -225,13 +230,14 @@ api = "0.6"
 										URI:  "some-license-uri",
 									},
 								},
-								Name:         "Some Dependency",
-								SHA256:       "shasum",
-								Source:       "source",
-								SourceSHA256: "source-shasum",
-								Stacks:       []string{"io.buildpacks.stacks.bionic", "org.cloudfoundry.stacks.tiny"},
-								URI:          "http://some-url",
-								Version:      "1.2.3",
+								Name:           "Some Dependency",
+								SHA256:         "shasum",
+								Source:         "source",
+								SourceChecksum: "sha256:source-shasum",
+								SourceSHA256:   "source-shasum",
+								Stacks:         []string{"io.buildpacks.stacks.bionic", "org.cloudfoundry.stacks.tiny"},
+								URI:            "http://some-url",
+								Version:        "1.2.3",
 							},
 						},
 						DependencyConstraints: []cargo.ConfigMetadataDependencyConstraint{
@@ -282,6 +288,7 @@ api = "0.6"
 	some-dependency = "1.2.x"
 
 [[metadata.dependencies]]
+	checksum = "sha256:some-sum"
   cpe = "some-cpe"
   purl = "some-purl"
   deprecation_date = "2020-06-01T00:00:00Z"
@@ -289,6 +296,7 @@ api = "0.6"
   name = "Some Dependency"
   sha256 = "shasum"
 	source = "source"
+	source-checksum = "sha256:source-shasum"
   source_sha256 = "source-shasum"
   stacks = ["io.buildpacks.stacks.bionic", "org.cloudfoundry.stacks.tiny"]
   uri = "http://some-url"
@@ -395,13 +403,15 @@ api = "0.6"
   key = "value"
 
 [[metadata.dependencies]]
+	checksum = "sha256:some-sum"
   cpe = "some-cpe"
   purl = "some-purl"
   id = "some-dependency"
 	licenses = ["fancy-license", "fancy-license-2"]
   name = "Some Dependency"
   sha256 = "shasum"
-	source = "source"
+  source = "source"
+  source-checksum = "sha256:source-shasum"
   source_sha256 = "source-shasum"
   stacks = ["io.buildpacks.stacks.bionic", "org.cloudfoundry.stacks.tiny"]
 	strip-components = 1
@@ -469,6 +479,7 @@ api = "0.6"
 					PrePackage: "some-pre-package-script.sh",
 					Dependencies: []cargo.ConfigMetadataDependency{
 						{
+							Checksum:        "sha256:some-sum",
 							CPE:             "some-cpe",
 							PURL:            "some-purl",
 							ID:              "some-dependency",
@@ -476,6 +487,7 @@ api = "0.6"
 							Name:            "Some Dependency",
 							SHA256:          "shasum",
 							Source:          "source",
+							SourceChecksum:  "sha256:source-shasum",
 							SourceSHA256:    "source-shasum",
 							Stacks:          []string{"io.buildpacks.stacks.bionic", "org.cloudfoundry.stacks.tiny"},
 							StripComponents: 1,
@@ -539,12 +551,14 @@ api = "0.2"
   key = "value"
 
 [[metadata.dependencies]]
+	checksum = "sha256:some-sum"
   cpe = "some-cpe"
   purl = "some-purl"
   id = "some-dependency"
   name = "Some Dependency"
   sha256 = "shasum"
-	source = "source"
+  source = "source"
+  source-checksum = "sha256:source-shasum"
   source_sha256 = "source-shasum"
   stacks = ["io.buildpacks.stacks.bionic", "org.cloudfoundry.stacks.tiny"]
   uri = "http://some-url"
@@ -615,9 +629,10 @@ api = "0.2"
 						PrePackage: "some-pre-package-script.sh",
 						Dependencies: []cargo.ConfigMetadataDependency{
 							{
-								CPE:  "some-cpe",
-								PURL: "some-purl",
-								ID:   "some-dependency",
+								Checksum: "sha256:some-sum",
+								CPE:      "some-cpe",
+								PURL:     "some-purl",
+								ID:       "some-dependency",
 								Licenses: []interface{}{
 									map[string]interface{}{
 										"type": "fancy-license",
@@ -628,13 +643,14 @@ api = "0.2"
 										"uri":  "some-license-uri",
 									},
 								},
-								Name:         "Some Dependency",
-								SHA256:       "shasum",
-								Source:       "source",
-								SourceSHA256: "source-shasum",
-								Stacks:       []string{"io.buildpacks.stacks.bionic", "org.cloudfoundry.stacks.tiny"},
-								URI:          "http://some-url",
-								Version:      "1.2.3",
+								Name:           "Some Dependency",
+								SHA256:         "shasum",
+								Source:         "source",
+								SourceChecksum: "sha256:source-shasum",
+								SourceSHA256:   "source-shasum",
+								Stacks:         []string{"io.buildpacks.stacks.bionic", "org.cloudfoundry.stacks.tiny"},
+								URI:            "http://some-url",
+								Version:        "1.2.3",
 							},
 						},
 						DependencyConstraints: []cargo.ConfigMetadataDependencyConstraint{

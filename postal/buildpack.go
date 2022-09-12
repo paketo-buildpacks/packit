@@ -23,6 +23,11 @@ type Dependency struct {
 	// DeprecationDate is the data upon which this dependency is considered deprecated.
 	DeprecationDate time.Time `toml:"deprecation_date"`
 
+	// Checksum is a string that includes an algorithm and the hex-encoded hash
+	// of the built dependency separated by a colon. Example
+	// sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855.
+	Checksum string `toml:"checksum"`
+
 	// ID is the identifier used to specify the dependency.
 	ID string `toml:"id"`
 
@@ -41,7 +46,13 @@ type Dependency struct {
 	// Source is the uri location of the source-code representation of the dependency.
 	Source string `toml:"source"`
 
-	// SourceSHA256 is the hex-encoded SHA256 checksum of the source-code representation of the dependency.
+	// SourceChecksum is a string that includes an algorithm and the hex-encoded
+	// hash of the source representation of the dependency separated by a colon.
+	// Example sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855.
+	SourceChecksum string `toml:"source-checksum"`
+
+	// SourceSHA256 is the hex-encoded SHA256 checksum of the source-code
+	// representation of the dependency.
 	SourceSHA256 string `toml:"source_sha256"`
 
 	// Stacks is a list of stacks for which the dependency is built.
