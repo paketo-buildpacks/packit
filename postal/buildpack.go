@@ -41,6 +41,8 @@ type Dependency struct {
 	PURL string `toml:"purl"`
 
 	// SHA256 is the hex-encoded SHA256 checksum of the built dependency.
+	//
+	// Deprecated: use Checksum instead.
 	SHA256 string `toml:"sha256"`
 
 	// Source is the uri location of the source-code representation of the dependency.
@@ -53,6 +55,8 @@ type Dependency struct {
 
 	// SourceSHA256 is the hex-encoded SHA256 checksum of the source-code
 	// representation of the dependency.
+	//
+	// Deprecated: use SourceChecksum instead.
 	SourceSHA256 string `toml:"source_sha256"`
 
 	// Stacks is a list of stacks for which the dependency is built.
