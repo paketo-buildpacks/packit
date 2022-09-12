@@ -163,7 +163,12 @@ func (s Service) Deliver(dependency Dependency, cnbPath, layerPath, platformPath
 	}
 	defer bundle.Close()
 
-	validatedReader := cargo.NewValidatedReader(bundle, dependency.SHA256)
+	var validatedReader cargo.ValidatedReader
+	if dependency.SHA256 != "" {
+		validatedReader = cargo.NewValidatedReader(bundle, fmt.Sprintf("sha256:%s", dependency.SHA256))
+	} else {
+		validatedReader = cargo.NewValidatedReader(bundle, dependency.Checksum)
+	}
 
 	name := dependency.Name
 	if name == "" {

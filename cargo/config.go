@@ -49,14 +49,16 @@ type ConfigMetadata struct {
 }
 
 type ConfigMetadataDependency struct {
+	Checksum        string        `toml:"checksum"         json:"checksum,omitempty"`
 	CPE             string        `toml:"cpe"              json:"cpe,omitempty"`
-	PURL            string        `toml:"purl"              json:"purl,omitempty"`
+	PURL            string        `toml:"purl"             json:"purl,omitempty"`
 	DeprecationDate *time.Time    `toml:"deprecation_date" json:"deprecation_date,omitempty"`
 	ID              string        `toml:"id"               json:"id,omitempty"`
 	Licenses        []interface{} `toml:"licenses"         json:"licenses,omitempty"`
 	Name            string        `toml:"name"             json:"name,omitempty"`
 	SHA256          string        `toml:"sha256"           json:"sha256,omitempty"`
 	Source          string        `toml:"source"           json:"source,omitempty"`
+	SourceChecksum  string        `toml:"source-checksum"  json:"source-checksum,omitempty"`
 	SourceSHA256    string        `toml:"source_sha256"    json:"source_sha256,omitempty"`
 	Stacks          []string      `toml:"stacks"           json:"stacks,omitempty"`
 	StripComponents int           `toml:"strip-components" json:"strip-components,omitempty"`
