@@ -60,4 +60,3 @@ jobs:
         token: ${{ secrets.PAKETO_BOT_GITHUB_TOKEN }}
         title: "Updates github-config"
         branch: automation/github-config/update
-        base: v2
