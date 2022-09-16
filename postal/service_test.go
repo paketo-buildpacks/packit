@@ -871,24 +871,24 @@ version = "this is super not semver"
 		it("returns a list of BOMEntry values", func() {
 			entries := service.GenerateBillOfMaterials(
 				postal.Dependency{
-					ID:           "some-entry",
-					Name:         "Some Entry",
-					SHA256:       "some-sha",
-					Source:       "some-source",
-					SourceSHA256: "some-source-sha",
-					Stacks:       []string{"some-stack"},
-					URI:          "some-uri",
-					Version:      "1.2.3",
+					ID:             "some-entry",
+					Name:           "Some Entry",
+					Checksum:       "sha256:some-sha",
+					Source:         "some-source",
+					SourceChecksum: "sha256:some-source-sha",
+					Stacks:         []string{"some-stack"},
+					URI:            "some-uri",
+					Version:        "1.2.3",
 				},
 				postal.Dependency{
-					ID:           "other-entry",
-					Name:         "Other Entry",
-					SHA256:       "other-sha",
-					Source:       "other-source",
-					SourceSHA256: "other-source-sha",
-					Stacks:       []string{"other-stack"},
-					URI:          "other-uri",
-					Version:      "4.5.6",
+					ID:             "other-entry",
+					Name:           "Other Entry",
+					Checksum:       "sha256:other-sha",
+					Source:         "other-source",
+					SourceChecksum: "sha256:other-source-sha",
+					Stacks:         []string{"other-stack"},
+					URI:            "other-uri",
+					Version:        "4.5.6",
 				},
 			)
 			Expect(entries).To(Equal([]packit.BOMEntry{
@@ -937,15 +937,15 @@ version = "this is super not semver"
 			it("generates a BOM with the CPE", func() {
 				entries := service.GenerateBillOfMaterials(
 					postal.Dependency{
-						CPE:          "some-cpe",
-						ID:           "some-entry",
-						Name:         "Some Entry",
-						SHA256:       "some-sha",
-						Source:       "some-source",
-						SourceSHA256: "some-source-sha",
-						Stacks:       []string{"some-stack"},
-						URI:          "some-uri",
-						Version:      "1.2.3",
+						CPE:            "some-cpe",
+						ID:             "some-entry",
+						Name:           "Some Entry",
+						Checksum:       "sha256:some-sha",
+						Source:         "some-source",
+						SourceChecksum: "sha256:some-source-sha",
+						Stacks:         []string{"some-stack"},
+						URI:            "some-uri",
+						Version:        "1.2.3",
 					},
 				)
 
@@ -976,16 +976,16 @@ version = "this is super not semver"
 				it("uses CPE, ignores CPEs, for backward compatibility", func() {
 					entries := service.GenerateBillOfMaterials(
 						postal.Dependency{
-							CPE:          "some-cpe",
-							CPEs:         []string{"some-other-cpe"},
-							ID:           "some-entry",
-							Name:         "Some Entry",
-							SHA256:       "some-sha",
-							Source:       "some-source",
-							SourceSHA256: "some-source-sha",
-							Stacks:       []string{"some-stack"},
-							URI:          "some-uri",
-							Version:      "1.2.3",
+							CPE:            "some-cpe",
+							CPEs:           []string{"some-other-cpe"},
+							ID:             "some-entry",
+							Name:           "Some Entry",
+							Checksum:       "sha256:some-sha",
+							Source:         "some-source",
+							SourceChecksum: "sha256:some-source-sha",
+							Stacks:         []string{"some-stack"},
+							URI:            "some-uri",
+							Version:        "1.2.3",
 						},
 					)
 
@@ -1031,9 +1031,9 @@ version = "this is super not semver"
 						DeprecationDate: deprecationDate,
 						ID:              "some-entry",
 						Name:            "Some Entry",
-						SHA256:          "some-sha",
+						Checksum:        "sha256:some-sha",
 						Source:          "some-source",
-						SourceSHA256:    "some-source-sha",
+						SourceChecksum:  "sha256:some-source-sha",
 						Stacks:          []string{"some-stack"},
 						URI:             "some-uri",
 						Version:         "1.2.3",
@@ -1069,15 +1069,15 @@ version = "this is super not semver"
 			it("generates a BOM with the license information", func() {
 				entries := service.GenerateBillOfMaterials(
 					postal.Dependency{
-						ID:           "some-entry",
-						Licenses:     []string{"some-license"},
-						Name:         "Some Entry",
-						SHA256:       "some-sha",
-						Source:       "some-source",
-						SourceSHA256: "some-source-sha",
-						Stacks:       []string{"some-stack"},
-						URI:          "some-uri",
-						Version:      "1.2.3",
+						ID:             "some-entry",
+						Licenses:       []string{"some-license"},
+						Name:           "Some Entry",
+						Checksum:       "sha256:some-sha",
+						Source:         "some-source",
+						SourceChecksum: "sha256:some-source-sha",
+						Stacks:         []string{"some-stack"},
+						URI:            "some-uri",
+						Version:        "1.2.3",
 					},
 				)
 
@@ -1110,15 +1110,15 @@ version = "this is super not semver"
 			it("generates a BOM with the pURL", func() {
 				entries := service.GenerateBillOfMaterials(
 					postal.Dependency{
-						ID:           "some-entry",
-						Name:         "Some Entry",
-						PURL:         "some-purl",
-						SHA256:       "some-sha",
-						Source:       "some-source",
-						SourceSHA256: "some-source-sha",
-						Stacks:       []string{"some-stack"},
-						URI:          "some-uri",
-						Version:      "1.2.3",
+						ID:             "some-entry",
+						Name:           "Some Entry",
+						PURL:           "some-purl",
+						Checksum:       "sha256:some-sha",
+						Source:         "some-source",
+						SourceChecksum: "sha256:some-source-sha",
+						Stacks:         []string{"some-stack"},
+						URI:            "some-uri",
+						Version:        "1.2.3",
 					},
 				)
 
@@ -1135,6 +1135,123 @@ version = "this is super not semver"
 								Checksum: paketosbom.BOMChecksum{
 									Algorithm: paketosbom.SHA256,
 									Hash:      "some-source-sha",
+								},
+								URI: "some-source",
+							},
+
+							URI:     "some-uri",
+							Version: "1.2.3",
+						},
+					},
+				}))
+			})
+		})
+
+		context("when there is a SHA256 instead of Checksum", func() {
+			it("generates a BOM with the SHA256", func() {
+				entries := service.GenerateBillOfMaterials(
+					postal.Dependency{
+						ID:           "some-entry",
+						Name:         "Some Entry",
+						SHA256:       "some-sha",
+						Source:       "some-source",
+						SourceSHA256: "some-source-sha",
+						Stacks:       []string{"some-stack"},
+						URI:          "some-uri",
+						Version:      "1.2.3",
+					},
+				)
+
+				Expect(entries).To(Equal([]packit.BOMEntry{
+					{
+						Name: "Some Entry",
+						Metadata: paketosbom.BOMMetadata{
+							Checksum: paketosbom.BOMChecksum{
+								Algorithm: paketosbom.SHA256,
+								Hash:      "some-sha",
+							},
+							Source: paketosbom.BOMSource{
+								Checksum: paketosbom.BOMChecksum{
+									Algorithm: paketosbom.SHA256,
+									Hash:      "some-source-sha",
+								},
+								URI: "some-source",
+							},
+
+							URI:     "some-uri",
+							Version: "1.2.3",
+						},
+					},
+				}))
+			})
+		})
+
+		context("when there is a checksum and SHA256", func() {
+			it("generates a BOM with the checksum", func() {
+				entries := service.GenerateBillOfMaterials(
+					postal.Dependency{
+						ID:             "some-entry",
+						Name:           "Some Entry",
+						Checksum:       "sha512:checksum-sha",
+						SHA256:         "some-sha",
+						Source:         "some-source",
+						SourceChecksum: "sha512:source-checksum-sha",
+						SourceSHA256:   "some-source-sha",
+						Stacks:         []string{"some-stack"},
+						URI:            "some-uri",
+						Version:        "1.2.3",
+					},
+				)
+
+				Expect(entries).To(Equal([]packit.BOMEntry{
+					{
+						Name: "Some Entry",
+						Metadata: paketosbom.BOMMetadata{
+							Checksum: paketosbom.BOMChecksum{
+								Algorithm: paketosbom.SHA512,
+								Hash:      "checksum-sha",
+							},
+							Source: paketosbom.BOMSource{
+								Checksum: paketosbom.BOMChecksum{
+									Algorithm: paketosbom.SHA512,
+									Hash:      "source-checksum-sha",
+								},
+								URI: "some-source",
+							},
+
+							URI:     "some-uri",
+							Version: "1.2.3",
+						},
+					},
+				}))
+			})
+		})
+
+		context("when there is no checksum or SHA256", func() {
+			it("generates a BOM with the empty/unknown checksum", func() {
+				entries := service.GenerateBillOfMaterials(
+					postal.Dependency{
+						ID:      "some-entry",
+						Name:    "Some Entry",
+						Source:  "some-source",
+						Stacks:  []string{"some-stack"},
+						URI:     "some-uri",
+						Version: "1.2.3",
+					},
+				)
+
+				Expect(entries).To(Equal([]packit.BOMEntry{
+					{
+						Name: "Some Entry",
+						Metadata: paketosbom.BOMMetadata{
+							Checksum: paketosbom.BOMChecksum{
+								Algorithm: paketosbom.UNKNOWN,
+								Hash:      "",
+							},
+							Source: paketosbom.BOMSource{
+								Checksum: paketosbom.BOMChecksum{
+									Algorithm: paketosbom.UNKNOWN,
+									Hash:      "",
 								},
 								URI: "some-source",
 							},
