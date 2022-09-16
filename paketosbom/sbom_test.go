@@ -41,7 +41,8 @@ func testPaketoSBOM(t *testing.T, context spec.G, it spec.S) {
 		context("failure cases", func() {
 			context("when the attempted BOM checksum algorithm is not supported", func() {
 				it("persists a build.toml", func() {
-					_, err := paketosbom.GetBOMChecksumAlgorithm("RANDOM-ALG")
+					alg, err := paketosbom.GetBOMChecksumAlgorithm("RANDOM-ALG")
+					Expect(alg).To(Equal(paketosbom.UNKNOWN))
 					Expect(err).To(MatchError("failed to get supported BOM checksum algorithm: RANDOM-ALG is not valid"))
 				})
 			})

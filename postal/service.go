@@ -198,17 +198,32 @@ func (s Service) Deliver(dependency Dependency, cnbPath, layerPath, platformPath
 func (s Service) GenerateBillOfMaterials(dependencies ...Dependency) []packit.BOMEntry {
 	var entries []packit.BOMEntry
 	for _, dependency := range dependencies {
+
+		algorithm, hash := determineChecksum(dependency.Checksum, dependency.SHA256)
+		paketoSbomAlgorithm, err := paketosbom.GetBOMChecksumAlgorithm(algorithm)
+		// GetBOMChecksumAlgorithm will set algorithm to UNKNOWN if there is an error
+		if err != nil {
+			hash = ""
+		}
+
+		srcAlgorithm, srcHash := determineChecksum(dependency.SourceChecksum, dependency.SourceSHA256)
+		paketoSbomSrcAlgorithm, err := paketosbom.GetBOMChecksumAlgorithm(srcAlgorithm)
+		// GetBOMChecksumAlgorithm will set algorithm to UNKNOWN if there is an error
+		if err != nil {
+			srcHash = ""
+		}
+
 		paketoBomMetadata := paketosbom.BOMMetadata{
 			Checksum: paketosbom.BOMChecksum{
-				Algorithm: paketosbom.SHA256,
-				Hash:      dependency.SHA256,
+				Algorithm: paketoSbomAlgorithm,
+				Hash:      hash,
 			},
 			URI:     dependency.URI,
 			Version: dependency.Version,
 			Source: paketosbom.BOMSource{
 				Checksum: paketosbom.BOMChecksum{
-					Algorithm: paketosbom.SHA256,
-					Hash:      dependency.SourceSHA256,
+					Algorithm: paketoSbomSrcAlgorithm,
+					Hash:      srcHash,
 				},
 				URI: dependency.Source,
 			},
@@ -239,4 +254,23 @@ func (s Service) GenerateBillOfMaterials(dependencies ...Dependency) []packit.BO
 	}
 
 	return entries
+}
+
+func determineChecksum(checksumField, sha256Field string) (string, string) {
+	var algorithm string
+	var hash string
+
+	if sha256Field != "" {
+		algorithm = "SHA256"
+		hash = sha256Field
+	}
+
+	// A well-formed checksum field (algorithm:hash) takes precedence over a SHA256 field
+	checksumParts := strings.Split(checksumField, ":")
+	if len(checksumParts) > 1 {
+		algorithm = checksumParts[0]
+		hash = checksumParts[1]
+	}
+
+	return algorithm, hash
 }
