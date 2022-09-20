@@ -257,20 +257,15 @@ func (s Service) GenerateBillOfMaterials(dependencies ...Dependency) []packit.BO
 }
 
 func determineChecksum(checksumField, sha256Field string) (string, string) {
-	var algorithm string
-	var hash string
-
-	if sha256Field != "" {
-		algorithm = "SHA256"
-		hash = sha256Field
-	}
-
 	// A well-formed checksum field (algorithm:hash) takes precedence over a SHA256 field
-	checksumParts := strings.Split(checksumField, ":")
-	if len(checksumParts) > 1 {
-		algorithm = checksumParts[0]
-		hash = checksumParts[1]
+	algorithm, hash, found := strings.Cut(checksumField, ":")
+	if found {
+		return algorithm, hash
 	}
 
-	return algorithm, hash
+	if len(sha256Field) > 0 {
+		return "SHA256", sha256Field
+	}
+
+	return "", ""
 }
