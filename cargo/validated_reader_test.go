@@ -60,21 +60,12 @@ func testValidatedReader(t *testing.T, context spec.G, it spec.S) {
 		})
 
 		context("failure cases", func() {
-			context("there is a malformed checksum", func() {
-				it("returns an error", func() {
-					vr := cargo.NewValidatedReader(strings.NewReader("some-contents"), "malformed checksum")
-
-					_, err := io.Copy(buffer, vr)
-					Expect(err).To(MatchError(`malformed checksum "malformed checksum": checksum should be formatted "algorithm:hash"`))
-				})
-			})
-
 			context("there is an unsupported algorithm", func() {
 				it("returns an error", func() {
 					vr := cargo.NewValidatedReader(strings.NewReader("some-contents"), "magic:6e32ea34db1b3755d7dec972eb72c705338f0dd8e0be881d966963438fb2e800")
 
 					_, err := io.Copy(buffer, vr)
-					Expect(err).To(MatchError(`unsupported algorithm "magic": the following algorithms are support [sha256, sha512]`))
+					Expect(err).To(MatchError(`unsupported algorithm "magic": the following algorithms are supported [sha256, sha512]`))
 				})
 			})
 		})

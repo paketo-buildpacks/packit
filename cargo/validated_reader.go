@@ -9,14 +9,13 @@ import (
 	"fmt"
 	"hash"
 	"io"
-	"strings"
 )
 
 var ChecksumValidationError = errors.New("validation error: checksum does not match")
 
 type ValidatedReader struct {
 	reader   io.Reader
-	checksum string
+	checksum Checksum
 	hash     hash.Hash
 }
 
@@ -26,28 +25,22 @@ type errorHash struct {
 	err error
 }
 
-func NewValidatedReader(reader io.Reader, checksum string) ValidatedReader {
-	splitChecksum := strings.SplitN(checksum, ":", 2)
-	if len(splitChecksum) != 2 {
-		return ValidatedReader{hash: errorHash{err: fmt.Errorf(`malformed checksum %q: checksum should be formatted "algorithm:hash"`, checksum)}}
-	}
-
-	checksumValue := splitChecksum[1]
-
+func NewValidatedReader(reader io.Reader, sum string) ValidatedReader {
 	var hash hash.Hash
+	checksum := Checksum(sum)
 
-	switch splitChecksum[0] {
+	switch checksum.Algorithm() {
 	case "sha256":
 		hash = sha256.New()
 	case "sha512":
 		hash = sha512.New()
 	default:
-		return ValidatedReader{hash: errorHash{err: fmt.Errorf("unsupported algorithm %q: the following algorithms are support [sha256, sha512]", splitChecksum[0])}}
+		return ValidatedReader{hash: errorHash{err: fmt.Errorf("unsupported algorithm %q: the following algorithms are supported [sha256, sha512]", checksum.Algorithm())}}
 	}
 
 	return ValidatedReader{
 		reader:   reader,
-		checksum: checksumValue,
+		checksum: checksum,
 		hash:     hash,
 	}
 }
@@ -75,7 +68,7 @@ func (vr ValidatedReader) Read(p []byte) (int, error) {
 
 	if done {
 		sum := hex.EncodeToString(vr.hash.Sum(nil))
-		if sum != vr.checksum {
+		if sum != vr.checksum.Hash() {
 			return n, ChecksumValidationError
 		}
 

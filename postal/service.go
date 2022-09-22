@@ -29,9 +29,10 @@ type Transport interface {
 	Drop(root, uri string) (io.ReadCloser, error)
 }
 
-//go:generate faux --interface MappingResolver --output fakes/mapping_resolver.go
 // MappingResolver serves as the interface that looks up platform binding provided
 // dependency mappings given a SHA256
+//
+//go:generate faux --interface MappingResolver --output fakes/mapping_resolver.go
 type MappingResolver interface {
 	FindDependencyMapping(SHA256, platformDir string) (string, error)
 }
@@ -199,18 +200,30 @@ func (s Service) GenerateBillOfMaterials(dependencies ...Dependency) []packit.BO
 	var entries []packit.BOMEntry
 	for _, dependency := range dependencies {
 
-		algorithm, hash := determineChecksum(dependency.Checksum, dependency.SHA256)
-		paketoSbomAlgorithm, err := paketosbom.GetBOMChecksumAlgorithm(algorithm)
+		checksum := Checksum(dependency.SHA256)
+		if len(dependency.Checksum) > 0 {
+			checksum = Checksum(dependency.Checksum)
+		}
+
+		hash := checksum.Hash()
+		paketoSbomAlgorithm, err := paketosbom.GetBOMChecksumAlgorithm(checksum.Algorithm())
 		// GetBOMChecksumAlgorithm will set algorithm to UNKNOWN if there is an error
-		if err != nil {
+		if err != nil || hash == "" {
+			paketoSbomAlgorithm = paketosbom.UNKNOWN
 			hash = ""
 		}
 
-		srcAlgorithm, srcHash := determineChecksum(dependency.SourceChecksum, dependency.SourceSHA256)
-		paketoSbomSrcAlgorithm, err := paketosbom.GetBOMChecksumAlgorithm(srcAlgorithm)
+		sourceChecksum := Checksum(dependency.SourceSHA256)
+		if len(dependency.Checksum) > 0 {
+			sourceChecksum = Checksum(dependency.SourceChecksum)
+		}
+
+		sourceHash := sourceChecksum.Hash()
+		paketoSbomSrcAlgorithm, err := paketosbom.GetBOMChecksumAlgorithm(sourceChecksum.Algorithm())
 		// GetBOMChecksumAlgorithm will set algorithm to UNKNOWN if there is an error
-		if err != nil {
-			srcHash = ""
+		if err != nil || sourceHash == "" {
+			paketoSbomSrcAlgorithm = paketosbom.UNKNOWN
+			sourceHash = ""
 		}
 
 		paketoBomMetadata := paketosbom.BOMMetadata{
@@ -223,7 +236,7 @@ func (s Service) GenerateBillOfMaterials(dependencies ...Dependency) []packit.BO
 			Source: paketosbom.BOMSource{
 				Checksum: paketosbom.BOMChecksum{
 					Algorithm: paketoSbomSrcAlgorithm,
-					Hash:      srcHash,
+					Hash:      sourceHash,
 				},
 				URI: dependency.Source,
 			},
@@ -254,18 +267,4 @@ func (s Service) GenerateBillOfMaterials(dependencies ...Dependency) []packit.BO
 	}
 
 	return entries
-}
-
-func determineChecksum(checksumField, sha256Field string) (string, string) {
-	// A well-formed checksum field (algorithm:hash) takes precedence over a SHA256 field
-	algorithm, hash, found := strings.Cut(checksumField, ":")
-	if found {
-		return algorithm, hash
-	}
-
-	if len(sha256Field) > 0 {
-		return "SHA256", sha256Field
-	}
-
-	return "", ""
 }
