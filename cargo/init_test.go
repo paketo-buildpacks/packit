@@ -15,7 +15,7 @@ func TestUnitCargo(t *testing.T) {
 	suite("DirectoryDuplicator", testDirectoryDuplicator)
 	suite("Transport", testTransport)
 	suite("ValidatedReader", testValidatedReader)
-	suite("AreChecksumsEqual", testAreChecksumsEqual)
+	suite("Checksum", testChecksum)
 	suite.Run(t)
 }
 

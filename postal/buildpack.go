@@ -6,7 +6,10 @@ import (
 	"time"
 
 	"github.com/BurntSushi/toml"
+	"github.com/paketo-buildpacks/packit/v2/cargo"
 )
+
+type Checksum = cargo.Checksum
 
 // Dependency is a representation of a buildpack dependency.
 type Dependency struct {

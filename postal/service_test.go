@@ -1227,6 +1227,45 @@ version = "this is super not semver"
 			})
 		})
 
+		context("when the checksum algorithm is unknown", func() {
+			it("generates a BOM with the empty/unknown checksum", func() {
+				entries := service.GenerateBillOfMaterials(
+					postal.Dependency{
+						ID:             "some-entry",
+						Name:           "Some Entry",
+						Checksum:       "no-such-algo:some-hash",
+						Source:         "some-source",
+						SourceChecksum: "no-such-algo:some-hash",
+						Stacks:         []string{"some-stack"},
+						URI:            "some-uri",
+						Version:        "1.2.3",
+					},
+				)
+
+				Expect(entries).To(Equal([]packit.BOMEntry{
+					{
+						Name: "Some Entry",
+						Metadata: paketosbom.BOMMetadata{
+							Checksum: paketosbom.BOMChecksum{
+								Algorithm: paketosbom.UNKNOWN,
+								Hash:      "",
+							},
+							Source: paketosbom.BOMSource{
+								Checksum: paketosbom.BOMChecksum{
+									Algorithm: paketosbom.UNKNOWN,
+									Hash:      "",
+								},
+								URI: "some-source",
+							},
+
+							URI:     "some-uri",
+							Version: "1.2.3",
+						},
+					},
+				}))
+			})
+		})
+
 		context("when there is no checksum or SHA256", func() {
 			it("generates a BOM with the empty/unknown checksum", func() {
 				entries := service.GenerateBillOfMaterials(
