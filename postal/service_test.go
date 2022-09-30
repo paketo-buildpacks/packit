@@ -305,6 +305,55 @@ version = "4.5.6"
 			})
 		})
 
+		context("when both a wildcard stack constraint and a specific stack constraint exist for the same dependency version", func() {
+			it.Before(func() {
+				err := os.WriteFile(path, []byte(`
+[metadata]
+[[metadata.dependencies]]
+id = "some-entry"
+sha256 = "some-sha"
+stacks = ["some-stack"]
+uri = "some-uri-specific-stack"
+version = "1.2.1"
+
+[[metadata.dependencies]]
+id = "some-entry"
+sha256 = "some-sha"
+stacks = ["*"]
+uri = "some-uri-only-wildcard"
+version = "1.2.1"
+
+[[metadata.dependencies]]
+id = "some-entry"
+sha256 = "some-sha"
+stacks = ["some-stack","*"]
+uri = "some-uri-only-wildcard"
+version = "1.2.3"
+
+[[metadata.dependencies]]
+id = "some-entry"
+sha256 = "some-sha"
+stacks = ["some-stack"]
+uri = "some-uri-specific-stack"
+version = "1.2.3"
+`), 0600)
+
+				Expect(err).NotTo(HaveOccurred())
+			})
+
+			it("selects the more specific stack constraint", func() {
+				dependency, err := service.Resolve(path, "some-entry", "*", "some-stack")
+				Expect(err).NotTo(HaveOccurred())
+				Expect(dependency).To(Equal(postal.Dependency{
+					ID:      "some-entry",
+					Stacks:  []string{"some-stack"},
+					URI:     "some-uri-specific-stack",
+					SHA256:  "some-sha",
+					Version: "1.2.3",
+				}))
+			})
+		})
+
 		context("failure cases", func() {
 			context("when the buildpack.toml is malformed", func() {
 				it.Before(func() {
@@ -341,6 +390,32 @@ version = "this is super not semver"
 				it("returns an error", func() {
 					_, err := service.Resolve(path, "some-entry", "1.2.3", "some-stack")
 					Expect(err).To(MatchError(ContainSubstring("Invalid Semantic Version")))
+				})
+			})
+
+			context("when multiple dependencies have a wildcard stack for the same version", func() {
+				it.Before(func() {
+					err := os.WriteFile(path, []byte(`
+[[metadata.dependencies]]
+id = "some-entry"
+sha256 = "some-sha-A"
+stacks = ["some-stack","*"]
+uri = "some-uri-A"
+version = "1.2.3"
+
+[[metadata.dependencies]]
+id = "some-entry"
+sha256 = "some-sha-B"
+stacks = ["some-stack","some-other-stack","*"]
+uri = "some-uri-B"
+version = "1.2.3"
+`), 0600)
+					Expect(err).NotTo(HaveOccurred())
+				})
+
+				it("returns an error", func() {
+					_, err := service.Resolve(path, "some-entry", "1.2.3", "some-stack")
+					Expect(err).To(MatchError(ContainSubstring(`multiple dependencies support wildcard stack for version: "1.2.3"`)))
 				})
 			})
 

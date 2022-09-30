@@ -132,13 +132,82 @@ func (s Service) Resolve(path, id, version, stack string) (Dependency, error) {
 		)
 	}
 
+	stacksForVersion := map[string][]string{}
+
+	for _, dep := range compatibleVersions {
+		stacksForVersion[dep.Version] = append(stacksForVersion[dep.Version], dep.Stacks...)
+	}
+
+	for version, stacks := range stacksForVersion {
+		count := stringSliceElementCount(stacks, "*")
+		if count > 1 {
+			return Dependency{}, fmt.Errorf("multiple dependencies support wildcard stack for version: %q", version)
+		}
+	}
+
 	sort.Slice(compatibleVersions, func(i, j int) bool {
-		iVersion := semver.MustParse(compatibleVersions[i].Version)
-		jVersion := semver.MustParse(compatibleVersions[j].Version)
-		return iVersion.GreaterThan(jVersion)
+		iDep := compatibleVersions[i]
+		jDep := compatibleVersions[j]
+
+		jVersion := semver.MustParse(jDep.Version)
+		iVersion := semver.MustParse(iDep.Version)
+
+		if !iVersion.Equal(jVersion) {
+			return iVersion.GreaterThan(jVersion)
+		}
+
+		iStacks := iDep.Stacks
+		jStacks := jDep.Stacks
+
+		// If either dependency supports the wildcard stack, it has lower
+		// priority than a dependency that only supports a more specific stack.
+		// This is true regardless of whether or not the dependency with
+		// wildcard stack support also supports other stacks
+		//
+		// If is an error to have multiple dependencies with the same version
+		// and wildcard stack support.
+		// This is tested for above, and we would not enter this sort function
+		// in this case
+
+		if stringSliceContains(iStacks, "*") {
+			return false
+		}
+
+		if stringSliceContains(jStacks, "*") {
+			return true
+		}
+
+		// As mentioned above, this isn't a valid path to encounter because
+		// only one dependency may have support for wildcard stacks for a given
+		// version. We could panic, but it is preferable to return an invalid
+		// sort order instead.
+		//
+		// This is untested as this path is not possible to encounter.
+		return true
 	})
 
 	return compatibleVersions[0], nil
+}
+
+func stringSliceContains(slice []string, str string) bool {
+	for _, s := range slice {
+		if s == str {
+			return true
+		}
+	}
+
+	return false
+}
+
+func stringSliceElementCount(slice []string, str string) int {
+	count := 0
+	for _, s := range slice {
+		if s == str {
+			count++
+		}
+	}
+
+	return count
 }
 
 // Deliver will fetch and expand a dependency into a layer path location. The
