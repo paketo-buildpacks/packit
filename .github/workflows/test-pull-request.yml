@@ -9,7 +9,7 @@ on:
 jobs:
   unit:
     name: Unit Tests
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
     - name: Setup Go
       uses: actions/setup-go@v3
@@ -24,7 +24,7 @@ jobs:
 
   upload:
     name: Upload Workflow Event Payload
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
     - name: Upload Artifact
       uses: actions/upload-artifact@v2
