@@ -5,12 +5,8 @@ import (
 	"fmt"
 	"io"
 	"path/filepath"
-	"regexp"
-	"sort"
-	"strings"
 	"time"
 
-	"github.com/Masterminds/semver/v3"
 	"github.com/paketo-buildpacks/packit/v2"
 	"github.com/paketo-buildpacks/packit/v2/cargo"
 	"github.com/paketo-buildpacks/packit/v2/postal/internal"
@@ -66,148 +62,20 @@ func (s Service) WithDependencyMappingResolver(mappingResolver MappingResolver) 
 // "default", the default version for the dependency with the given id will be
 // used. If there is no default version for that dependency, a wildcard
 // constraint will be used.
+//
+// Deprecated: use cargo.ResolveDependency instead.
 func (s Service) Resolve(path, id, version, stack string) (Dependency, error) {
-	dependencies, defaultVersion, err := parseBuildpack(path, id)
+	config, err := cargo.NewBuildpackParser().Parse(path)
+	if err != nil {
+		return Dependency{}, fmt.Errorf("failed to parse buildpack.toml: %w", err)
+	}
+
+	dep, err := cargo.ResolveDependency(config, id, version, stack)
 	if err != nil {
 		return Dependency{}, err
 	}
 
-	if version == "" {
-		version = "default"
-	}
-
-	if version == "default" {
-		version = "*"
-		if defaultVersion != "" {
-			version = defaultVersion
-		}
-	}
-
-	// Handle the pessmistic operator (~>)
-	var re = regexp.MustCompile(`~>`)
-	if re.MatchString(version) {
-		res := re.ReplaceAllString(version, "")
-		parts := strings.Split(res, ".")
-
-		// if the version contains a major, minor, and patch use "~" Tilde Range Comparison
-		// if the version contains a major and minor only, or a major version only use "^" Caret Range Comparison
-		if len(parts) == 3 {
-			version = "~" + res
-		} else {
-			version = "^" + res
-		}
-	}
-
-	var compatibleVersions []Dependency
-	versionConstraint, err := semver.NewConstraint(version)
-	if err != nil {
-		return Dependency{}, err
-	}
-
-	var supportedVersions []string
-	for _, dependency := range dependencies {
-		if dependency.ID != id || !stacksInclude(dependency.Stacks, stack) {
-			continue
-		}
-
-		sVersion, err := semver.NewVersion(dependency.Version)
-		if err != nil {
-			return Dependency{}, err
-		}
-
-		if versionConstraint.Check(sVersion) {
-			compatibleVersions = append(compatibleVersions, dependency)
-		}
-
-		supportedVersions = append(supportedVersions, dependency.Version)
-	}
-
-	if len(compatibleVersions) == 0 {
-		return Dependency{}, fmt.Errorf(
-			"failed to satisfy %q dependency version constraint %q: no compatible versions on %q stack. Supported versions are: [%s]",
-			id,
-			version,
-			stack,
-			strings.Join(supportedVersions, ", "),
-		)
-	}
-
-	stacksForVersion := map[string][]string{}
-
-	for _, dep := range compatibleVersions {
-		stacksForVersion[dep.Version] = append(stacksForVersion[dep.Version], dep.Stacks...)
-	}
-
-	for version, stacks := range stacksForVersion {
-		count := stringSliceElementCount(stacks, "*")
-		if count > 1 {
-			return Dependency{}, fmt.Errorf("multiple dependencies support wildcard stack for version: %q", version)
-		}
-	}
-
-	sort.Slice(compatibleVersions, func(i, j int) bool {
-		iDep := compatibleVersions[i]
-		jDep := compatibleVersions[j]
-
-		jVersion := semver.MustParse(jDep.Version)
-		iVersion := semver.MustParse(iDep.Version)
-
-		if !iVersion.Equal(jVersion) {
-			return iVersion.GreaterThan(jVersion)
-		}
-
-		iStacks := iDep.Stacks
-		jStacks := jDep.Stacks
-
-		// If either dependency supports the wildcard stack, it has lower
-		// priority than a dependency that only supports a more specific stack.
-		// This is true regardless of whether or not the dependency with
-		// wildcard stack support also supports other stacks
-		//
-		// If is an error to have multiple dependencies with the same version
-		// and wildcard stack support.
-		// This is tested for above, and we would not enter this sort function
-		// in this case
-
-		if stringSliceContains(iStacks, "*") {
-			return false
-		}
-
-		if stringSliceContains(jStacks, "*") {
-			return true
-		}
-
-		// As mentioned above, this isn't a valid path to encounter because
-		// only one dependency may have support for wildcard stacks for a given
-		// version. We could panic, but it is preferable to return an invalid
-		// sort order instead.
-		//
-		// This is untested as this path is not possible to encounter.
-		return true
-	})
-
-	return compatibleVersions[0], nil
-}
-
-func stringSliceContains(slice []string, str string) bool {
-	for _, s := range slice {
-		if s == str {
-			return true
-		}
-	}
-
-	return false
-}
-
-func stringSliceElementCount(slice []string, str string) int {
-	count := 0
-	for _, s := range slice {
-		if s == str {
-			count++
-		}
-	}
-
-	return count
+	return DependencyFrom(dep), nil
 }
 
 // Deliver will fetch and expand a dependency into a layer path location. The
@@ -217,7 +85,7 @@ func stringSliceElementCount(slice []string, str string) int {
 // the given dependency mapping URI to fetch the dependency. The dependency is
 // validated against the checksum value provided on the Dependency and will
 // error if there are inconsistencies in the fetched result.
-func (s Service) Deliver(dependency Dependency, cnbPath, layerPath, platformPath string) error {
+func (s Service) DeliverDependency(dependency cargo.ConfigMetadataDependency, cnbPath, layerPath, platformPath string) error {
 	dependencyMappingURI, err := s.mappingResolver.FindDependencyMapping(dependency.SHA256, platformPath)
 	if err != nil {
 		return fmt.Errorf("failure checking for dependency mappings: %s", err)
@@ -259,6 +127,19 @@ func (s Service) Deliver(dependency Dependency, cnbPath, layerPath, platformPath
 	}
 
 	return nil
+}
+
+// Deliver will fetch and expand a dependency into a layer path location. The
+// location of the CNBPath is given so that dependencies that may be included
+// in a buildpack when packaged for offline consumption can be retrieved. If
+// there is a dependency mapping for the specified dependency, Deliver will use
+// the given dependency mapping URI to fetch the dependency. The dependency is
+// validated against the checksum value provided on the Dependency and will
+// error if there are inconsistencies in the fetched result.
+//
+// Deprecated: use DeliverDependency instead
+func (s Service) Deliver(dependency Dependency, cnbPath, layerPath, platformPath string) error {
+	return s.DeliverDependency(cargoDependencyFrom(dependency), cnbPath, layerPath, platformPath)
 }
 
 // GenerateBillOfMaterials will generate a list of BOMEntry values given a

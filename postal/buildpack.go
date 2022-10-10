@@ -2,16 +2,16 @@ package postal
 
 import (
 	"fmt"
-	"os"
 	"time"
 
-	"github.com/BurntSushi/toml"
 	"github.com/paketo-buildpacks/packit/v2/cargo"
 )
 
 type Checksum = cargo.Checksum
 
 // Dependency is a representation of a buildpack dependency.
+//
+// Deprecated: use cargo.ConfigMetadataDependency instead.
 type Dependency struct {
 	// CPE is the Common Platform Enumerator for the dependency. Used in legacy
 	// image label SBOM (GenerateBillOfMaterials).
@@ -76,31 +76,55 @@ type Dependency struct {
 	StripComponents int `toml:"strip-components"`
 }
 
-func parseBuildpack(path, name string) ([]Dependency, string, error) {
-	file, err := os.Open(path)
-	if err != nil {
-		return nil, "", fmt.Errorf("failed to parse buildpack.toml: %w", err)
+func DependencyFrom(d cargo.ConfigMetadataDependency) Dependency {
+	dep := Dependency{
+		Checksum:        d.Checksum,
+		CPE:             d.CPE,
+		CPEs:            d.CPEs,
+		ID:              d.ID,
+		Name:            d.Name,
+		PURL:            d.PURL,
+		SHA256:          d.SHA256,
+		Source:          d.Source,
+		SourceSHA256:    d.SourceSHA256,
+		Stacks:          d.Stacks,
+		StripComponents: d.StripComponents,
+		URI:             d.URI,
+		Version:         d.Version,
 	}
 
-	var buildpack struct {
-		Metadata struct {
-			DefaultVersions map[string]string `toml:"default-versions"`
-			Dependencies    []Dependency      `toml:"dependencies"`
-		} `toml:"metadata"`
-	}
-	_, err = toml.NewDecoder(file).Decode(&buildpack)
-	if err != nil {
-		return nil, "", fmt.Errorf("failed to parse buildpack.toml: %w", err)
+	if d.DeprecationDate != nil {
+		dep.DeprecationDate = *d.DeprecationDate
 	}
 
-	return buildpack.Metadata.Dependencies, buildpack.Metadata.DefaultVersions[name], nil
+	for _, l := range d.Licenses {
+		dep.Licenses = append(dep.Licenses, fmt.Sprintf("%s", l))
+	}
+
+	return dep
 }
 
-func stacksInclude(stacks []string, stack string) bool {
-	for _, s := range stacks {
-		if s == stack || s == "*" {
-			return true
-		}
+func cargoDependencyFrom(d Dependency) cargo.ConfigMetadataDependency {
+	dep := cargo.ConfigMetadataDependency{
+		Checksum:        d.Checksum,
+		CPE:             d.CPE,
+		CPEs:            d.CPEs,
+		DeprecationDate: &d.DeprecationDate,
+		ID:              d.ID,
+		Name:            d.Name,
+		PURL:            d.PURL,
+		SHA256:          d.SHA256,
+		Source:          d.Source,
+		SourceSHA256:    d.SourceSHA256,
+		Stacks:          d.Stacks,
+		StripComponents: d.StripComponents,
+		URI:             d.URI,
+		Version:         d.Version,
 	}
-	return false
+
+	for _, l := range d.Licenses {
+		dep.Licenses = append(dep.Licenses, l)
+	}
+
+	return dep
 }
