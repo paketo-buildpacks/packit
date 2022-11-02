@@ -339,6 +339,43 @@ api = "0.6"
 
 		})
 
+		context("ensure proper strip component conversion", func() {
+			it("encodes the config to TOML", func() {
+				err := cargo.EncodeConfig(buffer, cargo.Config{
+					API: "0.6",
+					Buildpack: cargo.ConfigBuildpack{
+						ID: "some-buildpack-id",
+					},
+					Metadata: cargo.ConfigMetadata{
+						Dependencies: []cargo.ConfigMetadataDependency{
+							{
+								ID: "some-dependency",
+							},
+							{
+								ID:              "other-dependency",
+								StripComponents: 1,
+							},
+						},
+					},
+				})
+				Expect(err).NotTo(HaveOccurred())
+				Expect(buffer.String()).To(MatchTOML(`
+api = "0.6"
+
+[buildpack]
+	id = "some-buildpack-id"
+
+[[metadata.dependencies]]
+  id = "some-dependency"
+
+[[metadata.dependencies]]
+  id = "other-dependency"
+	strip-components = 1
+`))
+			})
+
+		})
+
 		context("failure cases", func() {
 			context("when the Config cannot be marshalled to json", func() {
 				it("returns an error", func() {
