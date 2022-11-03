@@ -221,8 +221,8 @@ func (cd ConfigMetadataDependency) HasStack(stack string) bool {
 
 // Unmarshal stores json numbers in float64 types, adding an unnecessary decimal point to the patch in the final toml.
 // convertPatches converts this float64 into an int and returns a new map that contains an integer value for patches
-func convertPatches(constraints []ConfigMetadataDependencyConstraint, c map[string]interface{}) (map[string]interface{}, error) {
-	if len(constraints) > 0 {
+func convertPatches(cons []ConfigMetadataDependencyConstraint, c map[string]interface{}) (map[string]interface{}, error) {
+	if len(cons) > 0 {
 		metadata, ok := c["metadata"].(map[string]interface{})
 		if !ok {
 			return nil, fmt.Errorf("failure to assert type: unexpected data in metadata")
@@ -250,8 +250,8 @@ func convertPatches(constraints []ConfigMetadataDependencyConstraint, c map[stri
 }
 
 // Accomplishes the same this as the convertPatches function but for strip components in the dependencies list.
-func convertStripComponents(dependencies []ConfigMetadataDependency, c map[string]interface{}) (map[string]interface{}, error) {
-	if len(dependencies) > 0 {
+func convertStripComponents(deps []ConfigMetadataDependency, c map[string]interface{}) (map[string]interface{}, error) {
+	if len(deps) > 0 {
 		metadata, ok := c["metadata"].(map[string]interface{})
 		if !ok {
 			return nil, fmt.Errorf("failure to assert type: unexpected data in metadata")
@@ -265,7 +265,7 @@ func convertStripComponents(dependencies []ConfigMetadataDependency, c map[strin
 		for _, dependency := range dependencies {
 			stripComponents, ok := dependency.(map[string]interface{})["strip-components"]
 			if !ok {
-				return c, nil
+				continue
 			}
 
 			floatStripComponents, ok := stripComponents.(float64)
