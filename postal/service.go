@@ -34,7 +34,7 @@ type Transport interface {
 //
 //go:generate faux --interface MappingResolver --output fakes/mapping_resolver.go
 type MappingResolver interface {
-	FindDependencyMapping(SHA256, platformDir string) (string, error)
+	FindDependencyMapping(checksum, platformDir string) (string, error)
 }
 
 // Service provides a mechanism for resolving and installing dependencies given
@@ -218,7 +218,12 @@ func stringSliceElementCount(slice []string, str string) int {
 // validated against the checksum value provided on the Dependency and will
 // error if there are inconsistencies in the fetched result.
 func (s Service) Deliver(dependency Dependency, cnbPath, layerPath, platformPath string) error {
-	dependencyMappingURI, err := s.mappingResolver.FindDependencyMapping(dependency.SHA256, platformPath)
+	dependencyChecksum := dependency.Checksum
+	if dependency.SHA256 != "" {
+		dependencyChecksum = fmt.Sprintf("sha256:%s", dependency.SHA256)
+	}
+
+	dependencyMappingURI, err := s.mappingResolver.FindDependencyMapping(dependencyChecksum, platformPath)
 	if err != nil {
 		return fmt.Errorf("failure checking for dependency mappings: %s", err)
 	}
@@ -233,12 +238,7 @@ func (s Service) Deliver(dependency Dependency, cnbPath, layerPath, platformPath
 	}
 	defer bundle.Close()
 
-	var validatedReader cargo.ValidatedReader
-	if dependency.SHA256 != "" {
-		validatedReader = cargo.NewValidatedReader(bundle, fmt.Sprintf("sha256:%s", dependency.SHA256))
-	} else {
-		validatedReader = cargo.NewValidatedReader(bundle, dependency.Checksum)
-	}
+	validatedReader := cargo.NewValidatedReader(bundle, dependencyChecksum)
 
 	name := dependency.Name
 	if name == "" {

@@ -430,10 +430,10 @@ version = "1.2.3"
 
 	context("Deliver", func() {
 		var (
-			dependencySHA string
-			hash512       string
-			layerPath     string
-			deliver       func() error
+			dependencyHash string
+			hash512        string
+			layerPath      string
+			deliver        func() error
 		)
 
 		it.Before(func() {
@@ -470,7 +470,7 @@ version = "1.2.3"
 			Expect(zw.Close()).To(Succeed())
 
 			sum := sha256.Sum256(buffer.Bytes())
-			dependencySHA = hex.EncodeToString(sum[:])
+			dependencyHash = hex.EncodeToString(sum[:])
 
 			sum512 := sha512.Sum512(buffer.Bytes())
 			hash512 = hex.EncodeToString(sum512[:])
@@ -483,7 +483,7 @@ version = "1.2.3"
 						ID:      "some-entry",
 						Stacks:  []string{"some-stack"},
 						URI:     "some-entry.tgz",
-						SHA256:  dependencySHA,
+						SHA256:  dependencyHash,
 						Version: "1.2.3",
 					},
 					"some-cnb-path",
@@ -600,7 +600,7 @@ version = "1.2.3"
 				Expect(zw.Close()).To(Succeed())
 
 				sum := sha256.Sum256(buffer.Bytes())
-				dependencySHA = hex.EncodeToString(sum[:])
+				dependencyHash = hex.EncodeToString(sum[:])
 
 				transport.DropCall.Returns.ReadCloser = io.NopCloser(buffer)
 
@@ -610,7 +610,7 @@ version = "1.2.3"
 							ID:              "some-entry",
 							Stacks:          []string{"some-stack"},
 							URI:             "some-entry.tgz",
-							SHA256:          dependencySHA,
+							SHA256:          dependencyHash,
 							Version:         "1.2.3",
 							StripComponents: 1,
 						},
@@ -659,7 +659,7 @@ version = "1.2.3"
 				buffer.WriteString("some-file-contents")
 
 				sum := sha256.Sum256(buffer.Bytes())
-				dependencySHA = hex.EncodeToString(sum[:])
+				dependencyHash = hex.EncodeToString(sum[:])
 
 				transport.DropCall.Returns.ReadCloser = io.NopCloser(buffer)
 
@@ -669,7 +669,7 @@ version = "1.2.3"
 							ID:      "some-entry",
 							Stacks:  []string{"some-stack"},
 							URI:     "https://dependencies.example.com/dependencies/some-file-name.txt",
-							SHA256:  dependencySHA,
+							SHA256:  dependencyHash,
 							Version: "1.2.3",
 						},
 						"some-cnb-path",
@@ -705,12 +705,74 @@ version = "1.2.3"
 				mappingResolver.FindDependencyMappingCall.Returns.String = "dependency-mapping-entry.tgz"
 			})
 
+			context("the dependency has a checksum field", func() {
+				it("looks up the dependency from the platform binding and downloads that instead", func() {
+					err := deliver()
+
+					Expect(err).NotTo(HaveOccurred())
+
+					Expect(mappingResolver.FindDependencyMappingCall.Receives.Checksum).To(Equal("sha256:" + dependencyHash))
+					Expect(mappingResolver.FindDependencyMappingCall.Receives.PlatformDir).To(Equal("some-platform-dir"))
+					Expect(transport.DropCall.Receives.Root).To(Equal("some-cnb-path"))
+					Expect(transport.DropCall.Receives.Uri).To(Equal("dependency-mapping-entry.tgz"))
+
+					files, err := filepath.Glob(fmt.Sprintf("%s/*", layerPath))
+					Expect(err).NotTo(HaveOccurred())
+					Expect(files).To(ConsistOf([]string{
+						filepath.Join(layerPath, "first"),
+						filepath.Join(layerPath, "second"),
+						filepath.Join(layerPath, "third"),
+						filepath.Join(layerPath, "some-dir"),
+						filepath.Join(layerPath, "symlink"),
+					}))
+
+					info, err := os.Stat(filepath.Join(layerPath, "first"))
+					Expect(err).NotTo(HaveOccurred())
+					Expect(info.Mode()).To(Equal(os.FileMode(0755)))
+				})
+
+			})
+
+			context("the dependency has a SHA256 field", func() {
+				it("looks up the dependency from the platform binding and downloads that instead", func() {
+					err := deliver()
+
+					Expect(err).NotTo(HaveOccurred())
+
+					Expect(mappingResolver.FindDependencyMappingCall.Receives.Checksum).To(Equal(fmt.Sprintf("sha256:%s", dependencyHash)))
+					Expect(mappingResolver.FindDependencyMappingCall.Receives.PlatformDir).To(Equal("some-platform-dir"))
+					Expect(transport.DropCall.Receives.Root).To(Equal("some-cnb-path"))
+					Expect(transport.DropCall.Receives.Uri).To(Equal("dependency-mapping-entry.tgz"))
+
+					files, err := filepath.Glob(fmt.Sprintf("%s/*", layerPath))
+					Expect(err).NotTo(HaveOccurred())
+					Expect(files).To(ConsistOf([]string{
+						filepath.Join(layerPath, "first"),
+						filepath.Join(layerPath, "second"),
+						filepath.Join(layerPath, "third"),
+						filepath.Join(layerPath, "some-dir"),
+						filepath.Join(layerPath, "symlink"),
+					}))
+
+					info, err := os.Stat(filepath.Join(layerPath, "first"))
+					Expect(err).NotTo(HaveOccurred())
+					Expect(info.Mode()).To(Equal(os.FileMode(0755)))
+				})
+
+			})
+		})
+
+		context("when there is a dependency mapping via binding", func() {
+			it.Before(func() {
+				mappingResolver.FindDependencyMappingCall.Returns.String = "dependency-mapping-entry.tgz"
+			})
+
 			it("looks up the dependency from the platform binding and downloads that instead", func() {
 				err := deliver()
 
 				Expect(err).NotTo(HaveOccurred())
 
-				Expect(mappingResolver.FindDependencyMappingCall.Receives.SHA256).To(Equal(dependencySHA))
+				Expect(mappingResolver.FindDependencyMappingCall.Receives.Checksum).To(Equal(fmt.Sprintf("sha256:%s", dependencyHash)))
 				Expect(mappingResolver.FindDependencyMappingCall.Receives.PlatformDir).To(Equal("some-platform-dir"))
 				Expect(transport.DropCall.Receives.Root).To(Equal("some-cnb-path"))
 				Expect(transport.DropCall.Receives.Uri).To(Equal("dependency-mapping-entry.tgz"))
@@ -787,7 +849,7 @@ version = "1.2.3"
 					transport.DropCall.Returns.ReadCloser = io.NopCloser(buffer)
 
 					sum := sha256.Sum256(buffer.Bytes())
-					dependencySHA = hex.EncodeToString(sum[:])
+					dependencyHash = hex.EncodeToString(sum[:])
 				})
 
 				it("fails to create a gzip reader", func() {
@@ -869,7 +931,7 @@ version = "1.2.3"
 					Expect(os.Symlink("some-file", filepath.Join(layerPath, "symlink"))).To(Succeed())
 
 					sum := sha256.Sum256(buffer.Bytes())
-					dependencySHA = hex.EncodeToString(sum[:])
+					dependencyHash = hex.EncodeToString(sum[:])
 
 					transport.DropCall.Returns.ReadCloser = io.NopCloser(buffer)
 				})
@@ -898,7 +960,7 @@ version = "1.2.3"
 					Expect(tw.Close()).To(Succeed())
 
 					sum := sha256.Sum256(buffer.Bytes())
-					dependencySHA = hex.EncodeToString(sum[:])
+					dependencyHash = hex.EncodeToString(sum[:])
 
 					// Empty block is tricking tar reader into think that we have reached
 					// EOF becuase we have surpassed the maximum block header size
@@ -917,7 +979,7 @@ version = "1.2.3"
 								ID:      "some-entry",
 								Stacks:  []string{"some-stack"},
 								URI:     "https://dependencies.example.com/dependencies/some-file-name.txt",
-								SHA256:  dependencySHA,
+								SHA256:  dependencyHash,
 								Version: "1.2.3",
 							},
 							"some-cnb-path",

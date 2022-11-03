@@ -7,7 +7,7 @@ type MappingResolver struct {
 		mutex     sync.Mutex
 		CallCount int
 		Receives  struct {
-			SHA256      string
+			Checksum    string
 			PlatformDir string
 		}
 		Returns struct {
@@ -22,7 +22,7 @@ func (f *MappingResolver) FindDependencyMapping(param1 string, param2 string) (s
 	f.FindDependencyMappingCall.mutex.Lock()
 	defer f.FindDependencyMappingCall.mutex.Unlock()
 	f.FindDependencyMappingCall.CallCount++
-	f.FindDependencyMappingCall.Receives.SHA256 = param1
+	f.FindDependencyMappingCall.Receives.Checksum = param1
 	f.FindDependencyMappingCall.Receives.PlatformDir = param2
 	if f.FindDependencyMappingCall.Stub != nil {
 		return f.FindDependencyMappingCall.Stub(param1, param2)
