@@ -339,8 +339,8 @@ api = "0.6"
 
 		})
 
-		context("ensure proper strip component conversion", func() {
-			it("encodes the config to TOML", func() {
+		context("when not all metadata.dependencies include strip-components", func() {
+			it("correctly encodes all elements", func() {
 				err := cargo.EncodeConfig(buffer, cargo.Config{
 					API: "0.6",
 					Buildpack: cargo.ConfigBuildpack{
