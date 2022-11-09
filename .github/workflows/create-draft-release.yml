@@ -62,7 +62,7 @@ jobs:
         if [ -z "${tag}" ]; then
           tag="${{ steps.semver.outputs.tag }}"
         fi
-        echo "::set-output name=tag::${tag}"
+        echo "tag=${tag}" >> "$GITHUB_OUTPUT"
     - name: Create Release
       uses: paketo-buildpacks/github-config/actions/release/create@main
       with:
