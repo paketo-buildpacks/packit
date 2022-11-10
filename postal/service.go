@@ -37,6 +37,26 @@ type MappingResolver interface {
 	FindDependencyMapping(checksum, platformDir string) (string, error)
 }
 
+// ErrNoDeps is a typed error indicating that no dependencies were resolved during Service.Resolve()
+//
+// errors can be tested against this type with: errors.As()
+type ErrNoDeps struct {
+	id                string
+	version           string
+	stack             string
+	supportedVersions []string
+}
+
+// Error implements the error.Error interface
+func (e *ErrNoDeps) Error() string {
+	return fmt.Sprintf("failed to satisfy %q dependency version constraint %q: no compatible versions on %q stack. Supported versions are: [%s]",
+		e.id,
+		e.version,
+		e.stack,
+		strings.Join(e.supportedVersions, ", "),
+	)
+}
+
 // Service provides a mechanism for resolving and installing dependencies given
 // a Transport.
 type Service struct {
@@ -123,13 +143,7 @@ func (s Service) Resolve(path, id, version, stack string) (Dependency, error) {
 	}
 
 	if len(compatibleVersions) == 0 {
-		return Dependency{}, fmt.Errorf(
-			"failed to satisfy %q dependency version constraint %q: no compatible versions on %q stack. Supported versions are: [%s]",
-			id,
-			version,
-			stack,
-			strings.Join(supportedVersions, ", "),
-		)
+		return Dependency{}, &ErrNoDeps{id, version, stack, supportedVersions}
 	}
 
 	stacksForVersion := map[string][]string{}
