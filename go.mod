@@ -7,8 +7,8 @@ require (
 	github.com/Masterminds/semver/v3 v3.2.0
 	github.com/anchore/go-testutils v0.0.0-20200925183923-d5f45b0d3c04
 	github.com/anchore/go-version v1.2.2-0.20200701162849-18adb9c92b9b
-	github.com/anchore/stereoscope v0.0.0-20221006201143-d24c9d626b33
-	github.com/anchore/syft v0.60.3
+	github.com/anchore/stereoscope v0.0.0-20221130153459-3b80d983223f
+	github.com/anchore/syft v0.62.3
 	github.com/dsnet/compress v0.0.2-0.20210315054119-f66993602bf5
 	github.com/gabriel-vasile/mimetype v1.4.1
 	github.com/google/go-cmp v0.5.9
