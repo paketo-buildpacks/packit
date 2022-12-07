@@ -1,9 +1,13 @@
 package packit
 
-// BuildpackInfo is a representation of the basic information for a buildpack
+// BuildpackInfo
+// Deprecated: use Info instead
+type BuildpackInfo = Info
+
+// Info is a representation of the basic information for a buildpack
 // provided in its buildpack.toml file as described in the specification:
 // https://github.com/buildpacks/spec/blob/main/buildpack.md#buildpacktoml-toml.
-type BuildpackInfo struct {
+type Info struct {
 	// ID is the identifier specified in the `buildpack.id` field of the
 	// buildpack.toml.
 	ID string `toml:"id"`
@@ -30,17 +34,21 @@ type BuildpackInfo struct {
 
 	// Licenses are the list of licenses specified in the `buildpack.licenses`
 	// fields of the buildpack.toml.
-	Licenses []BuildpackInfoLicense
+	Licenses []InfoLicense
 
 	// SBOMFormats is the list of Software Bill of Materials media types that the buildpack
 	// produces (e.g. "application/spdx+json").
 	SBOMFormats []string `toml:"sbom-formats"`
 }
 
-// BuildpackInfoLicense is a representation of a license specified in the
+// type BuildpackInfoLicense
+// Deprecated: use InfoLicense instead
+type BuildpackInfoLicense = InfoLicense
+
+// InfoLicense is a representation of a license specified in the
 // buildpack.toml as described in the specification:
 // https://github.com/buildpacks/spec/blob/main/buildpack.md#buildpacktoml-toml.
-type BuildpackInfoLicense struct {
+type InfoLicense struct {
 	// Type is the identifier specified in the `buildpack.licenses.type` field of
 	// the buildpack.toml.
 	Type string `toml:"type"`

@@ -20,7 +20,20 @@ func testRun(t *testing.T, context spec.G, it spec.S) {
 		tmpDir      string
 		cnbDir      string
 		exitHandler *fakes.ExitHandler
+
+		buildCalled  bool
+		detectCalled bool
 	)
+
+	build := func(packit.BuildContext) (packit.BuildResult, error) {
+		buildCalled = true
+		return packit.BuildResult{}, nil
+	}
+
+	detect := func(packit.DetectContext) (packit.DetectResult, error) {
+		detectCalled = true
+		return packit.DetectResult{}, nil
+	}
 
 	it.Before(func() {
 		var err error
@@ -48,6 +61,8 @@ clear-env = false
 `), 0644)).To(Succeed())
 
 		exitHandler = &fakes.ExitHandler{}
+		buildCalled = false
+		detectCalled = false
 	})
 
 	it.After(func() {
@@ -73,16 +88,10 @@ clear-env = false
 		})
 
 		it("calls the DetectFunc", func() {
-			var detectCalled bool
-
-			detect := func(packit.DetectContext) (packit.DetectResult, error) {
-				detectCalled = true
-				return packit.DetectResult{}, nil
-			}
-
-			packit.Run(detect, nil, packit.WithArgs(args), packit.WithExitHandler(exitHandler))
+			packit.Run(detect, build, packit.WithArgs(args), packit.WithExitHandler(exitHandler))
 
 			Expect(detectCalled).To(BeTrue())
+			Expect(buildCalled).To(BeFalse())
 			Expect(exitHandler.ErrorCall.CallCount).To(Equal(0))
 		})
 	})
@@ -123,16 +132,10 @@ some-key = "some-value"
 		})
 
 		it("calls the BuildFunc", func() {
-			var buildCalled bool
-
-			build := func(packit.BuildContext) (packit.BuildResult, error) {
-				buildCalled = true
-				return packit.BuildResult{}, nil
-			}
-
-			packit.Run(nil, build, packit.WithArgs(args), packit.WithExitHandler(exitHandler))
+			packit.Run(detect, build, packit.WithArgs(args), packit.WithExitHandler(exitHandler))
 
 			Expect(buildCalled).To(BeTrue())
+			Expect(detectCalled).To(BeFalse())
 			Expect(exitHandler.ErrorCall.CallCount).To(Equal(0))
 		})
 	})
@@ -147,6 +150,8 @@ some-key = "some-value"
 		it("returns an error", func() {
 			packit.Run(nil, nil, packit.WithArgs(args), packit.WithExitHandler(exitHandler))
 
+			Expect(buildCalled).To(BeFalse())
+			Expect(detectCalled).To(BeFalse())
 			Expect(exitHandler.ErrorCall.Receives.Error).To(MatchError("failed to run buildpack: unknown lifecycle phase \"something-else\""))
 		})
 	})
