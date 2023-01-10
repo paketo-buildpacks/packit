@@ -19,6 +19,8 @@ import (
 	"github.com/paketo-buildpacks/packit/v2/sbom/internal/version"
 )
 
+// We must keep a copy of this helper instead of using the upstream because it
+// references CycloneDX 1.3 which we also have to keep a copy of internally
 func ToFormatModel(s sbom.SBOM) *cyclonedx.BOM {
 	cdxBOM := cyclonedx.NewBOM()
 	versionInfo := version.FromBuild()
@@ -126,16 +128,11 @@ func toBomDescriptor(name, version string, srcMetadata source.Metadata) *cyclone
 // An example of a relationship to not include would be: OwnershipByFileOverlapRelationship.
 func isExpressiblePackageRelationship(ty artifact.RelationshipType) bool {
 	switch ty {
-	case artifact.RuntimeDependencyOfRelationship:
-		return true
-	case artifact.DevDependencyOfRelationship:
-		return true
-	case artifact.BuildDependencyOfRelationship:
-		return true
 	case artifact.DependencyOfRelationship:
 		return true
+	default:
+		return false
 	}
-	return false
 }
 
 func toDependencies(relationships []artifact.Relationship) []cyclonedx.Dependency {

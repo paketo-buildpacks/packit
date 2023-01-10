@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/paketo-buildpacks/packit/v2/sbom/internal/formats/common/testutils"
+	"github.com/anchore/syft/syft/formats/common/testutils"
 )
 
 var updateCycloneDx = flag.Bool("update-cyclonedx", false, "update the *.golden files for cyclone-dx encoders")
@@ -15,6 +15,7 @@ func TestCycloneDxDirectoryEncoder(t *testing.T) {
 		Format(),
 		testutils.DirectoryInput(t),
 		*updateCycloneDx,
+		true,
 		cycloneDxRedactor,
 	)
 }
@@ -26,6 +27,7 @@ func TestCycloneDxImageEncoder(t *testing.T) {
 		testutils.ImageInput(t, testImage),
 		testImage,
 		*updateCycloneDx,
+		true,
 		cycloneDxRedactor,
 	)
 }

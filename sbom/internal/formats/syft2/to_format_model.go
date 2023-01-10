@@ -5,6 +5,7 @@ import (
 	"sort"
 	"strconv"
 
+	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/linux"
 
@@ -12,22 +13,23 @@ import (
 
 	"github.com/anchore/syft/syft/sbom"
 
+	"github.com/anchore/syft/syft/formats/syftjson/model"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
-	"github.com/paketo-buildpacks/packit/v2/sbom/internal/formats/syft2/model"
+	internalmodel "github.com/paketo-buildpacks/packit/v2/sbom/internal/formats/syft2/model"
 	syft2source "github.com/paketo-buildpacks/packit/v2/sbom/internal/formats/syft2/source"
 )
 
 // NOTE: Adaptions have been added to functions in this file to translate from latest
 // syft package representations to legacy JSON schema
 
-func ToFormatModel(s sbom.SBOM) model.Document {
+func ToFormatModel(s sbom.SBOM) internalmodel.Document {
 	src, err := toSourceModel(s.Source)
 	if err != nil { //nolint:staticcheck
 		// log.Warnf("unable to create syft-json source object: %+v", err)
 	}
 
-	return model.Document{
+	return internalmodel.Document{
 		Artifacts:             toPackageModels(s.Artifacts.PackageCatalog),
 		ArtifactRelationships: toRelationshipModel(s.Relationships),
 		Files:                 toFile(s),
@@ -81,23 +83,17 @@ func toFile(s sbom.SBOM) []model.File {
 			digests = digestsForLocation
 		}
 
-		var classifications []file.Classification
-		if classificationsForLocation, exists := artifacts.FileClassifications[coordinates]; exists {
-			classifications = classificationsForLocation
-		}
-
 		var contents string
 		if contentsForLocation, exists := artifacts.FileContents[coordinates]; exists {
 			contents = contentsForLocation
 		}
 
 		results = append(results, model.File{
-			ID:              string(coordinates.ID()),
-			Location:        coordinates,
-			Metadata:        toFileMetadataEntry(coordinates, metadata),
-			Digests:         digests,
-			Classifications: classifications,
-			Contents:        contents,
+			ID:       string(coordinates.ID()),
+			Location: coordinates,
+			Metadata: toFileMetadataEntry(coordinates, metadata),
+			Digests:  digests,
+			Contents: contents,
 		})
 	}
 
@@ -129,8 +125,8 @@ func toFileMetadataEntry(coordinates source.Coordinates, metadata *source.FileMe
 	}
 }
 
-func toPackageModels(catalog *pkg.Catalog) []model.Package {
-	artifacts := make([]model.Package, 0)
+func toPackageModels(catalog *pkg.Catalog) []internalmodel.Package {
+	artifacts := make([]internalmodel.Package, 0)
 	if catalog == nil {
 		return artifacts
 	}
@@ -141,10 +137,10 @@ func toPackageModels(catalog *pkg.Catalog) []model.Package {
 }
 
 // toPackageModel crates a new Package from the given pkg.Package.
-func toPackageModel(p pkg.Package) model.Package {
+func toPackageModel(p pkg.Package) internalmodel.Package {
 	var cpes = make([]string, len(p.CPEs))
 	for i, c := range p.CPEs {
-		cpes[i] = pkg.CPEString(c)
+		cpes[i] = cpe.String(c)
 	}
 
 	var licenses = make([]string, 0)
@@ -158,8 +154,8 @@ func toPackageModel(p pkg.Package) model.Package {
 		coordinates[i] = l.Coordinates
 	}
 
-	return model.Package{
-		PackageBasicData: model.PackageBasicData{
+	return internalmodel.Package{
+		PackageBasicData: internalmodel.PackageBasicData{
 			ID:        string(p.ID()),
 			Name:      p.Name,
 			Version:   p.Version,
@@ -171,7 +167,7 @@ func toPackageModel(p pkg.Package) model.Package {
 			CPEs:      cpes,
 			PURL:      p.PURL,
 		},
-		PackageCustomData: model.PackageCustomData{
+		PackageCustomData: internalmodel.PackageCustomData{
 			MetadataType: p.MetadataType,
 			Metadata:     p.Metadata,
 		},
@@ -194,35 +190,35 @@ func toRelationshipModel(relationships []artifact.Relationship) []model.Relation
 // toSourceModel creates a new source object to be represented into JSON.
 // NOTE: THIS FUNCTION is NOT identical to the one that appears in the original version of this file.
 // It converts ImageMetadata into a struct that matches the old Syft schema.
-func toSourceModel(src source.Metadata) (model.Source, error) {
+func toSourceModel(src source.Metadata) (internalmodel.Source, error) {
 	switch src.Scheme {
 	case source.ImageScheme:
-		return model.Source{
+		return internalmodel.Source{
 			Type: "image",
 			// convert src.ImageMetadata into a struct with the old syft metadata fields
 			Target: syft2source.ConvertImageMetadata(src.ImageMetadata),
 		}, nil
 	case source.DirectoryScheme:
-		return model.Source{
+		return internalmodel.Source{
 			Type:   "directory",
 			Target: src.Path,
 		}, nil
 	case source.FileScheme:
-		return model.Source{
+		return internalmodel.Source{
 			Type:   "file",
 			Target: src.Path,
 		}, nil
 	default:
-		return model.Source{}, fmt.Errorf("unsupported source: %q", src.Scheme)
+		return internalmodel.Source{}, fmt.Errorf("unsupported source: %q", src.Scheme)
 	}
 }
 
 // // toDistroModel creates a struct with the Linux distribution to be represented in JSON.
 // NOTE: THIS FUNCTION is NOT identical to the one that appears in the original version of this file.
 // It now converts from a linux.Release to a model.Distro to maintain backward compatibility.
-func toDistroModel(d *linux.Release) model.Distro {
+func toDistroModel(d *linux.Release) internalmodel.Distro {
 	if d == nil {
-		return model.Distro{}
+		return internalmodel.Distro{}
 	}
 
 	idLike := d.ID
@@ -231,7 +227,7 @@ func toDistroModel(d *linux.Release) model.Distro {
 		idLike = d.IDLike[0]
 	}
 
-	return model.Distro{
+	return internalmodel.Distro{
 		Name:    d.ID,
 		Version: d.Version,
 		IDLike:  idLike,

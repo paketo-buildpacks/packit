@@ -7,6 +7,8 @@ import (
 )
 
 // Relies on cycloneDX published structs
+// We must copy this helper in because it's not exported from
+// syft/formats/common/cyclonedxhelpers
 func encodeLicenses(p pkg.Package) *cyclonedx.Licenses {
 	lc := cyclonedx.Licenses{}
 	for _, licenseName := range p.Licenses {

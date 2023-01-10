@@ -8,6 +8,8 @@ import (
 )
 
 // Relies on cycloneDX published structs
+// We must copy this helper in because it's not exported from
+// syft/formats/common/cyclonedxhelpers
 
 func encodeExternalReferences(p pkg.Package) *[]cyclonedx.ExternalReference {
 	refs := []cyclonedx.ExternalReference{}

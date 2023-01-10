@@ -4,6 +4,7 @@ import (
 	"flag"
 	"testing"
 
+	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/linux"
 
@@ -13,7 +14,7 @@ import (
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
 
-	"github.com/paketo-buildpacks/packit/v2/sbom/internal/formats/common/testutils"
+	"github.com/anchore/syft/syft/formats/common/testutils"
 )
 
 // Source https://github.com/anchore/syft/blob/dfefd2ea4e9d44187b4f861bc202970247dd34c8/internal/formats/syftjson/encoder_test.go
@@ -24,6 +25,7 @@ func TestDirectoryEncoder(t *testing.T) {
 	testutils.AssertEncoderAgainstGoldenSnapshot(t,
 		Format(),
 		testutils.DirectoryInput(t),
+		true,
 		*updateJson,
 	)
 }
@@ -34,6 +36,7 @@ func TestImageEncoder(t *testing.T) {
 		Format(),
 		testutils.ImageInput(t, testImage, testutils.FromSnapshot()),
 		testImage,
+		true,
 		*updateJson,
 	)
 }
@@ -62,8 +65,8 @@ func TestEncodeFullJSONDocument(t *testing.T) {
 			Files:   []pkg.PythonFileRecord{},
 		},
 		PURL: "a-purl-1",
-		CPEs: []pkg.CPE{
-			pkg.MustCPE("cpe:2.3:*:some:package:1:*:*:*:*:*:*:*"),
+		CPEs: []cpe.CPE{
+			cpe.Must("cpe:2.3:*:some:package:1:*:*:*:*:*:*:*"),
 		},
 	}
 
@@ -86,8 +89,8 @@ func TestEncodeFullJSONDocument(t *testing.T) {
 			Files:   []pkg.DpkgFileRecord{},
 		},
 		PURL: "a-purl-2",
-		CPEs: []pkg.CPE{
-			pkg.MustCPE("cpe:2.3:*:some:package:2:*:*:*:*:*:*:*"),
+		CPEs: []cpe.CPE{
+			cpe.Must("cpe:2.3:*:some:package:2:*:*:*:*:*:*:*"),
 		},
 	}
 
@@ -202,6 +205,7 @@ func TestEncodeFullJSONDocument(t *testing.T) {
 	testutils.AssertEncoderAgainstGoldenSnapshot(t,
 		Format(),
 		s,
+		true,
 		*updateJson,
 	)
 }

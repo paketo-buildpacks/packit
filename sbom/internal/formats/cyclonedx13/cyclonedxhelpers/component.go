@@ -6,6 +6,8 @@ import (
 )
 
 // Relies on cycloneDX published structs
+// We must copy this helper in because it's not exported from
+// syft/formats/common/cyclonedxhelpers
 func encodeComponent(p pkg.Package) cyclonedx.Component {
 	props := encodeProperties(p, "syft:package")
 	props = append(props, encodeCPEs(p)...)

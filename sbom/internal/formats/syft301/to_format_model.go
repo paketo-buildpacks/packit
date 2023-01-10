@@ -5,6 +5,7 @@ import (
 	"sort"
 	"strconv"
 
+	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/linux"
 
 	"github.com/anchore/syft/syft/file"
@@ -13,9 +14,9 @@ import (
 
 	"github.com/anchore/syft/syft/sbom"
 
-	// "github.com/anchore/syft/internal"
-	// "github.com/anchore/syft/internal/formats/syftjson/model"
-	"github.com/paketo-buildpacks/packit/v2/sbom/internal/formats/syft301/model"
+	internalmodel "github.com/paketo-buildpacks/packit/v2/sbom/internal/formats/syft301/model"
+
+	"github.com/anchore/syft/syft/formats/syftjson/model"
 	// "github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
@@ -23,14 +24,15 @@ import (
 
 // ToFormatModel transforms the sbom import a format-specific model.
 // note: this is needed for anchore import functionality
-// TODO: unexport this when/if anchore import functionality is removed
-func ToFormatModel(s sbom.SBOM) model.Document {
+// We must maintain our own copy in order to pass in the JSON Schema Version that we need
+// TODO: remove this if Syft introduces a way to pass that version in
+func ToFormatModel(s sbom.SBOM) internalmodel.Document {
 	src, err := toSourceModel(s.Source)
 	if err != nil { //nolint:staticcheck
 		// log.Warnf("unable to create syft-json source object: %+v", err)
 	}
 
-	return model.Document{
+	return internalmodel.Document{
 		Artifacts:             toPackageModels(s.Artifacts.PackageCatalog),
 		ArtifactRelationships: toRelationshipModel(s.Relationships),
 		Files:                 toFile(s),
@@ -105,23 +107,17 @@ func toFile(s sbom.SBOM) []model.File {
 			digests = digestsForLocation
 		}
 
-		var classifications []file.Classification
-		if classificationsForLocation, exists := artifacts.FileClassifications[coordinates]; exists {
-			classifications = classificationsForLocation
-		}
-
 		var contents string
 		if contentsForLocation, exists := artifacts.FileContents[coordinates]; exists {
 			contents = contentsForLocation
 		}
 
 		results = append(results, model.File{
-			ID:              string(coordinates.ID()),
-			Location:        coordinates,
-			Metadata:        toFileMetadataEntry(coordinates, metadata),
-			Digests:         digests,
-			Classifications: classifications,
-			Contents:        contents,
+			ID:       string(coordinates.ID()),
+			Location: coordinates,
+			Metadata: toFileMetadataEntry(coordinates, metadata),
+			Digests:  digests,
+			Contents: contents,
 		})
 	}
 
@@ -168,7 +164,7 @@ func toPackageModels(catalog *pkg.Catalog) []model.Package {
 func toPackageModel(p pkg.Package) model.Package {
 	var cpes = make([]string, len(p.CPEs))
 	for i, c := range p.CPEs {
-		cpes[i] = pkg.CPEString(c)
+		cpes[i] = cpe.String(c)
 	}
 
 	var licenses = make([]string, 0)
@@ -216,7 +212,7 @@ func toRelationshipModel(relationships []artifact.Relationship) []model.Relation
 }
 
 // toSourceModel creates a new source object to be represented into JSON.
-func toSourceModel(src source.Metadata) (model.Source, error) {
+func toSourceModel(src source.Metadata) (internalmodel.Source, error) {
 	switch src.Scheme {
 	case source.ImageScheme:
 		metadata := src.ImageMetadata
@@ -227,21 +223,21 @@ func toSourceModel(src source.Metadata) (model.Source, error) {
 		if metadata.Tags == nil {
 			metadata.Tags = []string{}
 		}
-		return model.Source{
+		return internalmodel.Source{
 			Type:   "image",
 			Target: metadata,
 		}, nil
 	case source.DirectoryScheme:
-		return model.Source{
+		return internalmodel.Source{
 			Type:   "directory",
 			Target: src.Path,
 		}, nil
 	case source.FileScheme:
-		return model.Source{
+		return internalmodel.Source{
 			Type:   "file",
 			Target: src.Path,
 		}, nil
 	default:
-		return model.Source{}, fmt.Errorf("unsupported source: %q", src.Scheme)
+		return internalmodel.Source{}, fmt.Errorf("unsupported source: %q", src.Scheme)
 	}
 }

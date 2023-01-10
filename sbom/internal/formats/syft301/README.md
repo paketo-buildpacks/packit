@@ -7,3 +7,5 @@ of Syft that supports Syft JSON Schema 3.0.1.
 The implementations of `decoder` and `validator` have been omitted for
 simplicity, since they are not required for buildpacks' SBOM generation.
 
+Aspects of the model have been copied over due to slight deviations against the
+latest Syft JSON model.
