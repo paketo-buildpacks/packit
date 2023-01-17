@@ -8,3 +8,5 @@ which [supports CycloneDX Spec version
 Only the portions of the package that are strictly necessary for SBOM encoding
 have been included here.
 
+
+This is required because the upstream code base does not support versioned specs.

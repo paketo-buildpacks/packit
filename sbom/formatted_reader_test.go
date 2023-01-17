@@ -119,8 +119,8 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 
 			// Ensures pretty printing
 			Expect(buffer.String()).To(ContainSubstring(`{
- "SPDXID": "SPDXRef-DOCUMENT",
- "creationInfo": {`))
+ "Reviews": null,
+ "SPDXID": "SPDXRef-DOCUMENT"`))
 
 			var spdxOutput spdxOutput
 
@@ -137,7 +137,7 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 			Expect(spdxOutput.Packages[5].Name).To(Equal("wrappy"), buffer.String())
 
 			// Ensure documentNamespace and creationInfo.created have reproducible values
-			Expect(spdxOutput.DocumentNamespace).To(Equal("https://paketo.io/packit/dir/testdata-5eb1cfc4-105b-5002-b80e-04a3f4cef71b"), buffer.String())
+			Expect(spdxOutput.DocumentNamespace).To(Equal("https://paketo.io/packit/dir/testdata-d359f27c-86a7-5551-b971-9c7afd003959"), buffer.String())
 			Expect(spdxOutput.CreationInfo.Created).To(BeZero(), buffer.String())
 
 			rerunBuffer := bytes.NewBuffer(nil)
@@ -186,7 +186,7 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 					Expect(spdxOutput.Packages[5].Name).To(Equal("wrappy"), buffer.String())
 
 					// Ensure documentNamespace and creationInfo.created have reproducible values
-					Expect(spdxOutput.DocumentNamespace).To(Equal("https://paketo.io/packit/dir/testdata-e4c3c453-ddc9-5920-995f-5a1a8472b6e8"), buffer.String())
+					Expect(spdxOutput.DocumentNamespace).To(Equal("https://paketo.io/packit/dir/testdata-c6ae45ee-2cee-584a-b637-9de3c8486856"), buffer.String())
 					Expect(spdxOutput.CreationInfo.Created).To(Equal(time.Unix(1659551872, 0).UTC()), buffer.String())
 
 					rerunBuffer := bytes.NewBuffer(nil)
@@ -272,7 +272,7 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 		Expect(rerunBuffer.String()).To(Equal(buffer.String()))
 	})
 
-	it("writes the SBOM in the latest Syft format (3.*)", func() {
+	it("writes the SBOM in the latest Syft format (6.*)", func() {
 		buffer := bytes.NewBuffer(nil)
 		_, err := io.Copy(buffer, sbom.NewFormattedReader(bom, sbom.Format(syft.JSONFormatID)))
 		Expect(err).NotTo(HaveOccurred())
@@ -282,7 +282,7 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 		err = json.Unmarshal(buffer.Bytes(), &syftOutput)
 		Expect(err).NotTo(HaveOccurred(), buffer.String())
 
-		Expect(syftOutput.Schema.Version).To(MatchRegexp(`3\.\d+\.\d+`), buffer.String())
+		Expect(syftOutput.Schema.Version).To(MatchRegexp(`6\.\d+\.\d+`), buffer.String())
 
 		Expect(syftOutput.Source.Type).To(Equal("directory"), buffer.String())
 		Expect(syftOutput.Source.Target).To(Equal("testdata/"), buffer.String())

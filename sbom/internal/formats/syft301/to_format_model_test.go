@@ -5,9 +5,8 @@ import (
 
 	"github.com/scylladb/go-set/strset"
 
-	// "github.com/anchore/syft/internal/formats/syftjson/model"
 	"github.com/anchore/syft/syft/source"
-	"github.com/paketo-buildpacks/packit/v2/sbom/internal/formats/syft301/model"
+	internalmodel "github.com/paketo-buildpacks/packit/v2/sbom/internal/formats/syft301/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -22,7 +21,7 @@ func Test_toSourceModel(t *testing.T) {
 	tests := []struct {
 		name     string
 		src      source.Metadata
-		expected model.Source
+		expected internalmodel.Source
 	}{
 		{
 			name: "directory",
@@ -30,7 +29,7 @@ func Test_toSourceModel(t *testing.T) {
 				Scheme: source.DirectoryScheme,
 				Path:   "some/path",
 			},
-			expected: model.Source{
+			expected: internalmodel.Source{
 				Type:   "directory",
 				Target: "some/path",
 			},
@@ -41,7 +40,7 @@ func Test_toSourceModel(t *testing.T) {
 				Scheme: source.FileScheme,
 				Path:   "some/path",
 			},
-			expected: model.Source{
+			expected: internalmodel.Source{
 				Type:   "file",
 				Target: "some/path",
 			},
@@ -57,7 +56,7 @@ func Test_toSourceModel(t *testing.T) {
 					MediaType:      "type...",
 				},
 			},
-			expected: model.Source{
+			expected: internalmodel.Source{
 				Type: "image",
 				Target: source.ImageMetadata{
 					UserInput:      "user-input",

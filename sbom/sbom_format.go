@@ -7,6 +7,7 @@ import (
 	"github.com/anchore/syft/syft"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/paketo-buildpacks/packit/v2/sbom/internal/formats/cyclonedx13"
+	"github.com/paketo-buildpacks/packit/v2/sbom/internal/formats/spdx22"
 	"github.com/paketo-buildpacks/packit/v2/sbom/internal/formats/syft2"
 	"github.com/paketo-buildpacks/packit/v2/sbom/internal/formats/syft301"
 )
@@ -25,8 +26,8 @@ var cyclonedxFormats map[string]sbom.FormatID = map[string]sbom.FormatID{
 }
 
 var spdxFormats map[string]sbom.FormatID = map[string]sbom.FormatID{
-	"default": syft.SPDXJSONFormatID,
-	"2.2":     syft.SPDXJSONFormatID,
+	"default": spdx22.ID,
+	"2.2":     spdx22.ID,
 }
 
 var additionalFormats []sbomFormat
@@ -36,6 +37,7 @@ func init() {
 		newSBOMFormat(cyclonedx13.Format()),
 		newSBOMFormat(syft2.Format()),
 		newSBOMFormat(syft301.Format()),
+		newSBOMFormat(spdx22.Format()),
 	}
 }
 

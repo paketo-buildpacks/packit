@@ -8,7 +8,7 @@ import (
 	"github.com/sclevine/spec/report"
 )
 
-func TestSBOM(t *testing.T) {
+func TestUnitSBOM(t *testing.T) {
 	format.MaxLength = 0
 
 	suite := spec.New("sbom", spec.Report(report.Terminal{}))

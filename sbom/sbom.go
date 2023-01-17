@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/anchore/syft/syft"
+	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger"
 	"github.com/anchore/syft/syft/sbom"
@@ -87,9 +88,9 @@ func GenerateFromDependency(dependency postal.Dependency, path string) (SBOM, er
 		dependency.CPEs = []string{dependency.CPE}
 	}
 
-	var cpes []pkg.CPE
+	var cpes []cpe.CPE
 	for _, cpeString := range dependency.CPEs {
-		cpe, err := pkg.NewCPE(cpeString)
+		cpe, err := cpe.New(cpeString)
 		if err != nil {
 			return SBOM{}, err
 		}
