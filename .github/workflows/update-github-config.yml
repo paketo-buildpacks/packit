@@ -61,3 +61,22 @@ jobs:
         title: "Updates github-config"
         branch: automation/github-config/update
         base: ${{ github.event.repository.default_branch }}
+
+  failure:
+    name: Alert on Failure
+    runs-on: ubuntu-22.04
+    needs: [build]
+    if: ${{ always() && needs.build.result == 'failure' }}
+    steps:
+    - name: File Failure Alert Issue
+      uses: paketo-buildpacks/github-config/actions/issue/file@main
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        repo: ${{ github.repository }}
+        label: "failure:update-github-config"
+        comment_if_exists: true
+        issue_title: "Failure: Update GitHub config workflow"
+        issue_body: |
+          Update GitHub config workflow [failed](https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}).
+        comment_body: |
+           Another failure occurred: https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}
