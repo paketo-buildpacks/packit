@@ -3,28 +3,24 @@
  "dataLicense": "CC0-1.0",
  "SPDXID": "SPDXRef-DOCUMENT",
  "name": "user-image-input",
- "documentNamespace": "https://anchore.com/syft/image/user-image-input-96922b5d-0ec8-47ec-9aa6-d4fbb53286a5",
+ "documentNamespace": "https://anchore.com/syft/image/user-image-input-6c400694-c3e4-46f9-a7e7-9e826c9ced8b",
  "creationInfo": {
   "licenseListVersion": "3.16",
   "creators": [
    "Organization: Anchore, Inc",
    "Tool: syft-v0.42.0-bogus"
   ],
-  "created": "2023-01-12T20:42:55Z",
-  "comment": ""
+  "created": "2023-01-26T15:33:01Z"
  },
  "packages": [
   {
-   "IsUnpackaged": false,
    "name": "package-1",
    "SPDXID": "SPDXRef-Package-python-package-1-66ba429119b8bec6",
    "versionInfo": "1.0.1",
    "downloadLocation": "NOASSERTION",
-   "IsFilesAnalyzedTagPresent": true,
    "packageVerificationCode": {
     "packageVerificationCodeValue": ""
    },
-   "checksums": null,
    "sourceInfo": "acquired package info from installed python package manifest file: /somefile-1.txt",
    "licenseConcluded": "MIT",
    "licenseInfoFromFiles": null,
@@ -34,30 +30,23 @@
     {
      "referenceCategory": "SECURITY",
      "referenceType": "cpe23Type",
-     "referenceLocator": "cpe:2.3:*:some:package:1:*:*:*:*:*:*:*",
-     "comment": ""
+     "referenceLocator": "cpe:2.3:*:some:package:1:*:*:*:*:*:*:*"
     },
     {
      "referenceCategory": "PACKAGE-MANAGER",
      "referenceType": "purl",
-     "referenceLocator": "a-purl-1",
-     "comment": ""
+     "referenceLocator": "a-purl-1"
     }
-   ],
-   "Files": null,
-   "annotations": null
+   ]
   },
   {
-   "IsUnpackaged": false,
    "name": "package-2",
    "SPDXID": "SPDXRef-Package-deb-package-2-958443e2d9304af4",
    "versionInfo": "2.0.1",
    "downloadLocation": "NOASSERTION",
-   "IsFilesAnalyzedTagPresent": true,
    "packageVerificationCode": {
     "packageVerificationCodeValue": ""
    },
-   "checksums": null,
    "sourceInfo": "acquired package info from DPKG DB: /somefile-2.txt",
    "licenseConcluded": "NONE",
    "licenseInfoFromFiles": null,
@@ -67,18 +56,14 @@
     {
      "referenceCategory": "SECURITY",
      "referenceType": "cpe23Type",
-     "referenceLocator": "cpe:2.3:*:some:package:2:*:*:*:*:*:*:*",
-     "comment": ""
+     "referenceLocator": "cpe:2.3:*:some:package:2:*:*:*:*:*:*:*"
     },
     {
      "referenceCategory": "PACKAGE-MANAGER",
      "referenceType": "purl",
-     "referenceLocator": "pkg:deb/debian/package-2@2.0.1",
-     "comment": ""
+     "referenceLocator": "pkg:deb/debian/package-2@2.0.1"
     }
-   ],
-   "Files": null,
-   "annotations": null
+   ]
   }
  ],
  "files": [
@@ -179,7 +164,6 @@
    "copyrightText": ""
   }
  ],
- "hasExtractedLicensingInfos": null,
  "relationships": [
   {
    "spdxElementId": "SPDXRef-Package-python-package-1-66ba429119b8bec6",
@@ -216,8 +200,5 @@
    "relatedSpdxElement": "SPDXRef-DOCUMENT",
    "relationshipType": "DESCRIBES"
   }
- ],
- "annotations": null,
- "snippets": null,
- "Reviews": null
+ ]
 }

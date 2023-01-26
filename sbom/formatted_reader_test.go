@@ -119,8 +119,8 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 
 			// Ensures pretty printing
 			Expect(buffer.String()).To(ContainSubstring(`{
- "Reviews": null,
- "SPDXID": "SPDXRef-DOCUMENT"`))
+ "SPDXID": "SPDXRef-DOCUMENT",
+ "creationInfo": {`))
 
 			var spdxOutput spdxOutput
 
@@ -137,7 +137,7 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 			Expect(spdxOutput.Packages[5].Name).To(Equal("wrappy"), buffer.String())
 
 			// Ensure documentNamespace and creationInfo.created have reproducible values
-			Expect(spdxOutput.DocumentNamespace).To(Equal("https://paketo.io/packit/dir/testdata-d359f27c-86a7-5551-b971-9c7afd003959"), buffer.String())
+			Expect(spdxOutput.DocumentNamespace).To(Equal("https://paketo.io/packit/dir/testdata-e3c5c6c0-975c-50ad-ba89-6c690c58f329"), buffer.String())
 			Expect(spdxOutput.CreationInfo.Created).To(BeZero(), buffer.String())
 
 			rerunBuffer := bytes.NewBuffer(nil)
@@ -186,7 +186,7 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 					Expect(spdxOutput.Packages[5].Name).To(Equal("wrappy"), buffer.String())
 
 					// Ensure documentNamespace and creationInfo.created have reproducible values
-					Expect(spdxOutput.DocumentNamespace).To(Equal("https://paketo.io/packit/dir/testdata-c6ae45ee-2cee-584a-b637-9de3c8486856"), buffer.String())
+					Expect(spdxOutput.DocumentNamespace).To(Equal("https://paketo.io/packit/dir/testdata-69392e4a-5484-50ba-babd-d21c6d13d9a3"), buffer.String())
 					Expect(spdxOutput.CreationInfo.Created).To(Equal(time.Unix(1659551872, 0).UTC()), buffer.String())
 
 					rerunBuffer := bytes.NewBuffer(nil)
