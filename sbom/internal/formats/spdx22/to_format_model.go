@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/apex/log"
-	"github.com/spdx/tools-golang/spdx/common"
-	spdx "github.com/spdx/tools-golang/spdx/v2_2"
+	"github.com/spdx/tools-golang/spdx/v2/common"
+	spdx "github.com/spdx/tools-golang/spdx/v2/v2_2"
 
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/formats/common/util"
