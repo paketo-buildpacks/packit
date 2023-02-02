@@ -3,8 +3,8 @@ package model
 import (
 	"testing"
 
-	"github.com/spdx/tools-golang/spdx/common"
-	spdx "github.com/spdx/tools-golang/spdx/v2_2"
+	"github.com/spdx/tools-golang/spdx/v2/common"
+	spdx "github.com/spdx/tools-golang/spdx/v2/v2_2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
