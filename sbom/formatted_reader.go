@@ -63,7 +63,7 @@ func (f *FormattedReader) Read(b []byte) (int, error) {
 
 		// Makes CycloneDX SBOM more reproducible, see
 		// https://github.com/paketo-buildpacks/packit/issues/367 for more details.
-		if f.format.ID() == "cyclonedx-1.3-json" || f.format.ID() == "cyclonedx-1-json" {
+		if f.format.ID() == "cyclonedx-1.3-json" || f.format.ID() == "cyclonedx-json" {
 			var cycloneDXOutput map[string]interface{}
 			err = json.Unmarshal(output, &cycloneDXOutput)
 			if err != nil {

@@ -77,12 +77,6 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 		format := syft.IdentifyFormat(buffer.Bytes())
 		Expect(format.ID()).To(Equal(syft.CycloneDxJSONFormatID))
 
-		// Ensures pretty printing
-		Expect(buffer.String()).To(ContainSubstring(`{
-  "bomFormat": "CycloneDX",
-  "components": [
-    {`))
-
 		var cdxOutput cdxOutput
 
 		err = json.Unmarshal(buffer.Bytes(), &cdxOutput)

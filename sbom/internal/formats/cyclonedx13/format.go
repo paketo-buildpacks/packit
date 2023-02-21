@@ -9,19 +9,12 @@ import (
 // TODO: Decide version granularity of IDs
 const ID sbom.FormatID = "cyclonedx-1.3-json"
 
-var dummyDecoder func(io.Reader) (*sbom.SBOM, error) = func(input io.Reader) (*sbom.SBOM, error) {
-	return nil, nil
-}
-
-var dummyValidator func(io.Reader) error = func(input io.Reader) error {
-	return nil
-}
-
 func Format() sbom.Format {
 	return sbom.NewFormat(
-		ID,
+		sbom.AnyVersion,
 		encoder,
-		dummyDecoder,
-		dummyValidator,
+		func(input io.Reader) (*sbom.SBOM, error) { return nil, nil },
+		func(input io.Reader) error { return nil },
+		ID,
 	)
 }

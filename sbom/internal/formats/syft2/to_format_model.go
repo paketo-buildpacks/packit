@@ -5,16 +5,14 @@ import (
 	"sort"
 	"strconv"
 
+	stereoscopeFile "github.com/anchore/stereoscope/pkg/file"
+	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/file"
-	"github.com/anchore/syft/syft/linux"
-
-	"github.com/anchore/syft/syft/artifact"
-
-	"github.com/anchore/syft/syft/sbom"
-
 	"github.com/anchore/syft/syft/formats/syftjson/model"
+	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
 	internalmodel "github.com/paketo-buildpacks/packit/v2/sbom/internal/formats/syft2/model"
 	syft2source "github.com/paketo-buildpacks/packit/v2/sbom/internal/formats/syft2/source"
@@ -117,11 +115,36 @@ func toFileMetadataEntry(coordinates source.Coordinates, metadata *source.FileMe
 
 	return &model.FileMetadataEntry{
 		Mode:            mode,
-		Type:            metadata.Type,
+		Type:            toFileType(metadata.Type),
 		LinkDestination: metadata.LinkDestination,
 		UserID:          metadata.UserID,
 		GroupID:         metadata.GroupID,
 		MIMEType:        metadata.MIMEType,
+	}
+}
+
+func toFileType(ty stereoscopeFile.Type) string {
+	switch ty {
+	case stereoscopeFile.TypeSymLink:
+		return "SymbolicLink"
+	case stereoscopeFile.TypeHardLink:
+		return "HardLink"
+	case stereoscopeFile.TypeDirectory:
+		return "Directory"
+	case stereoscopeFile.TypeSocket:
+		return "Socket"
+	case stereoscopeFile.TypeBlockDevice:
+		return "BlockDevice"
+	case stereoscopeFile.TypeCharacterDevice:
+		return "CharacterDevice"
+	case stereoscopeFile.TypeFIFO:
+		return "FIFONode"
+	case stereoscopeFile.TypeRegular:
+		return "RegularFile"
+	case stereoscopeFile.TypeIrregular:
+		return "IrregularFile"
+	default:
+		return "Unknown"
 	}
 }
 
