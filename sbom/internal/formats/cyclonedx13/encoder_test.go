@@ -15,7 +15,7 @@ func TestCycloneDxDirectoryEncoder(t *testing.T) {
 		Format(),
 		testutils.DirectoryInput(t),
 		*updateCycloneDx,
-		true,
+		testutils.TypeJson,
 		cycloneDxRedactor,
 	)
 }
@@ -27,7 +27,7 @@ func TestCycloneDxImageEncoder(t *testing.T) {
 		testutils.ImageInput(t, testImage),
 		testImage,
 		*updateCycloneDx,
-		true,
+		testutils.TypeJson,
 		cycloneDxRedactor,
 	)
 }
