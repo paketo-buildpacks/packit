@@ -21,8 +21,8 @@ func TestDirectoryEncoder(t *testing.T) {
 	testutils.AssertEncoderAgainstGoldenSnapshot(t,
 		Format(),
 		testutils.DirectoryInput(t),
-		true,
 		*updateJson,
+		testutils.TypeJson,
 	)
 }
 
@@ -32,8 +32,8 @@ func TestImageEncoder(t *testing.T) {
 		Format(),
 		testutils.ImageInput(t, testImage, testutils.FromSnapshot()),
 		testImage,
-		true,
 		*updateJson,
+		testutils.TypeJson,
 	)
 }
 
@@ -201,7 +201,7 @@ func TestEncodeFullJSONDocument(t *testing.T) {
 	testutils.AssertEncoderAgainstGoldenSnapshot(t,
 		Format(),
 		s,
-		true,
 		*updateJson,
+		testutils.TypeJson,
 	)
 }

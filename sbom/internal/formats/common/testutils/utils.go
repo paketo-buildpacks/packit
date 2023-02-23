@@ -37,7 +37,14 @@ func FromSnapshot() ImageOption {
 	}
 }
 
-func AssertEncoderAgainstGoldenImageSnapshot(t *testing.T, format sbom.Format, sbom sbom.SBOM, testImage string, updateSnapshot bool, json bool, redactors ...redactor) {
+type Type int
+
+const (
+	TypePlain Type = iota
+	TypeJson
+)
+
+func AssertEncoderAgainstGoldenImageSnapshot(t *testing.T, format sbom.Format, sbom sbom.SBOM, testImage string, updateSnapshot bool, contentType Type, redactors ...redactor) {
 	var buffer bytes.Buffer
 
 	// grab the latest image contents and persist
@@ -63,7 +70,7 @@ func AssertEncoderAgainstGoldenImageSnapshot(t *testing.T, format sbom.Format, s
 		expected = r(expected)
 	}
 
-	if json {
+	if contentType == TypeJson {
 		require.JSONEq(t, string(expected), string(actual))
 	} else if !bytes.Equal(expected, actual) {
 		// assert that the golden file snapshot matches the actual contents
@@ -73,7 +80,7 @@ func AssertEncoderAgainstGoldenImageSnapshot(t *testing.T, format sbom.Format, s
 	}
 }
 
-func AssertEncoderAgainstGoldenSnapshot(t *testing.T, format sbom.Format, sbom sbom.SBOM, updateSnapshot bool, json bool, redactors ...redactor) {
+func AssertEncoderAgainstGoldenSnapshot(t *testing.T, format sbom.Format, sbom sbom.SBOM, updateSnapshot bool, contentType Type, redactors ...redactor) {
 	var buffer bytes.Buffer
 
 	err := format.Encode(&buffer, sbom)
@@ -94,7 +101,7 @@ func AssertEncoderAgainstGoldenSnapshot(t *testing.T, format sbom.Format, sbom s
 		expected = r(expected)
 	}
 
-	if json {
+	if contentType == TypeJson {
 		require.JSONEq(t, string(expected), string(actual))
 	} else if !bytes.Equal(expected, actual) {
 		dmp := diffmatchpatch.New()
