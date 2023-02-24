@@ -31,6 +31,9 @@
 - name: "failure:release"
   description: An issue filed automatically when a release workflow run fails
   color: f00a0a
-- name: "failure:push"
-  description: An issue filed automatically when a push buildpackage workflow run fails
+- name: "failure:update-github-config"
+  description: An issue filed automatically when a github config update workflow run fails
+  color: f00a0a
+- name: "failure:approve-bot-pr"
+  description: An issue filed automatically when a PR auto-approve workflow run fails
   color: f00a0a
