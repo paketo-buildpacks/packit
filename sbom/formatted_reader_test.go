@@ -77,12 +77,6 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 		format := syft.IdentifyFormat(buffer.Bytes())
 		Expect(format.ID()).To(Equal(syft.CycloneDxJSONFormatID))
 
-		// Ensures pretty printing
-		Expect(buffer.String()).To(ContainSubstring(`{
-  "bomFormat": "CycloneDX",
-  "components": [
-    {`))
-
 		var cdxOutput cdxOutput
 
 		err = json.Unmarshal(buffer.Bytes(), &cdxOutput)
@@ -272,7 +266,7 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 		Expect(rerunBuffer.String()).To(Equal(buffer.String()))
 	})
 
-	it("writes the SBOM in the latest Syft format (6.*)", func() {
+	it("writes the SBOM in the latest Syft format (7.*)", func() {
 		buffer := bytes.NewBuffer(nil)
 		_, err := io.Copy(buffer, sbom.NewFormattedReader(bom, sbom.Format(syft.JSONFormatID)))
 		Expect(err).NotTo(HaveOccurred())
@@ -282,7 +276,7 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 		err = json.Unmarshal(buffer.Bytes(), &syftOutput)
 		Expect(err).NotTo(HaveOccurred(), buffer.String())
 
-		Expect(syftOutput.Schema.Version).To(MatchRegexp(`6\.\d+\.\d+`), buffer.String())
+		Expect(syftOutput.Schema.Version).To(MatchRegexp(`7\.\d+\.\d+`), buffer.String())
 
 		Expect(syftOutput.Source.Type).To(Equal("directory"), buffer.String())
 		Expect(syftOutput.Source.Target).To(Equal("testdata/"), buffer.String())

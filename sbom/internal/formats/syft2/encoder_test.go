@@ -4,17 +4,15 @@ import (
 	"flag"
 	"testing"
 
+	stereoFile "github.com/anchore/stereoscope/pkg/file"
+	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/linux"
-
-	"github.com/anchore/syft/syft/artifact"
-
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
-
-	"github.com/anchore/syft/syft/formats/common/testutils"
+	"github.com/paketo-buildpacks/packit/v2/sbom/internal/formats/common/testutils"
 )
 
 // Source https://github.com/anchore/syft/blob/dfefd2ea4e9d44187b4f861bc202970247dd34c8/internal/formats/syftjson/encoder_test.go
@@ -25,8 +23,8 @@ func TestDirectoryEncoder(t *testing.T) {
 	testutils.AssertEncoderAgainstGoldenSnapshot(t,
 		Format(),
 		testutils.DirectoryInput(t),
-		true,
 		*updateJson,
+		testutils.TypeJson,
 	)
 }
 
@@ -36,8 +34,8 @@ func TestImageEncoder(t *testing.T) {
 		Format(),
 		testutils.ImageInput(t, testImage, testutils.FromSnapshot()),
 		testImage,
-		true,
 		*updateJson,
+		testutils.TypeJson,
 	)
 }
 
@@ -103,26 +101,26 @@ func TestEncodeFullJSONDocument(t *testing.T) {
 			FileMetadata: map[source.Coordinates]source.FileMetadata{
 				source.NewLocation("/a/place").Coordinates: {
 					Mode:    0775,
-					Type:    "directory",
+					Type:    stereoFile.TypeDirectory,
 					UserID:  0,
 					GroupID: 0,
 				},
 				source.NewLocation("/a/place/a").Coordinates: {
 					Mode:    0775,
-					Type:    "regularFile",
+					Type:    stereoFile.TypeRegular,
 					UserID:  0,
 					GroupID: 0,
 				},
 				source.NewLocation("/b").Coordinates: {
 					Mode:            0775,
-					Type:            "symbolicLink",
+					Type:            stereoFile.TypeSymLink,
 					LinkDestination: "/c",
 					UserID:          0,
 					GroupID:         0,
 				},
 				source.NewLocation("/b/place/b").Coordinates: {
 					Mode:    0644,
-					Type:    "regularFile",
+					Type:    stereoFile.TypeRegular,
 					UserID:  1,
 					GroupID: 2,
 				},
@@ -205,7 +203,7 @@ func TestEncodeFullJSONDocument(t *testing.T) {
 	testutils.AssertEncoderAgainstGoldenSnapshot(t,
 		Format(),
 		s,
-		true,
 		*updateJson,
+		testutils.TypeJson,
 	)
 }

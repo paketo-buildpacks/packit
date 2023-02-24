@@ -57,7 +57,7 @@ func (f sbomFormat) Extension() string {
 	switch f.ID() {
 	case syft.CycloneDxJSONFormatID, cyclonedx13.ID:
 		return "cdx.json"
-	case syft.SPDXJSONFormatID:
+	case syft.SPDXJSONFormatID, spdx22.ID:
 		return "spdx.json"
 	case syft.JSONFormatID, syft2.ID, syft301.ID:
 		return "syft.json"
