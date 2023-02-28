@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/BurntSushi/toml"
+	"github.com/paketo-buildpacks/packit/v2/builderconfig"
 	"github.com/paketo-buildpacks/packit/v2/internal"
 )
 
@@ -77,7 +78,9 @@ func Detect(f DetectFunc, options ...Option) {
 	var buildpackInfo struct {
 		Buildpack BuildpackInfo `toml:"buildpack"`
 	}
-	_, err = toml.DecodeFile(filepath.Join(cnbPath, "buildpack.toml"), &buildpackInfo)
+
+	buildpackConfigPath := filepath.Join(cnbPath, "buildpack.toml")
+	_, err = toml.DecodeFile(buildpackConfigPath, &buildpackInfo)
 	if err != nil {
 		config.exitHandler.Error(err)
 		return
@@ -86,6 +89,11 @@ func Detect(f DetectFunc, options ...Option) {
 	platformPath, ok := os.LookupEnv("CNB_PLATFORM_DIR")
 	if !ok {
 		platformPath = config.args[1]
+	}
+
+	if err := builderconfig.ParseBuildpackAndResolve(buildpackConfigPath); err != nil {
+		config.exitHandler.Error(err)
+		return
 	}
 
 	result, err := f(DetectContext{

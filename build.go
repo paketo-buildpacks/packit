@@ -9,6 +9,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/paketo-buildpacks/packit/v2/builderconfig"
 	"github.com/paketo-buildpacks/packit/v2/fs"
 
 	"github.com/BurntSushi/toml"
@@ -135,7 +136,9 @@ func Build(f BuildFunc, options ...Option) {
 		Buildpack  BuildpackInfo `toml:"buildpack"`
 	}
 
-	_, err = toml.DecodeFile(filepath.Join(cnbPath, "buildpack.toml"), &buildpackInfo)
+	buildpackConfigPath := filepath.Join(cnbPath, "buildpack.toml")
+
+	_, err = toml.DecodeFile(buildpackConfigPath, &buildpackInfo)
 	if err != nil {
 		config.exitHandler.Error(err)
 		return
@@ -146,6 +149,11 @@ func Build(f BuildFunc, options ...Option) {
 	apiV08, _ := semver.NewVersion("0.8")
 	apiVersion, err := semver.NewVersion(buildpackInfo.APIVersion)
 	if err != nil {
+		config.exitHandler.Error(err)
+		return
+	}
+
+	if err := builderconfig.ParseBuildpackAndResolve(buildpackConfigPath); err != nil {
 		config.exitHandler.Error(err)
 		return
 	}

@@ -68,8 +68,20 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 
 		cnbDir, err = os.MkdirTemp("", "cnb")
 		Expect(err).NotTo(HaveOccurred())
+		builderConfig, err := os.CreateTemp("", "builder-config.toml")
+		Expect(err).NotTo(HaveOccurred())
+		defer builderConfig.Close()
 
-		bpTOML := []byte(`
+		_, err = builderConfig.WriteString(`
+api = "0.1"
+[[build.env]]
+name = "PAKETO_TEST"
+value = "1"
+`)
+		Expect(err).NotTo(HaveOccurred())
+
+		builderConfigPath := builderConfig.Name()
+		bpTOML := []byte(fmt.Sprintf(`
 api = "0.8"
 [buildpack]
   id = "some-id"
@@ -80,11 +92,13 @@ api = "0.8"
 	keywords = ["some-keyword"]
 	sbom-formats = ["some-sbom-format", "some-other-sbom-format"]
   clear-env = false
-
+[metadata]
+  builder-config-path = "%s"
 	[[buildpack.licenses]]
 		type = "some-license-type"
 		uri = "some-license-uri"
-`)
+`, builderConfigPath))
+
 		Expect(os.WriteFile(filepath.Join(cnbDir, "buildpack.toml"), bpTOML, 0600)).To(Succeed())
 
 		binaryPath = filepath.Join(cnbDir, "bin", "build")
@@ -96,6 +110,7 @@ api = "0.8"
 
 	it.After(func() {
 		Expect(os.Unsetenv("CNB_STACK_ID")).To(Succeed())
+		Expect(os.Unsetenv("PAKETO_TEST")).To(Succeed())
 
 		Expect(os.Chdir(workingDir)).To(Succeed())
 		Expect(os.RemoveAll(tmpDir)).To(Succeed())
@@ -149,6 +164,40 @@ api = "0.8"
 				},
 			},
 		}))
+	})
+
+	it("sets the builder config env vars", func() {
+		packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
+			Expect(os.Getenv("PAKETO_TEST")).To(Equal("1"))
+			return packit.BuildResult{}, nil
+		}, packit.WithArgs([]string{binaryPath, layersDir, platformDir, planPath}))
+	})
+
+	context("when the clear-builder-config flag is set", func() {
+		it.Before(func() {
+			bpTOML := []byte(`
+			api = "0.7"
+			[buildpack]
+			  id = "some-id"
+			  name = "some-name"
+			  version = "some-version"
+				homepage = "some-homepage"
+				description = "some-description"
+				keywords = ["some-keyword"]
+				sbom-formats = ["some-sbom-format", "some-other-sbom-format"]
+			  clear-env = false
+			[metadata]
+			  disable-builder-config = true
+			`)
+			Expect(os.WriteFile(filepath.Join(cnbDir, "buildpack.toml"), bpTOML, 0600)).To(Succeed())
+		})
+
+		it("does not set the builder config env vars", func() {
+			packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
+				Expect(os.Getenv("PAKETO_TEST")).To(Equal(""))
+				return packit.BuildResult{}, nil
+			}, packit.WithArgs([]string{binaryPath, layersDir, platformDir, planPath}))
+		})
 	})
 
 	context("when there are updates to the build plan", func() {
