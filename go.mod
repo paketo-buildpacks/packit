@@ -8,13 +8,13 @@ require (
 	github.com/anchore/go-testutils v0.0.0-20200925183923-d5f45b0d3c04
 	github.com/anchore/go-version v1.2.2-0.20200701162849-18adb9c92b9b
 	github.com/anchore/packageurl-go v0.1.1-0.20230104203445-02e0a6721501
-	github.com/anchore/stereoscope v0.0.0-20230222185948-fab1c9638abc
-	github.com/anchore/syft v0.73.0
+	github.com/anchore/stereoscope v0.0.0-20230301191755-abfb374a1122
+	github.com/anchore/syft v0.74.0
 	github.com/apex/log v1.9.0
 	github.com/dsnet/compress v0.0.2-0.20210315054119-f66993602bf5
 	github.com/gabriel-vasile/mimetype v1.4.1
 	github.com/google/uuid v1.3.0
-	github.com/onsi/gomega v1.27.1
+	github.com/onsi/gomega v1.27.2
 	github.com/pelletier/go-toml v1.9.5
 	github.com/sclevine/spec v1.4.0
 	github.com/scylladb/go-set v1.0.3-0.20200225121959-cc7b2070d91e
