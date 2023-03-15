@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/onsi/gomega/gexec"
@@ -49,7 +50,7 @@ func testPexec(t *testing.T, context spec.G, it spec.S) {
 				Stdout: stdout,
 			})
 			Expect(err).NotTo(HaveOccurred())
-			Expect(stdout).To(ContainSubstring(fmt.Sprintf("Arguments: [%s something]", fakeCLI)))
+			Expect(stdout.String()).To(ContainSubstring(fmt.Sprintf("Arguments: [%s something]", fakeCLI)))
 		})
 
 		context("when given a execution directory", func() {
@@ -59,7 +60,7 @@ func testPexec(t *testing.T, context spec.G, it spec.S) {
 					Stdout: stdout,
 				})
 				Expect(err).NotTo(HaveOccurred())
-				Expect(stdout).To(ContainSubstring(fmt.Sprintf("PWD=%s", tmpDir)))
+				Expect(stdout.String()).To(ContainSubstring(fmt.Sprintf("PWD=%s", tmpDir)))
 			})
 		})
 
@@ -70,7 +71,7 @@ func testPexec(t *testing.T, context spec.G, it spec.S) {
 					Stdout: stdout,
 				})
 				Expect(err).NotTo(HaveOccurred())
-				Expect(stdout).To(ContainSubstring("SOME_KEY=some-value"))
+				Expect(stdout.String()).To(ContainSubstring("SOME_KEY=some-value"))
 			})
 		})
 
@@ -82,14 +83,20 @@ func testPexec(t *testing.T, context spec.G, it spec.S) {
 				})
 				Expect(err).NotTo(HaveOccurred())
 
-				Expect(stdout).To(ContainSubstring("Output on stdout"))
-				Expect(stderr).To(ContainSubstring("Output on stderr"))
+				Expect(stdout.String()).To(ContainSubstring("Output on stdout"))
+				Expect(stderr.String()).To(ContainSubstring("Output on stderr"))
 			})
 		})
 
 		context("when the executable is on the PATH given as an argument", func() {
+			var path string
 			it.Before(func() {
+				path = os.Getenv("PATH")
 				os.Setenv("PATH", "some-path")
+			})
+
+			it.After(func() {
+				os.Setenv("PATH", path)
 			})
 
 			it("executes the given arguments against the executable", func() {
@@ -101,6 +108,17 @@ func testPexec(t *testing.T, context spec.G, it spec.S) {
 				Expect(err).NotTo(HaveOccurred())
 				Expect(stdout).To(ContainSubstring(fmt.Sprintf("Arguments: [%s something]", fakeCLI)))
 				Expect(os.Getenv("PATH")).To(Equal("some-path"))
+			})
+		})
+
+		context("when given a reader for stdin", func() {
+			it("pipes that reader to stdin", func() {
+				err := executable.Execute(pexec.Execution{
+					Stdin:  strings.NewReader("something on stdin"),
+					Stdout: stdout,
+				})
+				Expect(err).NotTo(HaveOccurred())
+				Expect(stdout.String()).To(ContainSubstring("Input on stdin\nsomething on stdin\n"))
 			})
 		})
 
