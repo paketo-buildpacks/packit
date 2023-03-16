@@ -112,7 +112,7 @@ func testPexec(t *testing.T, context spec.G, it spec.S) {
 		})
 
 		context("when given a reader for stdin", func() {
-			it("pipes that reader to stdin", func() {
+			it("pipes that reader to stdout", func() {
 				err := executable.Execute(pexec.Execution{
 					Stdin:  strings.NewReader("something on stdin"),
 					Stdout: stdout,
