@@ -74,6 +74,13 @@ func testTransport(t *testing.T, context spec.G, it spec.S) {
 						Expect(err).To(MatchError(ContainSubstring("connection refused")))
 					})
 				})
+
+				context("when the http status indicates an error", func() {
+					it("returns an error", func() {
+						_, err := transport.Drop("", fmt.Sprintf("%s/some-bundle-that-does-not-exist", server.URL))
+						Expect(err).To(MatchError(ContainSubstring("unexpected status code 404 while fetching")))
+					})
+				})
 			})
 		})
 
