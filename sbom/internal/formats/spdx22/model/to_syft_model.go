@@ -225,8 +225,10 @@ func toSyftCoordinates(f *spdx.File) source.Coordinates {
 
 func toSyftLocation(f *spdx.File) *source.Location {
 	return &source.Location{
-		Coordinates: toSyftCoordinates(f),
-		VirtualPath: f.FileName,
+		LocationData: source.LocationData{
+			Coordinates: toSyftCoordinates(f),
+			VirtualPath: f.FileName,
+		},
 	}
 }
 

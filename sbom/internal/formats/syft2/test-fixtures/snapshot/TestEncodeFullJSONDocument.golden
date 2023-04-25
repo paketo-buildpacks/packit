@@ -78,6 +78,7 @@
    },
    "metadata": {
     "mode": 775,
+    "size": 0,
     "type": "Directory",
     "userID": 0,
     "groupID": 0,
@@ -91,6 +92,7 @@
    },
    "metadata": {
     "mode": 775,
+    "size": 0,
     "type": "RegularFile",
     "userID": 0,
     "groupID": 0,
@@ -111,6 +113,7 @@
    },
    "metadata": {
     "mode": 775,
+    "size": 0,
     "type": "SymbolicLink",
     "linkDestination": "/c",
     "userID": 0,
@@ -125,6 +128,7 @@
    },
    "metadata": {
     "mode": 644,
+    "size": 0,
     "type": "RegularFile",
     "userID": 1,
     "groupID": 2,

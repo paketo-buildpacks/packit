@@ -28,7 +28,7 @@ func Test_encodeComponentProperties(t *testing.T) {
 			input: pkg.Package{
 				FoundBy: "cataloger",
 				Locations: source.NewLocationSet(
-					source.Location{Coordinates: source.Coordinates{RealPath: "test"}},
+					source.Location{LocationData: source.LocationData{Coordinates: source.Coordinates{RealPath: "test"}}},
 				),
 				Metadata: pkg.ApkMetadata{
 					Package:       "libc-utils",
