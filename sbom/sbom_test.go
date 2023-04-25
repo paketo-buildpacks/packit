@@ -184,7 +184,7 @@ func testSBOM(t *testing.T, context spec.G, it spec.S) {
 				Type:     "cpe23Type",
 			}), spdx.String())
 			Expect(goPackage.ExternalRefs).To(ContainElement(externalRef{
-				Category: "PACKAGE-MANAGER",
+				Category: "PACKAGE_MANAGER",
 				Locator:  "pkg:generic/go@go1.16.9?checksum=0a1cc7fd7bd20448f71ebed64d846138850d5099b18cf5cc10a4fc45160d8c3d&download_url=https://dl.google.com/go/go1.16.9.src.tar.gz",
 				Type:     "purl",
 			}), spdx.String())

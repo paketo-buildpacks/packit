@@ -47,8 +47,10 @@ func TestEncodeFullJSONDocument(t *testing.T) {
 		Version: "1.0.1",
 		Locations: source.NewLocationSet(
 			source.Location{
-				Coordinates: source.Coordinates{
-					RealPath: "/a/place/a",
+				LocationData: source.LocationData{
+					Coordinates: source.Coordinates{
+						RealPath: "/a/place/a",
+					},
 				},
 			},
 		),
@@ -73,8 +75,10 @@ func TestEncodeFullJSONDocument(t *testing.T) {
 		Version: "2.0.1",
 		Locations: source.NewLocationSet(
 			source.Location{
-				Coordinates: source.Coordinates{
-					RealPath: "/b/place/b",
+				LocationData: source.LocationData{
+					Coordinates: source.Coordinates{
+						RealPath: "/b/place/b",
+					},
 				},
 			},
 		),

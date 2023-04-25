@@ -33,7 +33,7 @@
      "referenceLocator": "cpe:2.3:*:some:package:2:*:*:*:*:*:*:*"
     },
     {
-     "referenceCategory": "PACKAGE-MANAGER",
+     "referenceCategory": "PACKAGE_MANAGER",
      "referenceType": "purl",
      "referenceLocator": "a-purl-2"
     }
@@ -59,7 +59,7 @@
      "referenceLocator": "cpe:2.3:*:some:package:2:*:*:*:*:*:*:*"
     },
     {
-     "referenceCategory": "PACKAGE-MANAGER",
+     "referenceCategory": "PACKAGE_MANAGER",
      "referenceType": "purl",
      "referenceLocator": "pkg:deb/debian/package-2@2.0.1"
     }
