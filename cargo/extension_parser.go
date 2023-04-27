@@ -8,16 +8,16 @@ func NewExtensionParser() ExtensionParser {
 	return ExtensionParser{}
 }
 
-func (p ExtensionParser) Parse(path string) (Config, error) {
+func (p ExtensionParser) Parse(path string) (ExtensionConfig, error) {
 	file, err := os.Open(path)
 	if err != nil {
-		return Config{}, err
+		return ExtensionConfig{}, err
 	}
 
-	var config Config
-	err = DecodeConfig(file, &config)
+	var config ExtensionConfig
+	err = DecodeExtensionConfig(file, &config)
 	if err != nil {
-		return Config{}, err
+		return ExtensionConfig{}, err
 	}
 
 	return config, nil

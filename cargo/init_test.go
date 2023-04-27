@@ -11,6 +11,7 @@ import (
 func TestUnitCargo(t *testing.T) {
 	suite := spec.New("cargo", spec.Report(report.Terminal{}))
 	suite("BuildpackParser", testBuildpackParser)
+	suite("ExtensionParser", testExtensionParser)
 	suite("Config", testConfig)
 	suite("ExtensionConfig", testExtensionConfig)
 	suite("DirectoryDuplicator", testDirectoryDuplicator)
