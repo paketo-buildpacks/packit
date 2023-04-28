@@ -14,10 +14,11 @@ type ExtensionConfig struct {
 }
 
 type ConfigExtensionMetadata struct {
-	IncludeFiles    []string                            `toml:"include-files"              json:"include-files,omitempty"`
-	PrePackage      string                              `toml:"pre-package"                json:"pre-package,omitempty"`
-	DefaultVersions map[string]string                   `toml:"default-versions"           json:"default-versions,omitempty"`
-	Dependencies    []ConfigExtensionMetadataDependency `toml:"dependencies"               json:"dependencies,omitempty"`
+	IncludeFiles    []string                               `toml:"include-files"              json:"include-files,omitempty"`
+	PrePackage      string                                 `toml:"pre-package"                json:"pre-package,omitempty"`
+	DefaultVersions map[string]string                      `toml:"default-versions"           json:"default-versions,omitempty"`
+	Dependencies    []ConfigExtensionMetadataDependency    `toml:"dependencies"               json:"dependencies,omitempty"`
+	Configurations  []ConfigExtensionMetadataConfiguration `toml:"configurations"             json:"configurations,omitempty"`
 }
 
 type ConfigExtensionMetadataDependency struct {
@@ -32,6 +33,13 @@ type ConfigExtensionMetadataDependency struct {
 	Stacks         []string      `toml:"stacks"           json:"stacks,omitempty"`
 	URI            string        `toml:"uri"              json:"uri,omitempty"`
 	Version        string        `toml:"version"          json:"version,omitempty"`
+}
+type ConfigExtensionMetadataConfiguration struct {
+	Default     string `toml:"default"          json:"default,omitempty"`
+	Description string `toml:"description"	    json:"description,omitempty"`
+	Launch      bool   `toml:"launch"	        json:"launch,omitempty"`
+	Name        string `toml:"name"             json:"name,omitempty"`
+	Build       bool   `toml:"build"	        json:"build,omitempty"`
 }
 type ConfigExtension struct {
 	ID          string                   `toml:"id"                    json:"id,omitempty"`

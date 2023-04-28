@@ -40,20 +40,27 @@ keywords = [ "some-extension-keyword" ]
 	some-dependency = "1.2.x"
 
 [[metadata.some-map]]
-  key = "value"
+	key = "value"
 
 [[metadata.dependencies]]
 	checksum = "sha256:some-sum"
-  id = "some-dependency"
+	id = "some-dependency"
 	licenses = ["fancy-license", "fancy-license-2"]
-  name = "Some Dependency"
-  sha256 = "shasum"
-  source = "source"
-  source-checksum = "sha256:source-shasum"
-  source_sha256 = "source-shasum"
-  stacks = ["io.buildpacks.stacks.bionic", "org.cloudfoundry.stacks.tiny"]
-  uri = "http://some-url"
-  version = "1.2.3"
+	name = "Some Dependency"
+	sha256 = "shasum"
+	source = "source"
+	source-checksum = "sha256:source-shasum"
+	source_sha256 = "source-shasum"
+	stacks = ["io.buildpacks.stacks.bionic", "org.cloudfoundry.stacks.tiny"]
+	uri = "http://some-url"
+	version = "1.2.3"
+
+[[metadata.configurations]]
+	default = "0"
+	description = "some-metadata-configuration-description"
+	launch = true
+	name = "SOME_METADATA_CONFIGURATION_NAME"
+	build = true
 `)
 
 			var config cargo.ExtensionConfig
@@ -93,6 +100,15 @@ keywords = [ "some-extension-keyword" ]
 							Stacks:         []string{"io.buildpacks.stacks.bionic", "org.cloudfoundry.stacks.tiny"},
 							URI:            "http://some-url",
 							Version:        "1.2.3",
+						},
+					},
+					Configurations: []cargo.ConfigExtensionMetadataConfiguration{
+						{
+							Default:     "0",
+							Description: "some-metadata-configuration-description",
+							Launch:      true,
+							Name:        "SOME_METADATA_CONFIGURATION_NAME",
+							Build:       true,
 						},
 					},
 					DefaultVersions: map[string]string{
