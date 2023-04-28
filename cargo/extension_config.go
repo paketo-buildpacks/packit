@@ -36,10 +36,10 @@ type ConfigExtensionMetadataDependency struct {
 }
 type ConfigExtensionMetadataConfiguration struct {
 	Default     string `toml:"default"          json:"default,omitempty"`
-	Description string `toml:"description"	    json:"description,omitempty"`
-	Launch      bool   `toml:"launch"	        json:"launch,omitempty"`
+	Launch      bool   `toml:"launch"           json:"launch,omitempty"`
+	Description string `toml:"description"      json:"description,omitempty"`
+	Build       bool   `toml:"build"            json:"build,omitempty"`
 	Name        string `toml:"name"             json:"name,omitempty"`
-	Build       bool   `toml:"build"	        json:"build,omitempty"`
 }
 type ConfigExtension struct {
 	ID          string                   `toml:"id"                    json:"id,omitempty"`
