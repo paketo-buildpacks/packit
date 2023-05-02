@@ -121,69 +121,70 @@ api = "0.7"
 `))
 		})
 
-		it("encodes the config to TOML when the config dependency licenses are structured like ConfigExtensionLicenses ", func() {
+		context("when the config dependency licenses are structured like ConfigExtensionLicenses", func() {
+			it("encodes the config to TOML", func() {
 
-			err := cargo.EncodeExtensionConfig(buffer, cargo.ExtensionConfig{
-				API: "0.7",
-				Extension: cargo.ConfigExtension{
-					ID:          "some-extension-id",
-					Name:        "some-extension-name",
-					Version:     "some-extension-version",
-					Homepage:    "some-extension-homepage",
-					Description: "some-extension-description",
-					Keywords:    []string{"some-extension-keyword"},
-					Licenses: []cargo.ConfigExtensionLicense{
-						{
-							Type: "some-license-type",
-							URI:  "some-license-uri",
+				err := cargo.EncodeExtensionConfig(buffer, cargo.ExtensionConfig{
+					API: "0.7",
+					Extension: cargo.ConfigExtension{
+						ID:          "some-extension-id",
+						Name:        "some-extension-name",
+						Version:     "some-extension-version",
+						Homepage:    "some-extension-homepage",
+						Description: "some-extension-description",
+						Keywords:    []string{"some-extension-keyword"},
+						Licenses: []cargo.ConfigExtensionLicense{
+							{
+								Type: "some-license-type",
+								URI:  "some-license-uri",
+							},
 						},
 					},
-				},
-				Metadata: cargo.ConfigExtensionMetadata{
-					IncludeFiles: []string{
-						"some-include-file",
-						"other-include-file",
-					},
-					PrePackage: "some-pre-package-script.sh",
-					Dependencies: []cargo.ConfigExtensionMetadataDependency{
-						{
-							Checksum: "sha256:some-sum",
-							ID:       "some-dependency",
-							Licenses: []interface{}{
-								cargo.ConfigBuildpackLicense{
-									Type: "fancy-license",
-									URI:  "some-license-uri",
-								},
-								cargo.ConfigBuildpackLicense{
-									Type: "fancy-license-2",
-									URI:  "some-license-uri",
-								},
-							}, Name: "Some Dependency",
-							SHA256:         "shasum",
-							Source:         "source",
-							SourceChecksum: "sha256:source-shasum",
-							SourceSHA256:   "source-shasum",
-							Stacks:         []string{"io.buildpacks.stacks.bionic", "org.cloudfoundry.stacks.tiny"},
-							URI:            "http://some-url",
-							Version:        "1.2.3",
+					Metadata: cargo.ConfigExtensionMetadata{
+						IncludeFiles: []string{
+							"some-include-file",
+							"other-include-file",
+						},
+						PrePackage: "some-pre-package-script.sh",
+						Dependencies: []cargo.ConfigExtensionMetadataDependency{
+							{
+								Checksum: "sha256:some-sum",
+								ID:       "some-dependency",
+								Licenses: []interface{}{
+									cargo.ConfigBuildpackLicense{
+										Type: "fancy-license",
+										URI:  "some-license-uri",
+									},
+									cargo.ConfigBuildpackLicense{
+										Type: "fancy-license-2",
+										URI:  "some-license-uri",
+									},
+								}, Name: "Some Dependency",
+								SHA256:         "shasum",
+								Source:         "source",
+								SourceChecksum: "sha256:source-shasum",
+								SourceSHA256:   "source-shasum",
+								Stacks:         []string{"io.buildpacks.stacks.bionic", "org.cloudfoundry.stacks.tiny"},
+								URI:            "http://some-url",
+								Version:        "1.2.3",
+							},
+						},
+						Configurations: []cargo.ConfigExtensionMetadataConfiguration{
+							{
+								Default:     "0",
+								Description: "some-metadata-configuration-description",
+								Launch:      true,
+								Name:        "SOME_METADATA_CONFIGURATION_NAME",
+								Build:       true,
+							},
+						},
+						DefaultVersions: map[string]string{
+							"some-dependency": "1.2.x",
 						},
 					},
-					Configurations: []cargo.ConfigExtensionMetadataConfiguration{
-						{
-							Default:     "0",
-							Description: "some-metadata-configuration-description",
-							Launch:      true,
-							Name:        "SOME_METADATA_CONFIGURATION_NAME",
-							Build:       true,
-						},
-					},
-					DefaultVersions: map[string]string{
-						"some-dependency": "1.2.x",
-					},
-				},
-			})
-			Expect(err).NotTo(HaveOccurred())
-			Expect(buffer.String()).To(MatchTOML(`
+				})
+				Expect(err).NotTo(HaveOccurred())
+				Expect(buffer.String()).To(MatchTOML(`
 api = "0.7"
 
 [extension]
@@ -231,6 +232,7 @@ api = "0.7"
     type = "fancy-license-2"
 	uri = "some-license-uri"
 `))
+			})
 		})
 	})
 
@@ -333,6 +335,115 @@ keywords = [ "some-extension-keyword" ]
 				},
 			}))
 		})
-	})
 
+		context("dependency license are not a list of IDs", func() {
+			it("decodes TOML to extensionConfig", func() {
+				tomlBuffer := strings.NewReader(`
+api = "0.2"
+
+[extension]
+  id = "some-extension-id"
+  name = "some-extension-name"
+  version = "some-extension-version"
+  homepage = "some-extension-homepage"
+
+  [[extension.licenses]]
+    type = "some-license-type"
+    uri = "some-license-uri"
+
+[metadata]
+	include-files = ["some-include-file", "other-include-file"]
+	pre-package = "some-pre-package-script.sh"
+
+[metadata.default-versions]
+	some-dependency = "1.2.x"
+
+[[metadata.some-map]]
+  key = "value"
+
+[[metadata.dependencies]]
+  checksum = "sha256:some-sum"
+  id = "some-dependency"
+  name = "Some Dependency"
+  sha256 = "shasum"
+  source = "source"
+  source-checksum = "sha256:source-shasum"
+  source_sha256 = "source-shasum"
+  stacks = ["io.buildpacks.stacks.bionic", "org.cloudfoundry.stacks.tiny"]
+  uri = "http://some-url"
+  version = "1.2.3"
+
+  [[metadata.dependencies.licenses]]
+    type = "fancy-license"
+	  uri = "some-license-uri"
+
+	[[metadata.dependencies.licenses]]
+    type = "fancy-license-2"
+	  uri = "some-license-uri"
+`)
+
+				var config cargo.ExtensionConfig
+				Expect(cargo.DecodeExtensionConfig(tomlBuffer, &config)).To(Succeed())
+				Expect(config).To(Equal(cargo.ExtensionConfig{
+					API: "0.2",
+					Extension: cargo.ConfigExtension{
+						ID:       "some-extension-id",
+						Name:     "some-extension-name",
+						Version:  "some-extension-version",
+						Homepage: "some-extension-homepage",
+						Licenses: []cargo.ConfigExtensionLicense{
+							{
+								Type: "some-license-type",
+								URI:  "some-license-uri",
+							},
+						},
+					},
+					Metadata: cargo.ConfigExtensionMetadata{
+						IncludeFiles: []string{
+							"some-include-file",
+							"other-include-file",
+						},
+						PrePackage: "some-pre-package-script.sh",
+						Dependencies: []cargo.ConfigExtensionMetadataDependency{
+							{
+								Checksum: "sha256:some-sum",
+								ID:       "some-dependency",
+								Licenses: []interface{}{
+									map[string]interface{}{
+										"type": "fancy-license",
+										"uri":  "some-license-uri",
+									},
+									map[string]interface{}{
+										"type": "fancy-license-2",
+										"uri":  "some-license-uri",
+									},
+								},
+								Name:           "Some Dependency",
+								SHA256:         "shasum",
+								Source:         "source",
+								SourceChecksum: "sha256:source-shasum",
+								SourceSHA256:   "source-shasum",
+								Stacks:         []string{"io.buildpacks.stacks.bionic", "org.cloudfoundry.stacks.tiny"},
+								URI:            "http://some-url",
+								Version:        "1.2.3",
+							},
+						},
+						DefaultVersions: map[string]string{
+							"some-dependency": "1.2.x",
+						},
+					},
+				}))
+			})
+
+		})
+
+		context("failure cases", func() {
+			context("when a bad reader is passed in", func() {
+				it("returns an error", func() {
+					err := cargo.DecodeExtensionConfig(errorReader{}, &cargo.ExtensionConfig{})
+					Expect(err).To(MatchError(ContainSubstring("failed to read")))
+				})
+			})
+		})
+	})
 }
