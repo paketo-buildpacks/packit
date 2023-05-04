@@ -86,3 +86,13 @@ func DecodeExtensionConfig(reader io.Reader, extensionConfig *ExtensionConfig) e
 
 	return json.Unmarshal(content, extensionConfig)
 }
+
+func (cd ConfigExtensionMetadataDependency) HasStack(stack string) bool {
+	for _, s := range cd.Stacks {
+		if s == stack {
+			return true
+		}
+	}
+
+	return false
+}
