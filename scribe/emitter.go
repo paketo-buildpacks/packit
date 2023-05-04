@@ -111,6 +111,26 @@ Entries:
 // name, whether or not it is a default process, the command, arguments, and
 // any process specific environment variables.
 func (e Emitter) LaunchProcesses(processes []packit.Process, processEnvs ...map[string]packit.Environment) {
+	launchProcesses := []packit.LaunchProcesses{}
+	for _, process := range processes {
+		launchProcesses = append(launchProcesses, process)
+	}
+	e.launch(launchProcesses, processEnvs...)
+}
+
+// LaunchDirectProcesses take a list of processes and a map of process specific
+// enivronment varables and prints out a formatted table including the type
+// name, whether or not it is a default process, the command, arguments, and
+// any process specific environment variables.
+func (e Emitter) LaunchDirectProcesses(processes []packit.DirectProcess, processEnvs ...map[string]packit.Environment) {
+	launchProcesses := []packit.LaunchProcesses{}
+	for _, process := range processes {
+		launchProcesses = append(launchProcesses, process)
+	}
+	e.launch(launchProcesses, processEnvs...)
+}
+
+func (e Emitter) launch(processes []packit.LaunchProcesses, processEnvs ...map[string]packit.Environment) {
 	e.Process("Assigning launch processes:")
 
 	var (
@@ -118,8 +138,8 @@ func (e Emitter) LaunchProcesses(processes []packit.Process, processEnvs ...map[
 	)
 
 	for _, process := range processes {
-		pType := process.Type
-		if process.Default {
+		pType := process.GetType()
+		if process.GetDefault() {
 			pType += " " + "(default)"
 		}
 
@@ -129,16 +149,17 @@ func (e Emitter) LaunchProcesses(processes []packit.Process, processEnvs ...map[
 	}
 
 	for _, process := range processes {
-		pType := process.Type
-		if process.Default {
+		pType := process.GetType()
+		if process.GetDefault() {
 			pType += " " + "(default)"
 		}
 
-		pad := typePadding + len(process.Command) - len(pType)
-		p := fmt.Sprintf("%s: %*s", pType, pad, process.Command)
+		command := strings.Join(process.GetCommand(), " ")
+		pad := typePadding + len(command) - len(pType)
+		p := fmt.Sprintf("%s: %*s", pType, pad, command)
 
-		if process.Args != nil {
-			p += " " + strings.Join(process.Args, " ")
+		if process.GetArgs() != nil {
+			p += " " + strings.Join(process.GetArgs(), " ")
 		}
 
 		e.Subprocess(p)
@@ -147,7 +168,7 @@ func (e Emitter) LaunchProcesses(processes []packit.Process, processEnvs ...map[
 		// matter the order of the process envs map list
 		processEnv := packit.Environment{}
 		for _, pEnvs := range processEnvs {
-			if env, ok := pEnvs[process.Type]; ok {
+			if env, ok := pEnvs[process.GetType()]; ok {
 				for key, value := range env {
 					processEnv[key] = value
 				}
