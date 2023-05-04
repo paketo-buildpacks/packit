@@ -8,6 +8,10 @@ type LaunchMetadata struct {
 	// be executed during the launch phase.
 	Processes []Process
 
+	// DirectProcesses is a list of processes that will be returned to the lifecycle to
+	// be executed directly during the launch phase.
+	DirectProcesses []DirectProcess
+
 	// Slices is a list of slices that will be returned to the lifecycle to be
 	// exported as separate layers during the export phase.
 	Slices []Slice
@@ -31,5 +35,5 @@ func (l LaunchMetadata) isEmpty() bool {
 		sbom = l.SBOM.Formats()
 	}
 
-	return len(sbom)+len(l.Processes)+len(l.Slices)+len(l.Labels)+len(l.BOM) == 0
+	return len(sbom)+len(l.Processes)+len(l.DirectProcesses)+len(l.Slices)+len(l.Labels)+len(l.BOM) == 0
 }
