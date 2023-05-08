@@ -1,14 +1,5 @@
 package packit
 
-import "strings"
-
-type LaunchProcesses interface {
-	GetType() string
-	GetCommand() []string
-	GetArgs() []string
-	GetDefault() bool
-}
-
 // Process represents a process to be run during the launch phase as described
 // in the specification lower than v0.9:
 // https://github.com/buildpacks/spec/blob/main/buildpack.md#launch. The
@@ -38,19 +29,6 @@ type Process struct {
 	WorkingDirectory string `toml:"working-directory,omitempty"`
 }
 
-func (p Process) GetType() string {
-	return p.Type
-}
-func (p Process) GetCommand() []string {
-	return strings.Split(p.Command, " ")
-}
-func (p Process) GetArgs() []string {
-	return p.Args
-}
-func (p Process) GetDefault() bool {
-	return p.Default
-}
-
 // DirectProcess represents a process to be run during the launch phase as described
 // in the specification higher or equal than v0.9:
 // https://github.com/buildpacks/spec/blob/main/buildpack.md#launch. The
@@ -75,17 +53,4 @@ type DirectProcess struct {
 	// directory other than the application directory. This can either be an
 	// absolute path or one relative to the default application directory.
 	WorkingDirectory string `toml:"working-directory,omitempty"`
-}
-
-func (p DirectProcess) GetType() string {
-	return p.Type
-}
-func (p DirectProcess) GetCommand() []string {
-	return p.Command
-}
-func (p DirectProcess) GetArgs() []string {
-	return p.Args
-}
-func (p DirectProcess) GetDefault() bool {
-	return p.Default
 }

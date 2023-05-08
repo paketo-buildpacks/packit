@@ -11,6 +11,47 @@ import (
 	"github.com/paketo-buildpacks/packit/v2/postal"
 )
 
+type launchProcess interface {
+	GetType() string
+	GetCommand() []string
+	GetArgs() []string
+	GetDefault() bool
+}
+
+type indirectProcess struct {
+	packit.Process
+}
+
+func (p indirectProcess) GetType() string {
+	return p.Type
+}
+func (p indirectProcess) GetCommand() []string {
+	return strings.Split(p.Command, " ")
+}
+func (p indirectProcess) GetArgs() []string {
+	return p.Args
+}
+func (p indirectProcess) GetDefault() bool {
+	return p.Default
+}
+
+type directProcess struct {
+	packit.DirectProcess
+}
+
+func (p directProcess) GetType() string {
+	return p.Type
+}
+func (p directProcess) GetCommand() []string {
+	return p.Command
+}
+func (p directProcess) GetArgs() []string {
+	return p.Args
+}
+func (p directProcess) GetDefault() bool {
+	return p.Default
+}
+
 // An Emitter embeds the scribe.Logger type to provide an interface for
 // complicated shared logging tasks.
 type Emitter struct {
@@ -106,31 +147,31 @@ Entries:
 	e.Break()
 }
 
-// LaunchProcesses take a list of processes and a map of process specific
+// LaunchProcesses take a list of (indirect) processes and a map of process specific
 // enivronment varables and prints out a formatted table including the type
 // name, whether or not it is a default process, the command, arguments, and
 // any process specific environment variables.
 func (e Emitter) LaunchProcesses(processes []packit.Process, processEnvs ...map[string]packit.Environment) {
-	launchProcesses := []packit.LaunchProcesses{}
+	launchProcesses := []launchProcess{}
 	for _, process := range processes {
-		launchProcesses = append(launchProcesses, process)
+		launchProcesses = append(launchProcesses, indirectProcess{process})
 	}
 	e.launch(launchProcesses, processEnvs...)
 }
 
-// LaunchDirectProcesses take a list of processes and a map of process specific
+// LaunchDirectProcesses take a list of direct processes and a map of process specific
 // enivronment varables and prints out a formatted table including the type
 // name, whether or not it is a default process, the command, arguments, and
 // any process specific environment variables.
 func (e Emitter) LaunchDirectProcesses(processes []packit.DirectProcess, processEnvs ...map[string]packit.Environment) {
-	launchProcesses := []packit.LaunchProcesses{}
+	launchProcesses := []launchProcess{}
 	for _, process := range processes {
-		launchProcesses = append(launchProcesses, process)
+		launchProcesses = append(launchProcesses, directProcess{process})
 	}
 	e.launch(launchProcesses, processEnvs...)
 }
 
-func (e Emitter) launch(processes []packit.LaunchProcesses, processEnvs ...map[string]packit.Environment) {
+func (e Emitter) launch(processes []launchProcess, processEnvs ...map[string]packit.Environment) {
 	e.Process("Assigning launch processes:")
 
 	var (
