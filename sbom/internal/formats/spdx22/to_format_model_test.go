@@ -418,7 +418,7 @@ func Test_H1Digest(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			catalog := pkg.NewCatalog(test.pkg)
+			catalog := pkg.NewCollection(test.pkg)
 			pkgs := toPackages(catalog, sbom)
 			require.Len(t, pkgs, 1)
 			for _, p := range pkgs {

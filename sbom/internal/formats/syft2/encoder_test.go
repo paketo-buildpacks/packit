@@ -2,6 +2,7 @@ package syft2
 
 import (
 	"flag"
+	"regexp"
 	"testing"
 
 	stereoFile "github.com/anchore/stereoscope/pkg/file"
@@ -24,7 +25,8 @@ func TestDirectoryEncoder(t *testing.T) {
 		Format(),
 		testutils.DirectoryInput(t),
 		*updateJson,
-		testutils.TypeJson,
+		true,
+		schemaVersionRedactor,
 	)
 }
 
@@ -35,12 +37,18 @@ func TestImageEncoder(t *testing.T) {
 		testutils.ImageInput(t, testImage, testutils.FromSnapshot()),
 		testImage,
 		*updateJson,
-		testutils.TypeJson,
+		true,
+		schemaVersionRedactor,
 	)
+}
+func schemaVersionRedactor(s []byte) []byte {
+	pattern := regexp.MustCompile(`,?\s*"schema":\s*\{[^}]*}`)
+	out := pattern.ReplaceAll(s, []byte(""))
+	return out
 }
 
 func TestEncodeFullJSONDocument(t *testing.T) {
-	catalog := pkg.NewCatalog()
+	catalog := pkg.NewCollection()
 
 	p1 := pkg.Package{
 		Name:    "package-1",
@@ -101,7 +109,7 @@ func TestEncodeFullJSONDocument(t *testing.T) {
 
 	s := sbom.SBOM{
 		Artifacts: sbom.Artifacts{
-			PackageCatalog: catalog,
+			Packages: catalog,
 			FileMetadata: map[source.Coordinates]source.FileMetadata{
 				source.NewLocation("/a/place").Coordinates: {
 					Mode:    0775,
@@ -203,11 +211,11 @@ func TestEncodeFullJSONDocument(t *testing.T) {
 			},
 		},
 	}
-
 	testutils.AssertEncoderAgainstGoldenSnapshot(t,
 		Format(),
 		s,
 		*updateJson,
-		testutils.TypeJson,
+		true,
+		schemaVersionRedactor,
 	)
 }
