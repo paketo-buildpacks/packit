@@ -15,7 +15,7 @@ func TestSPDXJSONDirectoryEncoder(t *testing.T) {
 		Format(),
 		testutils.DirectoryInput(t),
 		*updateSpdxJson,
-		testutils.TypeJson,
+		true,
 		spdxJsonRedactor,
 	)
 }
@@ -27,7 +27,7 @@ func TestSPDXJSONImageEncoder(t *testing.T) {
 		testutils.ImageInput(t, testImage, testutils.FromSnapshot()),
 		testImage,
 		*updateSpdxJson,
-		testutils.TypeJson,
+		true,
 		spdxJsonRedactor,
 	)
 }
@@ -41,7 +41,7 @@ func TestSPDXRelationshipOrder(t *testing.T) {
 		s,
 		testImage,
 		*updateSpdxJson,
-		testutils.TypeJson,
+		true,
 		spdxJsonRedactor,
 	)
 }

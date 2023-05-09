@@ -123,13 +123,13 @@ func ToFormatModel(s sbom.SBOM) *spdx.Document {
 			// Cardinality: mandatory, one
 			Created: time.Now().UTC().Format(time.RFC3339),
 		},
-		Packages:      toPackages(s.Artifacts.PackageCatalog, s),
+		Packages:      toPackages(s.Artifacts.Packages, s),
 		Files:         toFiles(s),
 		Relationships: relationships,
 	}
 }
 
-func toPackages(catalog *pkg.Catalog, sbom sbom.SBOM) (results []*spdx.Package) {
+func toPackages(catalog *pkg.Collection, sbom sbom.SBOM) (results []*spdx.Package) {
 	for _, p := range catalog.Sorted() {
 		// name should be guaranteed to be unique, but semantically useful and stable
 		id := toSPDXID(p)

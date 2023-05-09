@@ -28,7 +28,7 @@ func ToFormatModel(s sbom.SBOM) internalmodel.Document {
 	}
 
 	return internalmodel.Document{
-		Artifacts:             toPackageModels(s.Artifacts.PackageCatalog),
+		Artifacts:             toPackageModels(s.Artifacts.Packages),
 		ArtifactRelationships: toRelationshipModel(s.Relationships),
 		Files:                 toFile(s),
 		Secrets:               toSecrets(s.Artifacts.Secrets),
@@ -169,7 +169,7 @@ func toFileType(ty stereoscopeFile.Type) string {
 	}
 }
 
-func toPackageModels(catalog *pkg.Catalog) []model.Package {
+func toPackageModels(catalog *pkg.Collection) []model.Package {
 	artifacts := make([]model.Package, 0)
 	if catalog == nil {
 		return artifacts

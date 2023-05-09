@@ -64,7 +64,7 @@ func Generate(path string) (SBOM, error) {
 	return SBOM{
 		syft: sbom.SBOM{
 			Artifacts: sbom.Artifacts{
-				PackageCatalog:    catalog,
+				Packages:          catalog,
 				LinuxDistribution: release,
 			},
 			Source: src.Metadata,
@@ -108,7 +108,7 @@ func GenerateFromDependency(dependency postal.Dependency, path string) (SBOM, er
 	return SBOM{
 		syft: sbom.SBOM{
 			Artifacts: sbom.Artifacts{
-				PackageCatalog: catalog,
+				Packages: catalog,
 			},
 			Source: source.Metadata{
 				Scheme: source.DirectoryScheme,
