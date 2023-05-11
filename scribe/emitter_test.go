@@ -323,6 +323,74 @@ func testEmitter(t *testing.T, context spec.G, it spec.S) {
 		})
 	})
 
+	context("LaunchDirectProcesses", func() {
+		var processes []packit.DirectProcess
+
+		it.Before(func() {
+			processes = []packit.DirectProcess{
+				{
+					Type:    "some-type",
+					Command: []string{"some-command"},
+				},
+				{
+					Type:    "web",
+					Command: []string{"web-command"},
+					Default: true,
+				},
+				{
+					Type:    "some-other-type",
+					Command: []string{"some-other-command"},
+					Args:    []string{"some", "args"},
+				},
+			}
+		})
+
+		it("prints a list of launch processes", func() {
+			emitter.LaunchDirectProcesses(processes)
+
+			Expect(buffer.String()).To(ContainLines(
+				"  Assigning launch processes:",
+				"    some-type:       some-command",
+				"    web (default):   web-command",
+				"    some-other-type: some-other-command some args",
+				"",
+			))
+		})
+
+		context("when passed process specific environment variables", func() {
+			var processEnvs []map[string]packit.Environment
+
+			it.Before(func() {
+				processEnvs = []map[string]packit.Environment{
+					{
+						"web": packit.Environment{
+							"WEB_VAR.default": "some-env",
+						},
+					},
+					{
+						"web": packit.Environment{
+							"ANOTHER_WEB_VAR.default": "another-env",
+						},
+					},
+				}
+			})
+
+			it("prints a list of the launch processes and their processes specific env vars", func() {
+				emitter.LaunchDirectProcesses(processes, processEnvs...)
+
+				Expect(buffer.String()).To(ContainLines(
+					"  Assigning launch processes:",
+					"    some-type:       some-command",
+					"    web (default):   web-command",
+					`      ANOTHER_WEB_VAR -> "another-env"`,
+					`      WEB_VAR         -> "some-env"`,
+					"    some-other-type: some-other-command some args",
+					"",
+				))
+			})
+		})
+	})
+
 	context("EnvironmentVariables", func() {
 		it("prints a list of environment variables available during launch and build", func() {
 			emitter.EnvironmentVariables(packit.Layer{

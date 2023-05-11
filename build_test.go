@@ -209,7 +209,7 @@ api = "0.4"
 
 			return packit.BuildResult{
 				Layers: []packit.Layer{
-					packit.Layer{
+					{
 						Path:   layerPath,
 						Name:   "some-layer",
 						Build:  true,
@@ -256,7 +256,7 @@ api = "0.5"
 
 				return packit.BuildResult{
 					Layers: []packit.Layer{
-						packit.Layer{
+						{
 							Path:   layerPath,
 							Name:   "some-layer",
 							Build:  true,
@@ -292,7 +292,7 @@ cache = true
 
 				return packit.BuildResult{
 					Layers: []packit.Layer{
-						packit.Layer{
+						{
 							Path: layerPath,
 							Name: "some-layer",
 							SBOM: packit.SBOMFormats{
@@ -339,7 +339,7 @@ api = "0.6"
 
 					return packit.BuildResult{
 						Layers: []packit.Layer{
-							packit.Layer{
+							{
 								Path: layerPath,
 								Name: "some-layer",
 								SBOM: packit.SBOMFormats{
@@ -1136,6 +1136,140 @@ api = "0.7"
 				Expect(exitHandler.ErrorCall.Receives.Error).To(MatchError(ContainSubstring("processes can only have a specific working directory with Buildpack API v0.8 or higher")))
 			})
 		})
+
+		context("when the api version is less than 0.9", func() {
+			it.Before(func() {
+				Expect(os.WriteFile(filepath.Join(cnbDir, "buildpack.toml"), []byte(`
+api = "0.8"
+[buildpack]
+  id = "some-id"
+  name = "some-name"
+  version = "some-version"
+  clear-env = false
+`), 0600)).To(Succeed())
+			})
+
+			it("persists a launch.toml", func() {
+				packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
+					return packit.BuildResult{
+						Launch: packit.LaunchMetadata{
+							Processes: []packit.Process{
+								{
+									Type:             "some-type",
+									Command:          "some-command",
+									Args:             []string{"some-arg"},
+									Direct:           false,
+									Default:          true,
+									WorkingDirectory: "some-working-dir",
+								},
+							},
+						},
+					}, nil
+				}, packit.WithArgs([]string{binaryPath, layersDir, platformDir, planPath}), packit.WithExitHandler(exitHandler))
+
+				contents, err := os.ReadFile(filepath.Join(layersDir, "launch.toml"))
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(string(contents)).To(MatchTOML(`
+					[[processes]]
+						args = ["some-arg"]
+						command = "some-command"
+						direct = false
+						default = true
+						type = "some-type"
+						working-directory = "some-working-dir"
+				`))
+			})
+
+			context("failure cases", func() {
+				it("throws a specific error when new style proccesses are used", func() {
+
+					packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
+						return packit.BuildResult{
+							Launch: packit.LaunchMetadata{
+								DirectProcesses: []packit.DirectProcess{
+									{
+										Type:             "some-type",
+										Command:          []string{"some-command"},
+										Args:             []string{"some-arg"},
+										Default:          false,
+										WorkingDirectory: workingDir,
+									},
+								},
+							},
+						}, nil
+					}, packit.WithArgs([]string{binaryPath, layersDir, platformDir, planPath}), packit.WithExitHandler(exitHandler))
+
+					Expect(exitHandler.ErrorCall.Receives.Error).To(MatchError("direct processes can only be used with Buildpack API v0.9 or higher"))
+				})
+			})
+		})
+
+		context("when the api version is 0.9", func() {
+			it.Before(func() {
+				Expect(os.WriteFile(filepath.Join(cnbDir, "buildpack.toml"), []byte(`
+api = "0.9"
+[buildpack]
+  id = "some-id"
+  name = "some-name"
+  version = "some-version"
+  clear-env = false
+`), 0600)).To(Succeed())
+			})
+
+			it("persists a launch.toml", func() {
+				packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
+					return packit.BuildResult{
+						Launch: packit.LaunchMetadata{
+							DirectProcesses: []packit.DirectProcess{
+								{
+									Type:             "some-type",
+									Command:          []string{"some-command"},
+									Args:             []string{"some-arg"},
+									Default:          true,
+									WorkingDirectory: "some-working-dir",
+								},
+							},
+						},
+					}, nil
+				}, packit.WithArgs([]string{binaryPath, layersDir, platformDir, planPath}), packit.WithExitHandler(exitHandler))
+
+				contents, err := os.ReadFile(filepath.Join(layersDir, "launch.toml"))
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(string(contents)).To(MatchTOML(`
+					[[processes]]
+						args = ["some-arg"]
+						command = ["some-command"]
+						default = true
+						type = "some-type"
+						working-directory = "some-working-dir"
+				`))
+			})
+			context("failure cases", func() {
+				it("throws a specific error when old style proccesses are used", func() {
+
+					packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
+						return packit.BuildResult{
+							Launch: packit.LaunchMetadata{
+								Processes: []packit.Process{
+									{
+										Type:             "some-type",
+										Command:          "some-command",
+										Args:             []string{"some-arg"},
+										Direct:           false,
+										Default:          false,
+										WorkingDirectory: workingDir,
+									},
+								},
+							},
+						}, nil
+					}, packit.WithArgs([]string{binaryPath, layersDir, platformDir, planPath}), packit.WithExitHandler(exitHandler))
+
+					Expect(exitHandler.ErrorCall.Receives.Error).To(MatchError("non direct processes can only be used with Buildpack API v0.8 or lower"))
+				})
+			})
+		})
 	})
 
 	context("when there are slices in the result", func() {
@@ -1527,7 +1661,7 @@ api = "0.4"
 				packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
 					return packit.BuildResult{
 						Layers: []packit.Layer{
-							packit.Layer{
+							{
 								Path: filepath.Join(layersDir, "some-layer"),
 								Name: "some-layer",
 							},
@@ -1544,7 +1678,7 @@ api = "0.4"
 				packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
 					return packit.BuildResult{
 						Layers: []packit.Layer{
-							packit.Layer{
+							{
 								Path: filepath.Join(layersDir, "some-layer"),
 								Name: "some-layer",
 								SBOM: packit.SBOMFormats{

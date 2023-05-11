@@ -144,6 +144,7 @@ func Build(f BuildFunc, options ...Option) {
 	apiV05, _ := semver.NewVersion("0.5")
 	apiV06, _ := semver.NewVersion("0.6")
 	apiV08, _ := semver.NewVersion("0.8")
+	apiV09, _ := semver.NewVersion("0.9")
 	apiVersion, err := semver.NewVersion(buildpackInfo.APIVersion)
 	if err != nil {
 		config.exitHandler.Error(err)
@@ -284,13 +285,27 @@ func Build(f BuildFunc, options ...Option) {
 		}
 
 		var launch struct {
-			Processes []Process  `toml:"processes"`
-			Slices    []Slice    `toml:"slices"`
-			Labels    []label    `toml:"labels"`
-			BOM       []BOMEntry `toml:"bom"`
+			Processes       []Process       `toml:"processes,omitempty"`
+			DirectProcesses []DirectProcess `toml:"processes,omitempty"`
+			Slices          []Slice         `toml:"slices"`
+			Labels          []label         `toml:"labels"`
+			BOM             []BOMEntry      `toml:"bom"`
 		}
 
-		launch.Processes = result.Launch.Processes
+		if apiVersion.LessThan(apiV09) {
+			if result.Launch.DirectProcesses != nil {
+				config.exitHandler.Error(errors.New("direct processes can only be used with Buildpack API v0.9 or higher"))
+				return
+			}
+			launch.Processes = result.Launch.Processes
+		} else {
+			if result.Launch.Processes != nil {
+				config.exitHandler.Error(errors.New("non direct processes can only be used with Buildpack API v0.8 or lower"))
+				return
+			}
+			launch.DirectProcesses = result.Launch.DirectProcesses
+		}
+
 		if apiVersion.LessThan(apiV06) {
 			for _, process := range launch.Processes {
 				if process.Default {
