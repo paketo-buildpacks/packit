@@ -159,6 +159,24 @@ func toPackageModels(catalog *pkg.Collection) []internalmodel.Package {
 	return artifacts
 }
 
+func toLicenseModel(pkgLicenses []pkg.License) (modelLicenses []internalmodel.License) {
+	for _, l := range pkgLicenses {
+		// guarantee collection
+		locations := make([]file.Location, 0)
+		if v := l.Locations.ToSlice(); v != nil {
+			locations = v
+		}
+		modelLicenses = append(modelLicenses, internalmodel.License{
+			Value:          l.Value,
+			SPDXExpression: l.SPDXExpression,
+			Type:           l.Type,
+			URLs:           l.URLs.ToSlice(),
+			Locations:      locations,
+		})
+	}
+	return
+}
+
 // toPackageModel crates a new Package from the given pkg.Package.
 func toPackageModel(p pkg.Package) internalmodel.Package {
 	var cpes = make([]string, len(p.CPEs))
@@ -166,16 +184,12 @@ func toPackageModel(p pkg.Package) internalmodel.Package {
 		cpes[i] = cpe.String(c)
 	}
 
-	var licenses = make([]string, 0)
-	if p.Licenses != nil {
-		licenses = p.Licenses
+	var licenses = make([]internalmodel.License, 0)
+	if !p.Licenses.Empty() {
+		licenses = toLicenseModel(p.Licenses.ToSlice())
 	}
 
 	locations := p.Locations.ToSlice()
-	var coordinates = make([]source.Coordinates, len(locations))
-	for i, l := range locations {
-		coordinates[i] = l.Coordinates
-	}
 
 	return internalmodel.Package{
 		PackageBasicData: internalmodel.PackageBasicData{
@@ -184,7 +198,7 @@ func toPackageModel(p pkg.Package) internalmodel.Package {
 			Version:   p.Version,
 			Type:      p.Type,
 			FoundBy:   p.FoundBy,
-			Locations: coordinates,
+			Locations: locations,
 			Licenses:  licenses,
 			Language:  p.Language,
 			CPEs:      cpes,
