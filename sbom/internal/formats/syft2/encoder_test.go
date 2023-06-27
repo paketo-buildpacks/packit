@@ -5,7 +5,6 @@ import (
 	"regexp"
 	"testing"
 
-	stereoFile "github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/file"
@@ -41,6 +40,7 @@ func TestImageEncoder(t *testing.T) {
 		schemaVersionRedactor,
 	)
 }
+
 func schemaVersionRedactor(s []byte) []byte {
 	pattern := regexp.MustCompile(`,?\s*"schema":\s*\{[^}]*}`)
 	out := pattern.ReplaceAll(s, []byte(""))
@@ -53,22 +53,16 @@ func TestEncodeFullJSONDocument(t *testing.T) {
 	p1 := pkg.Package{
 		Name:    "package-1",
 		Version: "1.0.1",
-		Locations: source.NewLocationSet(
-			source.Location{
-				LocationData: source.LocationData{
-					Coordinates: source.Coordinates{
-						RealPath: "/a/place/a",
-					},
-				},
-			},
+		Locations: file.NewLocationSet(
+			file.NewLocationFromCoordinates(file.Coordinates{
+				RealPath: "/a/place/a",
+			}),
 		),
 		Type:         pkg.PythonPkg,
 		FoundBy:      "the-cataloger-1",
 		Language:     pkg.Python,
 		MetadataType: pkg.PythonPackageMetadataType,
-		Licenses: pkg.NewLicenseSet(
-			pkg.NewLicense("MIT"),
-		),
+		Licenses:     pkg.NewLicenseSet(pkg.NewLicense("MIT")),
 		Metadata: pkg.PythonPackageMetadata{
 			Name:    "package-1",
 			Version: "1.0.1",
@@ -83,14 +77,10 @@ func TestEncodeFullJSONDocument(t *testing.T) {
 	p2 := pkg.Package{
 		Name:    "package-2",
 		Version: "2.0.1",
-		Locations: source.NewLocationSet(
-			source.Location{
-				LocationData: source.LocationData{
-					Coordinates: source.Coordinates{
-						RealPath: "/b/place/b",
-					},
-				},
-			},
+		Locations: file.NewLocationSet(
+			file.NewLocationFromCoordinates(file.Coordinates{
+				RealPath: "/b/place/b",
+			}),
 		),
 		Type:         pkg.DebPkg,
 		FoundBy:      "the-cataloger-2",
@@ -112,49 +102,61 @@ func TestEncodeFullJSONDocument(t *testing.T) {
 	s := sbom.SBOM{
 		Artifacts: sbom.Artifacts{
 			Packages: catalog,
-			FileMetadata: map[source.Coordinates]source.FileMetadata{
-				source.NewLocation("/a/place").Coordinates: {
-					Mode:    0775,
+			FileMetadata: map[file.Coordinates]file.Metadata{
+				file.NewLocation("/a/place").Coordinates: {
+					FileInfo: stereoFile.ManualInfo{
+						NameValue: "/a/place",
+						ModeValue: 0775,
+					},
 					Type:    stereoFile.TypeDirectory,
 					UserID:  0,
 					GroupID: 0,
 				},
-				source.NewLocation("/a/place/a").Coordinates: {
-					Mode:    0775,
+				file.NewLocation("/a/place/a").Coordinates: {
+					FileInfo: stereoFile.ManualInfo{
+						NameValue: "/a/place/a",
+						ModeValue: 0775,
+					},
 					Type:    stereoFile.TypeRegular,
 					UserID:  0,
 					GroupID: 0,
 				},
-				source.NewLocation("/b").Coordinates: {
-					Mode:            0775,
+				file.NewLocation("/b").Coordinates: {
+					FileInfo: stereoFile.ManualInfo{
+						NameValue: "/b",
+						ModeValue: 0775,
+					},
 					Type:            stereoFile.TypeSymLink,
 					LinkDestination: "/c",
 					UserID:          0,
 					GroupID:         0,
 				},
-				source.NewLocation("/b/place/b").Coordinates: {
-					Mode:    0644,
+				file.NewLocation("/b/place/b").Coordinates: {
+					FileInfo: stereoFile.ManualInfo{
+						NameValue: "/b/place/b",
+						ModeValue: 0644,
+					},
 					Type:    stereoFile.TypeRegular,
 					UserID:  1,
 					GroupID: 2,
 				},
 			},
-			FileDigests: map[source.Coordinates][]file.Digest{
-				source.NewLocation("/a/place/a").Coordinates: {
+			FileDigests: map[file.Coordinates][]file.Digest{
+				file.NewLocation("/a/place/a").Coordinates: {
 					{
 						Algorithm: "sha256",
 						Value:     "366a3f5653e34673b875891b021647440d0127c2ef041e3b1a22da2a7d4f3703",
 					},
 				},
-				source.NewLocation("/b/place/b").Coordinates: {
+				file.NewLocation("/b/place/b").Coordinates: {
 					{
 						Algorithm: "sha256",
 						Value:     "1b3722da2a7d90d033b87581a2a3f12021647445653e34666ef041e3b4f3707c",
 					},
 				},
 			},
-			FileContents: map[source.Coordinates]string{
-				source.NewLocation("/a/place/a").Coordinates: "the-contents",
+			FileContents: map[file.Coordinates]string{
+				file.NewLocation("/a/place/a").Coordinates: "the-contents",
 			},
 			LinuxDistribution: &linux.Release{
 				ID:        "redhat",
@@ -176,6 +178,7 @@ func TestEncodeFullJSONDocument(t *testing.T) {
 			},
 		},
 		Source: source.Metadata{
+			ID:     "c2b46b4eb06296933b7cf0722683964e9ecbd93265b9ef6ae9642e3952afbba0",
 			Scheme: source.ImageScheme,
 			ImageMetadata: source.ImageMetadata{
 				UserInput:      "user-image-input",
@@ -213,6 +216,7 @@ func TestEncodeFullJSONDocument(t *testing.T) {
 			},
 		},
 	}
+
 	testutils.AssertEncoderAgainstGoldenSnapshot(t,
 		Format(),
 		s,

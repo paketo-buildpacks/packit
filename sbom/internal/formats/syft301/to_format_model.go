@@ -71,7 +71,7 @@ func toDescriptor(d sbom.Descriptor) model.Descriptor {
 	}
 }
 
-func toSecrets(data map[source.Coordinates][]file.SearchResult) []model.Secrets {
+func toSecrets(data map[file.Coordinates][]file.SearchResult) []model.Secrets {
 	results := make([]model.Secrets, 0)
 	for coordinates, secrets := range data {
 		results = append(results, model.Secrets{
@@ -92,7 +92,7 @@ func toFile(s sbom.SBOM) []model.File {
 	artifacts := s.Artifacts
 
 	for _, coordinates := range s.AllCoordinates() {
-		var metadata *source.FileMetadata
+		var metadata *file.Metadata
 		if metadataForLocation, exists := artifacts.FileMetadata[coordinates]; exists {
 			metadata = &metadataForLocation
 		}
@@ -123,12 +123,12 @@ func toFile(s sbom.SBOM) []model.File {
 	return results
 }
 
-func toFileMetadataEntry(metadata *source.FileMetadata) *model.FileMetadataEntry {
+func toFileMetadataEntry(metadata *file.Metadata) *model.FileMetadataEntry {
 	if metadata == nil {
 		return nil
 	}
 
-	mode, err := strconv.Atoi(fmt.Sprintf("%o", metadata.Mode))
+	mode, err := strconv.Atoi(fmt.Sprintf("%o", metadata.Mode()))
 	if err != nil {
 		// log.Warnf("invalid mode found in file catalog @ location=%+v mode=%q: %+v", coordinates, metadata.Mode, err)
 		mode = 0
@@ -180,6 +180,24 @@ func toPackageModels(catalog *pkg.Collection) []model.Package {
 	return artifacts
 }
 
+func toLicenseModel(pkgLicenses []pkg.License) (modelLicenses []model.License) {
+	for _, l := range pkgLicenses {
+		// guarantee collection
+		locations := make([]file.Location, 0)
+		if v := l.Locations.ToSlice(); v != nil {
+			locations = v
+		}
+		modelLicenses = append(modelLicenses, model.License{
+			Value:          l.Value,
+			SPDXExpression: l.SPDXExpression,
+			Type:           l.Type,
+			URLs:           l.URLs.ToSlice(),
+			Locations:      locations,
+		})
+	}
+	return
+}
+
 // toPackageModel crates a new Package from the given pkg.Package.
 func toPackageModel(p pkg.Package) model.Package {
 	var cpes = make([]string, len(p.CPEs))
@@ -187,9 +205,9 @@ func toPackageModel(p pkg.Package) model.Package {
 		cpes[i] = cpe.String(c)
 	}
 
-	var licenses = make([]string, 0)
-	if p.Licenses != nil {
-		licenses = p.Licenses
+	var licenses = make([]model.License, 0)
+	if !p.Licenses.Empty() {
+		licenses = toLicenseModel(p.Licenses.ToSlice())
 	}
 
 	return model.Package{
