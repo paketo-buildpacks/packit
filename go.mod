@@ -13,7 +13,7 @@ require (
 	github.com/apex/log v1.9.0
 	github.com/dsnet/compress v0.0.2-0.20210315054119-f66993602bf5
 	github.com/gabriel-vasile/mimetype v1.4.2
-	github.com/google/uuid v1.3.0
+	github.com/google/uuid v1.3.1
 	github.com/onsi/gomega v1.27.10
 	github.com/pelletier/go-toml v1.9.5
 	github.com/sclevine/spec v1.4.0
