@@ -2,7 +2,7 @@ name: Update shared github-config
 
 on:
   schedule:
-  - cron: '30 1 * * *'
+  - cron: '16 19 * * *' # daily at 19:16 UTC
   workflow_dispatch: {}
 
 concurrency: github_config_update
