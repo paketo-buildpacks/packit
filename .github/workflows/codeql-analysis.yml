@@ -10,7 +10,7 @@ on:
     - main
     - v*
   schedule:
-  - cron: '0 0 * * *'  # Once a day at midnight
+  - cron: '24 18 * * *'  # daily at 18:24 UTC
 
 jobs:
   analyze:
