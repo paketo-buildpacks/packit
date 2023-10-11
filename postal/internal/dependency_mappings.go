@@ -50,6 +50,13 @@ func (d DependencyMappingResolver) FindDependencyMapping(checksum, platformDir s
 				return "", err
 			}
 			return strings.TrimSpace(content), nil
+			// binding provided in the form `algorithm-hash`
+		} else if uri, ok := binding.Entries[strings.Replace(checksum, ":", "-", 1)]; ok {
+			content, err := uri.ReadString()
+			if err != nil {
+				return "", err
+			}
+			return strings.TrimSpace(content), nil
 		}
 	}
 
