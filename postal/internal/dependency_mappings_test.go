@@ -60,7 +60,7 @@ func testDependencyMappings(t *testing.T, context spec.G, it spec.S) {
 					Path: "hypen-another-",
 					Type: "dependency-mapping",
 					Entries: map[string]*servicebindings.Entry{
-						"sha512-other-sha-hypenated": servicebindings.NewEntry(filepath.Join(tmpDir, "entry-data")),
+						"sha-512_other-sha-underscore": servicebindings.NewEntry(filepath.Join(tmpDir, "entry-data")),
 					},
 				},
 				{
@@ -93,9 +93,9 @@ func testDependencyMappings(t *testing.T, context spec.G, it spec.S) {
 				})
 			})
 
-			context("the binding is of format <algorithm>-<hash>", func() {
+			context("the binding is of format <algorithm>_<hash>", func() {
 				it("finds a matching dependency mappings in the platform bindings if there is one", func() {
-					boundDependency, err := resolver.FindDependencyMapping("sha512-other-sha-hypenated", "some-platform-dir")
+					boundDependency, err := resolver.FindDependencyMapping("sha-512:other-sha-underscore", "some-platform-dir")
 					Expect(err).ToNot(HaveOccurred())
 					Expect(bindingResolver.ResolveCall.Receives.Typ).To(Equal("dependency-mapping"))
 					Expect(bindingResolver.ResolveCall.Receives.Provider).To(BeEmpty())
