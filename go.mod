@@ -21,5 +21,5 @@ require (
 	github.com/sergi/go-diff v1.3.1
 	github.com/spdx/tools-golang v0.5.0
 	github.com/stretchr/testify v1.9.0
-	github.com/ulikunitz/xz v0.5.11
+	github.com/ulikunitz/xz v0.5.12
 )
