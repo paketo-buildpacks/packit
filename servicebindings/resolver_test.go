@@ -147,6 +147,43 @@ func testResolver(t *testing.T, context spec.G, it spec.S) {
 				})
 			})
 		})
+
+		context("VCAP_SERVICES env var is set", func() {
+			it.Before(func() {
+				content, err := os.ReadFile("testdata/vcap_services.json")
+				Expect(err).NotTo(HaveOccurred())
+				Expect(os.Setenv("VCAP_SERVICES", string(content))).To(Succeed())
+			})
+
+			it.After(func() {
+				Expect(os.Unsetenv("VCAP_SERVICES")).To(Succeed())
+			})
+
+			context("SERVICE_BINDING_ROOT env var is set", func() {
+				it.Before(func() {
+					Expect(os.Setenv("SERVICE_BINDING_ROOT", bindingRootK8s)).To(Succeed())
+				})
+
+				it("resolves bindings from VCAP_SERVICES", func() {
+					resolver := servicebindings.NewResolver()
+					bindings, err := resolver.Resolve("postgres", "", platformDir)
+					Expect(err).NotTo(HaveOccurred())
+					Expect(bindings).To(ConsistOf(
+						servicebindings.Binding{
+							Name:     "postgres",
+							Path:     "",
+							Type:     "postgres",
+							Provider: "postgres",
+							Entries: map[string]*servicebindings.Entry{
+								"username": servicebindings.NewWithValue([]byte("foo")),
+								"password": servicebindings.NewWithValue([]byte("bar")),
+								"urls":     servicebindings.NewWithValue([]byte("{\"example\":\"http://example.com\"}")),
+							},
+						},
+					))
+				})
+			})
+		})
 	})
 
 	context("resolving bindings", func() {

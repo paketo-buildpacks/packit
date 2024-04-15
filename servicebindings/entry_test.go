@@ -14,9 +14,10 @@ import (
 
 func testEntry(t *testing.T, context spec.G, it spec.S) {
 	var (
-		Expect = NewWithT(t).Expect
-		entry  *servicebindings.Entry
-		tmpDir string
+		Expect         = NewWithT(t).Expect
+		entry          *servicebindings.Entry
+		entryWithValue *servicebindings.Entry
+		tmpDir         string
 	)
 
 	it.Before(func() {
@@ -26,6 +27,7 @@ func testEntry(t *testing.T, context spec.G, it spec.S) {
 		entryPath := filepath.Join(tmpDir, "entry")
 		Expect(os.WriteFile(entryPath, []byte("some data"), os.ModePerm)).To(Succeed())
 		entry = servicebindings.NewEntry(entryPath)
+		entryWithValue = servicebindings.NewWithValue([]byte("value from env"))
 	})
 
 	it.After(func() {
@@ -35,12 +37,14 @@ func testEntry(t *testing.T, context spec.G, it spec.S) {
 	context("ReadBytes", func() {
 		it("returns the raw bytes of the entry", func() {
 			Expect(entry.ReadBytes()).To(Equal([]byte("some data")))
+			Expect(entryWithValue.ReadBytes()).To(Equal([]byte("value from env")))
 		})
 	})
 
 	context("ReadString", func() {
 		it("returns the string value of the entry", func() {
 			Expect(entry.ReadString()).To(Equal("some data"))
+			Expect(entryWithValue.ReadString()).To(Equal("value from env"))
 		})
 	})
 
@@ -59,6 +63,16 @@ func testEntry(t *testing.T, context spec.G, it spec.S) {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(entry.Close()).To(Succeed())
 			Expect(data).To(Equal([]byte("some data")))
+
+			data, err = io.ReadAll(entryWithValue)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(entryWithValue.Close()).To(Succeed())
+			Expect(data).To(Equal([]byte("value from env")))
+
+			data, err = io.ReadAll(entryWithValue)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(entryWithValue.Close()).To(Succeed())
+			Expect(data).To(Equal([]byte("value from env")))
 		})
 
 		it("can be closed multiple times in a row", func() {
@@ -66,10 +80,16 @@ func testEntry(t *testing.T, context spec.G, it spec.S) {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(entry.Close()).To(Succeed())
 			Expect(entry.Close()).To(Succeed())
+
+			_, err = io.ReadAll(entryWithValue)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(entryWithValue.Close()).To(Succeed())
+			Expect(entryWithValue.Close()).To(Succeed())
 		})
 
 		it("can be closed if never read from", func() {
 			Expect(entry.Close()).To(Succeed())
+			Expect(entryWithValue.Close()).To(Succeed())
 		})
 	})
 }
