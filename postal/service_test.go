@@ -34,6 +34,7 @@ func testService(t *testing.T, context spec.G, it spec.S) {
 
 		transport       *fakes.Transport
 		mappingResolver *fakes.MappingResolver
+		mirrorResolver  *fakes.MirrorResolver
 
 		service postal.Service
 	)
@@ -109,7 +110,11 @@ strip-components = 1
 
 		mappingResolver = &fakes.MappingResolver{}
 
-		service = postal.NewService(transport).WithDependencyMappingResolver(mappingResolver)
+		mirrorResolver = &fakes.MirrorResolver{}
+
+		service = postal.NewService(transport).
+			WithDependencyMappingResolver(mappingResolver).
+			WithDependencyMirrorResolver(mirrorResolver)
 	})
 
 	context("Resolve", func() {
@@ -795,6 +800,37 @@ version = "1.2.3"
 			})
 		})
 
+		context("when there is a dependency mirror", func() {
+			it.Before(func() {
+				mirrorResolver.FindDependencyMirrorCall.Returns.String = "dependency-mirror-url"
+			})
+
+			it("downloads dependency from mirror", func() {
+				err := deliver()
+
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(mirrorResolver.FindDependencyMirrorCall.Receives.Uri).To(Equal("some-entry.tgz"))
+				Expect(mirrorResolver.FindDependencyMirrorCall.Receives.PlatformDir).To(Equal("some-platform-dir"))
+				Expect(transport.DropCall.Receives.Root).To(Equal("some-cnb-path"))
+				Expect(transport.DropCall.Receives.Uri).To(Equal("dependency-mirror-url"))
+
+				files, err := filepath.Glob(fmt.Sprintf("%s/*", layerPath))
+				Expect(err).NotTo(HaveOccurred())
+				Expect(files).To(ConsistOf([]string{
+					filepath.Join(layerPath, "first"),
+					filepath.Join(layerPath, "second"),
+					filepath.Join(layerPath, "third"),
+					filepath.Join(layerPath, "some-dir"),
+					filepath.Join(layerPath, "symlink"),
+				}))
+
+				info, err := os.Stat(filepath.Join(layerPath, "first"))
+				Expect(err).NotTo(HaveOccurred())
+				Expect(info.Mode()).To(Equal(os.FileMode(0755)))
+			})
+		})
+
 		context("failure cases", func() {
 			context("when dependency mapping resolver fails", func() {
 				it.Before(func() {
@@ -804,6 +840,17 @@ version = "1.2.3"
 					err := deliver()
 
 					Expect(err).To(MatchError(ContainSubstring("some dependency mapping error")))
+				})
+			})
+
+			context("when dependency mirror resolver fails", func() {
+				it.Before(func() {
+					mirrorResolver.FindDependencyMirrorCall.Returns.Error = fmt.Errorf("some dependency mirror error")
+				})
+				it("fails to find dependency mirror", func() {
+					err := deliver()
+
+					Expect(err).To(MatchError(ContainSubstring("some dependency mirror error")))
 				})
 			})
 

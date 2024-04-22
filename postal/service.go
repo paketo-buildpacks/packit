@@ -37,6 +37,14 @@ type MappingResolver interface {
 	FindDependencyMapping(checksum, platformDir string) (string, error)
 }
 
+// MirrorResolver serves as the interface that looks for a dependency mirror via
+// environment variable or binding
+//
+//go:generate faux --interface MirrorResolver --output fakes/mirror_resolver.go
+type MirrorResolver interface {
+	FindDependencyMirror(uri, platformDir string) (string, error)
+}
+
 // ErrNoDeps is a typed error indicating that no dependencies were resolved during Service.Resolve()
 //
 // errors can be tested against this type with: errors.As()
@@ -62,6 +70,7 @@ func (e *ErrNoDeps) Error() string {
 type Service struct {
 	transport       Transport
 	mappingResolver MappingResolver
+	mirrorResolver  MirrorResolver
 }
 
 // NewService creates an instance of a Service given a Transport.
@@ -71,11 +80,19 @@ func NewService(transport Transport) Service {
 		mappingResolver: internal.NewDependencyMappingResolver(
 			servicebindings.NewResolver(),
 		),
+		mirrorResolver: internal.NewDependencyMirrorResolver(
+			servicebindings.NewResolver(),
+		),
 	}
 }
 
 func (s Service) WithDependencyMappingResolver(mappingResolver MappingResolver) Service {
 	s.mappingResolver = mappingResolver
+	return s
+}
+
+func (s Service) WithDependencyMirrorResolver(mirrorResolver MirrorResolver) Service {
+	s.mirrorResolver = mirrorResolver
 	return s
 }
 
@@ -228,13 +245,21 @@ func stringSliceElementCount(slice []string, str string) int {
 // location of the CNBPath is given so that dependencies that may be included
 // in a buildpack when packaged for offline consumption can be retrieved. If
 // there is a dependency mapping for the specified dependency, Deliver will use
-// the given dependency mapping URI to fetch the dependency. The dependency is
-// validated against the checksum value provided on the Dependency and will
-// error if there are inconsistencies in the fetched result.
+// the given dependency mapping URI to fetch the dependency. If there is a
+// dependency mirror for the specified dependency, Deliver will use the mirror
+// URI to fetch the dependency. If both a dependency mapping and mirror are BOTH
+// present, the mapping will take precedence over the mirror.The dependency is
+// validated against the checksum value provided on the Dependency and will error
+// if there are inconsistencies in the fetched result.
 func (s Service) Deliver(dependency Dependency, cnbPath, layerPath, platformPath string) error {
 	dependencyChecksum := dependency.Checksum
 	if dependency.SHA256 != "" {
 		dependencyChecksum = fmt.Sprintf("sha256:%s", dependency.SHA256)
+	}
+
+	dependencyMirrorURI, err := s.mirrorResolver.FindDependencyMirror(dependency.URI, platformPath)
+	if err != nil {
+		return fmt.Errorf("failure checking for dependency mirror: %s", err)
 	}
 
 	dependencyMappingURI, err := s.mappingResolver.FindDependencyMapping(dependencyChecksum, platformPath)
@@ -244,6 +269,8 @@ func (s Service) Deliver(dependency Dependency, cnbPath, layerPath, platformPath
 
 	if dependencyMappingURI != "" {
 		dependency.URI = dependencyMappingURI
+	} else if dependencyMirrorURI != "" {
+		dependency.URI = dependencyMirrorURI
 	}
 
 	bundle, err := s.transport.Drop(cnbPath, dependency.URI)
