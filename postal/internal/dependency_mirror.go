@@ -28,11 +28,11 @@ func formatAndVerifyMirror(mirror, uri string) (string, error) {
 		return "", err
 	}
 
-	if mirrorURL.Scheme != "https" && mirrorURL.Scheme != "file" {
+	if strings.ToLower(mirrorURL.Scheme) != "https" && strings.ToLower(mirrorURL.Scheme) != "file" {
 		return "", fmt.Errorf("invalid mirror scheme")
 	}
 
-	mirrorURL.Path = strings.Replace(mirrorURL.Path, "{originalHost}", uriURL.Host+uriURL.Path, 1)
+	mirrorURL.Path = strings.Replace(mirrorURL.Path, "{originalHost}", uriURL.Hostname(), 1) + uriURL.Path
 	return mirrorURL.String(), nil
 }
 

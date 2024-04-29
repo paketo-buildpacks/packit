@@ -51,12 +51,12 @@ func testDependencyMirror(t *testing.T, context spec.G, it spec.S) {
 
 			context("given a default mirror binding", func() {
 				it("finds a matching dependency mirror in the platform bindings if there is one", func() {
-					boundDependency, err := resolver.FindDependencyMirror("some-uri", "some-platform-dir")
+					boundDependency, err := resolver.FindDependencyMirror("https://some-uri.com/dep.tgz", "some-platform-dir")
 					Expect(err).ToNot(HaveOccurred())
 					Expect(bindingResolver.ResolveCall.Receives.Typ).To(Equal("dependency-mirror"))
 					Expect(bindingResolver.ResolveCall.Receives.Provider).To(BeEmpty())
 					Expect(bindingResolver.ResolveCall.Receives.PlatformDir).To(Equal("some-platform-dir"))
-					Expect(boundDependency).To(Equal("https://mirror.example.org/some-uri"))
+					Expect(boundDependency).To(Equal("https://mirror.example.org/some-uri.com/dep.tgz"))
 				})
 			})
 
@@ -73,21 +73,21 @@ func testDependencyMirror(t *testing.T, context spec.G, it spec.S) {
 				})
 
 				it("finds the default mirror when given uri does not match a specific hostname", func() {
-					boundDependency, err := resolver.FindDependencyMirror("some-uri", "some-platform-dir")
+					boundDependency, err := resolver.FindDependencyMirror("https://some-uri.com/dep.tgz", "some-platform-dir")
 					Expect(err).ToNot(HaveOccurred())
 					Expect(bindingResolver.ResolveCall.Receives.Typ).To(Equal("dependency-mirror"))
 					Expect(bindingResolver.ResolveCall.Receives.Provider).To(BeEmpty())
 					Expect(bindingResolver.ResolveCall.Receives.PlatformDir).To(Equal("some-platform-dir"))
-					Expect(boundDependency).To(Equal("https://mirror.example.org/some-uri"))
+					Expect(boundDependency).To(Equal("https://mirror.example.org/some-uri.com/dep.tgz"))
 				})
 
 				it("finds the mirror matching the specific hostname in the given uri", func() {
-					boundDependency, err := resolver.FindDependencyMirror("some-github.com-uri", "some-platform-dir")
+					boundDependency, err := resolver.FindDependencyMirror("https://some-github.com-uri/dep.tgz", "some-platform-dir")
 					Expect(err).ToNot(HaveOccurred())
 					Expect(bindingResolver.ResolveCall.Receives.Typ).To(Equal("dependency-mirror"))
 					Expect(bindingResolver.ResolveCall.Receives.Provider).To(BeEmpty())
 					Expect(bindingResolver.ResolveCall.Receives.PlatformDir).To(Equal("some-platform-dir"))
-					Expect(boundDependency).To(Equal("https://mirror.example.org/public-github"))
+					Expect(boundDependency).To(Equal("https://mirror.example.org/public-github/dep.tgz"))
 				})
 			})
 
@@ -104,7 +104,7 @@ func testDependencyMirror(t *testing.T, context spec.G, it spec.S) {
 				})
 
 				it("return empty string for non specific hostnames", func() {
-					boundDependency, err := resolver.FindDependencyMirror("some-uri", "some-platform-dir")
+					boundDependency, err := resolver.FindDependencyMirror("https://some-uri.com/dep.tgz", "some-platform-dir")
 					Expect(err).ToNot(HaveOccurred())
 					Expect(bindingResolver.ResolveCall.Receives.Typ).To(Equal("dependency-mirror"))
 					Expect(bindingResolver.ResolveCall.Receives.Provider).To(BeEmpty())
@@ -113,12 +113,12 @@ func testDependencyMirror(t *testing.T, context spec.G, it spec.S) {
 				})
 
 				it("finds the mirror matching the specific hostname in the given uri", func() {
-					boundDependency, err := resolver.FindDependencyMirror("some-nodejs.org-uri", "some-platform-dir")
+					boundDependency, err := resolver.FindDependencyMirror("https://some-nodejs.org-uri.com/dep.tgz", "some-platform-dir")
 					Expect(err).ToNot(HaveOccurred())
 					Expect(bindingResolver.ResolveCall.Receives.Typ).To(Equal("dependency-mirror"))
 					Expect(bindingResolver.ResolveCall.Receives.Provider).To(BeEmpty())
 					Expect(bindingResolver.ResolveCall.Receives.PlatformDir).To(Equal("some-platform-dir"))
-					Expect(boundDependency).To(Equal("https://mirror.example.org/node-dist"))
+					Expect(boundDependency).To(Equal("https://mirror.example.org/node-dist/dep.tgz"))
 				})
 			})
 		})
@@ -137,9 +137,9 @@ func testDependencyMirror(t *testing.T, context spec.G, it spec.S) {
 
 			context("given the default mirror environment variable is set", func() {
 				it("finds the matching dependency mirror", func() {
-					boundDependency, err := resolver.FindDependencyMirror("some-uri", "some-platform-dir")
+					boundDependency, err := resolver.FindDependencyMirror("https://some-uri.com/dep.tgz", "some-platform-dir")
 					Expect(err).ToNot(HaveOccurred())
-					Expect(boundDependency).To(Equal("https://mirror.example.org/some-uri"))
+					Expect(boundDependency).To(Equal("https://mirror.example.org/some-uri.com/dep.tgz"))
 				})
 			})
 
@@ -155,21 +155,21 @@ func testDependencyMirror(t *testing.T, context spec.G, it spec.S) {
 				})
 
 				it("finds the default mirror when given uri does not match a specific hostname", func() {
-					boundDependency, err := resolver.FindDependencyMirror("some-uri", "some-platform-dir")
+					boundDependency, err := resolver.FindDependencyMirror("https://some-uri.com/dep.tgz", "some-platform-dir")
 					Expect(err).ToNot(HaveOccurred())
-					Expect(boundDependency).To(Equal("https://mirror.example.org/some-uri"))
+					Expect(boundDependency).To(Equal("https://mirror.example.org/some-uri.com/dep.tgz"))
 				})
 
 				it("finds the mirror matching the specific hostname in the given uri", func() {
-					boundDependency, err := resolver.FindDependencyMirror("some-github.com-uri", "some-platform-dir")
+					boundDependency, err := resolver.FindDependencyMirror("https://some-github.com-uri/dep.tgz", "some-platform-dir")
 					Expect(err).ToNot(HaveOccurred())
-					Expect(boundDependency).To(Equal("https://mirror.example.org/public-github"))
+					Expect(boundDependency).To(Equal("https://mirror.example.org/public-github/dep.tgz"))
 				})
 
 				it("properly decodes the hostname", func() {
-					boundDependency, err := resolver.FindDependencyMirror("testing.123-abc-uri", "some-platform-dir")
+					boundDependency, err := resolver.FindDependencyMirror("https://testing.123-abc-uri/dep.tgz", "some-platform-dir")
 					Expect(err).ToNot(HaveOccurred())
-					Expect(boundDependency).To(Equal("https://mirror.example.org/testing"))
+					Expect(boundDependency).To(Equal("https://mirror.example.org/testing/dep.tgz"))
 				})
 			})
 
@@ -184,15 +184,15 @@ func testDependencyMirror(t *testing.T, context spec.G, it spec.S) {
 				})
 
 				it("return empty string for non specific hostnames", func() {
-					boundDependency, err := resolver.FindDependencyMirror("some-uri", "some-platform-dir")
+					boundDependency, err := resolver.FindDependencyMirror("https://some-uri.com/dep.tgz", "some-platform-dir")
 					Expect(err).ToNot(HaveOccurred())
 					Expect(boundDependency).To(Equal(""))
 				})
 
 				it("finds the mirror matching the specific hostname in the given uri", func() {
-					boundDependency, err := resolver.FindDependencyMirror("some-github.com-uri", "some-platform-dir")
+					boundDependency, err := resolver.FindDependencyMirror("https://some-github.com-uri/dep.tgz", "some-platform-dir")
 					Expect(err).ToNot(HaveOccurred())
-					Expect(boundDependency).To(Equal("https://mirror.example.org/public-github"))
+					Expect(boundDependency).To(Equal("https://mirror.example.org/public-github/dep.tgz"))
 				})
 			})
 		})
@@ -213,12 +213,32 @@ func testDependencyMirror(t *testing.T, context spec.G, it spec.S) {
 			})
 
 			it("defaults to environment variable and ignores binding", func() {
-				boundDependency, err := resolver.FindDependencyMirror("some-uri", "some-platform-dir")
+				boundDependency, err := resolver.FindDependencyMirror("https://some-uri.com/dep.tgz", "some-platform-dir")
 				Expect(err).ToNot(HaveOccurred())
-				Expect(boundDependency).NotTo(Equal("https://mirror.example.org/some-uri"))
-				Expect(boundDependency).To(Equal("https://mirror.other-example.org/some-uri"))
+				Expect(boundDependency).NotTo(Equal("https://mirror.example.org/some-uri.com/dep.tgz"))
+				Expect(boundDependency).To(Equal("https://mirror.other-example.org/some-uri.com/dep.tgz"))
 
 			})
+		})
+
+		context("without originalHost placeholder", func() {
+			it.Before(func() {
+				Expect(os.Setenv("BP_DEPENDENCY_MIRROR", "https://mirror.example.org"))
+
+				bindingResolver = &fakes.BindingResolver{}
+				resolver = internal.NewDependencyMirrorResolver(bindingResolver)
+			})
+
+			it.After(func() {
+				Expect(os.Unsetenv("BP_DEPENDENCY_MIRROR"))
+			})
+
+			it("sets mirror excluding original hostname", func() {
+				boundDependency, err := resolver.FindDependencyMirror("https://some-uri.com/dep.tgz", "some-platform-dir")
+				Expect(err).ToNot(HaveOccurred())
+				Expect(boundDependency).To(Equal("https://mirror.example.org/dep.tgz"))
+			})
+
 		})
 
 		context("failure cases", func() {
@@ -258,7 +278,7 @@ func testDependencyMirror(t *testing.T, context spec.G, it spec.S) {
 						},
 					}
 
-					_, err = resolver.FindDependencyMirror("some-uri", "some-platform-dir")
+					_, err = resolver.FindDependencyMirror("https://some-uri.com/dep.tgz", "some-platform-dir")
 					Expect(err).To(MatchError(ContainSubstring("cannot have multiple bindings of type 'dependency-mirror'")))
 				})
 			})
@@ -276,7 +296,7 @@ func testDependencyMirror(t *testing.T, context spec.G, it spec.S) {
 				})
 
 				it("returns an error", func() {
-					_, err := resolver.FindDependencyMirror("some-uri", "some-platform-dir")
+					_, err := resolver.FindDependencyMirror("https://some-uri.com/dep.tgz", "some-platform-dir")
 					Expect(err).To(MatchError(ContainSubstring("invalid mirror scheme")))
 				})
 			})
