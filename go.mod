@@ -14,7 +14,7 @@ require (
 	github.com/dsnet/compress v0.0.2-0.20210315054119-f66993602bf5
 	github.com/gabriel-vasile/mimetype v1.4.3
 	github.com/google/uuid v1.6.0
-	github.com/onsi/gomega v1.33.0
+	github.com/onsi/gomega v1.33.1
 	github.com/pelletier/go-toml v1.9.5
 	github.com/sclevine/spec v1.4.0
 	github.com/scylladb/go-set v1.0.3-0.20200225121959-cc7b2070d91e
