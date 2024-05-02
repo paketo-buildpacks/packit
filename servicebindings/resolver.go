@@ -1,6 +1,7 @@
 package servicebindings
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -47,9 +48,9 @@ func NewResolver() *Resolver {
 //
 // The location of bindings is given by one of the following, in order of precedence:
 //
-//   1. SERVICE_BINDING_ROOT environment variable
-//   2. CNB_BINDINGS environment variable, if above is not set
-//   3. `<platformDir>/bindings`, if both above are not set
+//  1. SERVICE_BINDING_ROOT environment variable
+//  2. CNB_BINDINGS environment variable, if above is not set
+//  3. `<platformDir>/bindings`, if both above are not set
 func (r *Resolver) Resolve(typ, provider, platformDir string) ([]Binding, error) {
 	if newRoot := bindingRoot(platformDir); r.bindingRoot != newRoot {
 		r.bindingRoot = newRoot
@@ -92,6 +93,10 @@ func (r *Resolver) ResolveOne(typ, provider, platformDir string) (Binding, error
 }
 
 func loadBindings(bindingRoot string) ([]Binding, error) {
+	if vcapEnv, ok := os.LookupEnv("VCAP_SERVICES"); ok {
+		return loadvcapservicesbinding(vcapEnv)
+	}
+
 	files, err := os.ReadDir(bindingRoot)
 	if os.IsNotExist(err) {
 		return nil, nil
@@ -231,6 +236,55 @@ func loadLegacyBinding(bindingRoot, name string) (Binding, error) {
 	}
 
 	return binding, nil
+}
+
+func loadvcapservicesbinding(content string) ([]Binding, error) {
+	var contentTyped map[string][]vcapServicesBinding
+
+	err := json.Unmarshal([]byte(content), &contentTyped)
+	if err != nil {
+		return []Binding{}, err
+	}
+
+	bindings := []Binding{}
+	for p, bArray := range contentTyped {
+		for _, b := range bArray {
+			entries := map[string]*Entry{}
+			for k, v := range b.Credentials {
+				entries[k], err = toJSONString(v)
+				if err != nil {
+					return nil, err
+				}
+			}
+			bindings = append(bindings, Binding{
+				Name:     b.Name,
+				Type:     b.Label,
+				Provider: p,
+				Entries:  entries,
+			})
+		}
+	}
+
+	return bindings, nil
+}
+
+type vcapServicesBinding struct {
+	Name        string                 `json:"name"`
+	Label       string                 `json:"label"`
+	Credentials map[string]interface{} `json:"credentials"`
+}
+
+func toJSONString(input interface{}) (*Entry, error) {
+	switch in := input.(type) {
+	case string:
+		return NewWithValue([]byte(in)), nil
+	default:
+		jsonProperty, err := json.Marshal(in)
+		if err != nil {
+			return nil, err
+		}
+		return NewWithValue(jsonProperty), nil
+	}
 }
 
 func loadEntries(path string) (map[string]*Entry, error) {
