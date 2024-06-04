@@ -339,6 +339,184 @@ api = "0.6"
 
 		})
 
+		context("when using Standardized Dependency Metadata Format", func() {
+			it("encodes the config to TOML", func() {
+				eolDate, err := time.Parse(time.RFC3339, "2020-06-01T00:00:00Z")
+				Expect(err).NotTo(HaveOccurred())
+
+				err = cargo.EncodeConfig(buffer, cargo.Config{
+					API: "0.6",
+					Buildpack: cargo.ConfigBuildpack{
+						ID:       "some-buildpack-id",
+						Name:     "some-buildpack-name",
+						Version:  "some-buildpack-version",
+						Homepage: "some-homepage-link",
+						Licenses: []cargo.ConfigBuildpackLicense{
+							{
+								Type: "some-license-type",
+								URI:  "some-license-uri",
+							},
+						},
+					},
+					Stacks: []cargo.ConfigStack{
+						{
+							ID:     "some-stack-id",
+							Mixins: []string{"some-mixin-id"},
+						},
+						{
+							ID: "other-stack-id",
+						},
+					},
+					Metadata: cargo.ConfigMetadata{
+						IncludeFiles: []string{
+							"some-include-file",
+							"other-include-file",
+						},
+						Unstructured: map[string]interface{}{"some-map": []map[string]interface{}{{"key": "value"}}},
+						PrePackage:   "some-pre-package-script.sh",
+						Dependencies: []cargo.ConfigMetadataDependency{
+							{
+								Checksum:        "sha256:some-sum",
+								ID:              "some-dependency",
+								URI:             "http://some-url",
+								Version:         "1.2.3",
+								Arch:            "some-arch",
+								CPEs:            []string{"some-cpe", "some-other-cpe"},
+								EOLDate:         &eolDate,
+								Name:            "Some Dependency",
+								OS:              "some-os",
+								PURLs:           []string{"some-purl", "some-other-purl"},
+								Source:          "source",
+								SourceChecksum:  "sha256:source-shasum",
+								StripComponents: 1,
+								Distros: []interface{}{
+									cargo.ConfigBuildpackDistro{
+										Name:    "some-distro",
+										Version: "some-distro-version",
+									},
+									cargo.ConfigBuildpackDistro{
+										Name:    "some-other-distro",
+										Version: "some-other-distro-version",
+									},
+								},
+								Licenses: []interface{}{
+									cargo.ConfigBuildpackLicense{
+										Type: "fancy-license",
+										URI:  "some-license-uri",
+									},
+									cargo.ConfigBuildpackLicense{
+										Type: "fancy-license-2",
+										URI:  "some-license-uri",
+									},
+								},
+							},
+						},
+						DependencyConstraints: []cargo.ConfigMetadataDependencyConstraint{
+							{
+								ID:         "some-dependency",
+								Constraint: "1.*",
+								Patches:    1,
+							},
+						},
+						DefaultVersions: map[string]string{
+							"some-dependency": "1.2.x",
+						},
+					},
+					Order: []cargo.ConfigOrder{
+						{
+							Group: []cargo.ConfigOrderGroup{
+								{
+									ID:      "some-dependency",
+									Version: "some-version"},
+								{
+									ID:       "other-dependency",
+									Version:  "other-version",
+									Optional: true,
+								},
+							},
+						},
+					},
+				})
+				Expect(err).NotTo(HaveOccurred())
+				Expect(buffer.String()).To(MatchTOML(`
+api = "0.6"
+
+[buildpack]
+	id = "some-buildpack-id"
+	name = "some-buildpack-name"
+	version = "some-buildpack-version"
+	homepage = "some-homepage-link"
+
+[[buildpack.licenses]]
+  type = "some-license-type"
+	uri = "some-license-uri"
+
+[metadata]
+	include-files = ["some-include-file", "other-include-file"]
+	pre-package = "some-pre-package-script.sh"
+
+[metadata.default-versions]
+	some-dependency = "1.2.x"
+
+[[metadata.dependencies]]	
+  checksum = "sha256:some-sum"
+  id = "some-dependency"
+  uri = "http://some-url"
+  version = "1.2.3"
+  arch = "some-arch"
+  cpes = ["some-cpe", "some-other-cpe"]
+  eol-date = "2020-06-01T00:00:00Z"
+  name = "Some Dependency"
+  os = "some-os"
+  source = "source"
+  source-checksum = "sha256:source-shasum"
+  purls = ["some-purl", "some-other-purl"]
+  strip-components = 1
+
+  [[metadata.dependencies.distros]]
+    name = "some-distro"
+	version = "some-distro-version"
+
+  [[metadata.dependencies.distros]]
+    name = "some-other-distro"
+	version = "some-other-distro-version"
+
+  [[metadata.dependencies.licenses]]
+    type = "fancy-license"
+	uri = "some-license-uri"
+
+  [[metadata.dependencies.licenses]]
+    type = "fancy-license-2"
+	uri = "some-license-uri"
+
+[[metadata.dependency-constraints]]
+  id = "some-dependency"
+  constraint = "1.*"
+	patches = 1
+
+[[metadata.some-map]]
+  key = "value"
+
+[[stacks]]
+  id = "some-stack-id"
+  mixins = ["some-mixin-id"]
+
+[[stacks]]
+  id = "other-stack-id"
+
+[[order]]
+  [[order.group]]
+	  id = "some-dependency"
+		version = "some-version"
+
+  [[order.group]]
+		id = "other-dependency"
+		version = "other-version"
+		optional = true
+`))
+			})
+
+		})
 		context("when not all metadata.dependencies include strip-components", func() {
 			it("correctly encodes all elements", func() {
 				err := cargo.EncodeConfig(buffer, cargo.Config{
@@ -688,6 +866,189 @@ api = "0.2"
 								Stacks:         []string{"io.buildpacks.stacks.bionic", "org.cloudfoundry.stacks.tiny"},
 								URI:            "http://some-url",
 								Version:        "1.2.3",
+							},
+						},
+						DependencyConstraints: []cargo.ConfigMetadataDependencyConstraint{
+							{
+								ID:         "some-dependency",
+								Constraint: "1.*",
+								Patches:    1,
+							},
+						},
+						DefaultVersions: map[string]string{
+							"some-dependency": "1.2.x",
+						},
+					},
+					Order: []cargo.ConfigOrder{
+						{
+							Group: []cargo.ConfigOrderGroup{
+								{
+									ID:       "some-dependency",
+									Version:  "some-version",
+									Optional: false,
+								},
+								{
+									ID:       "other-dependency",
+									Version:  "other-version",
+									Optional: true,
+								},
+							},
+						},
+					},
+				}))
+			})
+
+		})
+
+		context("When using Standardized Dependency Metadata format", func() {
+			it("decodes TOML to config", func() {
+				tomlBuffer := strings.NewReader(`
+api = "0.2"
+
+[buildpack]
+	id = "some-buildpack-id"
+	name = "some-buildpack-name"
+	version = "some-buildpack-version"
+	homepage = "some-homepage-link"
+
+[[buildpack.licenses]]
+	type = "some-license-type"
+	uri = "some-license-uri"
+
+[metadata]
+	include-files = ["some-include-file", "other-include-file"]
+	pre-package = "some-pre-package-script.sh"
+
+[metadata.default-versions]
+	some-dependency = "1.2.x"
+
+[[metadata.some-map]]
+  key = "value"
+
+[[metadata.dependencies]]
+  checksum = "sha256:some-sum"
+  id = "some-dependency"
+  uri = "http://some-url"
+  version = "1.2.3"
+  arch = "some-arch"
+  cpes = ["some-cpe", "some-other-cpe"]
+  eol-date = "2020-06-01T00:00:00Z"
+  name = "Some Dependency"
+  os = "some-os"
+  purls = ["some-purl", "some-other-purl"]
+  source = "source"
+  source-checksum = "sha256:source-shasum"
+  strip-components = 1
+
+  [[metadata.dependencies.distros]]
+    name = "some-distro"
+	version = "some-distro-version"
+
+  [[metadata.dependencies.distros]]
+    name = "some-other-distro"
+	version = "some-other-distro-version"
+
+  [[metadata.dependencies.licenses]]
+    type = "fancy-license"
+	uri = "some-license-uri"
+
+  [[metadata.dependencies.licenses]]
+    type = "fancy-license-2"
+	uri = "some-license-uri"
+
+[[metadata.dependency-constraints]]
+  id = "some-dependency"
+  constraint = "1.*"
+	patches = 1
+
+[[stacks]]
+  id = "some-stack-id"
+  mixins = ["some-mixin-id"]
+
+[[stacks]]
+  id = "other-stack-id"
+
+[[order]]
+  [[order.group]]
+	  id = "some-dependency"
+		version = "some-version"
+
+  [[order.group]]
+		id = "other-dependency"
+		version = "other-version"
+		optional = true
+`)
+
+				eolDate, err := time.Parse(time.RFC3339, "2020-06-01T00:00:00Z")
+				Expect(err).NotTo(HaveOccurred())
+
+				var config cargo.Config
+				Expect(cargo.DecodeConfig(tomlBuffer, &config)).To(Succeed())
+				Expect(config).To(Equal(cargo.Config{
+					API: "0.2",
+					Buildpack: cargo.ConfigBuildpack{
+						ID:       "some-buildpack-id",
+						Name:     "some-buildpack-name",
+						Version:  "some-buildpack-version",
+						Homepage: "some-homepage-link",
+						Licenses: []cargo.ConfigBuildpackLicense{
+							{
+								Type: "some-license-type",
+								URI:  "some-license-uri",
+							},
+						},
+					},
+					Stacks: []cargo.ConfigStack{
+						{
+							ID:     "some-stack-id",
+							Mixins: []string{"some-mixin-id"},
+						},
+						{
+							ID: "other-stack-id",
+						},
+					},
+					Metadata: cargo.ConfigMetadata{
+						Unstructured: map[string]interface{}{"some-map": json.RawMessage(`[{"key":"value"}]`)},
+						IncludeFiles: []string{
+							"some-include-file",
+							"other-include-file",
+						},
+						PrePackage: "some-pre-package-script.sh",
+						Dependencies: []cargo.ConfigMetadataDependency{
+							{
+								Checksum:        "sha256:some-sum",
+								ID:              "some-dependency",
+								URI:             "http://some-url",
+								Version:         "1.2.3",
+								Arch:            "some-arch",
+								CPEs:            []string{"some-cpe", "some-other-cpe"},
+								EOLDate:         &eolDate,
+								Name:            "Some Dependency",
+								OS:              "some-os",
+								PURLs:           []string{"some-purl", "some-other-purl"},
+								Source:          "source",
+								SourceChecksum:  "sha256:source-shasum",
+								StripComponents: 1,
+								Distros: []interface{}{
+									map[string]interface{}{
+										"name":    "some-distro",
+										"version": "some-distro-version",
+									},
+									map[string]interface{}{
+										"name":    "some-other-distro",
+										"version": "some-other-distro-version",
+									},
+								},
+								Licenses: []interface{}{
+									map[string]interface{}{
+										"type": "fancy-license",
+										"uri":  "some-license-uri",
+									},
+									map[string]interface{}{
+										"type": "fancy-license-2",
+										"uri":  "some-license-uri",
+									},
+								},
 							},
 						},
 						DependencyConstraints: []cargo.ConfigMetadataDependencyConstraint{

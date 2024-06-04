@@ -39,6 +39,11 @@ type ConfigBuildpackLicense struct {
 	URI  string `toml:"uri"  json:"uri"`
 }
 
+type ConfigBuildpackDistro struct {
+	Name    string `toml:"name" json:"name"`
+	Version string `toml:"version"  json:"version"`
+}
+
 type ConfigMetadata struct {
 	IncludeFiles          []string                             `toml:"include-files"              json:"include-files,omitempty"`
 	PrePackage            string                               `toml:"pre-package"                json:"pre-package,omitempty"`
@@ -48,22 +53,31 @@ type ConfigMetadata struct {
 	Unstructured          map[string]interface{}               `toml:"-"                          json:"-"`
 }
 
+// ConfigMetadataDependency
+// Fields marked "non-standard" are not part of the Standardized Metadata Dependency Format (RFC 0059)
+// These fields should be deprecated and removed as adoption of the standardized format occurs.
 type ConfigMetadataDependency struct {
 	Checksum        string        `toml:"checksum"         json:"checksum,omitempty"`
-	CPE             string        `toml:"cpe"              json:"cpe,omitempty"`
-	PURL            string        `toml:"purl"             json:"purl,omitempty"`
-	DeprecationDate *time.Time    `toml:"deprecation_date" json:"deprecation_date,omitempty"`
 	ID              string        `toml:"id"               json:"id,omitempty"`
-	Licenses        []interface{} `toml:"licenses"         json:"licenses,omitempty"`
-	Name            string        `toml:"name"             json:"name,omitempty"`
-	SHA256          string        `toml:"sha256"           json:"sha256,omitempty"`
-	Source          string        `toml:"source"           json:"source,omitempty"`
-	SourceChecksum  string        `toml:"source-checksum"  json:"source-checksum,omitempty"`
-	SourceSHA256    string        `toml:"source_sha256"    json:"source_sha256,omitempty"`
-	Stacks          []string      `toml:"stacks"           json:"stacks,omitempty"`
-	StripComponents int           `toml:"strip-components" json:"strip-components,omitempty"`
 	URI             string        `toml:"uri"              json:"uri,omitempty"`
 	Version         string        `toml:"version"          json:"version,omitempty"`
+	Arch            string        `toml:"arch"    json:"arch,omitempty"`
+	CPEs            []string      `toml:"cpes"              json:"cpes,omitempty"`
+	EOLDate         *time.Time    `toml:"eol-date" json:"eol-date,omitempty"`
+	Name            string        `toml:"name"             json:"name,omitempty"`
+	OS              string        `toml:"os"    json:"os,omitempty"`
+	PURLs           []string      `toml:"purls"             json:"purls,omitempty"`
+	Source          string        `toml:"source"           json:"source,omitempty"`
+	SourceChecksum  string        `toml:"source-checksum"  json:"source-checksum,omitempty"`
+	StripComponents int           `toml:"strip-components" json:"strip-components,omitempty"`
+	Distros         []interface{} `toml:"distros"    json:"distros,omitempty"`
+	Licenses        []interface{} `toml:"licenses"         json:"licenses,omitempty"`
+	CPE             string        `toml:"cpe"              json:"cpe,omitempty"`              // non-standard
+	PURL            string        `toml:"purl"             json:"purl,omitempty"`             // non-standard
+	DeprecationDate *time.Time    `toml:"deprecation_date" json:"deprecation_date,omitempty"` // non-standard
+	SHA256          string        `toml:"sha256"           json:"sha256,omitempty"`           // non-standard
+	SourceSHA256    string        `toml:"source_sha256"    json:"source_sha256,omitempty"`    // non-standard
+	Stacks          []string      `toml:"stacks"           json:"stacks,omitempty"`           // non-standard
 }
 
 type ConfigMetadataDependencyConstraint struct {
