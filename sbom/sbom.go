@@ -97,12 +97,19 @@ func GenerateFromDependency(dependency postal.Dependency, path string) (SBOM, er
 		cpes = append(cpes, cpe)
 	}
 
+	var purl string
+	if len(dependency.PURLs) == 0 {
+		purl = dependency.PURL
+	} else {
+		purl = dependency.PURLs[0]
+	}
+
 	catalog := pkg.NewCatalog(pkg.Package{
 		Name:     dependency.Name,
 		Version:  dependency.Version,
 		Licenses: dependency.Licenses,
 		CPEs:     cpes,
-		PURL:     dependency.PURL,
+		PURL:     purl,
 	})
 
 	return SBOM{
