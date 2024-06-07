@@ -47,6 +47,7 @@ func testService(t *testing.T, context spec.G, it spec.S) {
 		_, err = file.WriteString(`
 [[metadata.dependencies]]
 deprecation_date = 2022-04-01T00:00:00Z
+eol-date = 2022-04-01T00:00:00Z
 cpe = "some-cpe"
 cpes = ["some-cpe", "other-cpe"]
 id = "some-entry"
@@ -121,6 +122,8 @@ strip-components = 1
 		it("finds the best matching dependency given a plan entry", func() {
 			deprecationDate, err := time.Parse(time.RFC3339, "2022-04-01T00:00:00Z")
 			Expect(err).NotTo(HaveOccurred())
+			eolDate, err := time.Parse(time.RFC3339, "2022-04-01T00:00:00Z")
+			Expect(err).NotTo(HaveOccurred())
 
 			dependency, err := service.Resolve(path, "some-entry", "1.2.*", "some-stack")
 			Expect(err).NotTo(HaveOccurred())
@@ -128,6 +131,7 @@ strip-components = 1
 				CPE:             "some-cpe",
 				CPEs:            []string{"some-cpe", "other-cpe"},
 				DeprecationDate: deprecationDate,
+				EOLDate:         eolDate,
 				ID:              "some-entry",
 				Stacks:          []string{"some-stack"},
 				URI:             "some-uri",
@@ -186,11 +190,14 @@ strip-components = 1
 				it("picks the dependency >= version and < major.minor+1", func() {
 					deprecationDate, err := time.Parse(time.RFC3339, "2022-04-01T00:00:00Z")
 					Expect(err).NotTo(HaveOccurred())
+					eolDate, err := time.Parse(time.RFC3339, "2022-04-01T00:00:00Z")
+					Expect(err).NotTo(HaveOccurred())
 
 					dependency, err := service.Resolve(path, "some-entry", "~> 1.2.0", "some-stack")
 					Expect(err).NotTo(HaveOccurred())
 					Expect(dependency).To(Equal(postal.Dependency{
 						DeprecationDate: deprecationDate,
+						EOLDate:         eolDate,
 						CPE:             "some-cpe",
 						CPEs:            []string{"some-cpe", "other-cpe"},
 						ID:              "some-entry",
@@ -206,6 +213,8 @@ strip-components = 1
 				it("picks the dependency >= version and < major+1", func() {
 					deprecationDate, err := time.Parse(time.RFC3339, "2022-04-01T00:00:00Z")
 					Expect(err).NotTo(HaveOccurred())
+					eolDate, err := time.Parse(time.RFC3339, "2022-04-01T00:00:00Z")
+					Expect(err).NotTo(HaveOccurred())
 
 					dependency, err := service.Resolve(path, "some-entry", "~> 1.1", "some-stack")
 					Expect(err).NotTo(HaveOccurred())
@@ -213,6 +222,7 @@ strip-components = 1
 						CPE:             "some-cpe",
 						CPEs:            []string{"some-cpe", "other-cpe"},
 						DeprecationDate: deprecationDate,
+						EOLDate:         eolDate,
 						ID:              "some-entry",
 						Stacks:          []string{"some-stack"},
 						URI:             "some-uri",
@@ -226,6 +236,8 @@ strip-components = 1
 				it("picks the dependency >= version.0.0 and < major+1.0.0", func() {
 					deprecationDate, err := time.Parse(time.RFC3339, "2022-04-01T00:00:00Z")
 					Expect(err).NotTo(HaveOccurred())
+					eolDate, err := time.Parse(time.RFC3339, "2022-04-01T00:00:00Z")
+					Expect(err).NotTo(HaveOccurred())
 
 					dependency, err := service.Resolve(path, "some-entry", "~> 1", "some-stack")
 					Expect(err).NotTo(HaveOccurred())
@@ -233,6 +245,7 @@ strip-components = 1
 						CPE:             "some-cpe",
 						CPEs:            []string{"some-cpe", "other-cpe"},
 						DeprecationDate: deprecationDate,
+						EOLDate:         eolDate,
 						ID:              "some-entry",
 						Stacks:          []string{"some-stack"},
 						URI:             "some-uri",
