@@ -7,6 +7,7 @@ package paketosbom
 
 import (
 	"fmt"
+	"github.com/paketo-buildpacks/packit/v2/cargo"
 	"strings"
 	"time"
 )
@@ -14,16 +15,16 @@ import (
 // BOMMetadata represents how the Paketo-specific implementation of
 // the Software Bill of Materials metadata components should be structured and named.
 type BOMMetadata struct {
-	Architecture    string      `toml:"arch,omitempty"`
-	CPE             string      `toml:"cpe,omitempty"`
-	DeprecationDate time.Time   `toml:"deprecation-date,omitempty"`
-	Licenses        []string    `toml:"licenses,omitempty"`
-	PURL            string      `toml:"purl,omitempty"`
-	Checksum        BOMChecksum `toml:"checksum,omitempty"`
-	Summary         string      `toml:"summary,omitempty"`
-	URI             string      `toml:"uri,omitempty"`
-	Version         string      `toml:"version,omitempty"`
-	Source          BOMSource   `toml:"source,omitempty"`
+	Architecture    string                         `toml:"arch,omitempty"`
+	CPE             string                         `toml:"cpe,omitempty"`
+	DeprecationDate time.Time                      `toml:"deprecation-date,omitempty"`
+	Licenses        []cargo.ConfigBuildpackLicense `toml:"licenses,omitempty"`
+	PURL            string                         `toml:"purl,omitempty"`
+	Checksum        BOMChecksum                    `toml:"checksum,omitempty"`
+	Summary         string                         `toml:"summary,omitempty"`
+	URI             string                         `toml:"uri,omitempty"`
+	Version         string                         `toml:"version,omitempty"`
+	Source          BOMSource                      `toml:"source,omitempty"`
 }
 
 type BOMSource struct {

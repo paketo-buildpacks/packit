@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/paketo-buildpacks/packit/v2/cargo"
 	"io"
 	"testing"
 
@@ -88,9 +89,11 @@ func testSBOM(t *testing.T, context spec.G, it spec.S) {
 	context("GenerateFromDependency", func() {
 		it("generates a SBOM from a dependency for latest schema versions", func() {
 			bom, err := sbom.GenerateFromDependency(postal.Dependency{
-				CPE:            "cpe:2.3:a:golang:go:1.16.9:*:*:*:*:*:*:*",
-				ID:             "go",
-				Licenses:       []string{"BSD-3-Clause"},
+				CPE: "cpe:2.3:a:golang:go:1.16.9:*:*:*:*:*:*:*",
+				ID:  "go",
+				Licenses: []cargo.ConfigBuildpackLicense{
+					{Type: "BSD-3-Clause"},
+				},
 				Name:           "Go",
 				PURL:           "pkg:generic/go@go1.16.9?checksum=0a1cc7fd7bd20448f71ebed64d846138850d5099b18cf5cc10a4fc45160d8c3d&download_url=https://dl.google.com/go/go1.16.9.src.tar.gz",
 				Checksum:       "sha256:ca9ef23a5db944b116102b87c1ae9344b27e011dae7157d2f1e501abd39e9829",
@@ -193,9 +196,11 @@ func testSBOM(t *testing.T, context spec.G, it spec.S) {
 		context("when multiple PURLs are given", func() {
 			it("uses first PURL in array when generating a SBOM from a dependency for latest schema versions", func() {
 				bom, err := sbom.GenerateFromDependency(postal.Dependency{
-					CPE:            "cpe:2.3:a:golang:go:1.16.9:*:*:*:*:*:*:*",
-					ID:             "go",
-					Licenses:       []string{"BSD-3-Clause"},
+					CPE: "cpe:2.3:a:golang:go:1.16.9:*:*:*:*:*:*:*",
+					ID:  "go",
+					Licenses: []cargo.ConfigBuildpackLicense{
+						{Type: "BSD-3-Clause"},
+					},
 					Name:           "Go",
 					PURL:           "pkg:generic/go@go1.16.9?checksum=0a1cc7fd7bd20448f71ebed64d846138850d5099b18cf5cc10a4fc45160d8c3d&download_url=https://dl.google.com/go/go1.16.9.src.tar.gz",
 					PURLs:          []string{"pkg:generic/go@go1.16.9?checksum=42aee9bf2b6956c75a7ad6aa3f0a51b5821ffeac57f5a2e733a2d6eae1e6d9d2&download_url=https://go.dev/dl/go1.16.9.src.tar.gz", "pkg:generic/go@go1.16.9?checksum=0a1cc7fd7bd20448f71ebed64d846138850d5099b18cf5cc10a4fc45160d8c3d&download_url=https://dl.google.com/go/go1.16.9.src.tar.gz"},
@@ -301,9 +306,11 @@ func testSBOM(t *testing.T, context spec.G, it spec.S) {
 
 		it("generates a SBOM from a dependency as syft2 JSON", func() {
 			bom, err := sbom.GenerateFromDependency(postal.Dependency{
-				CPE:            "cpe:2.3:a:golang:go:1.16.9:*:*:*:*:*:*:*",
-				ID:             "go",
-				Licenses:       []string{"BSD-3-Clause"},
+				CPE: "cpe:2.3:a:golang:go:1.16.9:*:*:*:*:*:*:*",
+				ID:  "go",
+				Licenses: []cargo.ConfigBuildpackLicense{
+					{Type: "BSD-3-Clause"},
+				},
 				Name:           "Go",
 				PURL:           "pkg:generic/go@go1.16.9?checksum=0a1cc7fd7bd20448f71ebed64d846138850d5099b18cf5cc10a4fc45160d8c3d&download_url=https://dl.google.com/go/go1.16.9.src.tar.gz",
 				Checksum:       "sha256:ca9ef23a5db944b116102b87c1ae9344b27e011dae7157d2f1e501abd39e9829",
@@ -347,9 +354,11 @@ func testSBOM(t *testing.T, context spec.G, it spec.S) {
 
 		it("generates a SBOM from a dependency in CycloneDX 1.4 JSON", func() {
 			bom, err := sbom.GenerateFromDependency(postal.Dependency{
-				CPE:            "cpe:2.3:a:golang:go:1.16.9:*:*:*:*:*:*:*",
-				ID:             "go",
-				Licenses:       []string{"BSD-3-Clause"},
+				CPE: "cpe:2.3:a:golang:go:1.16.9:*:*:*:*:*:*:*",
+				ID:  "go",
+				Licenses: []cargo.ConfigBuildpackLicense{
+					{Type: "BSD-3-Clause"},
+				},
 				Name:           "Go",
 				PURL:           "pkg:generic/go@go1.16.9?checksum=0a1cc7fd7bd20448f71ebed64d846138850d5099b18cf5cc10a4fc45160d8c3d&download_url=https://dl.google.com/go/go1.16.9.src.tar.gz",
 				Checksum:       "sha256:ca9ef23a5db944b116102b87c1ae9344b27e011dae7157d2f1e501abd39e9829",
@@ -396,8 +405,10 @@ func testSBOM(t *testing.T, context spec.G, it spec.S) {
 		context("when the input dependency does not have a CPE or a PURL", func() {
 			it("succeeds in generating an SBOM without CPEs", func() {
 				bom, err := sbom.GenerateFromDependency(postal.Dependency{
-					ID:             "go",
-					Licenses:       []string{"BSD-3-Clause"},
+					ID: "go",
+					Licenses: []cargo.ConfigBuildpackLicense{
+						{Type: "BSD-3-Clause"},
+					},
 					Name:           "Go",
 					Checksum:       "sha256:ca9ef23a5db944b116102b87c1ae9344b27e011dae7157d2f1e501abd39e9829",
 					Source:         "https://dl.google.com/go/go1.16.9.src.tar.gz",
@@ -491,10 +502,12 @@ func testSBOM(t *testing.T, context spec.G, it spec.S) {
 		context("when the input dependency has CPEs and CPE", func() {
 			it("uses CPEs, not CPE", func() {
 				bom, err := sbom.GenerateFromDependency(postal.Dependency{
-					CPE:            "cpe:2.3:a:golang:go:1.16.9:*:*:*:*:*:*:*",
-					CPEs:           []string{"cpe:2.3:a:some:other:cpe:*:*:*:*:*:*:*", "cpe:2.3:a:another:cpe:to:include:*:*:*:*:*:*"},
-					ID:             "go",
-					Licenses:       []string{"BSD-3-Clause"},
+					CPE:  "cpe:2.3:a:golang:go:1.16.9:*:*:*:*:*:*:*",
+					CPEs: []string{"cpe:2.3:a:some:other:cpe:*:*:*:*:*:*:*", "cpe:2.3:a:another:cpe:to:include:*:*:*:*:*:*"},
+					ID:   "go",
+					Licenses: []cargo.ConfigBuildpackLicense{
+						{Type: "BSD-3-Clause"},
+					},
 					Name:           "Go",
 					Checksum:       "sha256:ca9ef23a5db944b116102b87c1ae9344b27e011dae7157d2f1e501abd39e9829",
 					Source:         "https://dl.google.com/go/go1.16.9.src.tar.gz",

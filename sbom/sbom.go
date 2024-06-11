@@ -4,11 +4,11 @@ package sbom
 
 import (
 	"fmt"
+	"github.com/anchore/syft/syft/pkg"
 	"os"
 
 	"github.com/anchore/syft/syft"
 	"github.com/anchore/syft/syft/cpe"
-	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
@@ -104,10 +104,15 @@ func GenerateFromDependency(dependency postal.Dependency, path string) (SBOM, er
 		purl = dependency.PURLs[0]
 	}
 
+	var licenses []string
+	for _, license := range dependency.Licenses {
+		licenses = append(licenses, license.Type)
+	}
+
 	catalog := pkg.NewCatalog(pkg.Package{
 		Name:     dependency.Name,
 		Version:  dependency.Version,
-		Licenses: dependency.Licenses,
+		Licenses: licenses,
 		CPEs:     cpes,
 		PURL:     purl,
 	})

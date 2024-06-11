@@ -9,6 +9,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"github.com/paketo-buildpacks/packit/v2/cargo"
 	"io"
 	"os"
 	"path/filepath"
@@ -1268,8 +1269,10 @@ version = "1.2.3"
 			it("generates a BOM with the license information", func() {
 				entries := service.GenerateBillOfMaterials(
 					postal.Dependency{
-						ID:             "some-entry",
-						Licenses:       []string{"some-license"},
+						ID: "some-entry",
+						Licenses: []cargo.ConfigBuildpackLicense{
+							{Type: "some-license"},
+						},
 						Name:           "Some Entry",
 						Checksum:       "sha256:some-sha",
 						Source:         "some-source",
@@ -1284,7 +1287,9 @@ version = "1.2.3"
 					{
 						Name: "Some Entry",
 						Metadata: paketosbom.BOMMetadata{
-							Licenses: []string{"some-license"},
+							Licenses: []cargo.ConfigBuildpackLicense{
+								{Type: "some-license"},
+							},
 							Checksum: paketosbom.BOMChecksum{
 								Algorithm: paketosbom.SHA256,
 								Hash:      "some-sha",

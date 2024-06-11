@@ -58,10 +58,10 @@ type Dependency struct {
 	StripComponents int `toml:"strip-components"`
 
 	// Distros is a list of operating system distributions the dependency is compatible with.
-	Distros []string `toml:"distros"`
+	Distros []cargo.ConfigBuildpackDistro `toml:"distros"`
 
 	// Licenses is a list of SPDX license identifiers of licenses in the dependency.
-	Licenses []string `toml:"licenses"`
+	Licenses []cargo.ConfigBuildpackLicense `toml:"licenses"`
 
 	// CPE is the Common Platform Enumerator for the dependency. Used in legacy
 	// image label SBOM (GenerateBillOfMaterials).
