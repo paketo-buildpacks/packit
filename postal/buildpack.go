@@ -61,7 +61,7 @@ type Dependency struct {
 	Distros []cargo.ConfigBuildpackDistro `toml:"distros"`
 
 	// Licenses is a list of SPDX license identifiers of licenses in the dependency.
-	Licenses []cargo.ConfigBuildpackLicense `toml:"licenses"`
+	Licenses []interface{} `toml:"licenses"`
 
 	// CPE is the Common Platform Enumerator for the dependency. Used in legacy
 	// image label SBOM (GenerateBillOfMaterials).

@@ -150,12 +150,10 @@ func testEmitter(t *testing.T, context spec.G, it spec.S) {
 			})
 		})
 
-		context("when both DeprecationDate and EOLDate are supplied", func() {
+		context("when EOLDate is supplied", func() {
 
 			context("when it is within 30 days of the end-of-life date", func() {
 				it.Before(func() {
-					deprecationDate, err := time.Parse(time.RFC3339, "2021-04-01T00:00:00Z")
-					Expect(err).NotTo(HaveOccurred())
 					eolDate, err := time.Parse(time.RFC3339, "2021-04-01T00:00:00Z")
 					Expect(err).NotTo(HaveOccurred())
 					now = eolDate.Add(-29 * 24 * time.Hour)
@@ -164,10 +162,9 @@ func testEmitter(t *testing.T, context spec.G, it spec.S) {
 						Metadata: map[string]interface{}{"version-source": "some-source"},
 					}
 					dependency = postal.Dependency{
-						EOLDate:         eolDate,
-						DeprecationDate: deprecationDate,
-						Name:            "Some Dependency",
-						Version:         "some-version",
+						EOLDate: eolDate,
+						Name:    "Some Dependency",
+						Version: "some-version",
 					}
 				})
 
@@ -185,8 +182,6 @@ func testEmitter(t *testing.T, context spec.G, it spec.S) {
 			context("when it is on the end-of-life date", func() {
 				it.Before(func() {
 					var err error
-					deprecationDate, err := time.Parse(time.RFC3339, "2021-04-01T00:00:00Z")
-					Expect(err).NotTo(HaveOccurred())
 					eolDate, err := time.Parse(time.RFC3339, "2021-04-01T00:00:00Z")
 					Expect(err).NotTo(HaveOccurred())
 					now = eolDate
@@ -196,10 +191,9 @@ func testEmitter(t *testing.T, context spec.G, it spec.S) {
 					}
 
 					dependency = postal.Dependency{
-						EOLDate:         eolDate,
-						DeprecationDate: deprecationDate,
-						Name:            "Some Dependency",
-						Version:         "some-version",
+						EOLDate: eolDate,
+						Name:    "Some Dependency",
+						Version: "some-version",
 					}
 				})
 
@@ -215,8 +209,6 @@ func testEmitter(t *testing.T, context spec.G, it spec.S) {
 			})
 			context("when it is after the end-of-life date", func() {
 				it.Before(func() {
-					deprecationDate, err := time.Parse(time.RFC3339, "2021-04-01T00:00:00Z")
-					Expect(err).NotTo(HaveOccurred())
 					eolDate, err := time.Parse(time.RFC3339, "2021-04-01T00:00:00Z")
 					Expect(err).NotTo(HaveOccurred())
 					now = eolDate.Add(24 * time.Hour)
@@ -225,10 +217,9 @@ func testEmitter(t *testing.T, context spec.G, it spec.S) {
 						Metadata: map[string]interface{}{"version-source": "some-source"},
 					}
 					dependency = postal.Dependency{
-						EOLDate:         eolDate,
-						DeprecationDate: deprecationDate,
-						Name:            "Some Dependency",
-						Version:         "some-version",
+						EOLDate: eolDate,
+						Name:    "Some Dependency",
+						Version: "some-version",
 					}
 				})
 

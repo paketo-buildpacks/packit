@@ -9,7 +9,6 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"github.com/paketo-buildpacks/packit/v2/cargo"
 	"io"
 	"os"
 	"path/filepath"
@@ -47,7 +46,6 @@ func testService(t *testing.T, context spec.G, it spec.S) {
 		path = file.Name()
 		_, err = file.WriteString(`
 [[metadata.dependencies]]
-deprecation_date = 2022-04-01T00:00:00Z
 eol-date = 2022-04-01T00:00:00Z
 cpe = "some-cpe"
 cpes = ["some-cpe", "other-cpe"]
@@ -56,6 +54,7 @@ sha256 = "some-sha"
 stacks = ["some-stack"]
 uri = "some-uri"
 version = "1.2.3"
+licenses = ["BSD-3-Clause", "BSD-4-Clause"]
 
 [[metadata.dependencies]]
 id = "some-other-entry"
@@ -121,23 +120,21 @@ strip-components = 1
 
 	context("Resolve", func() {
 		it("finds the best matching dependency given a plan entry", func() {
-			deprecationDate, err := time.Parse(time.RFC3339, "2022-04-01T00:00:00Z")
-			Expect(err).NotTo(HaveOccurred())
 			eolDate, err := time.Parse(time.RFC3339, "2022-04-01T00:00:00Z")
 			Expect(err).NotTo(HaveOccurred())
 
 			dependency, err := service.Resolve(path, "some-entry", "1.2.*", "some-stack")
 			Expect(err).NotTo(HaveOccurred())
 			Expect(dependency).To(Equal(postal.Dependency{
-				CPE:             "some-cpe",
-				CPEs:            []string{"some-cpe", "other-cpe"},
-				DeprecationDate: deprecationDate,
-				EOLDate:         eolDate,
-				ID:              "some-entry",
-				Stacks:          []string{"some-stack"},
-				URI:             "some-uri",
-				SHA256:          "some-sha",
-				Version:         "1.2.3",
+				CPE:      "some-cpe",
+				CPEs:     []string{"some-cpe", "other-cpe"},
+				EOLDate:  eolDate,
+				ID:       "some-entry",
+				Stacks:   []string{"some-stack"},
+				URI:      "some-uri",
+				SHA256:   "some-sha",
+				Version:  "1.2.3",
+				Licenses: []interface{}{"BSD-3-Clause", "BSD-4-Clause"},
 			}))
 		})
 
@@ -189,69 +186,63 @@ strip-components = 1
 
 			context("when there is a version with a major, minor, patch, and pessimistic operator (~>)", func() {
 				it("picks the dependency >= version and < major.minor+1", func() {
-					deprecationDate, err := time.Parse(time.RFC3339, "2022-04-01T00:00:00Z")
-					Expect(err).NotTo(HaveOccurred())
 					eolDate, err := time.Parse(time.RFC3339, "2022-04-01T00:00:00Z")
 					Expect(err).NotTo(HaveOccurred())
 
 					dependency, err := service.Resolve(path, "some-entry", "~> 1.2.0", "some-stack")
 					Expect(err).NotTo(HaveOccurred())
 					Expect(dependency).To(Equal(postal.Dependency{
-						DeprecationDate: deprecationDate,
-						EOLDate:         eolDate,
-						CPE:             "some-cpe",
-						CPEs:            []string{"some-cpe", "other-cpe"},
-						ID:              "some-entry",
-						Stacks:          []string{"some-stack"},
-						URI:             "some-uri",
-						SHA256:          "some-sha",
-						Version:         "1.2.3",
+						EOLDate:  eolDate,
+						CPE:      "some-cpe",
+						CPEs:     []string{"some-cpe", "other-cpe"},
+						ID:       "some-entry",
+						Stacks:   []string{"some-stack"},
+						URI:      "some-uri",
+						SHA256:   "some-sha",
+						Version:  "1.2.3",
+						Licenses: []interface{}{"BSD-3-Clause", "BSD-4-Clause"},
 					}))
 				})
 			})
 
 			context("when there is a version with a major, minor, and pessimistic operator (~>)", func() {
 				it("picks the dependency >= version and < major+1", func() {
-					deprecationDate, err := time.Parse(time.RFC3339, "2022-04-01T00:00:00Z")
-					Expect(err).NotTo(HaveOccurred())
 					eolDate, err := time.Parse(time.RFC3339, "2022-04-01T00:00:00Z")
 					Expect(err).NotTo(HaveOccurred())
 
 					dependency, err := service.Resolve(path, "some-entry", "~> 1.1", "some-stack")
 					Expect(err).NotTo(HaveOccurred())
 					Expect(dependency).To(Equal(postal.Dependency{
-						CPE:             "some-cpe",
-						CPEs:            []string{"some-cpe", "other-cpe"},
-						DeprecationDate: deprecationDate,
-						EOLDate:         eolDate,
-						ID:              "some-entry",
-						Stacks:          []string{"some-stack"},
-						URI:             "some-uri",
-						SHA256:          "some-sha",
-						Version:         "1.2.3",
+						CPE:      "some-cpe",
+						CPEs:     []string{"some-cpe", "other-cpe"},
+						EOLDate:  eolDate,
+						ID:       "some-entry",
+						Stacks:   []string{"some-stack"},
+						URI:      "some-uri",
+						SHA256:   "some-sha",
+						Version:  "1.2.3",
+						Licenses: []interface{}{"BSD-3-Clause", "BSD-4-Clause"},
 					}))
 				})
 			})
 
 			context("when there is a version with a major line only and pessimistic operator (~>)", func() {
 				it("picks the dependency >= version.0.0 and < major+1.0.0", func() {
-					deprecationDate, err := time.Parse(time.RFC3339, "2022-04-01T00:00:00Z")
-					Expect(err).NotTo(HaveOccurred())
 					eolDate, err := time.Parse(time.RFC3339, "2022-04-01T00:00:00Z")
 					Expect(err).NotTo(HaveOccurred())
 
 					dependency, err := service.Resolve(path, "some-entry", "~> 1", "some-stack")
 					Expect(err).NotTo(HaveOccurred())
 					Expect(dependency).To(Equal(postal.Dependency{
-						CPE:             "some-cpe",
-						CPEs:            []string{"some-cpe", "other-cpe"},
-						DeprecationDate: deprecationDate,
-						EOLDate:         eolDate,
-						ID:              "some-entry",
-						Stacks:          []string{"some-stack"},
-						URI:             "some-uri",
-						SHA256:          "some-sha",
-						Version:         "1.2.3",
+						CPE:      "some-cpe",
+						CPEs:     []string{"some-cpe", "other-cpe"},
+						EOLDate:  eolDate,
+						ID:       "some-entry",
+						Stacks:   []string{"some-stack"},
+						URI:      "some-uri",
+						SHA256:   "some-sha",
+						Version:  "1.2.3",
+						Licenses: []interface{}{"BSD-3-Clause", "BSD-4-Clause"},
 					}))
 				})
 			})
@@ -1269,10 +1260,8 @@ version = "1.2.3"
 			it("generates a BOM with the license information", func() {
 				entries := service.GenerateBillOfMaterials(
 					postal.Dependency{
-						ID: "some-entry",
-						Licenses: []cargo.ConfigBuildpackLicense{
-							{Type: "some-license"},
-						},
+						ID:             "some-entry",
+						Licenses:       []interface{}{"some-license"},
 						Name:           "Some Entry",
 						Checksum:       "sha256:some-sha",
 						Source:         "some-source",
@@ -1287,9 +1276,7 @@ version = "1.2.3"
 					{
 						Name: "Some Entry",
 						Metadata: paketosbom.BOMMetadata{
-							Licenses: []cargo.ConfigBuildpackLicense{
-								{Type: "some-license"},
-							},
+							Licenses: []interface{}{"some-license"},
 							Checksum: paketosbom.BOMChecksum{
 								Algorithm: paketosbom.SHA256,
 								Hash:      "some-sha",
