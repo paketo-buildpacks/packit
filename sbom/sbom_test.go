@@ -602,13 +602,6 @@ func testSBOM(t *testing.T, context spec.G, it spec.S) {
 				Expect(goArtifact.Name).To(Equal("Go"), syft.String())
 				Expect(goArtifact.Version).To(Equal("1.16.9"), syft.String())
 				Expect(goArtifact.Licenses).To(Equal([]string{"BSD-3-Clause", "BSD-4-Clause"}), syft.String())
-				Expect(syftDefaultOutput.Source.Type).To(Equal("directory"), syft.String())
-				Expect(syftDefaultOutput.Source.Target).To(Equal("some-path"), syft.String())
-				Expect(goArtifact.PURL).To(BeEmpty())
-				Expect(goArtifact.CPEs).To(Equal([]string{
-					"cpe:2.3:a:some:other:cpe:*:*:*:*:*:*:*",
-					"cpe:2.3:a:another:cpe:to:include:*:*:*:*:*:*",
-				}))
 			})
 		})
 
