@@ -33,11 +33,15 @@ func testFormattedMap(t *testing.T, context spec.G, it spec.S) {
 					"PREPEND.delim":     ":",
 					"APPEND.append":     "some-value",
 					"APPEND.delim":      ":",
+					"BOTH.append":       "appended-value",
+					"BOTH.delim":        ":",
+					"BOTH.prepend":      "prepended-value",
 				})).To(Equal(scribe.FormattedMap{
 					"OVERRIDE": "some-value",
 					"DEFAULT":  "some-value",
 					"PREPEND":  "some-value:$PREPEND",
 					"APPEND":   "$APPEND:some-value",
+					"BOTH":     "prepended-value:$BOTH:appended-value",
 				}))
 			})
 		})
