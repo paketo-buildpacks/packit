@@ -58,17 +58,17 @@ func NewFormattedMapFromEnvironment(environment map[string]string) FormattedMap 
 		case parts[1] == "override" || parts[1] == "default":
 			envMap[parts[0]] = value
 		case parts[1] == "prepend":
-			if existingValue, ok := envMap[parts[0]]; ok {
-				envMap[parts[0]] = strings.Join([]string{value, existingValue.(string)}, environment[parts[0]+".delim"])
-			} else {
-				envMap[parts[0]] = strings.Join([]string{value, "$" + parts[0]}, environment[parts[0]+".delim"])
+			existingValue, ok := envMap[parts[0]]
+			if !ok {
+				existingValue = "$" + parts[0]
 			}
+			envMap[parts[0]] = strings.Join([]string{value, fmt.Sprintf("%v", existingValue)}, environment[parts[0]+".delim"])
 		case parts[1] == "append":
-			if existingValue, ok := envMap[parts[0]]; ok {
-				envMap[parts[0]] = strings.Join([]string{existingValue.(string), value}, environment[parts[0]+".delim"])
-			} else {
-				envMap[parts[0]] = strings.Join([]string{"$" + parts[0], value}, environment[parts[0]+".delim"])
+			existingValue, ok := envMap[parts[0]]
+			if !ok {
+				existingValue = "$" + parts[0]
 			}
+			envMap[parts[0]] = strings.Join([]string{fmt.Sprintf("%v", existingValue), value}, environment[parts[0]+".delim"])
 		}
 	}
 
