@@ -2,7 +2,7 @@ module github.com/paketo-buildpacks/packit/v2
 
 go 1.21
 
-toolchain go1.22.4
+toolchain go1.22.5
 
 require (
 	github.com/BurntSushi/toml v1.4.0
