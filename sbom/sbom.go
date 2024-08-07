@@ -3,8 +3,11 @@
 package sbom
 
 import (
+	"bytes"
 	"fmt"
 	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/anchore/syft/syft"
 	"github.com/anchore/syft/syft/cpe"
@@ -12,6 +15,7 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
+	"github.com/paketo-buildpacks/packit/v2/pexec"
 	"github.com/paketo-buildpacks/packit/v2/postal"
 )
 
@@ -116,6 +120,79 @@ func GenerateFromDependency(dependency postal.Dependency, path string) (SBOM, er
 			},
 		},
 	}, nil
+}
+
+func GenerateWithSyftCli(layersPath, layerName, scanDir string, mediaTypes ...string) error {
+
+	args := []string{"scan", "-q"}
+	for _, mediatype := range mediaTypes {
+		sbomWriteLocation := filepath.Join(layersPath, fmt.Sprintf("%s.sbom.%s", layerName, getExtension(mediatype)))
+
+		// TODO add @<version>
+		args = append(args, "--output", fmt.Sprintf("%s=%s", sbomFormatToSyftOutputFormat(mediatype), sbomWriteLocation))
+		// todo temporary
+		fmt.Printf("Writing SBOM to %s\n", sbomWriteLocation)
+	}
+
+	args = append(args, fmt.Sprintf("dir:%s", scanDir))
+
+	buffer := bytes.NewBuffer(nil)
+	if err := pexec.NewExecutable("syft").Execute(pexec.Execution{
+		Args:   args,
+		Dir:    scanDir,
+		Stdout: buffer,
+		Stderr: buffer,
+	}); err != nil {
+		return fmt.Errorf("unable to run `syft %s`\n%w\n%s", args, err, buffer)
+	}
+	// todo remove
+	fmt.Println("Finished syft command. output:")
+	fmt.Println(buffer)
+	fmt.Printf("args=%+v\n", args)
+
+	// TODO clean cyclonedx file which has a timestamp and unique id which always change
+	return nil
+}
+
+func getExtension(mediatype string) string {
+	switch {
+	case strings.HasPrefix(mediatype, CycloneDXFormat):
+		return "cdx.json"
+	case strings.HasPrefix(mediatype, SPDXFormat):
+		return "spdx.json"
+	// The syft tool does not support providing a version for its in-house standard.
+	case mediatype == SyftFormat:
+		return "syft.json"
+	default:
+		return ""
+	}
+}
+
+func sbomFormatToSyftOutputFormat(mediatype string) string {
+	fmt.Println("PPP: mediatype is " + mediatype)
+	optionalVersionSegment := extractVersionSegment(mediatype)
+
+	switch {
+	case strings.HasPrefix(mediatype, CycloneDXFormat):
+		return "cyclonedx-json" + optionalVersionSegment
+	case strings.HasPrefix(mediatype, SPDXFormat):
+		return "spdx-json" + optionalVersionSegment
+	// The syft tool does not support providing a version for its in-house standard.
+	case mediatype == SyftFormat:
+		return "syft-json"
+	default:
+		return ""
+	}
+}
+
+// look for a pattern like "application/vnd.cyclonedx+json;version=1.4"
+func extractVersionSegment(input string) string {
+	parts := strings.Split(input, ";")
+	versionPart := parts[len(parts)-1]
+	if strings.HasPrefix(versionPart, "version=") {
+		return "@" + strings.Split(versionPart, "=")[1]
+	}
+	return ""
 }
 
 // InFormats returns a Formatter containing mappings for the given Formats.
