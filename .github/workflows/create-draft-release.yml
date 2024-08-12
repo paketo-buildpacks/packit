@@ -5,6 +5,7 @@ on:
     branches:
     - main
     - v*
+    - '!v*-*'
   repository_dispatch:
     types: [ version-bump ]
   workflow_dispatch:
