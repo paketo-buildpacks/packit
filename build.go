@@ -3,14 +3,17 @@ package packit
 import (
 	"errors"
 	"fmt"
+	"math"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
 
+	"github.com/paketo-buildpacks/packit/v2/fs"
+
 	"github.com/BurntSushi/toml"
 	"github.com/Masterminds/semver/v3"
-	"github.com/paketo-buildpacks/packit/internal"
+	"github.com/paketo-buildpacks/packit/v2/internal"
 )
 
 // BuildFunc is the definition of a callback that can be invoked when the Build
@@ -94,16 +97,15 @@ func Build(f BuildFunc, options ...Option) {
 		config = option(config)
 	}
 
-	var (
-		layersPath   = config.args[1]
-		platformPath = config.args[2]
-		planPath     = config.args[3]
-	)
-
 	pwd, err := os.Getwd()
 	if err != nil {
 		config.exitHandler.Error(err)
 		return
+	}
+
+	planPath, ok := os.LookupEnv("CNB_BP_PLAN_PATH")
+	if !ok {
+		planPath = config.args[3]
 	}
 
 	var plan BuildpackPlan
@@ -116,6 +118,16 @@ func Build(f BuildFunc, options ...Option) {
 	cnbPath, ok := os.LookupEnv("CNB_BUILDPACK_DIR")
 	if !ok {
 		cnbPath = filepath.Clean(strings.TrimSuffix(config.args[0], filepath.Join("bin", "build")))
+	}
+
+	layersPath, ok := os.LookupEnv("CNB_LAYERS_DIR")
+	if !ok {
+		layersPath = config.args[1]
+	}
+
+	platformPath, ok := os.LookupEnv("CNB_PLATFORM_DIR")
+	if !ok {
+		platformPath = config.args[2]
 	}
 
 	var buildpackInfo struct {
@@ -131,6 +143,8 @@ func Build(f BuildFunc, options ...Option) {
 
 	apiV05, _ := semver.NewVersion("0.5")
 	apiV06, _ := semver.NewVersion("0.6")
+	apiV08, _ := semver.NewVersion("0.8")
+	apiV09, _ := semver.NewVersion("0.9")
 	apiVersion, err := semver.NewVersion(buildpackInfo.APIVersion)
 	if err != nil {
 		config.exitHandler.Error(err)
@@ -233,6 +247,30 @@ func Build(f BuildFunc, options ...Option) {
 				return
 			}
 		}
+
+		if (apiVersion.GreaterThan(apiV05) || apiVersion.Equal(apiV05)) && len(layer.ExecD) > 0 {
+			execdDir := filepath.Join(layer.Path, "exec.d")
+			err = os.MkdirAll(execdDir, os.ModePerm)
+			if err != nil {
+				config.exitHandler.Error(err)
+				return
+			}
+
+			lexicalWidth := 1 + int(math.Log10(float64(len(layer.ExecD))))
+
+			for i, exe := range layer.ExecD {
+				err = fs.Copy(exe, filepath.Join(execdDir, fmt.Sprintf("%0*d-%s", lexicalWidth, i, filepath.Base(exe))))
+
+				if err != nil {
+					if errors.Is(err, os.ErrNotExist) {
+						err = fmt.Errorf("file %s does not exist. Be sure to include it in the buildpack.toml", exe)
+					}
+
+					config.exitHandler.Error(err)
+					return
+				}
+			}
+		}
 	}
 
 	if !result.Launch.isEmpty() {
@@ -247,17 +285,40 @@ func Build(f BuildFunc, options ...Option) {
 		}
 
 		var launch struct {
-			Processes []Process  `toml:"processes"`
-			Slices    []Slice    `toml:"slices"`
-			Labels    []label    `toml:"labels"`
-			BOM       []BOMEntry `toml:"bom"`
+			Processes       []Process       `toml:"processes,omitempty"`
+			DirectProcesses []DirectProcess `toml:"processes,omitempty"`
+			Slices          []Slice         `toml:"slices"`
+			Labels          []label         `toml:"labels"`
+			BOM             []BOMEntry      `toml:"bom"`
 		}
 
-		launch.Processes = result.Launch.Processes
+		if apiVersion.LessThan(apiV09) {
+			if result.Launch.DirectProcesses != nil {
+				config.exitHandler.Error(errors.New("direct processes can only be used with Buildpack API v0.9 or higher"))
+				return
+			}
+			launch.Processes = result.Launch.Processes
+		} else {
+			if result.Launch.Processes != nil {
+				config.exitHandler.Error(errors.New("non direct processes can only be used with Buildpack API v0.8 or lower"))
+				return
+			}
+			launch.DirectProcesses = result.Launch.DirectProcesses
+		}
+
 		if apiVersion.LessThan(apiV06) {
 			for _, process := range launch.Processes {
 				if process.Default {
 					config.exitHandler.Error(errors.New("processes can only be marked as default with Buildpack API v0.6 or higher"))
+					return
+				}
+			}
+		}
+
+		if apiVersion.LessThan(apiV08) {
+			for _, process := range launch.Processes {
+				if process.WorkingDirectory != "" {
+					config.exitHandler.Error(errors.New("processes can only have a specific working directory with Buildpack API v0.8 or higher"))
 					return
 				}
 			}

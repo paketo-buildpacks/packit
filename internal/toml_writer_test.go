@@ -5,11 +5,11 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/paketo-buildpacks/packit/internal"
+	"github.com/paketo-buildpacks/packit/v2/internal"
 	"github.com/sclevine/spec"
 
 	. "github.com/onsi/gomega"
-	. "github.com/paketo-buildpacks/packit/matchers"
+	. "github.com/paketo-buildpacks/packit/v2/matchers"
 )
 
 func testTOMLWriter(t *testing.T, context spec.G, it spec.S) {

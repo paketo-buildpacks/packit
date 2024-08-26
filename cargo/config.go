@@ -49,16 +49,19 @@ type ConfigMetadata struct {
 }
 
 type ConfigMetadataDependency struct {
+	Checksum        string        `toml:"checksum"         json:"checksum,omitempty"`
 	CPE             string        `toml:"cpe"              json:"cpe,omitempty"`
-	PURL            string        `toml:"purl"              json:"purl,omitempty"`
+	PURL            string        `toml:"purl"             json:"purl,omitempty"`
 	DeprecationDate *time.Time    `toml:"deprecation_date" json:"deprecation_date,omitempty"`
 	ID              string        `toml:"id"               json:"id,omitempty"`
 	Licenses        []interface{} `toml:"licenses"         json:"licenses,omitempty"`
 	Name            string        `toml:"name"             json:"name,omitempty"`
 	SHA256          string        `toml:"sha256"           json:"sha256,omitempty"`
 	Source          string        `toml:"source"           json:"source,omitempty"`
+	SourceChecksum  string        `toml:"source-checksum"  json:"source-checksum,omitempty"`
 	SourceSHA256    string        `toml:"source_sha256"    json:"source_sha256,omitempty"`
 	Stacks          []string      `toml:"stacks"           json:"stacks,omitempty"`
+	StripComponents int           `toml:"strip-components" json:"strip-components,omitempty"`
 	URI             string        `toml:"uri"              json:"uri,omitempty"`
 	Version         string        `toml:"version"          json:"version,omitempty"`
 }
@@ -96,12 +99,17 @@ func EncodeConfig(writer io.Writer, config Config) error {
 		return err
 	}
 
+	c, err = convertStripComponents(config.Metadata.Dependencies, c)
+	if err != nil {
+		return err
+	}
+
 	return toml.NewEncoder(writer).Encode(c)
 }
 
 func DecodeConfig(reader io.Reader, config *Config) error {
 	var c map[string]interface{}
-	_, err := toml.DecodeReader(reader, &c)
+	_, err := toml.NewDecoder(reader).Decode(&c)
 	if err != nil {
 		return err
 	}
@@ -213,8 +221,8 @@ func (cd ConfigMetadataDependency) HasStack(stack string) bool {
 
 // Unmarshal stores json numbers in float64 types, adding an unnecessary decimal point to the patch in the final toml.
 // convertPatches converts this float64 into an int and returns a new map that contains an integer value for patches
-func convertPatches(constraints []ConfigMetadataDependencyConstraint, c map[string]interface{}) (map[string]interface{}, error) {
-	if len(constraints) > 0 {
+func convertPatches(cons []ConfigMetadataDependencyConstraint, c map[string]interface{}) (map[string]interface{}, error) {
+	if len(cons) > 0 {
 		metadata, ok := c["metadata"].(map[string]interface{})
 		if !ok {
 			return nil, fmt.Errorf("failure to assert type: unexpected data in metadata")
@@ -236,6 +244,35 @@ func convertPatches(constraints []ConfigMetadataDependencyConstraint, c map[stri
 				return nil, fmt.Errorf("failure to assert type: unexpected data")
 			}
 			dependencyConstraint.(map[string]interface{})["patches"] = int(floatPatches)
+		}
+	}
+	return c, nil
+}
+
+// Accomplishes the same this as the convertPatches function but for strip components in the dependencies list.
+func convertStripComponents(deps []ConfigMetadataDependency, c map[string]interface{}) (map[string]interface{}, error) {
+	if len(deps) > 0 {
+		metadata, ok := c["metadata"].(map[string]interface{})
+		if !ok {
+			return nil, fmt.Errorf("failure to assert type: unexpected data in metadata")
+		}
+
+		dependencies, ok := metadata["dependencies"].([]interface{})
+		if !ok {
+			return nil, fmt.Errorf("failure to assert type: unexpected data in constraints")
+		}
+
+		for _, dependency := range dependencies {
+			stripComponents, ok := dependency.(map[string]interface{})["strip-components"]
+			if !ok {
+				continue
+			}
+
+			floatStripComponents, ok := stripComponents.(float64)
+			if !ok {
+				return nil, fmt.Errorf("failure to assert type: unexpected data")
+			}
+			dependency.(map[string]interface{})["strip-components"] = int(floatStripComponents)
 		}
 	}
 	return c, nil

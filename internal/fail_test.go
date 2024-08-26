@@ -3,7 +3,7 @@ package internal_test
 import (
 	"testing"
 
-	"github.com/paketo-buildpacks/packit/internal"
+	"github.com/paketo-buildpacks/packit/v2/internal"
 	"github.com/sclevine/spec"
 
 	. "github.com/onsi/gomega"

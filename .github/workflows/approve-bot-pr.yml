@@ -1,0 +1,88 @@
+name: Approve Bot PRs and Enable Auto-Merge
+
+on:
+  workflow_run:
+    workflows: ["Test Pull Request"]
+    types:
+    - completed
+
+jobs:
+  download:
+    name: Download PR Artifact
+    if: ${{ github.event.workflow_run.event == 'pull_request' && github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-22.04
+    outputs:
+      pr-author: ${{ steps.pr-data.outputs.author }}
+      pr-number: ${{ steps.pr-data.outputs.number }}
+    steps:
+    - name: 'Download artifact'
+      uses: paketo-buildpacks/github-config/actions/pull-request/download-artifact@main
+      with:
+        name: "event-payload"
+        repo: ${{ github.repository }}
+        run_id: ${{ github.event.workflow_run.id }}
+        workspace: "/github/workspace"
+        token: ${{ secrets.PAKETO_BOT_GITHUB_TOKEN }}
+    - id: pr-data
+      run: |
+        echo "author=$(cat event.json | jq -r '.pull_request.user.login')" >> "$GITHUB_OUTPUT"
+        echo "number=$(cat event.json | jq -r '.pull_request.number')" >> "$GITHUB_OUTPUT"
+
+  approve:
+    name: Approve Bot PRs
+    needs: download
+    if: ${{ needs.download.outputs.pr-author == 'paketo-bot' || needs.download.outputs.pr-author == 'dependabot[bot]' }}
+    runs-on: ubuntu-22.04
+    steps:
+    - name: Check Commit Verification
+      id: unverified-commits
+      uses: paketo-buildpacks/github-config/actions/pull-request/check-unverified-commits@main
+      with:
+        token: ${{ secrets.PAKETO_BOT_REVIEWER_GITHUB_TOKEN }}
+        repo: ${{ github.repository }}
+        number: ${{ needs.download.outputs.pr-number }}
+
+    - name: Check for Human Commits
+      id: human-commits
+      uses: paketo-buildpacks/github-config/actions/pull-request/check-human-commits@main
+      with:
+        token: ${{ secrets.PAKETO_BOT_REVIEWER_GITHUB_TOKEN }}
+        repo: ${{ github.repository }}
+        number: ${{ needs.download.outputs.pr-number }}
+
+    - name: Checkout
+      if: steps.human-commits.outputs.human_commits == 'false' && steps.unverified-commits.outputs.unverified_commits == 'false'
+      uses: actions/checkout@v3
+
+    - name: Approve
+      if: steps.human-commits.outputs.human_commits == 'false' && steps.unverified-commits.outputs.unverified_commits == 'false'
+      uses: paketo-buildpacks/github-config/actions/pull-request/approve@main
+      with:
+        token: ${{ secrets.PAKETO_BOT_REVIEWER_GITHUB_TOKEN }}
+        number: ${{ needs.download.outputs.pr-number }}
+
+    - name: Enable Auto-Merge
+      if: steps.human-commits.outputs.human_commits == 'false' && steps.unverified-commits.outputs.unverified_commits == 'false'
+      run: |
+        gh pr merge ${{ needs.download.outputs.pr-number }} --auto --rebase
+      env:
+        GITHUB_TOKEN: ${{ secrets.PAKETO_BOT_GITHUB_TOKEN }}
+
+  failure:
+    name: Alert on Failure
+    runs-on: ubuntu-22.04
+    needs: [download, approve]
+    if: ${{ always() && needs.download.result == 'failure' || needs.approve.result == 'failure' }}
+    steps:
+    - name: File Failure Alert Issue
+      uses: paketo-buildpacks/github-config/actions/issue/file@main
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        repo: ${{ github.repository }}
+        label: "failure:approve-bot-pr"
+        comment_if_exists: true
+        issue_title: "Failure: Approve bot PR workflow"
+        issue_body: |
+          Approve bot PR workflow [failed](https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}).
+        comment_body: |
+          Another failure occurred: https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}

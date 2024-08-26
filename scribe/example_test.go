@@ -6,9 +6,9 @@ import (
 	"os"
 	"time"
 
-	"github.com/paketo-buildpacks/packit"
-	"github.com/paketo-buildpacks/packit/postal"
-	"github.com/paketo-buildpacks/packit/scribe"
+	"github.com/paketo-buildpacks/packit/v2"
+	"github.com/paketo-buildpacks/packit/v2/postal"
+	"github.com/paketo-buildpacks/packit/v2/scribe"
 )
 
 func ExampleEmitter() {
@@ -136,7 +136,7 @@ func ExampleEmitter_LaunchProcesses() {
 	//     some-type:       some-command
 	//     web (default):   web-command
 	//     some-other-type: some-other-command some args
-
+	//
 	//   Assigning launch processes:
 	//     some-type:       some-command
 	//     web (default):   web-command

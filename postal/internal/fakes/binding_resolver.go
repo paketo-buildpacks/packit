@@ -3,7 +3,7 @@ package fakes
 import (
 	"sync"
 
-	"github.com/paketo-buildpacks/packit/servicebindings"
+	"github.com/paketo-buildpacks/packit/v2/servicebindings"
 )
 
 type BindingResolver struct {

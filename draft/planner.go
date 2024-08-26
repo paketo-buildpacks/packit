@@ -7,7 +7,7 @@ import (
 	"regexp"
 	"sort"
 
-	"github.com/paketo-buildpacks/packit"
+	"github.com/paketo-buildpacks/packit/v2"
 )
 
 // A Planner sorts buildpack plan entries using a given list of priorities. A

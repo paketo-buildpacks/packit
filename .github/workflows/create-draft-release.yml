@@ -1,9 +1,13 @@
-name: Create Release
+name: Create or Update Draft Release
 
 on:
   push:
     branches:
     - main
+    - v*
+    - '!v*-*'
+  repository_dispatch:
+    types: [ version-bump ]
   workflow_dispatch:
     inputs:
       version:
@@ -15,29 +19,30 @@ concurrency: release
 jobs:
   unit:
     name: Unit Tests
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
     - name: Setup Go
-      uses: actions/setup-go@v1
+      uses: actions/setup-go@v3
       with:
-        go-version: 1.16
+        go-version: 'stable'
     - name: Checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
     - name: Run Unit Tests
-      run: go test -v -count=1 ./...
+      run: ./scripts/unit.sh
 
   release:
     name: Release
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     needs: unit
     steps:
     - name: Setup Go
-      uses: actions/setup-go@v2.1.3
+      uses: actions/setup-go@v3
       with:
-        go-version: 1.16.x
+        go-version: 'stable'
     - name: Checkout
-      uses: actions/checkout@v2
-    - run: git fetch --depth=1 origin +refs/tags/*:refs/tags/* || true
+      uses: actions/checkout@v3
+      with:
+        fetch-tags: true
     - name: Reset Draft Release
       id: reset
       uses: paketo-buildpacks/github-config/actions/release/reset-draft@main
@@ -51,6 +56,7 @@ jobs:
       with:
         repo: ${{ github.repository }}
         token: ${{ github.token }}
+        ref-name: ${{ github.ref_name }}
     - name: Set Release Tag
       id: tag
       run: |
@@ -58,8 +64,8 @@ jobs:
         if [ -z "${tag}" ]; then
           tag="${{ steps.semver.outputs.tag }}"
         fi
-        echo "::set-output name=tag::${tag}"
-    - name: Create Draft Release
+        echo "tag=${tag}" >> "$GITHUB_OUTPUT"
+    - name: Create Release
       uses: paketo-buildpacks/github-config/actions/release/create@main
       with:
         repo: ${{ github.repository }}
@@ -68,3 +74,22 @@ jobs:
         target_commitish: ${{ github.sha }}
         name: v${{ steps.tag.outputs.tag }}
         draft: true
+
+  failure:
+    name: Alert on Failure
+    runs-on: ubuntu-22.04
+    needs: [ unit, release ]
+    if: ${{ always() && needs.unit.result == 'failure' || needs.release.result == 'failure' }}
+    steps:
+    - name: File Failure Alert Issue
+      uses: paketo-buildpacks/github-config/actions/issue/file@main
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        repo: ${{ github.repository }}
+        label: "failure:release"
+        comment_if_exists: true
+        issue_title: "Failure: Create Draft Release workflow"
+        issue_body: |
+          Create Draft Release workflow [failed](https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}).
+        comment_body: |
+           Another failure occurred: https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}

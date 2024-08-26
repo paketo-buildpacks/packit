@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"sort"
 	"strings"
-
-	"github.com/paketo-buildpacks/packit"
 )
 
 // A FormattedMap is a wrapper for map[string]interface{} to extend functionality.
@@ -46,18 +44,31 @@ func (m FormattedMap) String() string {
 
 // NewFormattedMapFromEnvironment take an environment and returns a
 // FormattedMap with the appropriate environment variable information added.
-func NewFormattedMapFromEnvironment(environment packit.Environment) FormattedMap {
+func NewFormattedMapFromEnvironment(environment map[string]string) FormattedMap {
 	envMap := FormattedMap{}
 	for key, value := range environment {
 		parts := strings.SplitN(key, ".", 2)
+
+		if len(parts) < 2 {
+			envMap[key] = value
+			continue
+		}
 
 		switch {
 		case parts[1] == "override" || parts[1] == "default":
 			envMap[parts[0]] = value
 		case parts[1] == "prepend":
-			envMap[parts[0]] = strings.Join([]string{value, "$" + parts[0]}, environment[parts[0]+".delim"])
+			existingValue, ok := envMap[parts[0]]
+			if !ok {
+				existingValue = "$" + parts[0]
+			}
+			envMap[parts[0]] = strings.Join([]string{value, fmt.Sprintf("%v", existingValue)}, environment[parts[0]+".delim"])
 		case parts[1] == "append":
-			envMap[parts[0]] = strings.Join([]string{"$" + parts[0], value}, environment[parts[0]+".delim"])
+			existingValue, ok := envMap[parts[0]]
+			if !ok {
+				existingValue = "$" + parts[0]
+			}
+			envMap[parts[0]] = strings.Join([]string{fmt.Sprintf("%v", existingValue), value}, environment[parts[0]+".delim"])
 		}
 	}
 

@@ -11,6 +11,7 @@ func TestUnitPackit(t *testing.T) {
 	suite := spec.New("packit", spec.Report(report.Terminal{}))
 	suite("Build", testBuild)
 	suite("Detect", testDetect)
+	suite("Generate", testGenerate)
 	suite("Environment", testEnvironment)
 	suite("Layer", testLayer)
 	suite("Layers", testLayers)

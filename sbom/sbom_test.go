@@ -7,8 +7,9 @@ import (
 	"io"
 	"testing"
 
-	"github.com/paketo-buildpacks/packit/postal"
-	"github.com/paketo-buildpacks/packit/sbom"
+	syftsbom "github.com/anchore/syft/syft/sbom"
+	"github.com/paketo-buildpacks/packit/v2/postal"
+	"github.com/paketo-buildpacks/packit/v2/sbom"
 	"github.com/sclevine/spec"
 
 	. "github.com/onsi/gomega"
@@ -17,20 +18,87 @@ import (
 func testSBOM(t *testing.T, context spec.G, it spec.S) {
 	var Expect = NewWithT(t).Expect
 
+	context("NewSBOM", func() {
+		it("constructs an SBOM given a syft.SBOM", func() {
+			bom := sbom.NewSBOM(syftsbom.SBOM{})
+			formatter, err := bom.InFormats(sbom.SyftFormat)
+			Expect(err).NotTo(HaveOccurred())
+
+			buffer := bytes.NewBuffer(nil)
+			_, err = io.Copy(buffer, formatter.Formats()[0].Content)
+			Expect(err).NotTo(HaveOccurred())
+
+			var output syftOutput
+			err = json.NewDecoder(buffer).Decode(&output)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(output.Schema.Version).To(Equal(`3.0.1`), buffer.String())
+			Expect(output.Artifacts).To(HaveLen(0))
+		})
+	})
+
+	context("Generate", func() {
+		context("when given a directory", func() {
+			it("generates an SBOM for that directory", func() {
+				bom, err := sbom.Generate("testdata/")
+				Expect(err).NotTo(HaveOccurred())
+
+				formatter, err := bom.InFormats(sbom.SyftFormat)
+				Expect(err).NotTo(HaveOccurred())
+
+				syft := bytes.NewBuffer(nil)
+				_, err = io.Copy(syft, formatter.Formats()[0].Content)
+				Expect(err).NotTo(HaveOccurred())
+
+				var syftOutput syftOutput
+				err = json.Unmarshal(syft.Bytes(), &syftOutput)
+				Expect(err).NotTo(HaveOccurred(), syft.String())
+				Expect(syftOutput.Source.Type).To(Equal("directory"), syft.String())
+			})
+		})
+
+		context("when given a file", func() {
+			it("generates an SBOM for that file", func() {
+				bom, err := sbom.Generate("testdata/package-lock.json")
+				Expect(err).NotTo(HaveOccurred())
+
+				formatter, err := bom.InFormats(sbom.SyftFormat)
+				Expect(err).NotTo(HaveOccurred())
+
+				syft := bytes.NewBuffer(nil)
+				_, err = io.Copy(syft, formatter.Formats()[0].Content)
+				Expect(err).NotTo(HaveOccurred())
+
+				var syftOutput syftOutput
+				err = json.Unmarshal(syft.Bytes(), &syftOutput)
+				Expect(err).NotTo(HaveOccurred(), syft.String())
+				Expect(syftOutput.Source.Type).To(Equal("file"), syft.String())
+			})
+		})
+
+		context("failure cases", func() {
+			context("when given a nonexistent path", func() {
+				it("returns an error", func() {
+					_, err := sbom.Generate("no/such/path")
+					Expect(err).To(MatchError(ContainSubstring("no such file or directory")))
+				})
+			})
+		})
+	})
+
 	context("GenerateFromDependency", func() {
-		it("generates a SBOM from a dependency", func() {
+		it("generates a SBOM from a dependency for latest schema versions", func() {
 			bom, err := sbom.GenerateFromDependency(postal.Dependency{
-				CPE:          "cpe:2.3:a:golang:go:1.16.9:*:*:*:*:*:*:*",
-				ID:           "go",
-				Licenses:     []string{"BSD-3-Clause"},
-				Name:         "Go",
-				PURL:         "pkg:generic/go@go1.16.9?checksum=0a1cc7fd7bd20448f71ebed64d846138850d5099b18cf5cc10a4fc45160d8c3d&download_url=https://dl.google.com/go/go1.16.9.src.tar.gz",
-				SHA256:       "ca9ef23a5db944b116102b87c1ae9344b27e011dae7157d2f1e501abd39e9829",
-				Source:       "https://dl.google.com/go/go1.16.9.src.tar.gz",
-				SourceSHA256: "0a1cc7fd7bd20448f71ebed64d846138850d5099b18cf5cc10a4fc45160d8c3d",
-				Stacks:       []string{"io.buildpacks.stacks.bionic", "io.paketo.stacks.tiny"},
-				URI:          "https://deps.paketo.io/go/go_go1.16.9_linux_x64_bionic_ca9ef23a.tgz",
-				Version:      "1.16.9",
+				CPE:            "cpe:2.3:a:golang:go:1.16.9:*:*:*:*:*:*:*",
+				ID:             "go",
+				Licenses:       []string{"BSD-3-Clause"},
+				Name:           "Go",
+				PURL:           "pkg:generic/go@go1.16.9?checksum=0a1cc7fd7bd20448f71ebed64d846138850d5099b18cf5cc10a4fc45160d8c3d&download_url=https://dl.google.com/go/go1.16.9.src.tar.gz",
+				Checksum:       "sha256:ca9ef23a5db944b116102b87c1ae9344b27e011dae7157d2f1e501abd39e9829",
+				Source:         "https://dl.google.com/go/go1.16.9.src.tar.gz",
+				SourceChecksum: "sha256:0a1cc7fd7bd20448f71ebed64d846138850d5099b18cf5cc10a4fc45160d8c3d",
+				Stacks:         []string{"io.buildpacks.stacks.bionic", "io.paketo.stacks.tiny"},
+				URI:            "https://deps.paketo.io/go/go_go1.16.9_linux_x64_bionic_ca9ef23a.tgz",
+				Version:        "1.16.9",
 			}, "some-path")
 			Expect(err).NotTo(HaveOccurred())
 
@@ -47,46 +115,21 @@ func testSBOM(t *testing.T, context spec.G, it spec.S) {
 				}
 			}
 
-			Expect(syft.String()).To(MatchJSON(`{
-				"artifacts": [
-					{
-						"id": "b0a2cd11c0e13e43",
-						"name": "Go",
-						"version": "1.16.9",
-						"type": "",
-						"foundBy": "",
-						"locations": [],
-						"licenses": [
-							"BSD-3-Clause"
-						],
-						"language": "",
-						"cpes": [
-							"cpe:2.3:a:golang:go:1.16.9:*:*:*:*:*:*:*"
-						],
-						"purl": "pkg:generic/go@go1.16.9?checksum=0a1cc7fd7bd20448f71ebed64d846138850d5099b18cf5cc10a4fc45160d8c3d&download_url=https://dl.google.com/go/go1.16.9.src.tar.gz",
-						"metadataType": "",
-						"metadata": null
-					}
-				],
-				"artifactRelationships": [],
-				"source": {
-					"type": "directory",
-					"target": "some-path"
-				},
-				"distro": {
-					"name": "",
-					"version": "",
-					"idLike": ""
-				},
-				"descriptor": {
-					"name": "",
-					"version": ""
-				},
-				"schema": {
-					"version": "2.0.0",
-					"url": "https://raw.githubusercontent.com/anchore/syft/main/schema/json/schema-2.0.0.json"
-				}
-			}`))
+			var syftDefaultOutput syftOutput
+
+			err = json.NewDecoder(syft).Decode(&syftDefaultOutput)
+			Expect(err).NotTo(HaveOccurred(), syft.String())
+
+			Expect(syftDefaultOutput.Schema.Version).To(Equal(`3.0.1`), syft.String())
+
+			goArtifact := syftDefaultOutput.Artifacts[0]
+			Expect(goArtifact.Name).To(Equal("Go"), syft.String())
+			Expect(goArtifact.Version).To(Equal("1.16.9"), syft.String())
+			Expect(goArtifact.Licenses).To(Equal([]string{"BSD-3-Clause"}), syft.String())
+			Expect(goArtifact.CPEs).To(Equal([]string{"cpe:2.3:a:golang:go:1.16.9:*:*:*:*:*:*:*"}), syft.String())
+			Expect(goArtifact.PURL).To(Equal("pkg:generic/go@go1.16.9?checksum=0a1cc7fd7bd20448f71ebed64d846138850d5099b18cf5cc10a4fc45160d8c3d&download_url=https://dl.google.com/go/go1.16.9.src.tar.gz"), syft.String())
+			Expect(syftDefaultOutput.Source.Type).To(Equal("directory"), syft.String())
+			Expect(syftDefaultOutput.Source.Target).To(Equal("some-path"), syft.String())
 
 			cdx := bytes.NewBuffer(nil)
 			for _, format := range formats {
@@ -96,51 +139,23 @@ func testSBOM(t *testing.T, context spec.G, it spec.S) {
 				}
 			}
 
-			var cdxOutput struct {
-				SerialNumber string `json:"serialNumber"`
-				Metadata     struct {
-					Timestamp string `json:"timestamp"`
-				} `json:"metadata"`
-			}
-			err = json.Unmarshal(cdx.Bytes(), &cdxOutput)
-			Expect(err).NotTo(HaveOccurred())
+			var cdxDefaultOutput cdxOutput
 
-			Expect(cdx.String()).To(MatchJSON(fmt.Sprintf(`{
-				"bomFormat": "CycloneDX",
-				"specVersion": "1.3",
-				"version": 1,
-				"serialNumber": "%s",
-				"metadata": {
-					"timestamp": "%s",
-					"tools": [
-						{
-							"vendor": "anchore",
-							"name": "syft",
-							"version": "[not provided]"
-						}
-					],
-					"component": {
-						"type": "file",
-						"name": "some-path",
-						"version": ""
-					}
-				},
-				"components": [
-					{
-						"type": "library",
-						"name": "Go",
-						"version": "1.16.9",
-						"licenses": [
-							{
-								"license": {
-									"name": "BSD-3-Clause"
-								}
-							}
-						],
-						"purl": "pkg:generic/go@go1.16.9?checksum=0a1cc7fd7bd20448f71ebed64d846138850d5099b18cf5cc10a4fc45160d8c3d&download_url=https://dl.google.com/go/go1.16.9.src.tar.gz"
-					}
-				]
-			}`, cdxOutput.SerialNumber, cdxOutput.Metadata.Timestamp)))
+			err = json.Unmarshal(cdx.Bytes(), &cdxDefaultOutput)
+			Expect(err).NotTo(HaveOccurred(), cdx.String())
+
+			Expect(cdxDefaultOutput.BOMFormat).To(Equal("CycloneDX"))
+			Expect(cdxDefaultOutput.SpecVersion).To(Equal("1.3"))
+
+			goComponent := cdxDefaultOutput.Components[0]
+			Expect(goComponent.Name).To(Equal("Go"), cdx.String())
+			Expect(goComponent.Version).To(Equal("1.16.9"), cdx.String())
+			Expect(goComponent.Licenses).To(HaveLen(1), cdx.String())
+			Expect(goComponent.Licenses[0].License.ID).To(Equal("BSD-3-Clause"), cdx.String())
+			Expect(goComponent.PURL).To(Equal("pkg:generic/go@go1.16.9?checksum=0a1cc7fd7bd20448f71ebed64d846138850d5099b18cf5cc10a4fc45160d8c3d&download_url=https://dl.google.com/go/go1.16.9.src.tar.gz"), cdx.String())
+
+			Expect(cdxDefaultOutput.Metadata.Component.Type).To(Equal("file"), cdx.String())
+			Expect(cdxDefaultOutput.Metadata.Component.Name).To(Equal("some-path"), cdx.String())
 
 			spdx := bytes.NewBuffer(nil)
 			for _, format := range formats {
@@ -150,54 +165,268 @@ func testSBOM(t *testing.T, context spec.G, it spec.S) {
 				}
 			}
 
-			var spdxOutput struct {
-				CreationInfo struct {
-					Created string `json:"created"`
-				} `json:"creationInfo"`
-				DocumentNamespace string `json:"documentNamespace"`
-			}
-			err = json.Unmarshal(spdx.Bytes(), &spdxOutput)
+			var spdxDefaultOutput spdxOutput
+
+			err = json.Unmarshal(spdx.Bytes(), &spdxDefaultOutput)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(err).NotTo(HaveOccurred(), spdx.String())
+
+			Expect(spdxDefaultOutput.SPDXVersion).To(Equal("SPDX-2.2"), spdx.String())
+
+			goPackage := spdxDefaultOutput.Packages[0]
+			Expect(goPackage.Name).To(Equal("Go"), spdx.String())
+			Expect(goPackage.Version).To(Equal("1.16.9"), spdx.String())
+			Expect(goPackage.LicenseConcluded).To(Equal("BSD-3-Clause"), spdx.String())
+			Expect(goPackage.LicenseDeclared).To(Equal("BSD-3-Clause"), spdx.String())
+			Expect(goPackage.ExternalRefs).To(ContainElement(externalRef{
+				Category: "SECURITY",
+				Locator:  "cpe:2.3:a:golang:go:1.16.9:*:*:*:*:*:*:*",
+				Type:     "cpe23Type",
+			}), spdx.String())
+			Expect(goPackage.ExternalRefs).To(ContainElement(externalRef{
+				Category: "PACKAGE_MANAGER",
+				Locator:  "pkg:generic/go@go1.16.9?checksum=0a1cc7fd7bd20448f71ebed64d846138850d5099b18cf5cc10a4fc45160d8c3d&download_url=https://dl.google.com/go/go1.16.9.src.tar.gz",
+				Type:     "purl",
+			}), spdx.String())
+		})
+
+		it("generates a SBOM from a dependency as syft2 JSON", func() {
+			bom, err := sbom.GenerateFromDependency(postal.Dependency{
+				CPE:            "cpe:2.3:a:golang:go:1.16.9:*:*:*:*:*:*:*",
+				ID:             "go",
+				Licenses:       []string{"BSD-3-Clause"},
+				Name:           "Go",
+				PURL:           "pkg:generic/go@go1.16.9?checksum=0a1cc7fd7bd20448f71ebed64d846138850d5099b18cf5cc10a4fc45160d8c3d&download_url=https://dl.google.com/go/go1.16.9.src.tar.gz",
+				Checksum:       "sha256:ca9ef23a5db944b116102b87c1ae9344b27e011dae7157d2f1e501abd39e9829",
+				Source:         "https://dl.google.com/go/go1.16.9.src.tar.gz",
+				SourceChecksum: "sha256:0a1cc7fd7bd20448f71ebed64d846138850d5099b18cf5cc10a4fc45160d8c3d",
+				Stacks:         []string{"io.buildpacks.stacks.bionic", "io.paketo.stacks.tiny"},
+				URI:            "https://deps.paketo.io/go/go_go1.16.9_linux_x64_bionic_ca9ef23a.tgz",
+				Version:        "1.16.9",
+			}, "some-path")
 			Expect(err).NotTo(HaveOccurred())
 
-			Expect(spdx.String()).To(MatchJSON(fmt.Sprintf(`{
-				"SPDXID": "SPDXRef-DOCUMENT",
-				"name": "some-path",
-				"spdxVersion": "SPDX-2.2",
-				"creationInfo": {
-					"created": "%s",
-					"creators": [
-						"Organization: Anchore, Inc",
-						"Tool: syft-[not provided]"
-					],
-					"licenseListVersion": "3.15"
-				},
-				"dataLicense": "CC0-1.0",
-				"documentNamespace": "%s",
-				"packages": [
-					{
-						"SPDXID": "SPDXRef-b0a2cd11c0e13e43",
-						"name": "Go",
-						"licenseConcluded": "BSD-3-Clause",
-						"downloadLocation": "NOASSERTION",
-						"externalRefs": [
-							{
-								"referenceCategory": "SECURITY",
-								"referenceLocator": "cpe:2.3:a:golang:go:1.16.9:*:*:*:*:*:*:*",
-								"referenceType": "cpe23Type"
-							},
-							{
-								"referenceCategory": "PACKAGE_MANAGER",
-								"referenceLocator": "pkg:generic/go@go1.16.9?checksum=0a1cc7fd7bd20448f71ebed64d846138850d5099b18cf5cc10a4fc45160d8c3d&download_url=https://dl.google.com/go/go1.16.9.src.tar.gz",
-								"referenceType": "purl"
-							}
-						],
-						"filesAnalyzed": false,
-						"licenseDeclared": "BSD-3-Clause",
-						"sourceInfo": "acquired package info from the following paths: ",
-						"versionInfo": "1.16.9"
+			formatter, err := bom.InFormats(fmt.Sprintf("%s;version=2.0.2", sbom.SyftFormat))
+			Expect(err).NotTo(HaveOccurred())
+
+			formats := formatter.Formats()
+
+			syft := bytes.NewBuffer(nil)
+			for _, format := range formats {
+				if format.Extension == "syft.json" {
+					_, err = io.Copy(syft, format.Content)
+					Expect(err).NotTo(HaveOccurred())
+				}
+			}
+
+			var syft2Output syftOutput
+
+			err = json.Unmarshal(syft.Bytes(), &syft2Output)
+			Expect(err).NotTo(HaveOccurred(), syft.String())
+
+			Expect(syft2Output.Schema.Version).To(Equal("2.0.2"), syft.String())
+
+			goArtifact := syft2Output.Artifacts[0]
+			Expect(goArtifact.Name).To(Equal("Go"), syft.String())
+			Expect(goArtifact.Version).To(Equal("1.16.9"), syft.String())
+			Expect(goArtifact.Licenses).To(Equal([]string{"BSD-3-Clause"}), syft.String())
+			Expect(goArtifact.CPEs).To(Equal([]string{"cpe:2.3:a:golang:go:1.16.9:*:*:*:*:*:*:*"}), syft.String())
+			Expect(goArtifact.PURL).To(Equal("pkg:generic/go@go1.16.9?checksum=0a1cc7fd7bd20448f71ebed64d846138850d5099b18cf5cc10a4fc45160d8c3d&download_url=https://dl.google.com/go/go1.16.9.src.tar.gz"), syft.String())
+			Expect(syft2Output.Source.Type).To(Equal("directory"), syft.String())
+			Expect(syft2Output.Source.Target).To(Equal("some-path"), syft.String())
+		})
+
+		it("generates a SBOM from a dependency in CycloneDX 1.4 JSON", func() {
+			bom, err := sbom.GenerateFromDependency(postal.Dependency{
+				CPE:            "cpe:2.3:a:golang:go:1.16.9:*:*:*:*:*:*:*",
+				ID:             "go",
+				Licenses:       []string{"BSD-3-Clause"},
+				Name:           "Go",
+				PURL:           "pkg:generic/go@go1.16.9?checksum=0a1cc7fd7bd20448f71ebed64d846138850d5099b18cf5cc10a4fc45160d8c3d&download_url=https://dl.google.com/go/go1.16.9.src.tar.gz",
+				Checksum:       "sha256:ca9ef23a5db944b116102b87c1ae9344b27e011dae7157d2f1e501abd39e9829",
+				Source:         "https://dl.google.com/go/go1.16.9.src.tar.gz",
+				SourceChecksum: "sha256:0a1cc7fd7bd20448f71ebed64d846138850d5099b18cf5cc10a4fc45160d8c3d",
+				Stacks:         []string{"io.buildpacks.stacks.bionic", "io.paketo.stacks.tiny"},
+				URI:            "https://deps.paketo.io/go/go_go1.16.9_linux_x64_bionic_ca9ef23a.tgz",
+				Version:        "1.16.9",
+			}, "some-path")
+			Expect(err).NotTo(HaveOccurred())
+
+			formatter, err := bom.InFormats(fmt.Sprintf("%s;version=1.4", sbom.CycloneDXFormat))
+			Expect(err).NotTo(HaveOccurred())
+
+			formats := formatter.Formats()
+
+			cdx := bytes.NewBuffer(nil)
+			for _, format := range formats {
+				if format.Extension == "cdx.json" {
+					_, err = io.Copy(cdx, format.Content)
+					Expect(err).NotTo(HaveOccurred())
+				}
+			}
+
+			var cdx14Output cdxOutput
+
+			err = json.Unmarshal(cdx.Bytes(), &cdx14Output)
+			Expect(err).NotTo(HaveOccurred(), cdx.String())
+
+			Expect(cdx14Output.BOMFormat).To(Equal("CycloneDX"))
+			Expect(cdx14Output.SpecVersion).To(Equal("1.4"))
+
+			goComponent := cdx14Output.Components[0]
+			Expect(goComponent.Name).To(Equal("Go"), cdx.String())
+			Expect(goComponent.Version).To(Equal("1.16.9"), cdx.String())
+			Expect(goComponent.Licenses).To(HaveLen(1), cdx.String())
+			Expect(goComponent.Licenses[0].License.ID).To(Equal("BSD-3-Clause"), cdx.String())
+			Expect(goComponent.PURL).To(Equal("pkg:generic/go@go1.16.9?checksum=0a1cc7fd7bd20448f71ebed64d846138850d5099b18cf5cc10a4fc45160d8c3d&download_url=https://dl.google.com/go/go1.16.9.src.tar.gz"), cdx.String())
+
+			Expect(cdx14Output.Metadata.Component.Type).To(Equal("file"), cdx.String())
+			Expect(cdx14Output.Metadata.Component.Name).To(Equal("some-path"), cdx.String())
+		})
+
+		context("when the input dependency does not have a CPE or a PURL", func() {
+			it("succeeds in generating an SBOM without CPEs", func() {
+				bom, err := sbom.GenerateFromDependency(postal.Dependency{
+					ID:             "go",
+					Licenses:       []string{"BSD-3-Clause"},
+					Name:           "Go",
+					Checksum:       "sha256:ca9ef23a5db944b116102b87c1ae9344b27e011dae7157d2f1e501abd39e9829",
+					Source:         "https://dl.google.com/go/go1.16.9.src.tar.gz",
+					SourceChecksum: "sha256:0a1cc7fd7bd20448f71ebed64d846138850d5099b18cf5cc10a4fc45160d8c3d",
+					Stacks:         []string{"io.buildpacks.stacks.bionic", "io.paketo.stacks.tiny"},
+					URI:            "https://deps.paketo.io/go/go_go1.16.9_linux_x64_bionic_ca9ef23a.tgz",
+					Version:        "1.16.9",
+				}, "some-path")
+				Expect(err).NotTo(HaveOccurred())
+
+				formatter, err := bom.InFormats(sbom.SyftFormat, sbom.CycloneDXFormat, sbom.SPDXFormat)
+				Expect(err).NotTo(HaveOccurred())
+
+				formats := formatter.Formats()
+
+				syft := bytes.NewBuffer(nil)
+				for _, format := range formats {
+					if format.Extension == "syft.json" {
+						_, err = io.Copy(syft, format.Content)
+						Expect(err).NotTo(HaveOccurred())
 					}
-				]
-			}`, spdxOutput.CreationInfo.Created, spdxOutput.DocumentNamespace)))
+				}
+
+				var syftDefaultOutput syftOutput
+				err = json.NewDecoder(syft).Decode(&syftDefaultOutput)
+				Expect(err).NotTo(HaveOccurred(), syft.String())
+
+				Expect(syftDefaultOutput.Schema.Version).To(Equal(`3.0.1`), syft.String())
+
+				goArtifact := syftDefaultOutput.Artifacts[0]
+				Expect(goArtifact.Name).To(Equal("Go"), syft.String())
+				Expect(goArtifact.Version).To(Equal("1.16.9"), syft.String())
+				Expect(goArtifact.Licenses).To(Equal([]string{"BSD-3-Clause"}), syft.String())
+				Expect(syftDefaultOutput.Source.Type).To(Equal("directory"), syft.String())
+				Expect(syftDefaultOutput.Source.Target).To(Equal("some-path"), syft.String())
+				Expect(goArtifact.PURL).To(BeEmpty())
+				Expect(goArtifact.CPEs).To(Equal([]string{"cpe:2.3:-:-:-:-:-:-:-:-:-:-:-"}))
+
+				cdx := bytes.NewBuffer(nil)
+				for _, format := range formats {
+					if format.Extension == "cdx.json" {
+						_, err = io.Copy(cdx, format.Content)
+						Expect(err).NotTo(HaveOccurred())
+					}
+				}
+
+				var cdxDefaultOutput cdxOutput
+				err = json.Unmarshal(cdx.Bytes(), &cdxDefaultOutput)
+				Expect(err).NotTo(HaveOccurred(), cdx.String())
+
+				Expect(cdxDefaultOutput.BOMFormat).To(Equal("CycloneDX"))
+				Expect(cdxDefaultOutput.SpecVersion).To(Equal("1.3"))
+
+				goComponent := cdxDefaultOutput.Components[0]
+				Expect(goComponent.Name).To(Equal("Go"), cdx.String())
+				Expect(goComponent.Version).To(Equal("1.16.9"), cdx.String())
+				Expect(goComponent.Licenses).To(HaveLen(1), cdx.String())
+				Expect(goComponent.Licenses[0].License.ID).To(Equal("BSD-3-Clause"), cdx.String())
+				Expect(goComponent.PURL).To(BeEmpty())
+
+				Expect(cdxDefaultOutput.Metadata.Component.Type).To(Equal("file"), cdx.String())
+				Expect(cdxDefaultOutput.Metadata.Component.Name).To(Equal("some-path"), cdx.String())
+
+				spdx := bytes.NewBuffer(nil)
+				for _, format := range formats {
+					if format.Extension == "spdx.json" {
+						_, err = io.Copy(spdx, format.Content)
+						Expect(err).NotTo(HaveOccurred())
+					}
+				}
+
+				var spdxDefaultOutput spdxOutput
+				err = json.Unmarshal(spdx.Bytes(), &spdxDefaultOutput)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(err).NotTo(HaveOccurred(), spdx.String())
+
+				Expect(spdxDefaultOutput.SPDXVersion).To(Equal("SPDX-2.2"), spdx.String())
+
+				goPackage := spdxDefaultOutput.Packages[0]
+				Expect(goPackage.Name).To(Equal("Go"), spdx.String())
+				Expect(goPackage.Version).To(Equal("1.16.9"), spdx.String())
+				Expect(goPackage.LicenseConcluded).To(Equal("BSD-3-Clause"), spdx.String())
+				Expect(goPackage.LicenseDeclared).To(Equal("BSD-3-Clause"), spdx.String())
+				Expect(goPackage.ExternalRefs).To(Equal([]externalRef{{
+					Category: "SECURITY",
+					Locator:  "cpe:2.3:-:-:-:-:-:-:-:-:-:-:-",
+					Type:     "cpe23Type",
+				}}), spdx.String())
+			})
+		})
+		context("when the input dependency has CPEs and CPE", func() {
+			it("uses CPEs, not CPE", func() {
+				bom, err := sbom.GenerateFromDependency(postal.Dependency{
+					CPE:            "cpe:2.3:a:golang:go:1.16.9:*:*:*:*:*:*:*",
+					CPEs:           []string{"cpe:2.3:a:some:other:cpe:*:*:*:*:*:*:*", "cpe:2.3:a:another:cpe:to:include:*:*:*:*:*:*"},
+					ID:             "go",
+					Licenses:       []string{"BSD-3-Clause"},
+					Name:           "Go",
+					Checksum:       "sha256:ca9ef23a5db944b116102b87c1ae9344b27e011dae7157d2f1e501abd39e9829",
+					Source:         "https://dl.google.com/go/go1.16.9.src.tar.gz",
+					SourceChecksum: "sha256:0a1cc7fd7bd20448f71ebed64d846138850d5099b18cf5cc10a4fc45160d8c3d",
+					Stacks:         []string{"io.buildpacks.stacks.bionic", "io.paketo.stacks.tiny"},
+					URI:            "https://deps.paketo.io/go/go_go1.16.9_linux_x64_bionic_ca9ef23a.tgz",
+					Version:        "1.16.9",
+				}, "some-path")
+				Expect(err).NotTo(HaveOccurred())
+
+				formatter, err := bom.InFormats(sbom.SyftFormat, sbom.CycloneDXFormat, sbom.SPDXFormat)
+				Expect(err).NotTo(HaveOccurred())
+
+				formats := formatter.Formats()
+
+				syft := bytes.NewBuffer(nil)
+				for _, format := range formats {
+					if format.Extension == "syft.json" {
+						_, err = io.Copy(syft, format.Content)
+						Expect(err).NotTo(HaveOccurred())
+					}
+				}
+
+				var syftDefaultOutput syftOutput
+				err = json.NewDecoder(syft).Decode(&syftDefaultOutput)
+				Expect(err).NotTo(HaveOccurred(), syft.String())
+
+				Expect(syftDefaultOutput.Schema.Version).To(Equal(`3.0.1`), syft.String())
+
+				goArtifact := syftDefaultOutput.Artifacts[0]
+				Expect(goArtifact.Name).To(Equal("Go"), syft.String())
+				Expect(goArtifact.Version).To(Equal("1.16.9"), syft.String())
+				Expect(goArtifact.Licenses).To(Equal([]string{"BSD-3-Clause"}), syft.String())
+				Expect(syftDefaultOutput.Source.Type).To(Equal("directory"), syft.String())
+				Expect(syftDefaultOutput.Source.Target).To(Equal("some-path"), syft.String())
+				Expect(goArtifact.PURL).To(BeEmpty())
+				Expect(goArtifact.CPEs).To(Equal([]string{
+					"cpe:2.3:a:some:other:cpe:*:*:*:*:*:*:*",
+					"cpe:2.3:a:another:cpe:to:include:*:*:*:*:*:*",
+				}))
+			})
 		})
 
 		context("failure cases", func() {
@@ -217,7 +446,13 @@ func testSBOM(t *testing.T, context spec.G, it spec.S) {
 			context("when a format is not supported", func() {
 				it("returns an error", func() {
 					_, err := sbom.SBOM{}.InFormats("unknown-format")
-					Expect(err).To(MatchError(`"unknown-format" is not a supported SBOM format`))
+					Expect(err).To(MatchError(`unsupported SBOM format: 'unknown-format'`))
+				})
+			})
+			context("when a requested version is not supported", func() {
+				it("returns an error", func() {
+					_, err := sbom.SBOM{}.InFormats(fmt.Sprintf("%s;version=0.0.0", sbom.SyftFormat))
+					Expect(err).To(MatchError(fmt.Sprintf(`version '0.0.0' is not supported for SBOM format '%s'`, sbom.SyftFormat)))
 				})
 			})
 		})

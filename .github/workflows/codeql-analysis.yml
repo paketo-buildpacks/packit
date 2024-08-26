@@ -2,16 +2,20 @@ name: "CodeQL"
 
 on:
   push:
-    branches: [ main ]
+    branches:
+    - main
+    - v*
   pull_request:
-    branches: [ main ]
+    branches:
+    - main
+    - v*
   schedule:
-  - cron: '0 0 * * *' # Once a day at midnight
+  - cron: '24 18 * * *'  # daily at 18:24 UTC
 
 jobs:
   analyze:
     name: Analyze
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     strategy:
       fail-fast: false
@@ -21,15 +25,15 @@ jobs:
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: Initialize CodeQL
-      uses: github/codeql-action/init@v1
+      uses: github/codeql-action/init@v2
       with:
         languages: ${{ matrix.language }}
 
     - name: Autobuild
-      uses: github/codeql-action/autobuild@v1
+      uses: github/codeql-action/autobuild@v2
 
     - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v1
+      uses: github/codeql-action/analyze@v2

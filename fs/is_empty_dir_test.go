@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/paketo-buildpacks/packit/fs"
+	"github.com/paketo-buildpacks/packit/v2/fs"
 	"github.com/sclevine/spec"
 
 	. "github.com/onsi/gomega"

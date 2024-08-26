@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/paketo-buildpacks/packit/internal"
+	"github.com/paketo-buildpacks/packit/v2/internal"
 	"github.com/sclevine/spec"
 
 	. "github.com/onsi/gomega"
@@ -35,18 +35,23 @@ func testEnvironmentWriter(t *testing.T, context spec.G, it spec.S) {
 
 	it("writes the given environment to a directory", func() {
 		err := writer.Write(tmpDir, map[string]string{
-			"some-name":  "some-content",
-			"other-name": "other-content",
+			"some_name":        "some-content",
+			"OTHER_NAME":       "other-content",
+			"ANOTHER.override": "more-content",
 		})
 		Expect(err).NotTo(HaveOccurred())
 
-		content, err := os.ReadFile(filepath.Join(tmpDir, "some-name"))
+		content, err := os.ReadFile(filepath.Join(tmpDir, "some_name"))
 		Expect(err).NotTo(HaveOccurred())
 		Expect(string(content)).To(Equal("some-content"))
 
-		content, err = os.ReadFile(filepath.Join(tmpDir, "other-name"))
+		content, err = os.ReadFile(filepath.Join(tmpDir, "OTHER_NAME"))
 		Expect(err).NotTo(HaveOccurred())
 		Expect(string(content)).To(Equal("other-content"))
+
+		content, err = os.ReadFile(filepath.Join(tmpDir, "ANOTHER.override"))
+		Expect(err).NotTo(HaveOccurred())
+		Expect(string(content)).To(Equal("more-content"))
 	})
 
 	it("writes does not create a directory of the env map is empty", func() {
@@ -64,8 +69,8 @@ func testEnvironmentWriter(t *testing.T, context spec.G, it spec.S) {
 
 			it("returns an error", func() {
 				err := writer.Write(filepath.Join(tmpDir, "sub-dir"), map[string]string{
-					"some-name":  "some-content",
-					"other-name": "other-content",
+					"some_name":  "some-content",
+					"OTHER_NAME": "other-content",
 				})
 				Expect(err).To(MatchError(ContainSubstring("permission denied")))
 			})
@@ -78,10 +83,19 @@ func testEnvironmentWriter(t *testing.T, context spec.G, it spec.S) {
 
 			it("returns an error", func() {
 				err := writer.Write(tmpDir, map[string]string{
-					"some-name":  "some-content",
-					"other-name": "other-content",
+					"some_name":  "some-content",
+					"OTHER_NAME": "other-content",
 				})
 				Expect(err).To(MatchError(ContainSubstring("permission denied")))
+			})
+		})
+
+		context("when env var name is invalid", func() {
+			it("returns an error", func() {
+				err := writer.Write(tmpDir, map[string]string{
+					"INVA=*LID.override": "more-content",
+				})
+				Expect(err).To(MatchError(ContainSubstring("invalid environment variable name 'INVA=*LID'")))
 			})
 		})
 	})

@@ -3,8 +3,10 @@ package cargo
 import (
 	"bytes"
 	"crypto/sha256"
+	"crypto/sha512"
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"hash"
 	"io"
 )
@@ -13,19 +15,41 @@ var ChecksumValidationError = errors.New("validation error: checksum does not ma
 
 type ValidatedReader struct {
 	reader   io.Reader
-	checksum string
+	checksum Checksum
 	hash     hash.Hash
 }
 
-func NewValidatedReader(reader io.Reader, checksum string) ValidatedReader {
+type errorHash struct {
+	hash.Hash
+
+	err error
+}
+
+func NewValidatedReader(reader io.Reader, sum string) ValidatedReader {
+	var hash hash.Hash
+	checksum := Checksum(sum)
+
+	switch checksum.Algorithm() {
+	case "sha256":
+		hash = sha256.New()
+	case "sha512":
+		hash = sha512.New()
+	default:
+		return ValidatedReader{hash: errorHash{err: fmt.Errorf("unsupported algorithm %q: the following algorithms are supported [sha256, sha512]", checksum.Algorithm())}}
+	}
+
 	return ValidatedReader{
 		reader:   reader,
 		checksum: checksum,
-		hash:     sha256.New(),
+		hash:     hash,
 	}
 }
 
 func (vr ValidatedReader) Read(p []byte) (int, error) {
+	if errHash, ok := vr.hash.(errorHash); ok {
+		return 0, errHash.err
+	}
+
 	var done bool
 	n, err := vr.reader.Read(p)
 	if err != nil {
@@ -44,7 +68,7 @@ func (vr ValidatedReader) Read(p []byte) (int, error) {
 
 	if done {
 		sum := hex.EncodeToString(vr.hash.Sum(nil))
-		if sum != vr.checksum {
+		if sum != vr.checksum.Hash() {
 			return n, ChecksumValidationError
 		}
 

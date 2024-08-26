@@ -9,7 +9,7 @@
 //   import (
 //   	"os"
 //
-//   	"github.com/paketo-buildpacks/packit/chronos"
+//   	"github.com/paketo-buildpacks/packit/v2/chronos"
 //   )
 //
 //   func main() {

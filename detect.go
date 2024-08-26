@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/BurntSushi/toml"
-	"github.com/paketo-buildpacks/packit/internal"
+	"github.com/paketo-buildpacks/packit/v2/internal"
 )
 
 // DetectFunc is the definition of a callback that can be invoked when the
@@ -31,9 +31,14 @@ type DetectContext struct {
 	// https://github.com/buildpacks/spec/blob/main/buildpack.md#detection
 	Platform Platform
 
-	// BuildpackInfo includes the details of the buildpack parsed from the
-	// buildpack.toml included in the buildpack contents.
-	BuildpackInfo BuildpackInfo
+	// BuildpackInfo
+	// Deprecated: Use Info instead
+	BuildpackInfo Info
+
+	// Info includes the details of the buildpack (or extension) parsed
+	// from the buildpack.toml (or extension.tom) included in the buildpack
+	// (or extension) contents.
+	Info Info
 
 	// Stack is the value of the chosen stack. This value is populated from the
 	// $CNB_STACK_ID environment variable.
@@ -70,26 +75,47 @@ func Detect(f DetectFunc, options ...Option) {
 	}
 
 	cnbPath, ok := os.LookupEnv("CNB_BUILDPACK_DIR")
+	isExtension := false
+	if !ok {
+		cnbPath, ok = os.LookupEnv("CNB_EXTENSION_DIR")
+		isExtension = ok
+	}
 	if !ok {
 		cnbPath = filepath.Clean(strings.TrimSuffix(config.args[0], filepath.Join("bin", "detect")))
 	}
 
-	var buildpackInfo struct {
-		Buildpack BuildpackInfo `toml:"buildpack"`
+	info := Info{}
+	if isExtension {
+		_, err = toml.DecodeFile(filepath.Join(cnbPath, "extension.toml"), &struct {
+			Extension *Info `toml:"extension"`
+		}{
+			Extension: &info,
+		})
+	} else {
+		_, err = toml.DecodeFile(filepath.Join(cnbPath, "buildpack.toml"), &struct {
+			Buildpack *Info `toml:"buildpack"`
+		}{
+			Buildpack: &info,
+		})
 	}
-	_, err = toml.DecodeFile(filepath.Join(cnbPath, "buildpack.toml"), &buildpackInfo)
 	if err != nil {
 		config.exitHandler.Error(err)
 		return
 	}
 
+	platformPath, ok := os.LookupEnv("CNB_PLATFORM_DIR")
+	if !ok {
+		platformPath = config.args[1]
+	}
+
 	result, err := f(DetectContext{
 		WorkingDir: dir,
 		Platform: Platform{
-			Path: config.args[1],
+			Path: platformPath,
 		},
 		CNBPath:       cnbPath,
-		BuildpackInfo: buildpackInfo.Buildpack,
+		BuildpackInfo: info,
+		Info:          info,
 		Stack:         os.Getenv("CNB_STACK_ID"),
 	})
 	if err != nil {
@@ -97,7 +123,12 @@ func Detect(f DetectFunc, options ...Option) {
 		return
 	}
 
-	file, err := os.OpenFile(config.args[2], os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0644)
+	planPath, ok := os.LookupEnv("CNB_BUILD_PLAN_PATH")
+	if !ok {
+		planPath = config.args[2]
+	}
+
+	file, err := os.OpenFile(planPath, os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0644)
 	if err != nil {
 		config.exitHandler.Error(err)
 		return

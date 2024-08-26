@@ -5,10 +5,10 @@ import (
 	"path/filepath"
 	"testing"
 
-	. "github.com/onsi/gomega"
+	"github.com/paketo-buildpacks/packit/v2/servicebindings"
 	"github.com/sclevine/spec"
 
-	"github.com/paketo-buildpacks/packit/servicebindings"
+	. "github.com/onsi/gomega"
 )
 
 func testResolver(t *testing.T, context spec.G, it spec.S) {
@@ -147,6 +147,43 @@ func testResolver(t *testing.T, context spec.G, it spec.S) {
 				})
 			})
 		})
+
+		context("VCAP_SERVICES env var is set", func() {
+			it.Before(func() {
+				content, err := os.ReadFile("testdata/vcap_services.json")
+				Expect(err).NotTo(HaveOccurred())
+				Expect(os.Setenv("VCAP_SERVICES", string(content))).To(Succeed())
+			})
+
+			it.After(func() {
+				Expect(os.Unsetenv("VCAP_SERVICES")).To(Succeed())
+			})
+
+			context("SERVICE_BINDING_ROOT env var is set", func() {
+				it.Before(func() {
+					Expect(os.Setenv("SERVICE_BINDING_ROOT", bindingRootK8s)).To(Succeed())
+				})
+
+				it("resolves bindings from VCAP_SERVICES", func() {
+					resolver := servicebindings.NewResolver()
+					bindings, err := resolver.Resolve("postgres", "", platformDir)
+					Expect(err).NotTo(HaveOccurred())
+					Expect(bindings).To(ConsistOf(
+						servicebindings.Binding{
+							Name:     "postgres",
+							Path:     "",
+							Type:     "postgres",
+							Provider: "postgres",
+							Entries: map[string]*servicebindings.Entry{
+								"username": servicebindings.NewWithValue([]byte("foo")),
+								"password": servicebindings.NewWithValue([]byte("bar")),
+								"urls":     servicebindings.NewWithValue([]byte("{\"example\":\"http://example.com\"}")),
+							},
+						},
+					))
+				})
+			})
+		})
 	})
 
 	context("resolving bindings", func() {
@@ -205,6 +242,19 @@ func testResolver(t *testing.T, context spec.G, it spec.S) {
 
 			err = os.WriteFile(filepath.Join(bindingRoot, "binding-2", "password"), nil, os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
+
+			err = os.MkdirAll(filepath.Join(bindingRoot, "binding-3"), os.ModePerm)
+			Expect(err).NotTo(HaveOccurred())
+
+			err = os.WriteFile(filepath.Join(bindingRoot, "binding-3", "type"), []byte("\n type-3\n"), os.ModePerm)
+			Expect(err).NotTo(HaveOccurred())
+
+			err = os.WriteFile(filepath.Join(bindingRoot, "binding-3", "provider"), []byte("\tprovider-3\n"), os.ModePerm)
+			Expect(err).NotTo(HaveOccurred())
+
+			err = os.WriteFile(filepath.Join(bindingRoot, "binding-3", "value"), nil, os.ModePerm)
+			Expect(err).NotTo(HaveOccurred())
+
 		})
 
 		it.After(func() {
@@ -254,6 +304,23 @@ func testResolver(t *testing.T, context spec.G, it spec.S) {
 						Entries: map[string]*servicebindings.Entry{
 							"username": servicebindings.NewEntry(filepath.Join(bindingRoot, "binding-1B", "username")),
 							"password": servicebindings.NewEntry(filepath.Join(bindingRoot, "binding-1B", "password")),
+						},
+					},
+				))
+			})
+
+			it("resolves by type/provider files that contains whitespace", func() {
+				bindings, err := resolver.Resolve("type-3", "provider-3", "")
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(bindings).To(ConsistOf(
+					servicebindings.Binding{
+						Name:     "binding-3",
+						Path:     filepath.Join(bindingRoot, "binding-3"),
+						Type:     "type-3",
+						Provider: "provider-3",
+						Entries: map[string]*servicebindings.Entry{
+							"value": servicebindings.NewEntry(filepath.Join(bindingRoot, "binding-3", "value")),
 						},
 					},
 				))

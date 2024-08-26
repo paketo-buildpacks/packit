@@ -7,24 +7,23 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/paketo-buildpacks/packit"
-	"github.com/paketo-buildpacks/packit/fakes"
-	"github.com/paketo-buildpacks/packit/internal"
+	"github.com/paketo-buildpacks/packit/v2"
+	"github.com/paketo-buildpacks/packit/v2/fakes"
+	"github.com/paketo-buildpacks/packit/v2/internal"
 	"github.com/sclevine/spec"
 
 	. "github.com/onsi/gomega"
-	. "github.com/paketo-buildpacks/packit/matchers"
+	. "github.com/paketo-buildpacks/packit/v2/matchers"
 )
 
 func testDetect(t *testing.T, context spec.G, it spec.S) {
 	var (
-		Expect = NewWithT(t).Expect
-
+		Expect      = NewWithT(t).Expect
+		err         error
 		workingDir  string
 		tmpDir      string
 		platformDir string
 		cnbDir      string
-		cnbEnvDir   string
 		binaryPath  string
 		stackID     string
 		planDir     string
@@ -34,7 +33,6 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 	)
 
 	it.Before(func() {
-		var err error
 		workingDir, err = os.Getwd()
 		Expect(err).NotTo(HaveOccurred())
 
@@ -55,27 +53,7 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 		stackID = "io.packit.test.stack"
 		Expect(os.Setenv("CNB_STACK_ID", stackID)).To(Succeed())
 
-		//Separate, but valid CNB dir for testing env parsing
-		cnbEnvDir, err = os.MkdirTemp("", "cnbEnv")
-		Expect(err).NotTo(HaveOccurred())
-
 		binaryPath = filepath.Join(cnbDir, "bin", "detect")
-
-		bpTOMLContent := []byte(`
-api = "0.5"
-[buildpack]
-  id = "some-id"
-  name = "some-name"
-  version = "some-version"
-  clear-env = false
-`)
-		Expect(os.WriteFile(filepath.Join(cnbDir, "buildpack.toml"), bpTOMLContent, 0600)).To(Succeed())
-		Expect(os.WriteFile(filepath.Join(cnbEnvDir, "buildpack.toml"), bpTOMLContent, 0600)).To(Succeed())
-
-		planDir, err = os.MkdirTemp("", "buildplan.toml")
-		Expect(err).NotTo(HaveOccurred())
-
-		planPath = filepath.Join(planDir, "buildplan.toml")
 
 		exitHandler = &fakes.ExitHandler{}
 	})
@@ -84,61 +62,146 @@ api = "0.5"
 		Expect(os.Chdir(workingDir)).To(Succeed())
 		Expect(os.RemoveAll(tmpDir)).To(Succeed())
 		Expect(os.RemoveAll(cnbDir)).To(Succeed())
-		Expect(os.RemoveAll(planDir)).To(Succeed())
 		Expect(os.RemoveAll(platformDir)).To(Succeed())
 		Expect(os.Unsetenv("CNB_STACK_ID")).To(Succeed())
 	})
 
-	context("when providing the detect context to the given DetectFunc", func() {
-		it("succeeds", func() {
-			var context packit.DetectContext
+	context("when detect within an extension", func() {
 
-			packit.Detect(func(ctx packit.DetectContext) (packit.DetectResult, error) {
-				context = ctx
+		it.Before(func() {
+			extTOMLContent := []byte(`
+api = "0.9"
+[extension]
+  id = "some-id"
+  name = "some-name"
+  version = "some-version"
+`)
+			Expect(os.WriteFile(filepath.Join(cnbDir, "extension.toml"), extTOMLContent, 0600)).To(Succeed())
+			Expect(os.Setenv("CNB_EXTENSION_DIR", cnbDir))
+			planDir, err = os.MkdirTemp("", "buildplan.toml")
+			Expect(err).NotTo(HaveOccurred())
 
-				return packit.DetectResult{}, nil
-			}, packit.WithArgs([]string{binaryPath, platformDir, planPath}))
+			planPath = filepath.Join(planDir, "buildplan.toml")
 
-			Expect(context).To(Equal(packit.DetectContext{
-				WorkingDir: tmpDir,
-				CNBPath:    cnbDir,
-				Platform: packit.Platform{
-					Path: platformDir,
-				},
-				BuildpackInfo: packit.BuildpackInfo{
-					ID:      "some-id",
-					Name:    "some-name",
-					Version: "some-version",
-				},
-				Stack: stackID,
-			}))
+		})
+
+		it.After(func() {
+			Expect(os.RemoveAll(planDir)).To(Succeed())
+			Expect(os.Unsetenv("CNB_EXTENSION_DIR")).To(Succeed())
+		})
+
+		context("when providing the detect context to the given DetectFunc", func() {
+			it("succeeds", func() {
+				var context packit.DetectContext
+
+				packit.Detect(func(ctx packit.DetectContext) (packit.DetectResult, error) {
+					context = ctx
+
+					return packit.DetectResult{}, nil
+				}, packit.WithArgs([]string{binaryPath, platformDir, planPath}), packit.WithExitHandler(exitHandler))
+
+				Expect(exitHandler.ErrorCall.CallCount).To(Equal(0))
+				Expect(context).To(Equal(packit.DetectContext{
+					WorkingDir: tmpDir,
+					CNBPath:    cnbDir,
+					Platform: packit.Platform{
+						Path: platformDir,
+					},
+					BuildpackInfo: packit.BuildpackInfo{
+						ID:      "some-id",
+						Name:    "some-name",
+						Version: "some-version",
+					},
+					Info: packit.Info{
+						ID:      "some-id",
+						Name:    "some-name",
+						Version: "some-version",
+					},
+					Stack: stackID,
+				}))
+			})
 		})
 	})
 
-	it("writes out the buildplan.toml", func() {
-		packit.Detect(func(packit.DetectContext) (packit.DetectResult, error) {
-			return packit.DetectResult{
-				Plan: packit.BuildPlan{
-					Provides: []packit.BuildPlanProvision{
-						{Name: "some-provision"},
+	context("when detect within a buildpack", func() {
+		it.Before(func() {
+			bpTOMLContent := []byte(`
+api = "0.5"
+[buildpack]
+  id = "some-id"
+  name = "some-name"
+  version = "some-version"
+  clear-env = false
+`)
+			Expect(os.WriteFile(filepath.Join(cnbDir, "buildpack.toml"), bpTOMLContent, 0600)).To(Succeed())
+
+			planDir, err = os.MkdirTemp("", "buildplan.toml")
+			Expect(err).NotTo(HaveOccurred())
+
+			planPath = filepath.Join(planDir, "buildplan.toml")
+		})
+
+		it.After(func() {
+			Expect(os.RemoveAll(planDir)).To(Succeed())
+		})
+
+		context("when providing the detect context to the given DetectFunc", func() {
+			it("succeeds", func() {
+				var context packit.DetectContext
+
+				packit.Detect(func(ctx packit.DetectContext) (packit.DetectResult, error) {
+					context = ctx
+
+					return packit.DetectResult{}, nil
+				}, packit.WithArgs([]string{binaryPath, platformDir, planPath}), packit.WithExitHandler(exitHandler))
+
+				Expect(exitHandler.ErrorCall.CallCount).To(Equal(0))
+				Expect(context).To(Equal(packit.DetectContext{
+					WorkingDir: tmpDir,
+					CNBPath:    cnbDir,
+					Platform: packit.Platform{
+						Path: platformDir,
 					},
-					Requires: []packit.BuildPlanRequirement{
-						{
-							Name: "some-requirement",
-							Metadata: map[string]string{
-								"version":  "some-version",
-								"some-key": "some-value",
+					BuildpackInfo: packit.BuildpackInfo{
+						ID:      "some-id",
+						Name:    "some-name",
+						Version: "some-version",
+					},
+					Info: packit.Info{
+						ID:      "some-id",
+						Name:    "some-name",
+						Version: "some-version",
+					},
+					Stack: stackID,
+				}))
+			})
+		})
+
+		it("writes out the buildplan.toml", func() {
+			packit.Detect(func(packit.DetectContext) (packit.DetectResult, error) {
+				return packit.DetectResult{
+					Plan: packit.BuildPlan{
+						Provides: []packit.BuildPlanProvision{
+							{Name: "some-provision"},
+						},
+						Requires: []packit.BuildPlanRequirement{
+							{
+								Name: "some-requirement",
+								Metadata: map[string]string{
+									"version":  "some-version",
+									"some-key": "some-value",
+								},
 							},
 						},
 					},
-				},
-			}, nil
-		}, packit.WithArgs([]string{binaryPath, platformDir, planPath}))
+				}, nil
+			}, packit.WithArgs([]string{binaryPath, platformDir, planPath}), packit.WithExitHandler(exitHandler))
 
-		contents, err := os.ReadFile(planPath)
-		Expect(err).NotTo(HaveOccurred())
+			Expect(exitHandler.ErrorCall.CallCount).To(Equal(0))
+			contents, err := os.ReadFile(planPath)
+			Expect(err).NotTo(HaveOccurred())
 
-		Expect(string(contents)).To(MatchTOML(`
+			Expect(string(contents)).To(MatchTOML(`
 [[provides]]
   name = "some-provision"
 
@@ -149,62 +212,63 @@ api = "0.5"
   version = "some-version"
   some-key = "some-value"
 `))
-	})
+		})
 
-	it("writes out the buildplan.toml with multiple plans", func() {
-		packit.Detect(func(packit.DetectContext) (packit.DetectResult, error) {
-			return packit.DetectResult{
-				Plan: packit.BuildPlan{
-					Provides: []packit.BuildPlanProvision{
-						{Name: "some-provision"},
-					},
-					Requires: []packit.BuildPlanRequirement{
-						{
-							Name: "some-requirement",
-							Metadata: map[string]string{
-								"version":  "some-version",
-								"some-key": "some-value",
+		it("writes out the buildplan.toml with multiple plans", func() {
+			packit.Detect(func(packit.DetectContext) (packit.DetectResult, error) {
+				return packit.DetectResult{
+					Plan: packit.BuildPlan{
+						Provides: []packit.BuildPlanProvision{
+							{Name: "some-provision"},
+						},
+						Requires: []packit.BuildPlanRequirement{
+							{
+								Name: "some-requirement",
+								Metadata: map[string]string{
+									"version":  "some-version",
+									"some-key": "some-value",
+								},
 							},
 						},
-					},
-					Or: []packit.BuildPlan{
-						{
-							Provides: []packit.BuildPlanProvision{
-								{Name: "some-other-provision"},
+						Or: []packit.BuildPlan{
+							{
+								Provides: []packit.BuildPlanProvision{
+									{Name: "some-other-provision"},
+								},
+								Requires: []packit.BuildPlanRequirement{
+									{
+										Name: "some-other-requirement",
+										Metadata: map[string]string{
+											"version":        "some-other-version",
+											"some-other-key": "some-other-value",
+										},
+									},
+								},
 							},
-							Requires: []packit.BuildPlanRequirement{
-								{
-									Name: "some-other-requirement",
-									Metadata: map[string]string{
-										"version":        "some-other-version",
-										"some-other-key": "some-other-value",
+							{
+								Provides: []packit.BuildPlanProvision{
+									{Name: "some-another-provision"},
+								},
+								Requires: []packit.BuildPlanRequirement{
+									{
+										Name: "some-another-requirement",
+										Metadata: map[string]string{
+											"version":          "some-another-version",
+											"some-another-key": "some-another-value",
+										},
 									},
 								},
 							},
 						},
-						{
-							Provides: []packit.BuildPlanProvision{
-								{Name: "some-another-provision"},
-							},
-							Requires: []packit.BuildPlanRequirement{
-								{
-									Name: "some-another-requirement",
-									Metadata: map[string]string{
-										"version":          "some-another-version",
-										"some-another-key": "some-another-value",
-									},
-								},
-							},
-						},
 					},
-				},
-			}, nil
-		}, packit.WithArgs([]string{binaryPath, platformDir, planPath}))
+				}, nil
+			}, packit.WithArgs([]string{binaryPath, platformDir, planPath}), packit.WithExitHandler(exitHandler))
+			Expect(exitHandler.ErrorCall.CallCount).To(Equal(0))
 
-		contents, err := os.ReadFile(planPath)
-		Expect(err).NotTo(HaveOccurred())
+			contents, err := os.ReadFile(planPath)
+			Expect(err).NotTo(HaveOccurred())
 
-		Expect(string(contents)).To(MatchTOML(`
+			Expect(string(contents)).To(MatchTOML(`
 [[provides]]
   name = "some-provision"
 
@@ -238,95 +302,103 @@ api = "0.5"
 		version = "some-another-version"
 	  some-another-key = "some-another-value"
 `))
-	})
-
-	context("when CNB_BUILDPACK_DIR is set", func() {
-		it.Before(func() {
-			Expect(os.Setenv("CNB_BUILDPACK_DIR", cnbEnvDir)).To(Succeed())
 		})
 
-		it.After(func() {
-			Expect(os.Unsetenv("CNB_BUILDPACK_DIR")).To(Succeed())
-		})
-
-		it("the Detect context receives the correct value", func() {
-			var context packit.DetectContext
-
-			packit.Detect(func(ctx packit.DetectContext) (packit.DetectResult, error) {
-				context = ctx
-
-				return packit.DetectResult{}, nil
-			}, packit.WithArgs([]string{binaryPath, platformDir, planPath}))
-
-			Expect(context).To(Equal(packit.DetectContext{
-				WorkingDir: tmpDir,
-				CNBPath:    cnbEnvDir,
-				Platform: packit.Platform{
-					Path: platformDir,
-				},
-				BuildpackInfo: packit.BuildpackInfo{
-					ID:      "some-id",
-					Name:    "some-name",
-					Version: "some-version",
-				},
-				Stack: stackID,
-			}))
-		})
-	})
-
-	context("when the DetectFunc returns an error", func() {
-		it("calls the ExitHandler with that error", func() {
-			packit.Detect(func(ctx packit.DetectContext) (packit.DetectResult, error) {
-				return packit.DetectResult{}, errors.New("failed to detect")
-			}, packit.WithArgs([]string{binaryPath, platformDir, planPath}), packit.WithExitHandler(exitHandler))
-
-			Expect(exitHandler.ErrorCall.Receives.Error).To(MatchError("failed to detect"))
-		})
-	})
-
-	context("when the DetectFunc fails", func() {
-		it("calls the ExitHandler with the correct exit code", func() {
-			var exitCode int
-			buffer := bytes.NewBuffer(nil)
-
-			packit.Detect(func(ctx packit.DetectContext) (packit.DetectResult, error) {
-				return packit.DetectResult{}, packit.Fail.WithMessage("failure message")
-			},
-				packit.WithArgs([]string{binaryPath, platformDir, planPath}),
-				packit.WithExitHandler(
-					internal.NewExitHandler(
-						internal.WithExitHandlerExitFunc(func(code int) {
-							exitCode = code
-						}),
-						internal.WithExitHandlerStderr(buffer),
-					),
-				),
-			)
-
-			Expect(exitCode).To(Equal(100))
-			Expect(buffer.String()).To(Equal("failure message\n"))
-		})
-	})
-
-	context("failure cases", func() {
-		context("when the buildpack.toml cannot be read", func() {
-			it("returns an error", func() {
-				packit.Detect(func(packit.DetectContext) (packit.DetectResult, error) {
-					return packit.DetectResult{}, nil
-				}, packit.WithArgs([]string{binaryPath, platformDir, "/no/such/plan/path"}), packit.WithExitHandler(exitHandler))
-
-				Expect(exitHandler.ErrorCall.Receives.Error).To(MatchError(ContainSubstring("no such file or directory")))
-			})
-		})
-
-		context("when the buildplan.toml cannot be opened", func() {
+		context("when CNB_BUILDPACK_DIR is set", func() {
 			it.Before(func() {
-				_, err := os.OpenFile(planPath, os.O_CREATE|os.O_RDWR, 0000)
-				Expect(err).NotTo(HaveOccurred())
+				Expect(os.Setenv("CNB_BUILDPACK_DIR", cnbDir)).To(Succeed())
 			})
 
-			it("returns an error", func() {
-				packit.Detect(func(packit.DetectContext) (packit.DetectResult, error) {
+			it.After(func() {
+				Expect(os.Unsetenv("CNB_BUILDPACK_DIR")).To(Succeed())
+			})
+
+			it("the Detect context receives the correct value", func() {
+				var context packit.DetectContext
+
+				packit.Detect(func(ctx packit.DetectContext) (packit.DetectResult, error) {
+					context = ctx
+
+					return packit.DetectResult{}, nil
+				}, packit.WithArgs([]string{"env-var-override", platformDir, planPath}), packit.WithExitHandler(exitHandler))
+
+				Expect(exitHandler.ErrorCall.CallCount).To(Equal(0))
+				Expect(context).To(Equal(packit.DetectContext{
+					WorkingDir: tmpDir,
+					CNBPath:    cnbDir,
+					Platform: packit.Platform{
+						Path: platformDir,
+					},
+					BuildpackInfo: packit.Info{
+						ID:      "some-id",
+						Name:    "some-name",
+						Version: "some-version",
+					},
+					Info: packit.Info{
+						ID:      "some-id",
+						Name:    "some-name",
+						Version: "some-version",
+					},
+					Stack: stackID,
+				}))
+			})
+		})
+
+		context("when CNB_PLATFORM_DIR is set", func() {
+			it.Before(func() {
+				Expect(os.Setenv("CNB_PLATFORM_DIR", platformDir)).To(Succeed())
+			})
+
+			it.After(func() {
+				Expect(os.Unsetenv("CNB_PLATFORM_DIR")).To(Succeed())
+			})
+
+			it("the Detect context receives the correct value", func() {
+				var context packit.DetectContext
+
+				packit.Detect(func(ctx packit.DetectContext) (packit.DetectResult, error) {
+					context = ctx
+
+					return packit.DetectResult{}, nil
+				}, packit.WithArgs([]string{binaryPath, "env-var-override", planPath}), packit.WithExitHandler(exitHandler))
+
+				Expect(exitHandler.ErrorCall.CallCount).To(Equal(0))
+				Expect(context).To(Equal(packit.DetectContext{
+					WorkingDir: tmpDir,
+					CNBPath:    cnbDir,
+					Platform: packit.Platform{
+						Path: platformDir,
+					},
+					BuildpackInfo: packit.BuildpackInfo{
+						ID:      "some-id",
+						Name:    "some-name",
+						Version: "some-version",
+					},
+					Info: packit.Info{
+						ID:      "some-id",
+						Name:    "some-name",
+						Version: "some-version",
+					},
+					Stack: stackID,
+				}))
+			})
+		})
+
+		context("when CNB_BUILD_PLAN_PATH is set", func() {
+			it.Before(func() {
+				Expect(os.Setenv("CNB_BUILD_PLAN_PATH", planPath)).To(Succeed())
+			})
+
+			it.After(func() {
+				Expect(os.Unsetenv("CNB_BUILD_PLAN_PATH")).To(Succeed())
+			})
+
+			it("the Detect context receives the correct value", func() {
+				var context packit.DetectContext
+
+				packit.Detect(func(ctx packit.DetectContext) (packit.DetectResult, error) {
+					context = ctx
+
 					return packit.DetectResult{
 						Plan: packit.BuildPlan{
 							Provides: []packit.BuildPlanProvision{
@@ -343,31 +415,140 @@ api = "0.5"
 							},
 						},
 					}, nil
-				}, packit.WithArgs([]string{binaryPath, platformDir, planPath}), packit.WithExitHandler(exitHandler))
+				}, packit.WithArgs([]string{binaryPath, platformDir, "env-var-override"}), packit.WithExitHandler(exitHandler))
 
-				Expect(exitHandler.ErrorCall.Receives.Error).To(MatchError(ContainSubstring("permission denied")))
+				Expect(exitHandler.ErrorCall.CallCount).To(Equal(0))
+				Expect(context).To(Equal(packit.DetectContext{
+					WorkingDir: tmpDir,
+					CNBPath:    cnbDir,
+					Platform: packit.Platform{
+						Path: platformDir,
+					},
+					BuildpackInfo: packit.BuildpackInfo{
+						ID:      "some-id",
+						Name:    "some-name",
+						Version: "some-version",
+					},
+					Info: packit.Info{
+						ID:      "some-id",
+						Name:    "some-name",
+						Version: "some-version",
+					},
+					Stack: stackID,
+				}))
+
+				contents, err := os.ReadFile(planPath)
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(string(contents)).To(MatchTOML(`
+[[provides]]
+  name = "some-provision"
+
+[[requires]]
+  name = "some-requirement"
+
+[requires.metadata]
+  version = "some-version"
+  some-key = "some-value"
+`))
 			})
 		})
 
-		context("when the buildplan.toml cannot be encoded", func() {
-			it("returns an error", func() {
-				packit.Detect(func(packit.DetectContext) (packit.DetectResult, error) {
-					return packit.DetectResult{
-						Plan: packit.BuildPlan{
-							Provides: []packit.BuildPlanProvision{
-								{Name: "some-provision"},
-							},
-							Requires: []packit.BuildPlanRequirement{
-								{
-									Name:     "some-requirement",
-									Metadata: map[int]int{},
-								},
-							},
-						},
-					}, nil
+		context("when the DetectFunc returns an error", func() {
+			it("calls the ExitHandler with that error", func() {
+				packit.Detect(func(ctx packit.DetectContext) (packit.DetectResult, error) {
+					return packit.DetectResult{}, errors.New("failed to detect")
 				}, packit.WithArgs([]string{binaryPath, platformDir, planPath}), packit.WithExitHandler(exitHandler))
 
-				Expect(exitHandler.ErrorCall.Receives.Error).To(MatchError(ContainSubstring("cannot encode a map with non-string key type")))
+				Expect(exitHandler.ErrorCall.Receives.Error).To(MatchError("failed to detect"))
+			})
+		})
+
+		context("when the DetectFunc fails", func() {
+			it("calls the ExitHandler with the correct exit code", func() {
+				var exitCode int
+				buffer := bytes.NewBuffer(nil)
+
+				packit.Detect(func(ctx packit.DetectContext) (packit.DetectResult, error) {
+					return packit.DetectResult{}, packit.Fail.WithMessage("failure message")
+				},
+					packit.WithArgs([]string{binaryPath, platformDir, planPath}),
+					packit.WithExitHandler(
+						internal.NewExitHandler(
+							internal.WithExitHandlerExitFunc(func(code int) {
+								exitCode = code
+							}),
+							internal.WithExitHandlerStderr(buffer),
+						),
+					),
+				)
+
+				Expect(exitCode).To(Equal(100))
+				Expect(buffer.String()).To(Equal("failure message\n"))
+			})
+		})
+
+		context("failure cases", func() {
+			context("when the buildpack.toml cannot be read", func() {
+				it("returns an error", func() {
+					packit.Detect(func(packit.DetectContext) (packit.DetectResult, error) {
+						return packit.DetectResult{}, nil
+					}, packit.WithArgs([]string{binaryPath, platformDir, "/no/such/plan/path"}), packit.WithExitHandler(exitHandler))
+
+					Expect(exitHandler.ErrorCall.Receives.Error).To(MatchError(ContainSubstring("no such file or directory")))
+				})
+			})
+
+			context("when the buildplan.toml cannot be opened", func() {
+				it.Before(func() {
+					_, err := os.OpenFile(planPath, os.O_CREATE|os.O_RDWR, 0000)
+					Expect(err).NotTo(HaveOccurred())
+				})
+
+				it("returns an error", func() {
+					packit.Detect(func(packit.DetectContext) (packit.DetectResult, error) {
+						return packit.DetectResult{
+							Plan: packit.BuildPlan{
+								Provides: []packit.BuildPlanProvision{
+									{Name: "some-provision"},
+								},
+								Requires: []packit.BuildPlanRequirement{
+									{
+										Name: "some-requirement",
+										Metadata: map[string]string{
+											"version":  "some-version",
+											"some-key": "some-value",
+										},
+									},
+								},
+							},
+						}, nil
+					}, packit.WithArgs([]string{binaryPath, platformDir, planPath}), packit.WithExitHandler(exitHandler))
+
+					Expect(exitHandler.ErrorCall.Receives.Error).To(MatchError(ContainSubstring("permission denied")))
+				})
+			})
+
+			context("when the buildplan.toml cannot be encoded", func() {
+				it("returns an error", func() {
+					packit.Detect(func(packit.DetectContext) (packit.DetectResult, error) {
+						return packit.DetectResult{
+							Plan: packit.BuildPlan{
+								Provides: []packit.BuildPlanProvision{
+									{Name: "some-provision"},
+								},
+								Requires: []packit.BuildPlanRequirement{
+									{
+										Name:     "some-requirement",
+										Metadata: map[int]int{},
+									},
+								},
+							},
+						}, nil
+					}, packit.WithArgs([]string{binaryPath, platformDir, planPath}), packit.WithExitHandler(exitHandler))
+
+					Expect(exitHandler.ErrorCall.Receives.Error).To(MatchError(ContainSubstring("cannot encode a map with non-string key type")))
+				})
 			})
 		})
 	})

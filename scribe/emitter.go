@@ -7,9 +7,50 @@ import (
 	"strings"
 	"time"
 
-	"github.com/paketo-buildpacks/packit"
-	"github.com/paketo-buildpacks/packit/postal"
+	"github.com/paketo-buildpacks/packit/v2"
+	"github.com/paketo-buildpacks/packit/v2/postal"
 )
+
+type launchProcess interface {
+	GetType() string
+	GetCommand() []string
+	GetArgs() []string
+	GetDefault() bool
+}
+
+type indirectProcess struct {
+	packit.Process
+}
+
+func (p indirectProcess) GetType() string {
+	return p.Type
+}
+func (p indirectProcess) GetCommand() []string {
+	return strings.Split(p.Command, " ")
+}
+func (p indirectProcess) GetArgs() []string {
+	return p.Args
+}
+func (p indirectProcess) GetDefault() bool {
+	return p.Default
+}
+
+type directProcess struct {
+	packit.DirectProcess
+}
+
+func (p directProcess) GetType() string {
+	return p.Type
+}
+func (p directProcess) GetCommand() []string {
+	return p.Command
+}
+func (p directProcess) GetArgs() []string {
+	return p.Args
+}
+func (p directProcess) GetDefault() bool {
+	return p.Default
+}
 
 // An Emitter embeds the scribe.Logger type to provide an interface for
 // complicated shared logging tasks.
@@ -24,6 +65,13 @@ func NewEmitter(output io.Writer) Emitter {
 	return Emitter{
 		Logger: NewLogger(output),
 	}
+}
+
+// WithLevel takes in a log level string and configures the underlying Logger
+// log level. To enable debug logging the log level must be set to "DEBUG".
+func (e Emitter) WithLevel(level string) Emitter {
+	e.Logger = e.Logger.WithLevel(level)
+	return e
 }
 
 // SelectedDependency takes in a buildpack plan entry, a postal dependency, and
@@ -99,11 +147,31 @@ Entries:
 	e.Break()
 }
 
-// LaunchProcesses take a list of processes and a map of process specific
+// LaunchProcesses take a list of (indirect) processes and a map of process specific
 // enivronment varables and prints out a formatted table including the type
 // name, whether or not it is a default process, the command, arguments, and
 // any process specific environment variables.
 func (e Emitter) LaunchProcesses(processes []packit.Process, processEnvs ...map[string]packit.Environment) {
+	launchProcesses := []launchProcess{}
+	for _, process := range processes {
+		launchProcesses = append(launchProcesses, indirectProcess{process})
+	}
+	e.launch(launchProcesses, processEnvs...)
+}
+
+// LaunchDirectProcesses take a list of direct processes and a map of process specific
+// enivronment varables and prints out a formatted table including the type
+// name, whether or not it is a default process, the command, arguments, and
+// any process specific environment variables.
+func (e Emitter) LaunchDirectProcesses(processes []packit.DirectProcess, processEnvs ...map[string]packit.Environment) {
+	launchProcesses := []launchProcess{}
+	for _, process := range processes {
+		launchProcesses = append(launchProcesses, directProcess{process})
+	}
+	e.launch(launchProcesses, processEnvs...)
+}
+
+func (e Emitter) launch(processes []launchProcess, processEnvs ...map[string]packit.Environment) {
 	e.Process("Assigning launch processes:")
 
 	var (
@@ -111,8 +179,8 @@ func (e Emitter) LaunchProcesses(processes []packit.Process, processEnvs ...map[
 	)
 
 	for _, process := range processes {
-		pType := process.Type
-		if process.Default {
+		pType := process.GetType()
+		if process.GetDefault() {
 			pType += " " + "(default)"
 		}
 
@@ -122,16 +190,17 @@ func (e Emitter) LaunchProcesses(processes []packit.Process, processEnvs ...map[
 	}
 
 	for _, process := range processes {
-		pType := process.Type
-		if process.Default {
+		pType := process.GetType()
+		if process.GetDefault() {
 			pType += " " + "(default)"
 		}
 
-		pad := typePadding + len(process.Command) - len(pType)
-		p := fmt.Sprintf("%s: %*s", pType, pad, process.Command)
+		command := strings.Join(process.GetCommand(), " ")
+		pad := typePadding + len(command) - len(pType)
+		p := fmt.Sprintf("%s: %*s", pType, pad, command)
 
-		if process.Args != nil {
-			p += " " + strings.Join(process.Args, " ")
+		if process.GetArgs() != nil {
+			p += " " + strings.Join(process.GetArgs(), " ")
 		}
 
 		e.Subprocess(p)
@@ -140,7 +209,7 @@ func (e Emitter) LaunchProcesses(processes []packit.Process, processEnvs ...map[
 		// matter the order of the process envs map list
 		processEnv := packit.Environment{}
 		for _, pEnvs := range processEnvs {
-			if env, ok := pEnvs[process.Type]; ok {
+			if env, ok := pEnvs[process.GetType()]; ok {
 				for key, value := range env {
 					processEnv[key] = value
 				}
@@ -155,7 +224,7 @@ func (e Emitter) LaunchProcesses(processes []packit.Process, processEnvs ...map[
 	e.Break()
 }
 
-// EnvironmentVariables take a layer and prints out a formatted table of the
+// EnvironmentVariables takes a layer and prints out a formatted table of the
 // build and launch time environment variables set in the layer.
 func (e Emitter) EnvironmentVariables(layer packit.Layer) {
 	buildEnv := packit.Environment{}
@@ -188,4 +257,41 @@ func (e Emitter) EnvironmentVariables(layer packit.Layer) {
 		e.Subprocess("%s", NewFormattedMapFromEnvironment(launchEnv))
 		e.Break()
 	}
+}
+
+// LayerFlags takes a layer and prints out the state of the build, launch,
+// and cache layer flags in human-readable language.
+func (e Emitter) LayerFlags(layer packit.Layer) {
+	e.Debug.Process("Setting up layer '%s'", layer.Name)
+	e.Debug.Subprocess("Available at app launch: %t", layer.Launch)
+	e.Debug.Subprocess("Available to other buildpacks: %t", layer.Build)
+	e.Debug.Subprocess("Cached for rebuilds: %t", layer.Cache)
+	e.Debug.Break()
+}
+
+// GeneratingSBOM takes a path to a directory and logs that an SBOM is
+// being generated for that directory.
+func (e Emitter) GeneratingSBOM(path string) {
+	e.Process("Generating SBOM for %s", path)
+}
+
+// FormattingSBOM takes a list of SBOM formats and logs that an SBOM is
+// generated in each format. Note: Only logs when the emitter is in DEBUG
+// mode.
+func (e Emitter) FormattingSBOM(formats ...string) {
+	e.Debug.Process("Writing SBOM in the following format(s):")
+	for _, f := range formats {
+		e.Debug.Subprocess(f)
+	}
+	e.Debug.Break()
+}
+
+// BuildConfiguration takes a map representing environment variables
+// that will configure a buildpack build and prints them in a formatted
+// table.
+func (e Emitter) BuildConfiguration(envVars map[string]string) {
+	formatted := NewFormattedMapFromEnvironment(envVars)
+	e.Debug.Process("Build configuration:")
+	e.Debug.Subprocess(formatted.String())
+	e.Debug.Break()
 }

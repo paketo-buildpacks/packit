@@ -35,5 +35,10 @@ func (t Transport) Drop(root, uri string) (io.ReadCloser, error) {
 		return nil, fmt.Errorf("failed to make request: %s", err)
 	}
 
+	if response.StatusCode >= 400 {
+		response.Body.Close()
+		return nil, fmt.Errorf("unexpected status code %d while fetching %q", response.StatusCode, uri)
+	}
+
 	return response.Body, nil
 }

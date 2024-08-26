@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/paketo-buildpacks/packit/cargo"
+	"github.com/paketo-buildpacks/packit/v2/cargo"
 	"github.com/sclevine/spec"
 
 	. "github.com/onsi/gomega"
@@ -72,6 +72,13 @@ func testTransport(t *testing.T, context spec.G, it spec.S) {
 						_, err := transport.Drop("", fmt.Sprintf("%s/some-bundle", server.URL))
 						Expect(err).To(MatchError(ContainSubstring("failed to make request")))
 						Expect(err).To(MatchError(ContainSubstring("connection refused")))
+					})
+				})
+
+				context("when the http status indicates an error", func() {
+					it("returns an error", func() {
+						_, err := transport.Drop("", fmt.Sprintf("%s/some-bundle-that-does-not-exist", server.URL))
+						Expect(err).To(MatchError(ContainSubstring("unexpected status code 404 while fetching")))
 					})
 				})
 			})

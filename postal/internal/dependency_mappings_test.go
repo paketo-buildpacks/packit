@@ -5,9 +5,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/paketo-buildpacks/packit/postal/internal"
-	"github.com/paketo-buildpacks/packit/postal/internal/fakes"
-	"github.com/paketo-buildpacks/packit/servicebindings"
+	"github.com/paketo-buildpacks/packit/v2/postal/internal"
+	"github.com/paketo-buildpacks/packit/v2/postal/internal/fakes"
+	"github.com/paketo-buildpacks/packit/v2/servicebindings"
 	"github.com/sclevine/spec"
 
 	. "github.com/onsi/gomega"
@@ -25,7 +25,7 @@ func testDependencyMappings(t *testing.T, context spec.G, it spec.S) {
 	it.Before(func() {
 		tmpDir, err = os.MkdirTemp("", "dependency-mappings")
 		Expect(err).NotTo(HaveOccurred())
-		Expect(os.WriteFile(filepath.Join(tmpDir, "entry-data"), []byte("dependency-mapping-entry.tgz"), os.ModePerm))
+		Expect(os.WriteFile(filepath.Join(tmpDir, "entry-data"), []byte("\n\tdependency-mapping-entry.tgz\n"), os.ModePerm))
 
 		bindingResolver = &fakes.BindingResolver{}
 		resolver = internal.NewDependencyMappingResolver(bindingResolver)
@@ -49,10 +49,18 @@ func testDependencyMappings(t *testing.T, context spec.G, it spec.S) {
 				},
 				{
 					Name: "other-binding",
-					Path: "other-path",
+					Path: "other-",
 					Type: "dependency-mapping",
 					Entries: map[string]*servicebindings.Entry{
-						"other-sha": servicebindings.NewEntry("some-entry-path"),
+						"sha512:other-sha": servicebindings.NewEntry(filepath.Join(tmpDir, "entry-data")),
+					},
+				},
+				{
+					Name: "other-binding-with-hyphen",
+					Path: "hypen-another-",
+					Type: "dependency-mapping",
+					Entries: map[string]*servicebindings.Entry{
+						"sha-512_other-sha-underscore": servicebindings.NewEntry(filepath.Join(tmpDir, "entry-data")),
 					},
 				},
 				{
@@ -66,12 +74,42 @@ func testDependencyMappings(t *testing.T, context spec.G, it spec.S) {
 
 		context("given a set of bindings and a dependency", func() {
 			it("finds a matching dependency mappings in the platform bindings if there is one", func() {
-				boundDependency, err := resolver.FindDependencyMapping("some-sha", "some-platform-dir")
+				boundDependency, err := resolver.FindDependencyMapping("sha256:some-sha", "some-platform-dir")
 				Expect(err).ToNot(HaveOccurred())
 				Expect(bindingResolver.ResolveCall.Receives.Typ).To(Equal("dependency-mapping"))
 				Expect(bindingResolver.ResolveCall.Receives.Provider).To(BeEmpty())
 				Expect(bindingResolver.ResolveCall.Receives.PlatformDir).To(Equal("some-platform-dir"))
 				Expect(boundDependency).To(Equal("dependency-mapping-entry.tgz"))
+			})
+
+			context("the binding is of format <algorithm>:<hash>", func() {
+				it("finds a matching dependency mappings in the platform bindings if there is one", func() {
+					boundDependency, err := resolver.FindDependencyMapping("sha512:other-sha", "some-platform-dir")
+					Expect(err).ToNot(HaveOccurred())
+					Expect(bindingResolver.ResolveCall.Receives.Typ).To(Equal("dependency-mapping"))
+					Expect(bindingResolver.ResolveCall.Receives.Provider).To(BeEmpty())
+					Expect(bindingResolver.ResolveCall.Receives.PlatformDir).To(Equal("some-platform-dir"))
+					Expect(boundDependency).To(Equal("dependency-mapping-entry.tgz"))
+				})
+			})
+
+			context("the binding is of format <algorithm>_<hash>", func() {
+				it("finds a matching dependency mappings in the platform bindings if there is one", func() {
+					boundDependency, err := resolver.FindDependencyMapping("sha-512:other-sha-underscore", "some-platform-dir")
+					Expect(err).ToNot(HaveOccurred())
+					Expect(bindingResolver.ResolveCall.Receives.Typ).To(Equal("dependency-mapping"))
+					Expect(bindingResolver.ResolveCall.Receives.Provider).To(BeEmpty())
+					Expect(bindingResolver.ResolveCall.Receives.PlatformDir).To(Equal("some-platform-dir"))
+					Expect(boundDependency).To(Equal("dependency-mapping-entry.tgz"))
+				})
+			})
+
+			context("the binding does not contain an algorithm", func() {
+				it("does not find matching dependency mapping when input isn't of sha256 algorithm", func() {
+					boundDependency, err := resolver.FindDependencyMapping("sha512:some-sha", "some-platform-dir")
+					Expect(err).ToNot(HaveOccurred())
+					Expect(boundDependency).To(Equal(""))
+				})
 			})
 		})
 

@@ -5,13 +5,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/paketo-buildpacks/packit"
-	"github.com/paketo-buildpacks/packit/postal"
-	"github.com/paketo-buildpacks/packit/scribe"
+	"github.com/paketo-buildpacks/packit/v2"
+	"github.com/paketo-buildpacks/packit/v2/postal"
+	"github.com/paketo-buildpacks/packit/v2/scribe"
 	"github.com/sclevine/spec"
 
 	. "github.com/onsi/gomega"
-	. "github.com/paketo-buildpacks/packit/matchers"
+	. "github.com/paketo-buildpacks/packit/v2/matchers"
 )
 
 func testEmitter(t *testing.T, context spec.G, it spec.S) {
@@ -144,6 +144,38 @@ func testEmitter(t *testing.T, context spec.G, it spec.S) {
 					"      Version some-version of Some Dependency is deprecated.",
 					"      Migrate your application to a supported version of Some Dependency.",
 					"",
+				))
+			})
+		})
+	})
+
+	context("WithLevel", func() {
+		context("default", func() {
+			it("output includes debug level logs", func() {
+				emitter.Title("non-debug title")
+				emitter.Debug.Title("debug title")
+
+				Expect(buffer.String()).To(ContainLines(
+					"non-debug title",
+				))
+				Expect(buffer.String()).ToNot(ContainLines(
+					"debug title",
+				))
+			})
+		})
+
+		context("DEBUG", func() {
+			it.Before(func() {
+				emitter = emitter.WithLevel("DEBUG")
+			})
+
+			it("output includes debug level logs", func() {
+				emitter.Title("non-debug title")
+				emitter.Debug.Title("debug title")
+
+				Expect(buffer.String()).To(ContainLines(
+					"non-debug title",
+					"debug title",
 				))
 			})
 		})
@@ -291,6 +323,74 @@ func testEmitter(t *testing.T, context spec.G, it spec.S) {
 		})
 	})
 
+	context("LaunchDirectProcesses", func() {
+		var processes []packit.DirectProcess
+
+		it.Before(func() {
+			processes = []packit.DirectProcess{
+				{
+					Type:    "some-type",
+					Command: []string{"some-command"},
+				},
+				{
+					Type:    "web",
+					Command: []string{"web-command"},
+					Default: true,
+				},
+				{
+					Type:    "some-other-type",
+					Command: []string{"some-other-command"},
+					Args:    []string{"some", "args"},
+				},
+			}
+		})
+
+		it("prints a list of launch processes", func() {
+			emitter.LaunchDirectProcesses(processes)
+
+			Expect(buffer.String()).To(ContainLines(
+				"  Assigning launch processes:",
+				"    some-type:       some-command",
+				"    web (default):   web-command",
+				"    some-other-type: some-other-command some args",
+				"",
+			))
+		})
+
+		context("when passed process specific environment variables", func() {
+			var processEnvs []map[string]packit.Environment
+
+			it.Before(func() {
+				processEnvs = []map[string]packit.Environment{
+					{
+						"web": packit.Environment{
+							"WEB_VAR.default": "some-env",
+						},
+					},
+					{
+						"web": packit.Environment{
+							"ANOTHER_WEB_VAR.default": "another-env",
+						},
+					},
+				}
+			})
+
+			it("prints a list of the launch processes and their processes specific env vars", func() {
+				emitter.LaunchDirectProcesses(processes, processEnvs...)
+
+				Expect(buffer.String()).To(ContainLines(
+					"  Assigning launch processes:",
+					"    some-type:       some-command",
+					"    web (default):   web-command",
+					`      ANOTHER_WEB_VAR -> "another-env"`,
+					`      WEB_VAR         -> "some-env"`,
+					"    some-other-type: some-other-command some args",
+					"",
+				))
+			})
+		})
+	})
+
 	context("EnvironmentVariables", func() {
 		it("prints a list of environment variables available during launch and build", func() {
 			emitter.EnvironmentVariables(packit.Layer{
@@ -364,6 +464,92 @@ func testEmitter(t *testing.T, context spec.G, it spec.S) {
 				))
 
 				Expect(buffer.String()).NotTo(ContainSubstring("  Configuring launch environment"))
+			})
+		})
+	})
+	context("LayerFlags", func() {
+		context("when log level is INFO", func() {
+			it("prints information about launch, cache, build flags on layer", func() {
+				emitter.LayerFlags(packit.Layer{Name: "some-layer"})
+				Expect(buffer.String()).To(BeEmpty())
+			})
+		})
+		context("when log level is DEBUG", func() {
+			it.Before(func() {
+				emitter = scribe.NewEmitter(buffer).WithLevel("DEBUG")
+			})
+			it("prints information about launch, cache, build flags on layer", func() {
+				emitter.LayerFlags(packit.Layer{
+					Name:   "some-layer",
+					Launch: false,
+					Build:  true,
+					Cache:  false,
+				})
+				Expect(buffer.String()).To(ContainLines(
+					"  Setting up layer 'some-layer'",
+					"    Available at app launch: false",
+					"    Available to other buildpacks: true",
+					"    Cached for rebuilds: false",
+				))
+			})
+		})
+	})
+
+	context("GeneratingSBOM", func() {
+		it("prints the correct log line with the inputted path", func() {
+			emitter.GeneratingSBOM("/some/path")
+
+			Expect(buffer.String()).To(ContainSubstring("Generating SBOM for /some/path"))
+		})
+	})
+
+	context("FormattingSBOM", func() {
+		context("when log level is INFO", func() {
+			it("does not print anything", func() {
+				emitter.FormattingSBOM("format1", "format2")
+				Expect(buffer.String()).To(BeEmpty())
+			})
+
+			context("when the log level is DEBUG", func() {
+				it.Before(func() {
+					emitter = scribe.NewEmitter(buffer).WithLevel("DEBUG")
+				})
+
+				it("lists the inputted SBOM formats", func() {
+					emitter.FormattingSBOM("format1", "format2")
+					Expect(buffer.String()).To(ContainLines(
+						"  Writing SBOM in the following format(s):",
+						"    format1",
+						"    format2",
+					))
+				})
+			})
+		})
+	})
+
+	context("BuildConfiguration", func() {
+		context("when log level is INFO", func() {
+			it("does not print anything", func() {
+				emitter.BuildConfiguration(map[string]string{"ENV_VAR": "value"})
+				Expect(buffer.String()).To(BeEmpty())
+			})
+
+			context("when the log level is DEBUG", func() {
+				it.Before(func() {
+					emitter = scribe.NewEmitter(buffer).WithLevel("DEBUG")
+				})
+
+				it("lists the environment variables of the build configuration and their values", func() {
+					emitter.BuildConfiguration(map[string]string{
+						"OTHER_ENV_VAR": "another-value",
+						"ENV_VAR":       "value",
+					})
+					Expect(buffer.String()).To(ContainLines(
+						"  Build configuration:",
+						`    ENV_VAR       -> "value"`,
+						`    OTHER_ENV_VAR -> "another-value"`,
+					))
+				})
 			})
 		})
 	})

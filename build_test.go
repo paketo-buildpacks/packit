@@ -9,12 +9,12 @@ import (
 	"testing"
 	"testing/iotest"
 
-	"github.com/paketo-buildpacks/packit"
-	"github.com/paketo-buildpacks/packit/fakes"
+	"github.com/paketo-buildpacks/packit/v2"
+	"github.com/paketo-buildpacks/packit/v2/fakes"
 	"github.com/sclevine/spec"
 
 	. "github.com/onsi/gomega"
-	. "github.com/paketo-buildpacks/packit/matchers"
+	. "github.com/paketo-buildpacks/packit/v2/matchers"
 )
 
 func testBuild(t *testing.T, context spec.G, it spec.S) {
@@ -27,7 +27,6 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 		layersDir   string
 		planPath    string
 		cnbDir      string
-		envCnbDir   string
 		binaryPath  string
 		exitHandler *fakes.ExitHandler
 	)
@@ -70,11 +69,8 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 		cnbDir, err = os.MkdirTemp("", "cnb")
 		Expect(err).NotTo(HaveOccurred())
 
-		envCnbDir, err = os.MkdirTemp("", "envCnb")
-		Expect(err).NotTo(HaveOccurred())
-
 		bpTOML := []byte(`
-api = "0.7"
+api = "0.8"
 [buildpack]
   id = "some-id"
   name = "some-name"
@@ -90,7 +86,6 @@ api = "0.7"
 		uri = "some-license-uri"
 `)
 		Expect(os.WriteFile(filepath.Join(cnbDir, "buildpack.toml"), bpTOML, 0600)).To(Succeed())
-		Expect(os.WriteFile(filepath.Join(envCnbDir, "buildpack.toml"), bpTOML, 0600)).To(Succeed())
 
 		binaryPath = filepath.Join(cnbDir, "bin", "build")
 
@@ -168,8 +163,6 @@ api = "0.4"
   clear-env = false
 `)
 				Expect(os.WriteFile(filepath.Join(cnbDir, "buildpack.toml"), bpTOML, 0600)).To(Succeed())
-				Expect(os.WriteFile(filepath.Join(envCnbDir, "buildpack.toml"), bpTOML, 0600)).To(Succeed())
-
 			})
 
 			it("updates the buildpack plan.toml with any changes", func() {
@@ -216,7 +209,7 @@ api = "0.4"
 
 			return packit.BuildResult{
 				Layers: []packit.Layer{
-					packit.Layer{
+					{
 						Path:   layerPath,
 						Name:   "some-layer",
 						Build:  true,
@@ -263,7 +256,7 @@ api = "0.5"
 
 				return packit.BuildResult{
 					Layers: []packit.Layer{
-						packit.Layer{
+						{
 							Path:   layerPath,
 							Name:   "some-layer",
 							Build:  true,
@@ -299,7 +292,7 @@ cache = true
 
 				return packit.BuildResult{
 					Layers: []packit.Layer{
-						packit.Layer{
+						{
 							Path: layerPath,
 							Name: "some-layer",
 							SBOM: packit.SBOMFormats{
@@ -337,7 +330,6 @@ api = "0.6"
   clear-env = false
 `)
 				Expect(os.WriteFile(filepath.Join(cnbDir, "buildpack.toml"), bpTOML, 0600)).To(Succeed())
-				Expect(os.WriteFile(filepath.Join(envCnbDir, "buildpack.toml"), bpTOML, 0600)).To(Succeed())
 			})
 
 			it("throws an error", func() {
@@ -347,7 +339,7 @@ api = "0.6"
 
 					return packit.BuildResult{
 						Layers: []packit.Layer{
-							packit.Layer{
+							{
 								Path: layerPath,
 								Name: "some-layer",
 								SBOM: packit.SBOMFormats{
@@ -461,7 +453,7 @@ api = "0.6"
 
 	context("when the CNB_BUILDPACK_DIR environment variable is set", func() {
 		it.Before(func() {
-			os.Setenv("CNB_BUILDPACK_DIR", envCnbDir)
+			os.Setenv("CNB_BUILDPACK_DIR", cnbDir)
 		})
 
 		it.After(func() {
@@ -475,10 +467,10 @@ api = "0.6"
 				context = ctx
 
 				return packit.BuildResult{}, nil
-			}, packit.WithArgs([]string{binaryPath, layersDir, platformDir, planPath}))
+			}, packit.WithArgs([]string{"env-var-override", layersDir, platformDir, planPath}))
 
 			Expect(context).To(Equal(packit.BuildContext{
-				CNBPath: envCnbDir,
+				CNBPath: cnbDir,
 				Platform: packit.Platform{
 					Path: platformDir,
 				},
@@ -514,6 +506,192 @@ api = "0.6"
 					},
 				},
 			}))
+		})
+	})
+
+	context("when the CNB_LAYERS_DIR environment variable is set", func() {
+		it.Before(func() {
+			os.Setenv("CNB_LAYERS_DIR", layersDir)
+		})
+
+		it.After(func() {
+			os.Unsetenv("CNB_LAYERS_DIR")
+		})
+
+		it("sets the correct value for layers dir in the Build context", func() {
+			var context packit.BuildContext
+
+			packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
+				context = ctx
+
+				return packit.BuildResult{}, nil
+			}, packit.WithArgs([]string{binaryPath, "env-var-override", platformDir, planPath}))
+
+			Expect(context).To(Equal(packit.BuildContext{
+				CNBPath: cnbDir,
+				Platform: packit.Platform{
+					Path: platformDir,
+				},
+				Stack:      "some-stack",
+				WorkingDir: tmpDir,
+				Plan: packit.BuildpackPlan{
+					Entries: []packit.BuildpackPlanEntry{
+						{
+							Name: "some-entry",
+							Metadata: map[string]interface{}{
+								"version":  "some-version",
+								"some-key": "some-value",
+							},
+						},
+					},
+				},
+				Layers: packit.Layers{
+					Path: layersDir,
+				},
+				BuildpackInfo: packit.BuildpackInfo{
+					ID:          "some-id",
+					Name:        "some-name",
+					Version:     "some-version",
+					Homepage:    "some-homepage",
+					Description: "some-description",
+					Keywords:    []string{"some-keyword"},
+					SBOMFormats: []string{"some-sbom-format", "some-other-sbom-format"},
+					Licenses: []packit.BuildpackInfoLicense{
+						{
+							Type: "some-license-type",
+							URI:  "some-license-uri",
+						},
+					},
+				},
+			}))
+		})
+	})
+
+	context("when the CNB_PLATFORM_DIR environment variable is set", func() {
+		it.Before(func() {
+			os.Setenv("CNB_PLATFORM_DIR", platformDir)
+		})
+
+		it.After(func() {
+			os.Unsetenv("CNB_PLATFORM_DIR")
+		})
+
+		it("sets the correct value for platform dir in the Build context", func() {
+			var context packit.BuildContext
+
+			packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
+				context = ctx
+
+				return packit.BuildResult{}, nil
+			}, packit.WithArgs([]string{binaryPath, layersDir, "env-var-override", planPath}))
+
+			Expect(context).To(Equal(packit.BuildContext{
+				CNBPath: cnbDir,
+				Platform: packit.Platform{
+					Path: platformDir,
+				},
+				Stack:      "some-stack",
+				WorkingDir: tmpDir,
+				Plan: packit.BuildpackPlan{
+					Entries: []packit.BuildpackPlanEntry{
+						{
+							Name: "some-entry",
+							Metadata: map[string]interface{}{
+								"version":  "some-version",
+								"some-key": "some-value",
+							},
+						},
+					},
+				},
+				Layers: packit.Layers{
+					Path: layersDir,
+				},
+				BuildpackInfo: packit.BuildpackInfo{
+					ID:          "some-id",
+					Name:        "some-name",
+					Version:     "some-version",
+					Homepage:    "some-homepage",
+					Description: "some-description",
+					Keywords:    []string{"some-keyword"},
+					SBOMFormats: []string{"some-sbom-format", "some-other-sbom-format"},
+					Licenses: []packit.BuildpackInfoLicense{
+						{
+							Type: "some-license-type",
+							URI:  "some-license-uri",
+						},
+					},
+				},
+			}))
+		})
+	})
+
+	context("when the CNB_BP_PLAN_PATH environment variable is set", func() {
+		it.Before(func() {
+			os.Setenv("CNB_BP_PLAN_PATH", planPath)
+		})
+
+		it.After(func() {
+			os.Unsetenv("CNB_BP_PLAN_PATH")
+		})
+
+		it("sets the correct value for platform dir in the Build context", func() {
+			var context packit.BuildContext
+
+			packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
+				context = ctx
+
+				return packit.BuildResult{}, nil
+			}, packit.WithArgs([]string{binaryPath, layersDir, platformDir, "env-var-override"}))
+
+			Expect(context).To(Equal(packit.BuildContext{
+				CNBPath: cnbDir,
+				Platform: packit.Platform{
+					Path: platformDir,
+				},
+				Stack:      "some-stack",
+				WorkingDir: tmpDir,
+				Plan: packit.BuildpackPlan{
+					Entries: []packit.BuildpackPlanEntry{
+						{
+							Name: "some-entry",
+							Metadata: map[string]interface{}{
+								"version":  "some-version",
+								"some-key": "some-value",
+							},
+						},
+					},
+				},
+				Layers: packit.Layers{
+					Path: layersDir,
+				},
+				BuildpackInfo: packit.BuildpackInfo{
+					ID:          "some-id",
+					Name:        "some-name",
+					Version:     "some-version",
+					Homepage:    "some-homepage",
+					Description: "some-description",
+					Keywords:    []string{"some-keyword"},
+					SBOMFormats: []string{"some-sbom-format", "some-other-sbom-format"},
+					Licenses: []packit.BuildpackInfoLicense{
+						{
+							Type: "some-license-type",
+							URI:  "some-license-uri",
+						},
+					},
+				},
+			}))
+
+			contents, err := os.ReadFile(planPath)
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(string(contents)).To(MatchTOML(`
+[[entries]]
+  name = "some-entry"
+
+[entries.metadata]
+  version = "some-version"
+  some-key = "some-value"
+`))
 		})
 	})
 
@@ -556,7 +734,6 @@ api = "0.6"
   clear-env = false
 `)
 				Expect(os.WriteFile(filepath.Join(cnbDir, "buildpack.toml"), bpTOML, 0600)).To(Succeed())
-				Expect(os.WriteFile(filepath.Join(envCnbDir, "buildpack.toml"), bpTOML, 0600)).To(Succeed())
 			})
 
 			it("throws an error", func() {
@@ -621,7 +798,6 @@ api = "0.4"
   clear-env = false
 `)
 				Expect(os.WriteFile(filepath.Join(cnbDir, "buildpack.toml"), bpTOML, 0600)).To(Succeed())
-				Expect(os.WriteFile(filepath.Join(envCnbDir, "buildpack.toml"), bpTOML, 0600)).To(Succeed())
 			})
 
 			it("throws an error", func() {
@@ -685,8 +861,6 @@ api = "0.4"
   clear-env = false
 `)
 				Expect(os.WriteFile(filepath.Join(cnbDir, "buildpack.toml"), bpTOML, 0600)).To(Succeed())
-				Expect(os.WriteFile(filepath.Join(envCnbDir, "buildpack.toml"), bpTOML, 0600)).To(Succeed())
-
 			})
 
 			it("throws an error", func() {
@@ -749,7 +923,6 @@ api = "0.6"
   clear-env = false
 `)
 				Expect(os.WriteFile(filepath.Join(cnbDir, "buildpack.toml"), bpTOML, 0600)).To(Succeed())
-				Expect(os.WriteFile(filepath.Join(envCnbDir, "buildpack.toml"), bpTOML, 0600)).To(Succeed())
 			})
 
 			it("throws an error", func() {
@@ -865,6 +1038,38 @@ api = "0.6"
 			})
 		})
 
+		context("when the process specifies a working directory", func() {
+			it("persists a launch.toml", func() {
+				packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
+					return packit.BuildResult{
+						Launch: packit.LaunchMetadata{
+							Processes: []packit.Process{
+								{
+									Type:             "some-type",
+									Command:          "some-command",
+									Args:             []string{"some-arg"},
+									Direct:           true,
+									WorkingDirectory: "some-working-dir",
+								},
+							},
+						},
+					}, nil
+				}, packit.WithArgs([]string{binaryPath, layersDir, platformDir, planPath}))
+
+				contents, err := os.ReadFile(filepath.Join(layersDir, "launch.toml"))
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(string(contents)).To(MatchTOML(`
+					[[processes]]
+						type = "some-type"
+						command = "some-command"
+						args = ["some-arg"]
+						direct = true
+						working-directory = "some-working-dir"
+				`))
+			})
+		})
+
 		context("when the api version is less than 0.6", func() {
 			it.Before(func() {
 				Expect(os.WriteFile(filepath.Join(cnbDir, "buildpack.toml"), []byte(`
@@ -895,6 +1100,174 @@ api = "0.5"
 				}, packit.WithArgs([]string{binaryPath, layersDir, platformDir, planPath}), packit.WithExitHandler(exitHandler))
 
 				Expect(exitHandler.ErrorCall.Receives.Error).To(MatchError(ContainSubstring("processes can only be marked as default with Buildpack API v0.6 or higher")))
+			})
+		})
+
+		context("when the api version is less than 0.8", func() {
+			it.Before(func() {
+				Expect(os.WriteFile(filepath.Join(cnbDir, "buildpack.toml"), []byte(`
+api = "0.7"
+[buildpack]
+  id = "some-id"
+  name = "some-name"
+  version = "some-version"
+  clear-env = false
+`), 0600)).To(Succeed())
+			})
+
+			it("errors", func() {
+				packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
+					return packit.BuildResult{
+						Launch: packit.LaunchMetadata{
+							Processes: []packit.Process{
+								{
+									Type:             "some-type",
+									Command:          "some-command",
+									Args:             []string{"some-arg"},
+									Direct:           true,
+									Default:          true,
+									WorkingDirectory: "some-working-dir",
+								},
+							},
+						},
+					}, nil
+				}, packit.WithArgs([]string{binaryPath, layersDir, platformDir, planPath}), packit.WithExitHandler(exitHandler))
+
+				Expect(exitHandler.ErrorCall.Receives.Error).To(MatchError(ContainSubstring("processes can only have a specific working directory with Buildpack API v0.8 or higher")))
+			})
+		})
+
+		context("when the api version is less than 0.9", func() {
+			it.Before(func() {
+				Expect(os.WriteFile(filepath.Join(cnbDir, "buildpack.toml"), []byte(`
+api = "0.8"
+[buildpack]
+  id = "some-id"
+  name = "some-name"
+  version = "some-version"
+  clear-env = false
+`), 0600)).To(Succeed())
+			})
+
+			it("persists a launch.toml", func() {
+				packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
+					return packit.BuildResult{
+						Launch: packit.LaunchMetadata{
+							Processes: []packit.Process{
+								{
+									Type:             "some-type",
+									Command:          "some-command",
+									Args:             []string{"some-arg"},
+									Direct:           false,
+									Default:          true,
+									WorkingDirectory: "some-working-dir",
+								},
+							},
+						},
+					}, nil
+				}, packit.WithArgs([]string{binaryPath, layersDir, platformDir, planPath}), packit.WithExitHandler(exitHandler))
+
+				contents, err := os.ReadFile(filepath.Join(layersDir, "launch.toml"))
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(string(contents)).To(MatchTOML(`
+					[[processes]]
+						args = ["some-arg"]
+						command = "some-command"
+						direct = false
+						default = true
+						type = "some-type"
+						working-directory = "some-working-dir"
+				`))
+			})
+
+			context("failure cases", func() {
+				it("throws a specific error when new style proccesses are used", func() {
+
+					packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
+						return packit.BuildResult{
+							Launch: packit.LaunchMetadata{
+								DirectProcesses: []packit.DirectProcess{
+									{
+										Type:             "some-type",
+										Command:          []string{"some-command"},
+										Args:             []string{"some-arg"},
+										Default:          false,
+										WorkingDirectory: workingDir,
+									},
+								},
+							},
+						}, nil
+					}, packit.WithArgs([]string{binaryPath, layersDir, platformDir, planPath}), packit.WithExitHandler(exitHandler))
+
+					Expect(exitHandler.ErrorCall.Receives.Error).To(MatchError("direct processes can only be used with Buildpack API v0.9 or higher"))
+				})
+			})
+		})
+
+		context("when the api version is 0.9", func() {
+			it.Before(func() {
+				Expect(os.WriteFile(filepath.Join(cnbDir, "buildpack.toml"), []byte(`
+api = "0.9"
+[buildpack]
+  id = "some-id"
+  name = "some-name"
+  version = "some-version"
+  clear-env = false
+`), 0600)).To(Succeed())
+			})
+
+			it("persists a launch.toml", func() {
+				packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
+					return packit.BuildResult{
+						Launch: packit.LaunchMetadata{
+							DirectProcesses: []packit.DirectProcess{
+								{
+									Type:             "some-type",
+									Command:          []string{"some-command"},
+									Args:             []string{"some-arg"},
+									Default:          true,
+									WorkingDirectory: "some-working-dir",
+								},
+							},
+						},
+					}, nil
+				}, packit.WithArgs([]string{binaryPath, layersDir, platformDir, planPath}), packit.WithExitHandler(exitHandler))
+
+				contents, err := os.ReadFile(filepath.Join(layersDir, "launch.toml"))
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(string(contents)).To(MatchTOML(`
+					[[processes]]
+						args = ["some-arg"]
+						command = ["some-command"]
+						default = true
+						type = "some-type"
+						working-directory = "some-working-dir"
+				`))
+			})
+			context("failure cases", func() {
+				it("throws a specific error when old style proccesses are used", func() {
+
+					packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
+						return packit.BuildResult{
+							Launch: packit.LaunchMetadata{
+								Processes: []packit.Process{
+									{
+										Type:             "some-type",
+										Command:          "some-command",
+										Args:             []string{"some-arg"},
+										Direct:           false,
+										Default:          false,
+										WorkingDirectory: workingDir,
+									},
+								},
+							},
+						}, nil
+					}, packit.WithArgs([]string{binaryPath, layersDir, platformDir, planPath}), packit.WithExitHandler(exitHandler))
+
+					Expect(exitHandler.ErrorCall.Receives.Error).To(MatchError("non direct processes can only be used with Buildpack API v0.8 or lower"))
+				})
 			})
 		})
 	})
@@ -1079,6 +1452,138 @@ api = "0.5"
 		})
 	})
 
+	context("when layers have Exec.D executables", func() {
+		var (
+			exe0 string
+		)
+
+		it.Before(func() {
+			temp, err := os.CreateTemp(cnbDir, "exec-d")
+			Expect(err).NotTo(HaveOccurred())
+			exe0 = temp.Name()
+		})
+
+		context("when the api version is greater than 0.4", func() {
+			it.Before(func() {
+				bpTOML := []byte(`
+api = "0.5"
+[buildpack]
+  id = "some-id"
+  name = "some-name"
+  version = "some-version"
+  clear-env = false
+				`)
+				Expect(os.WriteFile(filepath.Join(cnbDir, "buildpack.toml"), bpTOML, 0600)).To(Succeed())
+				Expect(os.Chmod(planPath, 0444)).To(Succeed())
+			})
+
+			it("puts the Exec.D executables in the exec.d directory", func() {
+				packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
+					return packit.BuildResult{
+						Layers: []packit.Layer{
+							{
+								Path:  filepath.Join(ctx.Layers.Path, "layer-with-exec-d-stuff"),
+								ExecD: []string{exe0},
+							},
+						},
+					}, nil
+				}, packit.WithArgs([]string{binaryPath, layersDir, platformDir, planPath}))
+
+				Expect(filepath.Join(layersDir, "layer-with-exec-d-stuff", "exec.d", fmt.Sprintf("0-%s", filepath.Base(exe0)))).To(BeARegularFile())
+			})
+
+			it("does not create an exec.d directory when ExecD is empty", func() {
+				packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
+					return packit.BuildResult{
+						Layers: []packit.Layer{
+							{
+								Path:  filepath.Join(ctx.Layers.Path, "layer-with-exec-d-stuff"),
+								ExecD: []string{},
+							},
+						},
+					}, nil
+				}, packit.WithArgs([]string{binaryPath, layersDir, platformDir, planPath}))
+
+				Expect(filepath.Join(layersDir, "layer-with-exec-d-stuff", "exec.d")).NotTo(BeARegularFile())
+			})
+
+			it("prepends a padded integer for lexical ordering", func() {
+				N := 101
+
+				var exes []string
+				for i := 0; i < N; i++ {
+					command, err := os.CreateTemp(cnbDir, "command")
+					Expect(err).NotTo(HaveOccurred())
+
+					exes = append(exes, command.Name())
+				}
+
+				packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
+					return packit.BuildResult{
+						Layers: []packit.Layer{
+							{
+								Path:  filepath.Join(ctx.Layers.Path, "layer-with-exec-d-stuff"),
+								ExecD: exes,
+							},
+						},
+					}, nil
+				}, packit.WithArgs([]string{binaryPath, layersDir, platformDir, planPath}))
+
+				Expect(filepath.Join(layersDir, "layer-with-exec-d-stuff", "exec.d", fmt.Sprintf("000-%s", filepath.Base(exes[0])))).To(BeARegularFile())
+				Expect(filepath.Join(layersDir, "layer-with-exec-d-stuff", "exec.d", fmt.Sprintf("010-%s", filepath.Base(exes[10])))).To(BeARegularFile())
+				Expect(filepath.Join(layersDir, "layer-with-exec-d-stuff", "exec.d", fmt.Sprintf("100-%s", filepath.Base(exes[100])))).To(BeARegularFile())
+			})
+		})
+
+		context("when the api version is less than 0.5", func() {
+			it.Before(func() {
+				bpTOML := []byte(`
+api = "0.4"
+[buildpack]
+  id = "some-id"
+  name = "some-name"
+  version = "some-version"
+  clear-env = false
+				`)
+				Expect(os.WriteFile(filepath.Join(cnbDir, "buildpack.toml"), bpTOML, 0600)).To(Succeed())
+				Expect(os.Chmod(planPath, 0444)).To(Succeed())
+			})
+
+			it("should not do anything", func() {
+				packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
+					return packit.BuildResult{
+						Layers: []packit.Layer{
+							{
+								Path:  filepath.Join(ctx.Layers.Path, "layer-with-exec-d-stuff"),
+								ExecD: []string{exe0},
+							},
+						},
+					}, nil
+				}, packit.WithArgs([]string{binaryPath, layersDir, platformDir, planPath}))
+
+				Expect(filepath.Join(layersDir, "layer-with-exec-d-stuff", "exec.d")).NotTo(BeARegularFile())
+			})
+		})
+
+		context("failure cases", func() {
+			it("throws a specific error when executable not found", func() {
+
+				packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
+					return packit.BuildResult{
+						Layers: []packit.Layer{
+							{
+								Path:  filepath.Join(ctx.Layers.Path, "layer-with-exec-d-stuff"),
+								ExecD: []string{"foobar"},
+							},
+						},
+					}, nil
+				}, packit.WithArgs([]string{binaryPath, layersDir, platformDir, planPath}), packit.WithExitHandler(exitHandler))
+
+				Expect(exitHandler.ErrorCall.Receives.Error).To(MatchError("file foobar does not exist. Be sure to include it in the buildpack.toml"))
+			})
+		})
+	})
+
 	context("failure cases", func() {
 		context("when the buildpack plan.toml is malformed", func() {
 			it.Before(func() {
@@ -1131,7 +1636,6 @@ api = "0.4"
   clear-env = false
 				`)
 				Expect(os.WriteFile(filepath.Join(cnbDir, "buildpack.toml"), bpTOML, 0600)).To(Succeed())
-				Expect(os.WriteFile(filepath.Join(envCnbDir, "buildpack.toml"), bpTOML, 0600)).To(Succeed())
 				Expect(os.Chmod(planPath, 0444)).To(Succeed())
 			})
 
@@ -1157,7 +1661,7 @@ api = "0.4"
 				packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
 					return packit.BuildResult{
 						Layers: []packit.Layer{
-							packit.Layer{
+							{
 								Path: filepath.Join(layersDir, "some-layer"),
 								Name: "some-layer",
 							},
@@ -1174,7 +1678,7 @@ api = "0.4"
 				packit.Build(func(ctx packit.BuildContext) (packit.BuildResult, error) {
 					return packit.BuildResult{
 						Layers: []packit.Layer{
-							packit.Layer{
+							{
 								Path: filepath.Join(layersDir, "some-layer"),
 								Name: "some-layer",
 								SBOM: packit.SBOMFormats{

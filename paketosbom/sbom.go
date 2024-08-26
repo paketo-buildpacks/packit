@@ -60,7 +60,7 @@ func GetBOMChecksumAlgorithm(alg string) (algorithm, error) {
 		}
 	}
 
-	return "", fmt.Errorf("failed to get supported BOM checksum algorithm: %s is not valid", alg)
+	return UNKNOWN, fmt.Errorf("failed to get supported BOM checksum algorithm: %s is not valid", alg)
 }
 
 const (
@@ -76,4 +76,5 @@ const (
 	BLAKE2B512 algorithm = "BLAKE2b-512"
 	BLAKE3     algorithm = "BLAKE3"
 	MD5        algorithm = "MD5"
+	UNKNOWN    algorithm = "UNKNOWN"
 )
