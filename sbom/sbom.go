@@ -4,11 +4,11 @@ package sbom
 
 import (
 	"fmt"
+	"github.com/anchore/syft/syft/pkg"
 	"os"
 
 	"github.com/anchore/syft/syft"
 	"github.com/anchore/syft/syft/cpe"
-	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
@@ -97,13 +97,48 @@ func GenerateFromDependency(dependency postal.Dependency, path string) (SBOM, er
 		cpes = append(cpes, cpe)
 	}
 
-	catalog := pkg.NewCatalog(pkg.Package{
-		Name:     dependency.Name,
-		Version:  dependency.Version,
-		Licenses: dependency.Licenses,
-		CPEs:     cpes,
-		PURL:     dependency.PURL,
-	})
+	var licenses []string
+	for _, license := range dependency.Licenses {
+		switch license.(type) {
+		case string:
+			licenses = append(licenses, license.(string))
+		case map[string]interface{}:
+			licenses = append(licenses, license.(map[string]interface{})["type"].(string))
+		case nil:
+		default:
+			return SBOM{}, fmt.Errorf("unsupported license type: %s. Consult Paketo RFC 0059 for guidance on licenses", license)
+		}
+	}
+
+	var catalog *pkg.Catalog
+	var pkgs []pkg.Package
+	if len(dependency.PURLs) == 0 {
+		pkgs = append(pkgs, pkg.Package{
+			Name:     dependency.Name,
+			Version:  dependency.Version,
+			Licenses: licenses,
+			CPEs:     cpes,
+			PURL:     dependency.PURL,
+		})
+	}
+
+	/* Idea for handling multiple PURLs, untested
+
+	if len(dependency.PURLs) >= 1 {
+		for _, purlString := range dependency.PURLs {
+			pkgObj := pkg.Package{
+				Name:     dependency.Name,
+				Version:  dependency.Version,
+				Licenses: licenses,
+				CPEs:     cpes,
+				PURL:     purlString,
+			}
+			pkgs = append(pkgs, pkgObj)
+		}
+	}
+	*/
+
+	catalog = pkg.NewCatalog(pkgs...)
 
 	return SBOM{
 		syft: sbom.SBOM{

@@ -339,6 +339,93 @@ api = "0.6"
 
 		})
 
+		context("when using Standardized Dependency Metadata Format", func() {
+			it("encodes the config to TOML", func() {
+				eolDate, err := time.Parse(time.RFC3339, "2020-06-01T00:00:00Z")
+				Expect(err).NotTo(HaveOccurred())
+
+				err = cargo.EncodeConfig(buffer, cargo.Config{
+					Metadata: cargo.ConfigMetadata{
+						Dependencies: []cargo.ConfigMetadataDependency{
+							{
+								Checksum:        "sha256:some-sum",
+								ID:              "some-dependency",
+								URI:             "http://some-url",
+								Version:         "1.2.3",
+								Arch:            "some-arch",
+								CPEs:            []string{"some-cpe", "some-other-cpe"},
+								EOLDate:         &eolDate,
+								Name:            "Some Dependency",
+								OS:              "some-os",
+								PURLs:           []string{"some-purl", "some-other-purl"},
+								Source:          "source",
+								SourceChecksum:  "sha256:source-shasum",
+								StripComponents: 1,
+								Distros: []interface{}{
+									cargo.ConfigBuildpackDistro{
+										Name:    "some-distro",
+										Version: "some-distro-version",
+									},
+									cargo.ConfigBuildpackDistro{
+										Name:    "some-other-distro",
+										Version: "some-other-distro-version",
+									},
+								},
+								Licenses: []interface{}{
+									cargo.ConfigBuildpackLicense{
+										Type: "fancy-license",
+										URI:  "some-license-uri",
+									},
+									cargo.ConfigBuildpackLicense{
+										Type: "fancy-license-2",
+										URI:  "some-license-uri",
+									},
+								},
+							},
+						},
+					},
+				})
+				Expect(err).NotTo(HaveOccurred())
+				Expect(buffer.String()).To(MatchTOML(`
+[buildpack]
+
+[metadata]
+
+[[metadata.dependencies]]	
+  checksum = "sha256:some-sum"
+  id = "some-dependency"
+  uri = "http://some-url"
+  version = "1.2.3"
+  arch = "some-arch"
+  cpes = ["some-cpe", "some-other-cpe"]
+  eol-date = "2020-06-01T00:00:00Z"
+  name = "Some Dependency"
+  os = "some-os"
+  source = "source"
+  source-checksum = "sha256:source-shasum"
+  purls = ["some-purl", "some-other-purl"]
+  strip-components = 1
+
+  [[metadata.dependencies.distros]]
+    name = "some-distro"
+	version = "some-distro-version"
+
+  [[metadata.dependencies.distros]]
+    name = "some-other-distro"
+	version = "some-other-distro-version"
+
+  [[metadata.dependencies.licenses]]
+    type = "fancy-license"
+	uri = "some-license-uri"
+
+  [[metadata.dependencies.licenses]]
+    type = "fancy-license-2"
+	uri = "some-license-uri"
+
+`))
+			})
+
+		})
 		context("when not all metadata.dependencies include strip-components", func() {
 			it("correctly encodes all elements", func() {
 				err := cargo.EncodeConfig(buffer, cargo.Config{
@@ -713,6 +800,96 @@ api = "0.2"
 									ID:       "other-dependency",
 									Version:  "other-version",
 									Optional: true,
+								},
+							},
+						},
+					},
+				}))
+			})
+
+		})
+
+		context("When using Standardized Dependency Metadata format", func() {
+			it("decodes TOML to config", func() {
+				tomlBuffer := strings.NewReader(`
+[buildpack]
+
+[metadata]
+
+[[metadata.dependencies]]
+  checksum = "sha256:some-sum"
+  id = "some-dependency"
+  uri = "http://some-url"
+  version = "1.2.3"
+  arch = "some-arch"
+  cpes = ["some-cpe", "some-other-cpe"]
+  eol-date = "2020-06-01T00:00:00Z"
+  name = "Some Dependency"
+  os = "some-os"
+  purls = ["some-purl", "some-other-purl"]
+  source = "source"
+  source-checksum = "sha256:source-shasum"
+  strip-components = 1
+
+  [[metadata.dependencies.distros]]
+    name = "some-distro"
+	version = "some-distro-version"
+
+  [[metadata.dependencies.distros]]
+    name = "some-other-distro"
+	version = "some-other-distro-version"
+
+  [[metadata.dependencies.licenses]]
+    type = "fancy-license"
+	uri = "some-license-uri"
+
+  [[metadata.dependencies.licenses]]
+    type = "fancy-license-2"
+	uri = "some-license-uri"
+
+`)
+
+				eolDate, err := time.Parse(time.RFC3339, "2020-06-01T00:00:00Z")
+				Expect(err).NotTo(HaveOccurred())
+
+				var config cargo.Config
+				Expect(cargo.DecodeConfig(tomlBuffer, &config)).To(Succeed())
+				Expect(config).To(Equal(cargo.Config{
+					Metadata: cargo.ConfigMetadata{
+						Dependencies: []cargo.ConfigMetadataDependency{
+							{
+								Checksum:        "sha256:some-sum",
+								ID:              "some-dependency",
+								URI:             "http://some-url",
+								Version:         "1.2.3",
+								Arch:            "some-arch",
+								CPEs:            []string{"some-cpe", "some-other-cpe"},
+								EOLDate:         &eolDate,
+								Name:            "Some Dependency",
+								OS:              "some-os",
+								PURLs:           []string{"some-purl", "some-other-purl"},
+								Source:          "source",
+								SourceChecksum:  "sha256:source-shasum",
+								StripComponents: 1,
+								Distros: []interface{}{
+									map[string]interface{}{
+										"name":    "some-distro",
+										"version": "some-distro-version",
+									},
+									map[string]interface{}{
+										"name":    "some-other-distro",
+										"version": "some-other-distro-version",
+									},
+								},
+								Licenses: []interface{}{
+									map[string]interface{}{
+										"type": "fancy-license",
+										"uri":  "some-license-uri",
+									},
+									map[string]interface{}{
+										"type": "fancy-license-2",
+										"uri":  "some-license-uri",
+									},
 								},
 							},
 						},
