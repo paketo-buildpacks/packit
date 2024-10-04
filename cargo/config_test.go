@@ -57,6 +57,12 @@ func testConfig(t *testing.T, context spec.G, it spec.S) {
 						ID: "other-stack-id",
 					},
 				},
+				Targets: []cargo.ConfigTarget{
+					{
+						OS:     "linux",
+						Arch:   "arm64",
+					},
+				},
 				Metadata: cargo.ConfigMetadata{
 					IncludeFiles: []string{
 						"some-include-file",
@@ -165,6 +171,10 @@ api = "0.6"
 
 [[stacks]]
   id = "other-stack-id"
+
+[[targets]]
+  os = "linux"
+  arch = "arm64"
 
 [[order]]
   [[order.group]]

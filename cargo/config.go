@@ -15,11 +15,17 @@ type Config struct {
 	Metadata  ConfigMetadata  `toml:"metadata"  json:"metadata,omitempty"`
 	Stacks    []ConfigStack   `toml:"stacks"    json:"stacks,omitempty"`
 	Order     []ConfigOrder   `toml:"order"     json:"order,omitempty"`
+	Targets   []ConfigTarget  `toml:"targets"   json:"targets,omitempty"`
 }
 
 type ConfigStack struct {
 	ID     string   `toml:"id"     json:"id,omitempty"`
 	Mixins []string `toml:"mixins" json:"mixins,omitempty"`
+}
+
+type ConfigTarget struct {
+	OS     string   `toml:"os"     json:"os,omitempty"`
+	Arch   string   `toml:"arch"   json:"arch,omitempty"`
 }
 
 type ConfigBuildpack struct {
