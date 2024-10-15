@@ -123,6 +123,73 @@ func testDependencyMirror(t *testing.T, context spec.G, it spec.S) {
 			})
 		})
 
+		context("via binding with additional arguments", func() {
+			it.Before(func() {
+				tmpDir, err = os.MkdirTemp("", "dependency-mirror")
+				Expect(err).NotTo(HaveOccurred())
+				Expect(os.WriteFile(filepath.Join(tmpDir, "type"), []byte("dependency-mirror"), os.ModePerm))
+
+				bindingResolver = &fakes.BindingResolver{}
+				resolver = internal.NewDependencyMirrorResolver(bindingResolver)
+
+				bindingResolver.ResolveCall.Returns.BindingSlice = []servicebindings.Binding{
+					{
+						Name: "some-binding",
+						Path: "some-path",
+						Type: "dependency-mirror",
+						Entries: map[string]*servicebindings.Entry{
+							"default": servicebindings.NewEntry(filepath.Join(tmpDir, "default")),
+						},
+					},
+				}
+			})
+
+			it.After(func() {
+				Expect(os.RemoveAll(tmpDir)).To(Succeed())
+			})
+
+			context("respects skip-path argument", func() {
+				it.Before(func() {
+					Expect(os.WriteFile(filepath.Join(tmpDir, "github.com"), []byte("mirror=https://mirror.example.org/public-github,skip-path=/path-to-skip"), os.ModePerm))
+					Expect(os.WriteFile(filepath.Join(tmpDir, "nodejs.org"), []byte("https://mirror.example.org/node-dist,skip-path=/path-to-skip"), os.ModePerm))
+					Expect(os.WriteFile(filepath.Join(tmpDir, "maven.org"), []byte("https://user%3Apa%24%24word%2C%40mirror.example.org%2Fmaven,skip-path=%2Fpath%20to%20skip"), os.ModePerm))
+
+					bindingResolver.ResolveCall.Returns.BindingSlice[0].Entries = map[string]*servicebindings.Entry{
+						"github.com": servicebindings.NewEntry(filepath.Join(tmpDir, "github.com")),
+						"nodejs.org": servicebindings.NewEntry(filepath.Join(tmpDir, "nodejs.org")),
+						"maven.org":  servicebindings.NewEntry(filepath.Join(tmpDir, "maven.org")),
+					}
+				})
+
+				it("sets mirror excluding a path segment with 'mirror' argument", func() {
+					boundDependency, err := resolver.FindDependencyMirror("https://github.com/path-to-skip/dep.tgz", "some-platform-dir")
+					Expect(err).ToNot(HaveOccurred())
+					Expect(bindingResolver.ResolveCall.Receives.Typ).To(Equal("dependency-mirror"))
+					Expect(bindingResolver.ResolveCall.Receives.Provider).To(BeEmpty())
+					Expect(bindingResolver.ResolveCall.Receives.PlatformDir).To(Equal("some-platform-dir"))
+					Expect(boundDependency).To(Equal("https://mirror.example.org/public-github/dep.tgz"))
+				})
+
+				it("sets mirror excluding a path segment without 'mirror' argument", func() {
+					boundDependency, err := resolver.FindDependencyMirror("https://nodejs.org/path-to-skip/dep.tgz", "some-platform-dir")
+					Expect(err).ToNot(HaveOccurred())
+					Expect(bindingResolver.ResolveCall.Receives.Typ).To(Equal("dependency-mirror"))
+					Expect(bindingResolver.ResolveCall.Receives.Provider).To(BeEmpty())
+					Expect(bindingResolver.ResolveCall.Receives.PlatformDir).To(Equal("some-platform-dir"))
+					Expect(boundDependency).To(Equal("https://mirror.example.org/node-dist/dep.tgz"))
+				})
+
+				it("sets mirror excluding a path segment using URL encoding", func() {
+					boundDependency, err := resolver.FindDependencyMirror("https://maven.org/path to skip/dep.tgz", "some-platform-dir")
+					Expect(err).ToNot(HaveOccurred())
+					Expect(bindingResolver.ResolveCall.Receives.Typ).To(Equal("dependency-mirror"))
+					Expect(bindingResolver.ResolveCall.Receives.Provider).To(BeEmpty())
+					Expect(bindingResolver.ResolveCall.Receives.PlatformDir).To(Equal("some-platform-dir"))
+					Expect(boundDependency).To(Equal("https://user:pa$$word,@mirror.example.org/maven/dep.tgz"))
+				})
+			})
+		})
+
 		context("via environment variables", func() {
 			it.Before(func() {
 				Expect(os.Setenv("BP_DEPENDENCY_MIRROR", "https://mirror.example.org/{originalHost}"))
@@ -193,6 +260,43 @@ func testDependencyMirror(t *testing.T, context spec.G, it spec.S) {
 					boundDependency, err := resolver.FindDependencyMirror("https://some-github.com-uri/dep.tgz", "some-platform-dir")
 					Expect(err).ToNot(HaveOccurred())
 					Expect(boundDependency).To(Equal("https://mirror.example.org/public-github/dep.tgz"))
+				})
+			})
+		})
+
+		context("via environment variables with additional arguments", func() {
+			context("respects skip-path argument", func() {
+				it.Before(func() {
+					Expect(os.Setenv("BP_DEPENDENCY_MIRROR_GITHUB_COM", "mirror=https://mirror.example.org/public-github,skip-path=/path-to-skip"))
+					Expect(os.Setenv("BP_DEPENDENCY_MIRROR_NODEJS_ORG", "https://mirror.example.org/node-dist,skip-path=/path-to-skip"))
+					Expect(os.Setenv("BP_DEPENDENCY_MIRROR_MAVEN_ORG", "https://user%3Apa%24%24word%2C%40mirror.example.org%2Fmaven,skip-path=%2Fpath%20to%20skip"))
+
+					bindingResolver = &fakes.BindingResolver{}
+					resolver = internal.NewDependencyMirrorResolver(bindingResolver)
+				})
+
+				it.After(func() {
+					Expect(os.Unsetenv("BP_DEPENDENCY_MIRROR_GITHUB_COM"))
+					Expect(os.Unsetenv("BP_DEPENDENCY_MIRROR_NODEJS_ORG"))
+					Expect(os.Unsetenv("BP_DEPENDENCY_MIRROR_MAVEN_ORG"))
+				})
+
+				it("sets mirror excluding a path segment with 'mirror' argument", func() {
+					boundDependency, err := resolver.FindDependencyMirror("https://github.com/path-to-skip/dep.tgz", "some-platform-dir")
+					Expect(err).ToNot(HaveOccurred())
+					Expect(boundDependency).To(Equal("https://mirror.example.org/public-github/dep.tgz"))
+				})
+
+				it("sets mirror excluding a path segment without 'mirror' argument", func() {
+					boundDependency, err := resolver.FindDependencyMirror("https://nodejs.org/path-to-skip/dep.tgz", "some-platform-dir")
+					Expect(err).ToNot(HaveOccurred())
+					Expect(boundDependency).To(Equal("https://mirror.example.org/node-dist/dep.tgz"))
+				})
+
+				it("sets mirror excluding a path segment using URL encoding", func() {
+					boundDependency, err := resolver.FindDependencyMirror("https://maven.org/path to skip/dep.tgz", "some-platform-dir")
+					Expect(err).ToNot(HaveOccurred())
+					Expect(boundDependency).To(Equal("https://user:pa$$word,@mirror.example.org/maven/dep.tgz"))
 				})
 			})
 		})
