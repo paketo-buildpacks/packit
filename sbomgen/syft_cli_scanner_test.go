@@ -115,7 +115,7 @@ func testSyftCLIScanner(t *testing.T, context spec.G, it spec.S) {
 			context("syft CLI execution", func() {
 				context("single mediatype without a version", func() {
 					it("runs the cli commands to scan and generate SBOM", func() {
-						err := syftCLIScanner.GenerateSBOM("some-dir", layersDir, "some-layer-name", sbomgen.CycloneDXFormat)
+						err := syftCLIScanner.GenerateSBOM("some-path", layersDir, "some-layer-name", sbomgen.CycloneDXFormat)
 						Expect(err).NotTo(HaveOccurred())
 
 						Expect(executions).To(HaveLen(1))
@@ -123,14 +123,14 @@ func testSyftCLIScanner(t *testing.T, context spec.G, it spec.S) {
 							"scan",
 							"--quiet",
 							"--output", fmt.Sprintf("cyclonedx-json=%s/some-layer-name.sbom.cdx.json", layersDir),
-							"dir:some-dir",
+							"some-path",
 						}))
 					})
 				})
 
 				context("multiple mediatypes without a version", func() {
 					it("runs the cli commands to scan and generate SBOM", func() {
-						err := syftCLIScanner.GenerateSBOM("some-dir", layersDir, "some-layer-name",
+						err := syftCLIScanner.GenerateSBOM("some-path", layersDir, "some-layer-name",
 							sbomgen.CycloneDXFormat, sbomgen.SPDXFormat, sbomgen.SyftFormat)
 						Expect(err).NotTo(HaveOccurred())
 
@@ -141,14 +141,14 @@ func testSyftCLIScanner(t *testing.T, context spec.G, it spec.S) {
 							"--output", fmt.Sprintf("cyclonedx-json=%s/some-layer-name.sbom.cdx.json", layersDir),
 							"--output", fmt.Sprintf("spdx-json=%s/some-layer-name.sbom.spdx.json", layersDir),
 							"--output", fmt.Sprintf("syft-json=%s/some-layer-name.sbom.syft.json", layersDir),
-							"dir:some-dir",
+							"some-path",
 						}))
 					})
 				})
 
 				context("multiple mediatypes with and without version", func() {
 					it("runs the cli commands to scan and generate SBOM", func() {
-						err := syftCLIScanner.GenerateSBOM("some-dir", layersDir, "some-layer-name",
+						err := syftCLIScanner.GenerateSBOM("some-path", layersDir, "some-layer-name",
 							sbomgen.CycloneDXFormat+";version=1.2.3", sbomgen.SPDXFormat, sbomgen.SyftFormat)
 						Expect(err).NotTo(HaveOccurred())
 
@@ -159,7 +159,7 @@ func testSyftCLIScanner(t *testing.T, context spec.G, it spec.S) {
 							"--output", fmt.Sprintf("cyclonedx-json@1.2.3=%s/some-layer-name.sbom.cdx.json", layersDir),
 							"--output", fmt.Sprintf("spdx-json=%s/some-layer-name.sbom.spdx.json", layersDir),
 							"--output", fmt.Sprintf("syft-json=%s/some-layer-name.sbom.syft.json", layersDir),
-							"dir:some-dir",
+							"some-path",
 						}))
 					})
 				})
@@ -167,7 +167,7 @@ func testSyftCLIScanner(t *testing.T, context spec.G, it spec.S) {
 
 			context("making CLI CycloneDX output reproducible", func() {
 				it("removes non-reproducible fields from CycloneDX SBOM", func() {
-					err := syftCLIScanner.GenerateSBOM("some-dir", layersDir, "some-layer-name", sbomgen.CycloneDXFormat)
+					err := syftCLIScanner.GenerateSBOM("some-path", layersDir, "some-layer-name", sbomgen.CycloneDXFormat)
 					Expect(err).NotTo(HaveOccurred())
 
 					generatedSBOM, err := os.ReadFile(filepath.Join(layersDir, "some-layer-name.sbom.cdx.json"))
@@ -205,7 +205,7 @@ func testSyftCLIScanner(t *testing.T, context spec.G, it spec.S) {
 			context("making CLI SPDX output reproducible", func() {
 				context("without setting $SOURCE_DATE_EPOCH", func() {
 					it("modifies non-reproducible fields from SPDX SBOM", func() {
-						err := syftCLIScanner.GenerateSBOM("some-dir", layersDir, "some-layer-name", sbomgen.SPDXFormat)
+						err := syftCLIScanner.GenerateSBOM("some-path", layersDir, "some-layer-name", sbomgen.SPDXFormat)
 						Expect(err).NotTo(HaveOccurred())
 
 						generatedSBOM, err := os.ReadFile(filepath.Join(layersDir, "some-layer-name.sbom.spdx.json"))
@@ -240,7 +240,7 @@ func testSyftCLIScanner(t *testing.T, context spec.G, it spec.S) {
 					})
 
 					it("modifies non-reproducible fields from SPDX SBOM", func() {
-						err := syftCLIScanner.GenerateSBOM("some-dir", layersDir, "some-layer-name", sbomgen.SPDXFormat)
+						err := syftCLIScanner.GenerateSBOM("some-path", layersDir, "some-layer-name", sbomgen.SPDXFormat)
 						Expect(err).NotTo(HaveOccurred())
 
 						generatedSBOM, err := os.ReadFile(filepath.Join(layersDir, "some-layer-name.sbom.spdx.json"))
@@ -260,21 +260,21 @@ func testSyftCLIScanner(t *testing.T, context spec.G, it spec.S) {
 			context("failure cases", func() {
 				context("invalid mediatype name", func() {
 					it("shows an invalid type error", func() {
-						err := syftCLIScanner.GenerateSBOM("some-dir", layersDir, "some-layer-name", "whatever-mediatype")
+						err := syftCLIScanner.GenerateSBOM("some-path", layersDir, "some-layer-name", "whatever-mediatype")
 						Expect(err).To(MatchError(ContainSubstring("mediatype whatever-mediatype matched none of the known mediatypes. Valid values are [application/vnd.cyclonedx+json application/spdx+json application/vnd.syft+json], with an optional version param for CycloneDX and SPDX")))
 					})
 				})
 
 				context("invalid mediatype version format", func() {
 					it("shows an invalid mediatype version format error", func() {
-						err := syftCLIScanner.GenerateSBOM("some-dir", layersDir, "some-layer-name", "application/vnd.cyclonedx+json;;foo")
+						err := syftCLIScanner.GenerateSBOM("some-path", layersDir, "some-layer-name", "application/vnd.cyclonedx+json;;foo")
 						Expect(err).To(MatchError(ContainSubstring("Expected <mediatype>[;version=<ver>], Got application/vnd.cyclonedx+json;;foo")))
 					})
 				})
 
 				context("syft mediatype contains a version specifier", func() {
 					it("shows an error", func() {
-						err := syftCLIScanner.GenerateSBOM("some-dir", layersDir, "some-layer-name",
+						err := syftCLIScanner.GenerateSBOM("some-path", layersDir, "some-layer-name",
 							sbomgen.CycloneDXFormat, sbomgen.SPDXFormat, sbomgen.SyftFormat+";version=1.2.3")
 						Expect(err).To(MatchError(ContainSubstring("The syft mediatype does not allow providing a ;version=<ver> param")))
 					})
@@ -289,9 +289,9 @@ func testSyftCLIScanner(t *testing.T, context spec.G, it spec.S) {
 						}
 					})
 					it("returns an error & writes to logs", func() {
-						err := syftCLIScanner.GenerateSBOM("some-dir", layersDir, "some-layer-name", sbomgen.CycloneDXFormat+";version=1.2.3", sbomgen.SPDXFormat, sbomgen.SyftFormat)
+						err := syftCLIScanner.GenerateSBOM("some-path", layersDir, "some-layer-name", sbomgen.CycloneDXFormat+";version=1.2.3", sbomgen.SPDXFormat, sbomgen.SyftFormat)
 						Expect(err).To(MatchError(ContainSubstring(
-							fmt.Sprintf("failed to execute syft cli with args '[scan --quiet --output cyclonedx-json@1.2.3=%s/some-layer-name.sbom.cdx.json --output spdx-json=%s/some-layer-name.sbom.spdx.json --output syft-json=%s/some-layer-name.sbom.syft.json dir:some-dir]'", layersDir, layersDir, layersDir))))
+							fmt.Sprintf("failed to execute syft cli with args '[scan --quiet --output cyclonedx-json@1.2.3=%s/some-layer-name.sbom.cdx.json --output spdx-json=%s/some-layer-name.sbom.spdx.json --output syft-json=%s/some-layer-name.sbom.syft.json some-path]'", layersDir, layersDir, layersDir))))
 						Expect(err).To(MatchError(ContainSubstring("cli command failed")))
 						Expect(err).To(MatchError(ContainSubstring("You might be missing a buildpack that provides the syft CLI")))
 
@@ -315,7 +315,7 @@ func testSyftCLIScanner(t *testing.T, context spec.G, it spec.S) {
 					})
 
 					it("returns helpful error message", func() {
-						err := syftCLIScanner.GenerateSBOM("some-dir", tmpLayersDir, "some-layer-name", sbomgen.CycloneDXFormat)
+						err := syftCLIScanner.GenerateSBOM("some-path", tmpLayersDir, "some-layer-name", sbomgen.CycloneDXFormat)
 						Expect(err).To(MatchError(ContainSubstring("failed to make CycloneDX SBOM reproducible: unable to decode CycloneDX JSON")))
 					})
 				})
@@ -335,7 +335,7 @@ func testSyftCLIScanner(t *testing.T, context spec.G, it spec.S) {
 					})
 
 					it("returns helpful error message", func() {
-						err := syftCLIScanner.GenerateSBOM("some-dir", tmpLayersDir, "some-layer-name", sbomgen.SPDXFormat)
+						err := syftCLIScanner.GenerateSBOM("some-path", tmpLayersDir, "some-layer-name", sbomgen.SPDXFormat)
 						Expect(err).To(MatchError(ContainSubstring("failed to make SPDX SBOM reproducible: unable to decode SPDX JSON")))
 					})
 				})
