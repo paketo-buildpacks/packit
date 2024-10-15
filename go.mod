@@ -12,7 +12,7 @@ require (
 	github.com/anchore/syft v0.80.0
 	github.com/apex/log v1.9.0
 	github.com/dsnet/compress v0.0.2-0.20210315054119-f66993602bf5
-	github.com/gabriel-vasile/mimetype v1.4.5
+	github.com/gabriel-vasile/mimetype v1.4.6
 	github.com/google/uuid v1.6.0
 	github.com/onsi/gomega v1.34.1
 	github.com/pelletier/go-toml v1.9.5
