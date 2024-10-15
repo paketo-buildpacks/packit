@@ -20,7 +20,7 @@ type Executable interface {
 	Execute(pexec.Execution) (err error)
 }
 
-// SyftCLIScanner implements scanning a dir using the `syft` CLI
+// SyftCLIScanner implements scanning a path using the `syft` CLI
 // to generate SBOM, process it, and write it to a location that complies with
 // the buildpacks spec. Supports CycloneDX, SPDX and Syft mediatypes, with an
 // optional version param for CycloneDX and Syft.
@@ -43,13 +43,13 @@ func NewSyftCLIScanner(syftCLI Executable, logger scribe.Emitter) SyftCLIScanner
 	}
 }
 
-// Generate takes a path to a directory to scan and a list of SBOM mediatypes
-// (with an optional version for CycloneDX and SPDX), and invokes the syft CLI
-// scan command. The CLI is instructed to write the SBOM to
+// Generate takes a path to scan and a list of SBOM mediatypes (with an
+// optional version for CycloneDX and SPDX), and invokes the syft CLI scan
+// command. The CLI is instructed to write the SBOM to
 // <layers>/<layer>.sbom.<ext> as defined by the buildpack spec. Additionally,
 // CycloneDX & SPDX outputs are modified to make the output reproducible
 // (Paketo RFCs 38 & 49).
-func (s SyftCLIScanner) GenerateSBOM(scanDir, layersPath, layerName string, mediaTypes ...string) error {
+func (s SyftCLIScanner) GenerateSBOM(scanPath, layersPath, layerName string, mediaTypes ...string) error {
 	sbomWritePaths := make(map[string]string)
 	args := []string{"scan", "--quiet"}
 
@@ -71,12 +71,11 @@ func (s SyftCLIScanner) GenerateSBOM(scanDir, layersPath, layerName string, medi
 		args = append(args, "--output", fmt.Sprintf("%s=%s", syftOutputFormat, sbomWritePaths[mediatype]))
 	}
 
-	args = append(args, fmt.Sprintf("dir:%s", scanDir))
+	args = append(args, scanPath)
 
 	s.logger.Debug.Subprocess("Executing syft CLI with args %v", args)
 	if err := s.syftCLI.Execute(pexec.Execution{
 		Args:   args,
-		Dir:    scanDir,
 		Stdout: s.logger.ActionWriter,
 		Stderr: s.logger.ActionWriter,
 	}); err != nil {
