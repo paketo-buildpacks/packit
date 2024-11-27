@@ -247,8 +247,8 @@ func stringSliceElementCount(slice []string, str string) int {
 // there is a dependency mapping for the specified dependency, Deliver will use
 // the given dependency mapping URI to fetch the dependency. If there is a
 // dependency mirror for the specified dependency, Deliver will use the mirror
-// URI to fetch the dependency. If both a dependency mapping and mirror are BOTH
-// present, the mapping will take precedence over the mirror.The dependency is
+// URI to fetch the dependency. If a dependency mapping and mirror are BOTH
+// present, the mapping will take precedence over the mirror. The dependency is
 // validated against the checksum value provided on the Dependency and will error
 // if there are inconsistencies in the fetched result.
 func (s Service) Deliver(dependency Dependency, cnbPath, layerPath, platformPath string) error {
