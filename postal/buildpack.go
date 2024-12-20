@@ -74,6 +74,9 @@ type Dependency struct {
 	// StripComponents behaves like the --strip-components flag on tar command
 	// removing the first n levels from the final decompression destination.
 	StripComponents int `toml:"strip-components"`
+
+	// ARCH is the architecture of this dependency
+	Arch string `toml:"arch"`
 }
 
 func parseBuildpack(path, name string) ([]Dependency, string, error) {
