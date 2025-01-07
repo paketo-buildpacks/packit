@@ -11,6 +11,12 @@ type ExtensionConfig struct {
 	API       string                  `toml:"api"       json:"api,omitempty"`
 	Extension ConfigExtension         `toml:"extension" json:"extension,omitempty"`
 	Metadata  ConfigExtensionMetadata `toml:"metadata"  json:"metadata,omitempty"`
+	Targets   []ExtensionConfigTarget `toml:"targets"   json:"targets,omitempty"`
+}
+
+type ExtensionConfigTarget struct {
+	OS   string `toml:"os"     json:"os,omitempty"`
+	Arch string `toml:"arch"   json:"arch,omitempty"`
 }
 
 type ConfigExtensionMetadata struct {
