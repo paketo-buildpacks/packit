@@ -23,6 +23,7 @@ import (
 	//nolint Ignore SA1019, usage of deprecated package within a deprecated test case
 	"github.com/paketo-buildpacks/packit/v2/paketosbom"
 
+	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
 
@@ -115,6 +116,12 @@ strip-components = 1
 		service = postal.NewService(transport).
 			WithDependencyMappingResolver(mappingResolver).
 			WithDependencyMirrorResolver(mirrorResolver)
+
+		Expect(os.Setenv("BP_ARCH", "amd64")).To(Succeed())
+	})
+
+	AfterEach(func() {
+		Expect(os.Unsetenv("BP_ARCH")).To(Succeed())
 	})
 
 	context("Resolve", func() {
@@ -310,6 +317,85 @@ version = "4.5.6"
 			})
 		})
 
+		context("when there architecture specific versions", func() {
+			it.Before(func() {
+				err := os.WriteFile(path, []byte(`
+[metadata]
+[metadata.default-versions]
+some-entry = "1.2.x"
+
+[[metadata.dependencies]]
+id = "some-entry"
+sha256 = "some-sha-amd64"
+stacks = ["*"]
+uri = "some-uri"
+version = "1.2.3"
+arch = "amd64"
+
+[[metadata.dependencies]]
+id = "some-entry"
+sha256 = "some-sha-arm"
+stacks = ["*"]
+uri = "some-uri"
+version = "1.2.3"
+arch = "arm"
+
+[[metadata.dependencies]]
+id = "some-other-entry"
+sha256 = "some-other-sha"
+stacks = ["*"]
+uri = "some-uri"
+version = "1.2.4"
+
+`), 0600)
+				Expect(err).NotTo(HaveOccurred())
+			})
+
+			context("BP_ARCH=amd64", func() {
+				it.Before(func() {
+					Expect(os.Setenv("BP_ARCH", "amd64")).To(Succeed())
+				})
+
+				it.After(func() {
+					Expect(os.Unsetenv("BP_ARCH")).To(Succeed())
+				})
+
+				it("picks the dependency with the correct arch", func() {
+					dependency, err := service.Resolve(path, "some-entry", "1.2.3", "some-stack")
+					Expect(err).NotTo(HaveOccurred())
+					Expect(dependency.SHA256).To(Equal("some-sha-amd64"))
+				})
+
+				it("picks the dependency with the no arch", func() {
+					dependency, err := service.Resolve(path, "some-other-entry", "1.2.4", "some-stack")
+					Expect(err).NotTo(HaveOccurred())
+					Expect(dependency.SHA256).To(Equal("some-other-sha"))
+				})
+			})
+
+			context("BP_ARCH=arm", func() {
+				it.Before(func() {
+					Expect(os.Setenv("BP_ARCH", "arm")).To(Succeed())
+				})
+
+				it.After(func() {
+					Expect(os.Unsetenv("BP_ARCH")).To(Succeed())
+				})
+
+				it("picks the dependency with the correct arch", func() {
+					dependency, err := service.Resolve(path, "some-entry", "1.2.3", "some-stack")
+					Expect(err).NotTo(HaveOccurred())
+					Expect(dependency.SHA256).To(Equal("some-sha-arm"))
+				})
+
+				it("fails if no dependency with the correct arch is found", func() {
+					_, err := service.Resolve(path, "some-other-entry", "1.2.4", "some-stack")
+					Expect(err).To(MatchError(ContainSubstring("failed to satisfy")))
+					Expect(err).To(MatchError(ContainSubstring("\"arm\"")))
+				})
+			})
+		})
+
 		context("when both a wildcard stack constraint and a specific stack constraint exist for the same dependency version", func() {
 			it.Before(func() {
 				err := os.WriteFile(path, []byte(`
@@ -429,7 +515,7 @@ version = "1.2.3"
 					expectedErr := &postal.ErrNoDeps{}
 					_, err := service.Resolve(path, "some-entry", "9.9.9", "some-stack")
 					Expect(errors.As(err, &expectedErr)).To(BeTrue())
-					Expect(err).To(MatchError(ContainSubstring("failed to satisfy \"some-entry\" dependency version constraint \"9.9.9\": no compatible versions on \"some-stack\" stack. Supported versions are: [1.2.3, 4.5.6]")))
+					Expect(err).To(MatchError(ContainSubstring("failed to satisfy \"some-entry\" dependency version constraint \"9.9.9\": no compatible versions on \"some-stack\" stack with architecture \"amd64\". Supported versions are: [1.2.3, 4.5.6]")))
 				})
 			})
 		})
