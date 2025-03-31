@@ -8,9 +8,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/anchore/syft/syft"
+	"github.com/anchore/syft/syft/format"
 	"github.com/paketo-buildpacks/packit/v2/sbom"
-	"github.com/paketo-buildpacks/packit/v2/sbom/internal/formats/syft2"
 	"github.com/sclevine/spec"
 
 	. "github.com/onsi/gomega"
@@ -29,16 +28,18 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 		Expect(err).NotTo(HaveOccurred())
 	})
 
-	it("writes the SBOM in the default CycloneDX format", func() {
+	it("writes the SBOM in the 1.3 CycloneDX format", func() {
 		buffer := bytes.NewBuffer(nil)
 		_, err := io.Copy(buffer, sbom.NewFormattedReader(bom, sbom.CycloneDXFormat))
 		Expect(err).NotTo(HaveOccurred())
 
-		format := syft.IdentifyFormat(buffer.Bytes())
-		Expect(format.ID()).To(Equal(syft.CycloneDxJSONFormatID))
+		format, version := format.Identify(bytes.NewBuffer(buffer.Bytes()))
+		Expect(format).To(Equal(sbom.CycloneLatest))
+		Expect(version).To(Equal("1.3"))
 
 		// Ensures pretty printing
 		Expect(buffer.String()).To(ContainSubstring(`{
+  "$schema": "http://cyclonedx.org/schema/bom-1.3.schema.json",
   "bomFormat": "CycloneDX",
   "components": [
     {`))
@@ -54,7 +55,6 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 
 		Expect(cdxOutput.Metadata.Timestamp).To(Equal(""), buffer.String())
 		Expect(cdxOutput.Metadata.Component.Type).To(Equal("file"), buffer.String())
-		Expect(cdxOutput.Metadata.Component.Type).To(Equal("file"), buffer.String())
 		Expect(cdxOutput.Metadata.Component.Name).To(Equal("testdata/"), buffer.String())
 		Expect(cdxOutput.Components[0].Name).To(Equal("collapse-white-space"), buffer.String())
 		Expect(cdxOutput.Components[1].Name).To(Equal("end-of-stream"), buffer.String())
@@ -69,13 +69,17 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 		Expect(rerunBuffer.String()).To(Equal(buffer.String()))
 	})
 
-	it("writes the SBOM in the latest CycloneDX format (1.4)", func() {
+	it("writes the SBOM in the 1.4 CycloneDX format", func() {
 		buffer := bytes.NewBuffer(nil)
-		_, err := io.Copy(buffer, sbom.NewFormattedReader(bom, sbom.Format(syft.CycloneDxJSONFormatID)))
+		_, err := io.Copy(buffer, sbom.NewFormattedReader(bom, sbom.Format(sbom.CycloneDX14)))
 		Expect(err).NotTo(HaveOccurred())
 
-		format := syft.IdentifyFormat(buffer.Bytes())
-		Expect(format.ID()).To(Equal(syft.CycloneDxJSONFormatID))
+		// Ensures pretty printing
+		Expect(buffer.String()).To(ContainSubstring(`{
+  "$schema": "http://cyclonedx.org/schema/bom-1.4.schema.json",
+  "bomFormat": "CycloneDX",
+  "components": [
+`))
 
 		var cdxOutput cdxOutput
 
@@ -97,19 +101,20 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 		Expect(cdxOutput.Components[5].Name).To(Equal("wrappy"), buffer.String())
 
 		rerunBuffer := bytes.NewBuffer(nil)
-		_, err = io.Copy(rerunBuffer, sbom.NewFormattedReader(bom, sbom.Format(syft.CycloneDxJSONFormatID)))
+		_, err = io.Copy(rerunBuffer, sbom.NewFormattedReader(bom, sbom.Format(sbom.CycloneDX14)))
 		Expect(err).NotTo(HaveOccurred())
 		Expect(rerunBuffer.String()).To(Equal(buffer.String()))
 	})
 
-	context("writes the SBOM in SPDX format, with fields replaced for reproducibility", func() {
+	context("writes the SBOM in latest SPDX format, with fields replaced for reproducibility", func() {
 		it("produces an SBOM", func() {
 			buffer := bytes.NewBuffer(nil)
 			_, err := io.Copy(buffer, sbom.NewFormattedReader(bom, sbom.SPDXFormat))
 			Expect(err).NotTo(HaveOccurred())
 
-			format := syft.IdentifyFormat(buffer.Bytes())
-			Expect(format.ID()).To(Equal(syft.SPDXJSONFormatID))
+			format, version := format.Identify(bytes.NewBuffer(buffer.Bytes()))
+			Expect(format).To(Equal(sbom.SPDXLatest))
+			Expect(version).To(Equal("2.2"))
 
 			// Ensures pretty printing
 			Expect(buffer.String()).To(ContainSubstring(`{
@@ -131,7 +136,7 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 			Expect(spdxOutput.Packages[5].Name).To(Equal("wrappy"), buffer.String())
 
 			// Ensure documentNamespace and creationInfo.created have reproducible values
-			Expect(spdxOutput.DocumentNamespace).To(Equal("https://paketo.io/packit/dir/testdata-e5ba1162-56a7-57ac-8372-3aff3f15e036"), buffer.String())
+			Expect(spdxOutput.DocumentNamespace).To(Equal("https://paketo.io/packit/dir/testdata-04aad2fb-ad20-54bc-a8a3-3702ac37734a"), buffer.String())
 			Expect(spdxOutput.CreationInfo.Created).To(BeZero(), buffer.String())
 
 			rerunBuffer := bytes.NewBuffer(nil)
@@ -167,8 +172,9 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 					err = json.Unmarshal(buffer.Bytes(), &spdxOutput)
 					Expect(err).NotTo(HaveOccurred(), buffer.String())
 
-					format := syft.IdentifyFormat(buffer.Bytes())
-					Expect(format.ID()).To(Equal(syft.SPDXJSONFormatID))
+					format, version := format.Identify(bytes.NewBuffer(buffer.Bytes()))
+					Expect(format).To(Equal(sbom.SPDXLatest))
+					Expect(version).To(Equal("2.2"))
 
 					Expect(spdxOutput.SPDXVersion).To(Equal("SPDX-2.2"), buffer.String())
 
@@ -180,7 +186,7 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 					Expect(spdxOutput.Packages[5].Name).To(Equal("wrappy"), buffer.String())
 
 					// Ensure documentNamespace and creationInfo.created have reproducible values
-					Expect(spdxOutput.DocumentNamespace).To(Equal("https://paketo.io/packit/dir/testdata-ef57d584-3f15-5c91-be8c-0f7c011883a8"), buffer.String())
+					Expect(spdxOutput.DocumentNamespace).To(Equal("https://paketo.io/packit/dir/testdata-b103dc3d-2f7a-59c8-835c-ffaa80cd92a0"), buffer.String())
 					Expect(spdxOutput.CreationInfo.Created).To(Equal(time.Unix(1659551872, 0).UTC()), buffer.String())
 
 					rerunBuffer := bytes.NewBuffer(nil)
@@ -206,7 +212,7 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 		})
 	}, spec.Sequential())
 
-	it("writes the SBOM in the default syft format", func() {
+	it("writes the SBOM in the latest syft format", func() {
 		buffer := bytes.NewBuffer(nil)
 		_, err := io.Copy(buffer, sbom.NewFormattedReader(bom, sbom.SyftFormat))
 		Expect(err).NotTo(HaveOccurred())
@@ -216,10 +222,10 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 		err = json.Unmarshal(buffer.Bytes(), &syftOutput)
 		Expect(err).NotTo(HaveOccurred(), buffer.String())
 
-		Expect(syftOutput.Schema.Version).To(Equal(`3.0.1`), buffer.String())
+		Expect(syftOutput.Schema.Version).To(Equal(`16.0.20`), buffer.String())
 
 		Expect(syftOutput.Source.Type).To(Equal("directory"), buffer.String())
-		Expect(syftOutput.Source.Target).To(Equal("testdata/"), buffer.String())
+		Expect(syftOutput.Source.Metadata.Path).To(Equal("testdata/"), buffer.String())
 		Expect(syftOutput.Artifacts[0].Name).To(Equal("collapse-white-space"), buffer.String())
 		Expect(syftOutput.Artifacts[1].Name).To(Equal("end-of-stream"), buffer.String())
 		Expect(syftOutput.Artifacts[2].Name).To(Equal("insert-css"), buffer.String())
@@ -229,66 +235,6 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 
 		rerunBuffer := bytes.NewBuffer(nil)
 		_, err = io.Copy(rerunBuffer, sbom.NewFormattedReader(bom, sbom.SyftFormat))
-		Expect(err).NotTo(HaveOccurred())
-		Expect(rerunBuffer.String()).To(Equal(buffer.String()))
-	})
-
-	it("writes the SBOM in Syft 2.0.2 format", func() {
-		buffer := bytes.NewBuffer(nil)
-		_, err := io.Copy(buffer, sbom.NewFormattedReader(bom, sbom.Format(syft2.ID)))
-		Expect(err).NotTo(HaveOccurred())
-
-		// Ensures pretty printing
-		Expect(buffer.String()).To(ContainSubstring(`{
- "artifacts": [
-  {
-   "id":`))
-
-		var syftOutput syftOutput
-
-		err = json.Unmarshal(buffer.Bytes(), &syftOutput)
-		Expect(err).NotTo(HaveOccurred(), buffer.String())
-
-		Expect(syftOutput.Schema.Version).To(Equal("2.0.2"), buffer.String())
-
-		Expect(syftOutput.Source.Type).To(Equal("directory"), buffer.String())
-		Expect(syftOutput.Source.Target).To(Equal("testdata/"), buffer.String())
-		Expect(syftOutput.Artifacts[0].Name).To(Equal("collapse-white-space"), buffer.String())
-		Expect(syftOutput.Artifacts[1].Name).To(Equal("end-of-stream"), buffer.String())
-		Expect(syftOutput.Artifacts[2].Name).To(Equal("insert-css"), buffer.String())
-		Expect(syftOutput.Artifacts[3].Name).To(Equal("once"), buffer.String())
-		Expect(syftOutput.Artifacts[4].Name).To(Equal("pump"), buffer.String())
-		Expect(syftOutput.Artifacts[5].Name).To(Equal("wrappy"), buffer.String())
-
-		rerunBuffer := bytes.NewBuffer(nil)
-		_, err = io.Copy(rerunBuffer, sbom.NewFormattedReader(bom, sbom.Format(syft2.ID)))
-		Expect(err).NotTo(HaveOccurred())
-		Expect(rerunBuffer.String()).To(Equal(buffer.String()))
-	})
-
-	it("writes the SBOM in the latest Syft format (7.*)", func() {
-		buffer := bytes.NewBuffer(nil)
-		_, err := io.Copy(buffer, sbom.NewFormattedReader(bom, sbom.Format(syft.JSONFormatID)))
-		Expect(err).NotTo(HaveOccurred())
-
-		var syftOutput syftOutput
-
-		err = json.Unmarshal(buffer.Bytes(), &syftOutput)
-		Expect(err).NotTo(HaveOccurred(), buffer.String())
-
-		Expect(syftOutput.Schema.Version).To(MatchRegexp(`7\.\d+\.\d+`), buffer.String())
-
-		Expect(syftOutput.Source.Type).To(Equal("directory"), buffer.String())
-		Expect(syftOutput.Source.Target).To(Equal("testdata/"), buffer.String())
-		Expect(syftOutput.Artifacts[0].Name).To(Equal("collapse-white-space"), buffer.String())
-		Expect(syftOutput.Artifacts[1].Name).To(Equal("end-of-stream"), buffer.String())
-		Expect(syftOutput.Artifacts[2].Name).To(Equal("insert-css"), buffer.String())
-		Expect(syftOutput.Artifacts[3].Name).To(Equal("once"), buffer.String())
-		Expect(syftOutput.Artifacts[4].Name).To(Equal("pump"), buffer.String())
-		Expect(syftOutput.Artifacts[5].Name).To(Equal("wrappy"), buffer.String())
-
-		rerunBuffer := bytes.NewBuffer(nil)
-		_, err = io.Copy(rerunBuffer, sbom.NewFormattedReader(bom, sbom.Format(syft.JSONFormatID)))
 		Expect(err).NotTo(HaveOccurred())
 		Expect(rerunBuffer.String()).To(Equal(buffer.String()))
 	})
