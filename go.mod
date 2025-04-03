@@ -1,7 +1,6 @@
 module github.com/paketo-buildpacks/packit/v2
 
 go 1.24.1
-
 require (
 	github.com/BurntSushi/toml v1.5.0
 	github.com/Masterminds/semver/v3 v3.3.1
@@ -15,7 +14,7 @@ require (
 	github.com/gabriel-vasile/mimetype v1.4.8
 	github.com/google/uuid v1.6.0
 	github.com/onsi/ginkgo v1.16.5
-	github.com/onsi/gomega v1.36.3
+	github.com/onsi/gomega v1.37.0
 	github.com/pelletier/go-toml v1.9.5
 	github.com/sclevine/spec v1.4.0
 	github.com/scylladb/go-set v1.0.3-0.20200225121959-cc7b2070d91e
