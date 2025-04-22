@@ -4,62 +4,42 @@ import (
 	"fmt"
 	"mime"
 
-	"github.com/anchore/syft/syft"
-	"github.com/anchore/syft/syft/sbom"
-	"github.com/paketo-buildpacks/packit/v2/sbom/internal/formats/cyclonedx13"
-	"github.com/paketo-buildpacks/packit/v2/sbom/internal/formats/spdx22"
-	"github.com/paketo-buildpacks/packit/v2/sbom/internal/formats/syft2"
-	"github.com/paketo-buildpacks/packit/v2/sbom/internal/formats/syft301"
+	"github.com/anchore/syft/syft/format"
+	syftsbom "github.com/anchore/syft/syft/sbom"
 )
 
-// TODO: refactor the version lookup part
-var syftFormats map[string]sbom.FormatID = map[string]sbom.FormatID{
-	"default": syft301.ID,
-	"3.0.1":   syft301.ID,
-	"2.0.2":   syft2.ID,
+var encoderCollection = format.NewEncoderCollection(format.Encoders()...)
+
+var cyclonedxFormats map[string]syftsbom.FormatID = map[string]syftsbom.FormatID{
+	"default": CycloneDX13,
+	"1.3":     CycloneDX13,
+	"1.4":     CycloneDX14,
 }
 
-var cyclonedxFormats map[string]sbom.FormatID = map[string]sbom.FormatID{
-	"default": cyclonedx13.ID,
-	"1.4":     syft.CycloneDxJSONFormatID,
-	"1.3":     cyclonedx13.ID,
-}
-
-var spdxFormats map[string]sbom.FormatID = map[string]sbom.FormatID{
-	"default": spdx22.ID,
-	"2.2":     spdx22.ID,
-}
-
-var additionalFormats []sbomFormat
-
-func init() {
-	additionalFormats = []sbomFormat{
-		newSBOMFormat(cyclonedx13.Format()),
-		newSBOMFormat(syft2.Format()),
-		newSBOMFormat(syft301.Format()),
-		newSBOMFormat(spdx22.Format()),
-	}
+var spdxFormats map[string]syftsbom.FormatID = map[string]syftsbom.FormatID{
+	"default": SPDX22,
+	"2.2":     SPDX22,
 }
 
 // An experimental type added to support more SBOM formats
 // It extends the Syft sbom.Format interface
 type sbomFormat struct {
-	sbom.Format
+	syftsbom.FormatEncoder
 }
 
-func newSBOMFormat(format sbom.Format) sbomFormat {
+func newSBOMFormat(format syftsbom.FormatEncoder) sbomFormat {
 	return sbomFormat{
-		Format: format,
+		FormatEncoder: format,
 	}
 }
 
 func (f sbomFormat) Extension() string {
 	switch f.ID() {
-	case syft.CycloneDxJSONFormatID, cyclonedx13.ID:
+	case CycloneLatest, CycloneDX13, CycloneDX14:
 		return "cdx.json"
-	case syft.SPDXJSONFormatID, spdx22.ID:
+	case SPDXLatest, SPDX22:
 		return "spdx.json"
-	case syft.JSONFormatID, syft2.ID, syft301.ID:
+	case SyftLatest:
 		return "syft.json"
 	default:
 		return ""
@@ -76,31 +56,26 @@ func sbomFormatByMediaType(mediaType string) (sbomFormat, error) {
 	if !ok {
 		version = "default"
 	}
-	var selected sbom.FormatID
+	var selected syftsbom.FormatID
 	switch baseType {
 	case CycloneDXFormat:
 		selected = cyclonedxFormats[version]
 	case SPDXFormat:
 		selected = spdxFormats[version]
 	case SyftFormat:
-		selected = syftFormats[version]
+		selected = SyftLatest
 	default:
 		return sbomFormat{}, fmt.Errorf("unsupported SBOM format: '%s'", mediaType)
 	}
 
-	if selected == sbom.FormatID("") {
+	if selected == syftsbom.FormatID("") {
 		return sbomFormat{}, fmt.Errorf("version '%s' is not supported for SBOM format '%s'", version, baseType)
 	}
 	return sbomFormatByID(selected)
 }
 
-func sbomFormatByID(id sbom.FormatID) (sbomFormat, error) {
-	for _, f := range additionalFormats {
-		if f.ID() == id {
-			return f, nil
-		}
-	}
-	format := syft.FormatByID(id)
+func sbomFormatByID(id syftsbom.FormatID) (sbomFormat, error) {
+	format := encoderCollection.GetByString(id.String())
 	if format == nil {
 		return sbomFormat{}, fmt.Errorf("'%s' is not a valid SBOM format identifier", id)
 	}
