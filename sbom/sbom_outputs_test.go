@@ -33,22 +33,35 @@ type cdxOutput struct {
 }
 
 type artifact struct {
-	Name     string   `json:"name"`
-	Version  string   `json:"version"`
-	Licenses []string `json:"licenses"`
-	CPEs     []string `json:"cpes"`
-	PURL     string   `json:"purl"`
+	Name     string        `json:"name"`
+	Version  string        `json:"version"`
+	Licenses []syftLicense `json:"licenses"`
+	CPEs     []cpe         `json:"cpes"`
+	PURL     string        `json:"purl"`
+}
+
+type syftLicense struct {
+	Value string `json:"value"`
+}
+
+type cpe struct {
+	CPE    string `json:"cpe"`
+	Source string `json:"source"`
 }
 
 type syftOutput struct {
 	Artifacts []artifact `json:"artifacts"`
 	Source    struct {
-		Type   string `json:"type"`
-		Target string `json:"target"`
+		Type     string   `json:"type"`
+		Metadata metadata `json:"metadata"`
 	} `json:"source"`
 	Schema struct {
 		Version string `json:"version"`
 	} `json:"schema"`
+}
+
+type metadata struct {
+	Path string `json:"path"`
 }
 
 type externalRef struct {
