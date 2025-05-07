@@ -222,7 +222,7 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 		err = json.Unmarshal(buffer.Bytes(), &syftOutput)
 		Expect(err).NotTo(HaveOccurred(), buffer.String())
 
-		Expect(syftOutput.Schema.Version).To(Equal(`16.0.20`), buffer.String())
+		Expect(syftOutput.Schema.Version).To(Equal(LATEST_SYFT_VERSION), buffer.String())
 
 		Expect(syftOutput.Source.Type).To(Equal("directory"), buffer.String())
 		Expect(syftOutput.Source.Metadata.Path).To(Equal("testdata/"), buffer.String())
