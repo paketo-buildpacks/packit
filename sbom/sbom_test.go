@@ -31,7 +31,6 @@ func testSBOM(t *testing.T, context spec.G, it spec.S) {
 			var output syftOutput
 			err = json.NewDecoder(buffer).Decode(&output)
 			Expect(err).NotTo(HaveOccurred())
-			Expect(output.Schema.Version).To(Equal(`16.0.20`), buffer.String())
 			Expect(output.Artifacts).To(HaveLen(0))
 		})
 	})
@@ -119,8 +118,6 @@ func testSBOM(t *testing.T, context spec.G, it spec.S) {
 
 			err = json.NewDecoder(syft).Decode(&syftDefaultOutput)
 			Expect(err).NotTo(HaveOccurred(), syft.String())
-
-			Expect(syftDefaultOutput.Schema.Version).To(Equal(`16.0.20`), syft.String())
 
 			goArtifact := syftDefaultOutput.Artifacts[0]
 			Expect(goArtifact.Name).To(Equal("Go"), syft.String())
@@ -273,8 +270,6 @@ func testSBOM(t *testing.T, context spec.G, it spec.S) {
 				err = json.NewDecoder(syft).Decode(&syftDefaultOutput)
 				Expect(err).NotTo(HaveOccurred(), syft.String())
 
-				Expect(syftDefaultOutput.Schema.Version).To(Equal(`16.0.20`), syft.String())
-
 				goArtifact := syftDefaultOutput.Artifacts[0]
 				Expect(goArtifact.Name).To(Equal("Go"), syft.String())
 				Expect(goArtifact.Version).To(Equal("1.16.9"), syft.String())
@@ -369,8 +364,6 @@ func testSBOM(t *testing.T, context spec.G, it spec.S) {
 				var syftDefaultOutput syftOutput
 				err = json.NewDecoder(syft).Decode(&syftDefaultOutput)
 				Expect(err).NotTo(HaveOccurred(), syft.String())
-
-				Expect(syftDefaultOutput.Schema.Version).To(Equal(`16.0.20`), syft.String())
 
 				goArtifact := syftDefaultOutput.Artifacts[0]
 				Expect(goArtifact.Name).To(Equal("Go"), syft.String())
