@@ -24,8 +24,8 @@ type ConfigStack struct {
 }
 
 type ConfigTarget struct {
-	OS     string   `toml:"os"     json:"os,omitempty"`
-	Arch   string   `toml:"arch"   json:"arch,omitempty"`
+	OS   string `toml:"os"     json:"os,omitempty"`
+	Arch string `toml:"arch"   json:"arch,omitempty"`
 }
 
 type ConfigBuildpack struct {
@@ -55,21 +55,73 @@ type ConfigMetadata struct {
 }
 
 type ConfigMetadataDependency struct {
-	Checksum        string        `toml:"checksum"         json:"checksum,omitempty"`
-	CPE             string        `toml:"cpe"              json:"cpe,omitempty"`
-	PURL            string        `toml:"purl"             json:"purl,omitempty"`
-	DeprecationDate *time.Time    `toml:"deprecation_date" json:"deprecation_date,omitempty"`
-	ID              string        `toml:"id"               json:"id,omitempty"`
-	Licenses        []interface{} `toml:"licenses"         json:"licenses,omitempty"`
-	Name            string        `toml:"name"             json:"name,omitempty"`
-	SHA256          string        `toml:"sha256"           json:"sha256,omitempty"`
-	Source          string        `toml:"source"           json:"source,omitempty"`
-	SourceChecksum  string        `toml:"source-checksum"  json:"source-checksum,omitempty"`
-	SourceSHA256    string        `toml:"source_sha256"    json:"source_sha256,omitempty"`
-	Stacks          []string      `toml:"stacks"           json:"stacks,omitempty"`
-	StripComponents int           `toml:"strip-components" json:"strip-components,omitempty"`
-	URI             string        `toml:"uri"              json:"uri,omitempty"`
-	Version         string        `toml:"version"          json:"version,omitempty"`
+	Checksum string `toml:"checksum" json:"checksum,omitempty"`
+	// Deprecated: use GetCPES()
+	CPE string `toml:"cpe" json:"cpe,omitempty"`
+	// Deprecated: use GetPURLS()
+	PURL string `toml:"purl" json:"purl,omitempty"`
+	// Deprecated: use GetEOLDate()
+	DeprecationDate *time.Time                        `toml:"deprecation_date" json:"deprecation_date,omitempty"`
+	ID              string                            `toml:"id" json:"id,omitempty"`
+	Licenses        []ConfigMetadataDependencyLicense `toml:"licenses" json:"licenses,omitempty"`
+	Name            string                            `toml:"name" json:"name,omitempty"`
+	// Deprecated: use Checksum
+	SHA256          string   `toml:"sha256" json:"sha256,omitempty"`
+	Source          string   `toml:"source" json:"source,omitempty"`
+	SourceChecksum  string   `toml:"source-checksum" json:"source-checksum,omitempty"`
+	SourceSHA256    string   `toml:"source_sha256" json:"source_sha256,omitempty"`
+	Stacks          []string `toml:"stacks" json:"stacks,omitempty"`
+	StripComponents int      `toml:"strip-components" json:"strip-components,omitempty"`
+	URI             string   `toml:"uri" json:"uri,omitempty"`
+	Version         string   `toml:"version" json:"version,omitempty"`
+
+	Arch    string                           `toml:"arch" json:"arch,omitempty"`
+	CPEs    []string                         `toml:"cpes" json:"cp_es,omitempty"`
+	EOLDate time.Time                        `toml:"eol-date" json:"eol_date,omitempty,omitzero"`
+	OS      string                           `toml:"os" json:"os,omitempty"`
+	PURLs   []string                         `toml:"purls" json:"pur_ls,omitempty"`
+	Distros []ConfigMetadataDependencyDistro `toml:"distros" json:"distros,omitempty"`
+}
+
+func (b ConfigMetadataDependency) GetEOLDate() time.Time {
+	if !b.EOLDate.IsZero() {
+		return b.EOLDate
+	}
+
+	return *b.DeprecationDate
+}
+
+func (b ConfigMetadataDependency) GetPURLS() []string {
+	if len(b.PURLs) > 0 {
+		return b.PURLs
+	}
+
+	return []string{b.PURL}
+}
+func (b ConfigMetadataDependency) GetCPES() []string {
+	if len(b.CPEs) > 0 {
+		return b.CPEs
+	}
+
+	return []string{b.CPE}
+}
+
+// ConfigMetadataDependencyLicense represents a license that a BuildModuleDependency is distributed under.
+// At least one of Name or URI MUST be specified.
+type ConfigMetadataDependencyLicense struct {
+	// Type is the type of the license.  This is typically the SPDX short identifier.
+	Type string `toml:"type" json:"type,omitempty"`
+
+	// URI is the location where the license can be found.
+	URI string `toml:"uri" json:"uri,omitempty"`
+}
+
+// ConfigMetadataDependencyDistro represents a supported distribution of a BuildModuleDependency
+type ConfigMetadataDependencyDistro struct {
+	// Name is the name of the distribution.
+	Name string `toml:"name" json:"name,omitempty"`
+	// Version is the version of the distribution.
+	Version string `toml:"version" json:"version,omitempty"`
 }
 
 type ConfigMetadataDependencyConstraint struct {

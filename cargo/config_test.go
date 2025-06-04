@@ -59,8 +59,8 @@ func testConfig(t *testing.T, context spec.G, it spec.S) {
 				},
 				Targets: []cargo.ConfigTarget{
 					{
-						OS:     "linux",
-						Arch:   "arm64",
+						OS:   "linux",
+						Arch: "arm64",
 					},
 				},
 				Metadata: cargo.ConfigMetadata{
@@ -77,7 +77,16 @@ func testConfig(t *testing.T, context spec.G, it spec.S) {
 							PURL:            "some-purl",
 							DeprecationDate: &deprecationDate,
 							ID:              "some-dependency",
-							Licenses:        []interface{}{"fancy-license", "fancy-license-2"},
+							Licenses: []cargo.ConfigMetadataDependencyLicense{
+								{
+									Type: "fancy-license",
+									URI:  "some-license-uri",
+								},
+								{
+									Type: "fancy-license-2",
+									URI:  "some-license-uri",
+								},
+							},
 							Name:            "Some Dependency",
 							SHA256:          "shasum",
 							Source:          "source",
@@ -146,7 +155,6 @@ api = "0.6"
   purl = "some-purl"
   deprecation_date = "2020-06-01T00:00:00Z"
   id = "some-dependency"
-	licenses = ["fancy-license", "fancy-license-2"]
   name = "Some Dependency"
   sha256 = "shasum"
 	source = "source"
@@ -156,6 +164,14 @@ api = "0.6"
   strip-components = 1
   uri = "http://some-url"
   version = "1.2.3"
+
+[[metadata.dependencies.licenses]]
+	type = "fancy-license"
+	uri = "some-license-uri"
+
+[[metadata.dependencies.licenses]]
+	type = "fancy-license-2"
+	uri = "some-license-uri"
 
 [[metadata.dependency-constraints]]
   id = "some-dependency"
@@ -230,12 +246,12 @@ api = "0.6"
 								PURL:            "some-purl",
 								DeprecationDate: &deprecationDate,
 								ID:              "some-dependency",
-								Licenses: []interface{}{
-									cargo.ConfigBuildpackLicense{
+								Licenses: []cargo.ConfigMetadataDependencyLicense{
+									{
 										Type: "fancy-license",
 										URI:  "some-license-uri",
 									},
-									cargo.ConfigBuildpackLicense{
+									{
 										Type: "fancy-license-2",
 										URI:  "some-license-uri",
 									},
@@ -454,7 +470,6 @@ api = "0.6"
   cpe = "some-cpe"
   purl = "some-purl"
   id = "some-dependency"
-	licenses = ["fancy-license", "fancy-license-2"]
   name = "Some Dependency"
   sha256 = "shasum"
   source = "source"
@@ -464,6 +479,14 @@ api = "0.6"
 	strip-components = 1
   uri = "http://some-url"
   version = "1.2.3"
+
+[[metadata.dependencies.licenses]]
+	type = "fancy-license"
+	uri = "some-license-uri"
+
+[[metadata.dependencies.licenses]]
+	type = "fancy-license-2"
+	uri = "some-license-uri"
 
 [[metadata.dependency-constraints]]
   id = "some-dependency"
@@ -526,11 +549,20 @@ api = "0.6"
 					PrePackage: "some-pre-package-script.sh",
 					Dependencies: []cargo.ConfigMetadataDependency{
 						{
-							Checksum:        "sha256:some-sum",
-							CPE:             "some-cpe",
-							PURL:            "some-purl",
-							ID:              "some-dependency",
-							Licenses:        []interface{}{"fancy-license", "fancy-license-2"},
+							Checksum: "sha256:some-sum",
+							CPE:      "some-cpe",
+							PURL:     "some-purl",
+							ID:       "some-dependency",
+							Licenses: []cargo.ConfigMetadataDependencyLicense{
+								{
+									Type: "fancy-license",
+									URI:  "some-license-uri",
+								},
+								{
+									Type: "fancy-license-2",
+									URI:  "some-license-uri",
+								},
+							},
 							Name:            "Some Dependency",
 							SHA256:          "shasum",
 							Source:          "source",
@@ -680,14 +712,14 @@ api = "0.2"
 								CPE:      "some-cpe",
 								PURL:     "some-purl",
 								ID:       "some-dependency",
-								Licenses: []interface{}{
-									map[string]interface{}{
-										"type": "fancy-license",
-										"uri":  "some-license-uri",
+								Licenses: []cargo.ConfigMetadataDependencyLicense{
+									{
+										Type: "fancy-license",
+										URI:  "some-license-uri",
 									},
-									map[string]interface{}{
-										"type": "fancy-license-2",
-										"uri":  "some-license-uri",
+									{
+										Type: "fancy-license-2",
+										URI:  "some-license-uri",
 									},
 								},
 								Name:           "Some Dependency",
