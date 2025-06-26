@@ -1,0 +1,69 @@
+{
+    "elephantsql-provider": [
+      {
+        "name": "elephantsql-binding-c6c60",
+        "binding_guid": "44ceb72f-100b-4f50-87a2-7809c8b42b8d",
+        "binding_name": "elephantsql-binding-c6c60",
+        "instance_guid": "391308e8-8586-4c42-b464-c7831aa2ad22",
+        "instance_name": "elephantsql-c6c60",
+        "label": "elephantsql-type",
+        "tags": [
+          "postgres",
+          "postgresql",
+          "relational"
+        ],
+        "plan": "turtle",
+        "credentials": {
+          "uri": "postgres://exampleuser:examplepass@postgres.example.com:5432/exampleuser",
+          "int": 1,
+          "bool": true
+        },
+        "syslog_drain_url": null,
+        "volume_mounts": []
+      }
+    ],
+    "sendgrid-provider": [
+      {
+        "name": "mysendgrid",
+        "binding_guid": "6533b1b6-7916-488d-b286-ca33d3fa0081",
+        "binding_name": null,
+        "instance_guid": "8c907d0f-ec0f-44e4-87cf-e23c9ba3925d",
+        "instance_name": "mysendgrid",
+        "label": "sendgrid-type",
+        "tags": [
+          "smtp"
+        ],
+        "plan": "free",
+        "credentials": {
+          "hostname": "smtp.example.com",
+          "username": "QvsXMbJ3rK",
+          "password": "HCHMOYluTv"
+        },
+        "syslog_drain_url": null,
+        "volume_mounts": []
+      }
+    ],
+    "postgres": [
+      {
+        "name": "postgres",
+        "label": "postgres",
+        "plan": "default",
+        "tags": [
+          "postgres"
+        ],
+        "binding_guid": "6533b1b6-7916-488d-b286-ca33d3fa0081",
+        "binding_name": null,
+        "instance_guid": "8c907d0f-ec0f-44e4-87cf-e23c9ba3925d",
+        "credentials": {
+          "username": "foo",
+          "password": "bar",
+          "urls": {
+            "example": "http://example.com"
+          }
+        },
+        "syslog_drain_url": null,
+        "volume_mounts": []
+      }
+    ]
+  }
+  
