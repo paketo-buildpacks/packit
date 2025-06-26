@@ -16,17 +16,17 @@ import (
 	"time"
 
 	"github.com/paketo-buildpacks/packit/v2"
+	//nolint Ignore SA1019, usage of deprecated package within a deprecated test case
+	"github.com/paketo-buildpacks/packit/v2/paketosbom"
 	"github.com/paketo-buildpacks/packit/v2/postal"
 	"github.com/paketo-buildpacks/packit/v2/postal/fakes"
 	"github.com/sclevine/spec"
-
-	//nolint Ignore SA1019, usage of deprecated package within a deprecated test case
-	"github.com/paketo-buildpacks/packit/v2/paketosbom"
 
 	. "github.com/onsi/gomega"
 )
 
 func testService(t *testing.T, context spec.G, it spec.S) {
+
 	var (
 		Expect = NewWithT(t).Expect
 
@@ -38,6 +38,127 @@ func testService(t *testing.T, context spec.G, it spec.S) {
 
 		service postal.Service
 	)
+	context("Validating CNB_TARGET_ARCH behaviour", func() {
+
+		it.Before(func() {
+			file, err := os.CreateTemp("", "buildpack.toml")
+			Expect(err).NotTo(HaveOccurred())
+
+			path = file.Name()
+			_, err = file.WriteString(`
+		[[metadata.dependencies]]
+		deprecation_date = 2022-04-01T00:00:00Z
+		arch = "ppc64le"
+		name = "Some Entry for ppc64le arch"
+		id = "some-entry"
+		cpe = "some-cpe"
+		cpes = ["some-cpe", "other-cpe"]
+		sha256 = "some-sha"
+		stacks = ["some-stack"]
+		uri = "some-uri"
+		version = "1.2.4"
+
+		[[metadata.dependencies]]
+		deprecation_date = 2022-04-01T00:00:00Z
+		id = "some-entry"
+		name = "Some Entry for arm64 arch"
+		arch = "arm64"
+		cpes = ["some-cpe", "other-cpe"]
+		sha256 = "some-other-sha"
+		stacks = ["some-stack"]
+		uri = "some-uri"
+		version = "1.2.4"
+
+		[[metadata.dependencies]]
+		deprecation_date = 2022-04-01T00:00:00Z
+		id = "some-entry"
+		name = "Some Entry for amd64 arch"
+		cpes = ["some-cpe", "other-cpe"]
+		sha256 = "some-other-sha"
+		stacks = ["some-stack"]
+		uri = "some-uri"
+		version = "1.2.4"
+		`)
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(file.Close()).To(Succeed())
+
+			transport = &fakes.Transport{}
+
+			mappingResolver = &fakes.MappingResolver{}
+
+			mirrorResolver = &fakes.MirrorResolver{}
+
+			service = postal.NewService(transport).
+				WithDependencyMappingResolver(mappingResolver).
+				WithDependencyMirrorResolver(mirrorResolver)
+
+		})
+
+		it.After(func() {
+			Expect(os.Unsetenv("CNB_TARGET_ARCH")).To(Succeed())
+			Expect(os.Unsetenv("BP_ARCH")).To(Succeed())
+		})
+
+		it("expect CNB_TARGET_ARCH to take priority over BP_ARCH", func() {
+			Expect(os.Setenv("CNB_TARGET_ARCH", "ppc64le")).To(Succeed())
+			Expect(os.Setenv("BP_ARCH", "amd64")).To(Succeed())
+
+			deprecationDate, err := time.Parse(time.RFC3339, "2022-04-01T00:00:00Z")
+			Expect(err).NotTo(HaveOccurred())
+
+			dependency, err := service.Resolve(path, "some-entry", "1.2.*", "some-stack")
+			Expect(err).NotTo(HaveOccurred())
+			Expect(dependency).To(Equal(postal.Dependency{
+				CPE:             "some-cpe",
+				CPEs:            []string{"some-cpe", "other-cpe"},
+				DeprecationDate: deprecationDate,
+				ID:              "some-entry",
+				Stacks:          []string{"some-stack"},
+				URI:             "some-uri",
+				SHA256:          "some-sha",
+				Version:         "1.2.4",
+				Arch:            "ppc64le",
+				Name:            "Some Entry for ppc64le arch",
+			}))
+		})
+
+		it("When the arch specified by the CNB_TARGET_ARCH is not on the dependencies, should fail", func() {
+			Expect(os.Setenv("CNB_TARGET_ARCH", "unkown-arch")).To(Succeed())
+			Expect(os.Setenv("BP_ARCH", "amd64")).To(Succeed())
+
+			_, err := service.Resolve(path, "some-entry", "1.2.*", "some-stack")
+			Expect(err).To(HaveOccurred())
+			Expect(err).To(MatchError(ContainSubstring(
+				"failed to satisfy \"some-entry\" dependency version constraint \"1.2.*\": " +
+					"no compatible versions on \"some-stack\" stack with architecture \"unkown-arch\". " +
+					"Supported versions are: []",
+			)))
+		})
+
+		it("if CNB_TARGET_ARCH is not set, BP_ARCH should specify the target platform", func() {
+			Expect(os.Setenv("BP_ARCH", "arm64")).To(Succeed())
+
+			deprecationDate, err := time.Parse(time.RFC3339, "2022-04-01T00:00:00Z")
+			Expect(err).NotTo(HaveOccurred())
+
+			dependency, err := service.Resolve(path, "some-entry", "1.2.*", "some-stack")
+			Expect(err).NotTo(HaveOccurred())
+			Expect(dependency).To(Equal(postal.Dependency{
+				CPE:             "",
+				CPEs:            []string{"some-cpe", "other-cpe"},
+				DeprecationDate: deprecationDate,
+				ID:              "some-entry",
+				Stacks:          []string{"some-stack"},
+				URI:             "some-uri",
+				SHA256:          "some-other-sha",
+				Version:         "1.2.4",
+				Arch:            "arm64",
+				Name:            "Some Entry for arm64 arch",
+			}))
+		})
+
+	})
 
 	it.Before(func() {
 		file, err := os.CreateTemp("", "buildpack.toml")
@@ -115,6 +236,12 @@ strip-components = 1
 		service = postal.NewService(transport).
 			WithDependencyMappingResolver(mappingResolver).
 			WithDependencyMirrorResolver(mirrorResolver)
+
+		Expect(os.Setenv("BP_ARCH", "amd64")).To(Succeed())
+	})
+
+	it.After(func() {
+		Expect(os.Unsetenv("BP_ARCH")).To(Succeed())
 	})
 
 	context("Resolve", func() {

@@ -143,6 +143,8 @@ func (s Service) Resolve(path, id, version, stack string) (Dependency, error) {
 		return Dependency{}, err
 	}
 
+	targetArch := getTargetArch()
+
 	var supportedVersions []string
 	for _, dependency := range dependencies {
 		if dependency.ID != id || !stacksInclude(dependency.Stacks, stack) {
@@ -226,13 +228,18 @@ func (s Service) Resolve(path, id, version, stack string) (Dependency, error) {
 	return compatibleVersions[0], nil
 }
 
-func archFromSystem() string {
-	archFromEnv, ok := os.LookupEnv("BP_ARCH")
-	if !ok {
-		archFromEnv = runtime.GOARCH
+func getTargetArch() string {
+	cnbTargetArch, ok := os.LookupEnv("CNB_TARGET_ARCH")
+	if ok {
+		return cnbTargetArch
 	}
 
-	return archFromEnv
+	archFromEnv, ok := os.LookupEnv("BP_ARCH")
+	if ok {
+		return archFromEnv
+	}
+
+	return runtime.GOARCH
 }
 
 func stringSliceContains(slice []string, str string) bool {
