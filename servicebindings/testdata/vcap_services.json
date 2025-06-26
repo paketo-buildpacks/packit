@@ -64,6 +64,23 @@
         "syslog_drain_url": null,
         "volume_mounts": []
       }
-    ]
+    ],
+    "user-provided": [
+    {
+      "name": "my-custom-binding",
+      "label": "user-provided",
+      "plan": "default",
+      "binding_guid": "6533b1b6-7916-488d-b286-ca33d3fa0082",
+      "binding_name": null,
+      "instance_guid": "8c907d0f-ec0f-44e4-87cf-e23c9ba3925f",
+      "credentials": {
+        "username": "foo",
+        "password": "bar",
+        "type": "custom-type"
+      },
+      "syslog_drain_url": null,
+      "volume_mounts": []
+    }
+  ]
   }
   
