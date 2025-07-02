@@ -136,6 +136,7 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 			Expect(spdxOutput.Packages[5].Name).To(Equal("wrappy"), buffer.String())
 
 			// Ensure documentNamespace and creationInfo.created have reproducible values
+			// The DocumentNamespace inculdes the sha1 uuid of the data, which may differ if running locally versus in github actions
 			Expect(spdxOutput.DocumentNamespace).To(Equal("https://paketo.io/packit/dir/testdata-04aad2fb-ad20-54bc-a8a3-3702ac37734a"), buffer.String())
 			Expect(spdxOutput.CreationInfo.Created).To(BeZero(), buffer.String())
 
@@ -186,6 +187,7 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 					Expect(spdxOutput.Packages[5].Name).To(Equal("wrappy"), buffer.String())
 
 					// Ensure documentNamespace and creationInfo.created have reproducible values
+					// The DocumentNamespace inculdes the sha1 uuid of the data, which may differ if running locally versus in github actions
 					Expect(spdxOutput.DocumentNamespace).To(Equal("https://paketo.io/packit/dir/testdata-b103dc3d-2f7a-59c8-835c-ffaa80cd92a0"), buffer.String())
 					Expect(spdxOutput.CreationInfo.Created).To(Equal(time.Unix(1659551872, 0).UTC()), buffer.String())
 

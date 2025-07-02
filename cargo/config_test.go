@@ -59,8 +59,8 @@ func testConfig(t *testing.T, context spec.G, it spec.S) {
 				},
 				Targets: []cargo.ConfigTarget{
 					{
-						OS:     "linux",
-						Arch:   "arm64",
+						OS:   "linux",
+						Arch: "arm64",
 					},
 				},
 				Metadata: cargo.ConfigMetadata{
@@ -87,6 +87,14 @@ func testConfig(t *testing.T, context spec.G, it spec.S) {
 							StripComponents: 1,
 							URI:             "http://some-url",
 							Version:         "1.2.3",
+							OS:              "some-os",
+							Arch:            "some-arch",
+							Distros: []cargo.ConfigDistro{
+								{
+									Name:    "some-distro-name",
+									Version: "some-distro-version",
+								},
+							},
 						},
 					},
 					DependencyConstraints: []cargo.ConfigMetadataDependencyConstraint{
@@ -156,6 +164,12 @@ api = "0.6"
   strip-components = 1
   uri = "http://some-url"
   version = "1.2.3"
+  os = "some-os"
+  arch = "some-arch"
+
+	[[metadata.dependencies.distros]]
+	name = "some-distro-name"
+	version = "some-distro-version"
 
 [[metadata.dependency-constraints]]
   id = "some-dependency"
@@ -464,6 +478,12 @@ api = "0.6"
 	strip-components = 1
   uri = "http://some-url"
   version = "1.2.3"
+  os = "some-os"
+  arch = "some-arch"
+
+	[[metadata.dependencies.distros]]
+	name = "some-distro-name"
+	version = "some-distro-version"
 
 [[metadata.dependency-constraints]]
   id = "some-dependency"
@@ -540,6 +560,14 @@ api = "0.6"
 							StripComponents: 1,
 							URI:             "http://some-url",
 							Version:         "1.2.3",
+							OS:              "some-os",
+							Arch:            "some-arch",
+							Distros: []cargo.ConfigDistro{
+								{
+									Name:    "some-distro-name",
+									Version: "some-distro-version",
+								},
+							},
 						},
 					},
 					DependencyConstraints: []cargo.ConfigMetadataDependencyConstraint{
