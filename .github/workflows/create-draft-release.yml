@@ -26,7 +26,7 @@ jobs:
       with:
         go-version: 'stable'
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
     - name: Run Unit Tests
       run: ./scripts/unit.sh
 
@@ -40,7 +40,7 @@ jobs:
       with:
         go-version: 'stable'
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         fetch-tags: true
     - name: Reset Draft Release
