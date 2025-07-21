@@ -3,13 +3,14 @@
 package sbom
 
 import (
+	"context"
 	"fmt"
 	"os"
 
 	"github.com/anchore/syft/syft"
 	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/pkg/cataloger"
+	"github.com/anchore/syft/syft/pkg/cataloger/javascript"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
 	"github.com/paketo-buildpacks/packit/v2/postal"
@@ -33,42 +34,28 @@ func NewSBOM(syft sbom.SBOM) SBOM {
 
 // Generate returns a populated SBOM given a path to a directory to scan.
 func Generate(path string) (SBOM, error) {
-	info, err := os.Stat(path)
+	ctx := context.Background()
+
+	_, err := os.Stat(path)
 	if err != nil {
 		return SBOM{}, err
 	}
 
-	var src source.Source
-	if info.IsDir() {
-		src, err = source.NewFromDirectory(path)
-		if err != nil {
-			return SBOM{}, err
-		}
-	} else {
-		var cleanup func()
-		src, cleanup = source.NewFromFile(path)
-		defer cleanup()
-	}
-
-	config := cataloger.Config{
-		Search: cataloger.SearchConfig{
-			Scope: source.UnknownScope,
-		},
-	}
-
-	catalog, _, release, err := syft.CatalogPackages(&src, config)
+	src, err := syft.GetSource(ctx, path, nil)
 	if err != nil {
-		return SBOM{}, err
+		return SBOM{}, nil
+	}
+
+	config := syft.DefaultCreateSBOMConfig()
+	config.Packages.JavaScript = javascript.DefaultCatalogerConfig().WithIncludeDevDependencies(true) // included for compatibility reasons
+
+	bom, err := syft.CreateSBOM(ctx, src, config)
+	if err != nil {
+		return SBOM{}, nil
 	}
 
 	return SBOM{
-		syft: sbom.SBOM{
-			Artifacts: sbom.Artifacts{
-				Packages:          catalog,
-				LinuxDistribution: release,
-			},
-			Source: src.Metadata,
-		},
+		syft: *bom,
 	}, nil
 }
 
@@ -76,7 +63,7 @@ func Generate(path string) (SBOM, error) {
 // and the directory path where the dependency will be located within the
 // application image.
 
-//nolint Ignore SA1019, informed usage of deprecated package
+// nolint Ignore SA1019, informed usage of deprecated package
 func GenerateFromDependency(dependency postal.Dependency, path string) (SBOM, error) {
 
 	//nolint Ignore SA1019, informed usage of deprecated package
@@ -90,17 +77,22 @@ func GenerateFromDependency(dependency postal.Dependency, path string) (SBOM, er
 
 	var cpes []cpe.CPE
 	for _, cpeString := range dependency.CPEs {
-		cpe, err := cpe.New(cpeString)
+		cpe, err := cpe.New(cpeString, cpe.DeclaredSource)
 		if err != nil {
 			return SBOM{}, err
 		}
 		cpes = append(cpes, cpe)
 	}
 
-	catalog := pkg.NewCatalog(pkg.Package{
+	licenses := pkg.NewLicenseSet()
+	for _, license := range dependency.Licenses {
+		licenses.Add(pkg.NewLicense(license))
+	}
+
+	catalog := pkg.NewCollection(pkg.Package{
 		Name:     dependency.Name,
 		Version:  dependency.Version,
-		Licenses: dependency.Licenses,
+		Licenses: licenses,
 		CPEs:     cpes,
 		PURL:     dependency.PURL,
 	})
@@ -110,9 +102,10 @@ func GenerateFromDependency(dependency postal.Dependency, path string) (SBOM, er
 			Artifacts: sbom.Artifacts{
 				Packages: catalog,
 			},
-			Source: source.Metadata{
-				Scheme: source.DirectoryScheme,
-				Path:   path,
+			Source: source.Description{
+				Metadata: source.DirectoryMetadata{
+					Path: path,
+				},
 			},
 		},
 	}, nil
@@ -131,7 +124,7 @@ func (s SBOM) InFormats(mediaTypes ...string) (Formatter, error) {
 			return Formatter{}, fmt.Errorf("unable to determine file extension for SBOM format '%s'", format.ID())
 		}
 
-		fs = append(fs, format.ID())
+		fs = append(fs, sbom.FormatID(fmt.Sprintf("%s@%s", format.ID(), format.Version())))
 	}
 
 	return Formatter{sbom: s, formatIDs: fs}, nil

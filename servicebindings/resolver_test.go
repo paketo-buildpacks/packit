@@ -159,9 +159,9 @@ func testResolver(t *testing.T, context spec.G, it spec.S) {
 				Expect(os.Unsetenv("VCAP_SERVICES")).To(Succeed())
 			})
 
-			context("SERVICE_BINDING_ROOT env var is set", func() {
+			context("SERVICE_BINDING_ROOT env var is not set", func() {
 				it.Before(func() {
-					Expect(os.Setenv("SERVICE_BINDING_ROOT", bindingRootK8s)).To(Succeed())
+					Expect(os.Unsetenv("SERVICE_BINDING_ROOT")).To(Succeed())
 				})
 
 				it("resolves bindings from VCAP_SERVICES", func() {
@@ -182,6 +182,28 @@ func testResolver(t *testing.T, context spec.G, it spec.S) {
 						},
 					))
 				})
+			})
+
+			context("SERVICE_BINDING_ROOT env var is set", func() {
+				it.Before(func() {
+					Expect(os.Setenv("SERVICE_BINDING_ROOT", bindingRootK8s)).To(Succeed())
+				})
+
+				it("resolves bindings from SERVICE_BINDING_ROOT", func() {
+					resolver := servicebindings.NewResolver()
+
+					bindings, err := resolver.Resolve("some-type", "", platformDir)
+					Expect(err).NotTo(HaveOccurred())
+					Expect(bindings).To(ConsistOf(
+						servicebindings.Binding{
+							Name:    "some-binding",
+							Path:    filepath.Join(bindingRootK8s, "some-binding"),
+							Type:    "some-type",
+							Entries: map[string]*servicebindings.Entry{},
+						},
+					))
+				})
+
 			})
 		})
 	})
@@ -389,6 +411,49 @@ func testResolver(t *testing.T, context spec.G, it spec.S) {
 
 				_, err = resolver.Resolve("bad-type", "", "")
 				Expect(err).To(MatchError(HavePrefix("failed to load bindings from '%s': failed to read binding 'bad-binding': open %s: permission denied", bindingRoot, filepath.Join(bindingRoot, "bad-binding", "type"))))
+			})
+
+			context("VCAP_SERVICES", func() {
+				context("success", func() {
+					it.Before(func() {
+						content, err := os.ReadFile("testdata/vcap_services.json")
+						Expect(err).NotTo(HaveOccurred())
+						Expect(os.Setenv("VCAP_SERVICES", string(content))).To(Succeed())
+						Expect(os.Unsetenv("SERVICE_BINDING_ROOT")).To(Succeed())
+					})
+
+					it.After(func() {
+						Expect(os.Unsetenv("VCAP_SERVICES")).To(Succeed())
+					})
+
+					it("successfully parses VCAP_SERVICES", func() {
+						bindings, err := resolver.Resolve("postgres", "", "")
+						Expect(err).ToNot(HaveOccurred())
+						Expect(bindings).To(HaveLen(1))
+					})
+
+					it("handles custom types", func() {
+						bindings, err := resolver.Resolve("custom-type", "", "")
+						Expect(err).ToNot(HaveOccurred())
+						Expect(bindings).To(HaveLen(1))
+					})
+				})
+				context("errors", func() {
+					it.Before(func() {
+						Expect(os.Setenv("VCAP_SERVICES", "{bad json")).To(Succeed())
+						Expect(os.Unsetenv("SERVICE_BINDING_ROOT")).To(Succeed())
+					})
+
+					it.After(func() {
+						Expect(os.Unsetenv("VCAP_SERVICES")).To(Succeed())
+					})
+
+					it("returns errors if it cannot parse VCAP_SERVICES", func() {
+						_, err := resolver.Resolve("bad-type", "", "")
+						Expect(err).To(MatchError(HavePrefix("failed to load bindings from 'VCAP_SERVICES'")))
+					})
+
+				})
 			})
 
 			it("returns empty list if binding root doesn't exist", func() {

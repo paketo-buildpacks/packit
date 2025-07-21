@@ -33,10 +33,9 @@ type Binding struct {
 //
 // It also supports backwards compatibility with the legacy service binding spec:
 // https://github.com/buildpacks/spec/blob/main/extensions/bindings.md
-type Resolver struct {
-	bindingRoot string
-	bindings    []Binding
-}
+//
+// It also supports reading bindings from VCAP_SERVICES
+type Resolver struct{}
 
 // NewResolver returns a new service binding resolver.
 func NewResolver() *Resolver {
@@ -50,19 +49,16 @@ func NewResolver() *Resolver {
 //
 //  1. SERVICE_BINDING_ROOT environment variable
 //  2. CNB_BINDINGS environment variable, if above is not set
-//  3. `<platformDir>/bindings`, if both above are not set
+//  3. VCAP_SERVICES environment variable, if above is not set
+//  4. `<platformDir>/bindings`, if all above are not set
 func (r *Resolver) Resolve(typ, provider, platformDir string) ([]Binding, error) {
-	if newRoot := bindingRoot(platformDir); r.bindingRoot != newRoot {
-		r.bindingRoot = newRoot
-		bindings, err := loadBindings(r.bindingRoot)
-		if err != nil {
-			return nil, fmt.Errorf("failed to load bindings from '%s': %w", r.bindingRoot, err)
-		}
-		r.bindings = bindings
+	bindings, err := loadBindings(platformDir)
+	if err != nil {
+		return nil, err
 	}
 
 	var resolved []Binding
-	for _, binding := range r.bindings {
+	for _, binding := range bindings {
 		if (strings.EqualFold(binding.Type, typ)) &&
 			(provider == "" || strings.EqualFold(binding.Provider, provider)) {
 			resolved = append(resolved, binding)
@@ -77,9 +73,10 @@ func (r *Resolver) Resolve(typ, provider, platformDir string) ([]Binding, error)
 //
 // The location of bindings is given by one of the following, in order of precedence:
 //
-//   1. SERVICE_BINDING_ROOT environment variable
-//   2. CNB_BINDINGS environment variable, if above is not set
-//   3. `<platformDir>/bindings`, if both above are not set
+//  1. SERVICE_BINDING_ROOT environment variable
+//  2. CNB_BINDINGS environment variable, if above is not set
+//  3. VCAP_SERVICES environment variable, if above is not set
+//  4. `<platformDir>/bindings`, if all above are not set
 
 func (r *Resolver) ResolveOne(typ, provider, platformDir string) (Binding, error) {
 	bindings, err := r.Resolve(typ, provider, platformDir)
@@ -92,16 +89,28 @@ func (r *Resolver) ResolveOne(typ, provider, platformDir string) (Binding, error
 	return bindings[0], nil
 }
 
-func loadBindings(bindingRoot string) ([]Binding, error) {
-	if vcapEnv, ok := os.LookupEnv("VCAP_SERVICES"); ok {
-		return loadvcapservicesbinding(vcapEnv)
+func loadBindings(platformDir string) ([]Binding, error) {
+	if path, ok := os.LookupEnv("SERVICE_BINDING_ROOT"); ok {
+		return loadBindingsFromPath(path)
 	}
 
+	if path, ok := os.LookupEnv("CNB_BINDINGS"); ok {
+		return loadBindingsFromPath(path)
+	}
+
+	if content, ok := os.LookupEnv("VCAP_SERVICES"); ok {
+		return loadBindingsFromVcapServices(content)
+	}
+
+	return loadBindingsFromPath(filepath.Join(platformDir, "bindings"))
+}
+
+func loadBindingsFromPath(bindingRoot string) ([]Binding, error) {
 	files, err := os.ReadDir(bindingRoot)
 	if os.IsNotExist(err) {
 		return nil, nil
 	} else if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to load bindings from '%s': %w", bindingRoot, err)
 	}
 
 	var bindings []Binding
@@ -115,26 +124,14 @@ func loadBindings(bindingRoot string) ([]Binding, error) {
 		if isLegacy {
 			binding, err = loadLegacyBinding(bindingRoot, file.Name())
 		} else {
-			binding, err = loadBinding(bindingRoot, file.Name())
+			binding, err = loadK8sBinding(bindingRoot, file.Name())
 		}
 		if err != nil {
-			return nil, fmt.Errorf("failed to read binding '%s': %w", file.Name(), err)
+			return nil, fmt.Errorf("failed to load bindings from '%s': failed to read binding '%s': %w", bindingRoot, file.Name(), err)
 		}
 		bindings = append(bindings, binding)
 	}
 	return bindings, nil
-}
-
-func bindingRoot(platformDir string) string {
-	root := os.Getenv("SERVICE_BINDING_ROOT")
-	if root == "" {
-		root = os.Getenv("CNB_BINDINGS")
-	}
-
-	if root == "" {
-		root = filepath.Join(platformDir, "bindings")
-	}
-	return root
 }
 
 // According to the legacy spec (https://github.com/buildpacks/spec/blob/main/extensions/bindings.md), a legacy binding
@@ -150,7 +147,7 @@ func isLegacyBinding(bindingRoot, name string) (bool, error) {
 }
 
 // See: https://github.com/k8s-service-bindings/spec#workload-projection
-func loadBinding(bindingRoot, name string) (Binding, error) {
+func loadK8sBinding(bindingRoot, name string) (Binding, error) {
 	binding := Binding{
 		Name:    name,
 		Path:    filepath.Join(bindingRoot, name),
@@ -238,12 +235,12 @@ func loadLegacyBinding(bindingRoot, name string) (Binding, error) {
 	return binding, nil
 }
 
-func loadvcapservicesbinding(content string) ([]Binding, error) {
+func loadBindingsFromVcapServices(content string) ([]Binding, error) {
 	var contentTyped map[string][]vcapServicesBinding
 
 	err := json.Unmarshal([]byte(content), &contentTyped)
 	if err != nil {
-		return []Binding{}, err
+		return []Binding{}, fmt.Errorf("failed to load bindings from 'VCAP_SERVICES': %w", err)
 	}
 
 	bindings := []Binding{}
@@ -253,12 +250,22 @@ func loadvcapservicesbinding(content string) ([]Binding, error) {
 			for k, v := range b.Credentials {
 				entries[k], err = toJSONString(v)
 				if err != nil {
-					return nil, err
+					return nil, fmt.Errorf("failed to load bindings from 'VCAP_SERVICES': %w", err)
 				}
 			}
+
+			bindingType := b.Label
+			if value, ok := entries["type"]; ok {
+				str, err := value.ReadString()
+				if err != nil {
+					return nil, fmt.Errorf("failed to load bindings from 'VCAP_SERVICES': could not read binding type: %w", err)
+				}
+				bindingType = str
+			}
+
 			bindings = append(bindings, Binding{
 				Name:     b.Name,
-				Type:     b.Label,
+				Type:     bindingType,
 				Provider: p,
 				Entries:  entries,
 			})

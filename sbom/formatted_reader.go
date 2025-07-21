@@ -13,7 +13,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/anchore/syft/syft"
+	"github.com/anchore/syft/syft/format"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/google/uuid"
 )
@@ -22,8 +22,8 @@ import (
 type FormattedReader struct {
 	m           sync.Mutex
 	sbom        SBOM
-	rawFormatID string
-	format      sbom.Format
+	rawFormatID sbom.FormatID
+	format      sbom.FormatEncoder
 	reader      io.Reader
 }
 
@@ -38,10 +38,10 @@ func NewFormattedReader(s SBOM, f Format) *FormattedReader {
 		sbomFormat, err = sbomFormatByMediaType(string(f))
 		if err != nil {
 			// Defer throwing an error until Read() is called
-			return &FormattedReader{sbom: s, rawFormatID: string(f), format: nil}
+			return &FormattedReader{sbom: s, rawFormatID: sbom.FormatID(f), format: nil}
 		}
 	}
-	return &FormattedReader{sbom: s, rawFormatID: string(sbomFormat.ID()), format: sbomFormat}
+	return &FormattedReader{sbom: s, rawFormatID: sbomFormat.ID(), format: sbomFormat}
 }
 
 // Read implements the io.Reader interface to output the contents of the
@@ -55,7 +55,7 @@ func (f *FormattedReader) Read(b []byte) (int, error) {
 			return 0, fmt.Errorf("failed to format sbom: '%s' is not a valid SBOM format identifier", f.rawFormatID)
 		}
 
-		output, err := syft.Encode(f.sbom.syft, f.format)
+		output, err := format.Encode(f.sbom.syft, f.format)
 		if err != nil {
 			// not tested
 			return 0, fmt.Errorf("failed to format sbom: %w", err)
@@ -63,7 +63,7 @@ func (f *FormattedReader) Read(b []byte) (int, error) {
 
 		// Makes CycloneDX SBOM more reproducible, see
 		// https://github.com/paketo-buildpacks/packit/issues/367 for more details.
-		if f.format.ID() == "cyclonedx-1.3-json" || f.format.ID() == "cyclonedx-json" {
+		if f.format.ID() == "cyclonedx-json" {
 			var cycloneDXOutput map[string]interface{}
 			err = json.Unmarshal(output, &cycloneDXOutput)
 			if err != nil {
@@ -87,7 +87,7 @@ func (f *FormattedReader) Read(b []byte) (int, error) {
 
 		// Makes SPDX SBOM more reproducible, see
 		// https://github.com/paketo-buildpacks/packit/issues/368 for more details.
-		if f.format.ID() == "spdx-2-json" {
+		if f.format.ID() == "spdx-json" {
 			var spdxOutput map[string]interface{}
 
 			err = json.Unmarshal(output, &spdxOutput)

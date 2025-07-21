@@ -10,6 +10,7 @@ import (
 )
 
 type Checksum = cargo.Checksum
+type Distro = cargo.ConfigDistro
 
 // Dependency is a representation of a buildpack dependency.
 type Dependency struct {
@@ -74,6 +75,13 @@ type Dependency struct {
 	// StripComponents behaves like the --strip-components flag on tar command
 	// removing the first n levels from the final decompression destination.
 	StripComponents int `toml:"strip-components"`
+
+	// Platform information of the dependency
+	OS   string `toml:"OS"`
+	Arch string `toml:"arch"`
+
+	// Optional list of OS distribution supported by the dependency.
+	Distros []Distro `toml:"distros"`
 }
 
 func parseBuildpack(path, name string) ([]Dependency, string, error) {

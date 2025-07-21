@@ -72,8 +72,19 @@ func testExtensionConfig(t *testing.T, context spec.G, it spec.S) {
 							Build:       true,
 						},
 					},
+
 					DefaultVersions: map[string]string{
 						"some-dependency": "1.2.x",
+					},
+				},
+				Targets: []cargo.ExtensionConfigTarget{
+					{
+						OS:   "linux",
+						Arch: "arm64",
+					},
+					{
+						OS:   "linux",
+						Arch: "amd64",
 					},
 				},
 			})
@@ -118,6 +129,14 @@ api = "0.7"
     stacks = ["io.buildpacks.stacks.bionic", "org.cloudfoundry.stacks.tiny"]
     uri = "http://some-url"
     version = "1.2.3"
+
+[[targets]]
+  os = "linux"
+  arch = "arm64"
+
+[[targets]]
+  os = "linux"
+  arch = "amd64"
 `))
 		})
 
