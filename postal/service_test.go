@@ -480,7 +480,7 @@ version = "this is super not semver"
 
 				it("returns an error", func() {
 					_, err := service.Resolve(path, "some-entry", "1.2.3", "some-stack")
-					Expect(err).To(MatchError(ContainSubstring("Invalid Semantic Version")))
+					Expect(err).To(MatchError(ContainSubstring("invalid semantic version")))
 				})
 			})
 
