@@ -24,8 +24,13 @@ type ConfigStack struct {
 }
 
 type ConfigTarget struct {
-	OS     string   `toml:"os"     json:"os,omitempty"`
-	Arch   string   `toml:"arch"   json:"arch,omitempty"`
+	OS   string `toml:"os"       json:"os,omitempty"`
+	Arch string `toml:"arch"     json:"arch,omitempty"`
+}
+
+type ConfigDistro struct {
+	Name    string `toml:"name" json:"name"`
+	Version string `toml:"version"  json:"version"`
 }
 
 type ConfigBuildpack struct {
@@ -55,21 +60,24 @@ type ConfigMetadata struct {
 }
 
 type ConfigMetadataDependency struct {
-	Checksum        string        `toml:"checksum"         json:"checksum,omitempty"`
-	CPE             string        `toml:"cpe"              json:"cpe,omitempty"`
-	PURL            string        `toml:"purl"             json:"purl,omitempty"`
-	DeprecationDate *time.Time    `toml:"deprecation_date" json:"deprecation_date,omitempty"`
-	ID              string        `toml:"id"               json:"id,omitempty"`
-	Licenses        []interface{} `toml:"licenses"         json:"licenses,omitempty"`
-	Name            string        `toml:"name"             json:"name,omitempty"`
-	SHA256          string        `toml:"sha256"           json:"sha256,omitempty"`
-	Source          string        `toml:"source"           json:"source,omitempty"`
-	SourceChecksum  string        `toml:"source-checksum"  json:"source-checksum,omitempty"`
-	SourceSHA256    string        `toml:"source_sha256"    json:"source_sha256,omitempty"`
-	Stacks          []string      `toml:"stacks"           json:"stacks,omitempty"`
-	StripComponents int           `toml:"strip-components" json:"strip-components,omitempty"`
-	URI             string        `toml:"uri"              json:"uri,omitempty"`
-	Version         string        `toml:"version"          json:"version,omitempty"`
+	Arch            string         `toml:"arch"             json:"arch,omitempty"`
+	Checksum        string         `toml:"checksum"         json:"checksum,omitempty"`
+	CPE             string         `toml:"cpe"              json:"cpe,omitempty"`
+	Distros         []ConfigDistro `toml:"distros"          json:"distros,omitempty"`
+	PURL            string         `toml:"purl"             json:"purl,omitempty"`
+	DeprecationDate *time.Time     `toml:"deprecation_date" json:"deprecation_date,omitempty"`
+	ID              string         `toml:"id"               json:"id,omitempty"`
+	Licenses        []interface{}  `toml:"licenses"         json:"licenses,omitempty"`
+	Name            string         `toml:"name"             json:"name,omitempty"`
+	OS              string         `toml:"os"               json:"os,omitempty"`
+	SHA256          string         `toml:"sha256"           json:"sha256,omitempty"`
+	Source          string         `toml:"source"           json:"source,omitempty"`
+	SourceChecksum  string         `toml:"source-checksum"  json:"source-checksum,omitempty"`
+	SourceSHA256    string         `toml:"source_sha256"    json:"source_sha256,omitempty"`
+	Stacks          []string       `toml:"stacks"           json:"stacks,omitempty"`
+	StripComponents int            `toml:"strip-components" json:"strip-components,omitempty"`
+	URI             string         `toml:"uri"              json:"uri,omitempty"`
+	Version         string         `toml:"version"          json:"version,omitempty"`
 }
 
 type ConfigMetadataDependencyConstraint struct {

@@ -330,15 +330,17 @@ sha256 = "some-sha-amd64"
 stacks = ["*"]
 uri = "some-uri"
 version = "1.2.3"
+os = "linux"
 arch = "amd64"
 
 [[metadata.dependencies]]
 id = "some-entry"
-sha256 = "some-sha-arm"
+sha256 = "some-sha-arm64"
 stacks = ["*"]
 uri = "some-uri"
 version = "1.2.3"
-arch = "arm"
+os = "linux"
+arch = "arm64"
 
 [[metadata.dependencies]]
 id = "some-other-entry"
@@ -373,9 +375,9 @@ version = "1.2.4"
 				})
 			})
 
-			context("BP_ARCH=arm", func() {
+			context("BP_ARCH=arm64", func() {
 				it.Before(func() {
-					Expect(os.Setenv("BP_ARCH", "arm")).To(Succeed())
+					Expect(os.Setenv("BP_ARCH", "arm64")).To(Succeed())
 				})
 
 				it.After(func() {
@@ -385,13 +387,15 @@ version = "1.2.4"
 				it("picks the dependency with the correct arch", func() {
 					dependency, err := service.Resolve(path, "some-entry", "1.2.3", "some-stack")
 					Expect(err).NotTo(HaveOccurred())
-					Expect(dependency.SHA256).To(Equal("some-sha-arm"))
+					Expect(dependency.OS).To(Equal("linux"))
+					Expect(dependency.Arch).To(Equal("arm64"))
+					Expect(dependency.SHA256).To(Equal("some-sha-arm64"))
 				})
 
 				it("fails if no dependency with the correct arch is found", func() {
 					_, err := service.Resolve(path, "some-other-entry", "1.2.4", "some-stack")
 					Expect(err).To(MatchError(ContainSubstring("failed to satisfy")))
-					Expect(err).To(MatchError(ContainSubstring("\"arm\"")))
+					Expect(err).To(MatchError(ContainSubstring("\"arm64\"")))
 				})
 			})
 		})
