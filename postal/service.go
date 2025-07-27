@@ -54,17 +54,15 @@ type ErrNoDeps struct {
 	id                string
 	version           string
 	stack             string
-	arch              string
 	supportedVersions []string
 }
 
 // Error implements the error.Error interface
 func (e *ErrNoDeps) Error() string {
-	return fmt.Sprintf("failed to satisfy %q dependency version constraint %q: no compatible versions on %q stack with architecture %q. Supported versions are: [%s]",
+	return fmt.Sprintf("failed to satisfy %q dependency version constraint %q: no compatible versions on %q stack. Supported versions are: [%s]",
 		e.id,
 		e.version,
 		e.stack,
-		e.arch,
 		strings.Join(e.supportedVersions, ", "),
 	)
 }
@@ -151,7 +149,7 @@ func (s Service) Resolve(path, id, version, stack string) (Dependency, error) {
 			continue
 		}
 
-		if !isCorrectArch(dependency) {
+		if dependency.Arch != "" && archFromSystem() != dependency.Arch {
 			continue
 		}
 
@@ -168,7 +166,7 @@ func (s Service) Resolve(path, id, version, stack string) (Dependency, error) {
 	}
 
 	if len(compatibleVersions) == 0 {
-		return Dependency{}, &ErrNoDeps{id, version, stack, archFromSystem(), supportedVersions}
+		return Dependency{}, &ErrNoDeps{id, version, stack, supportedVersions}
 	}
 
 	stacksForVersion := map[string][]string{}
@@ -226,16 +224,6 @@ func (s Service) Resolve(path, id, version, stack string) (Dependency, error) {
 	})
 
 	return compatibleVersions[0], nil
-}
-
-func isCorrectArch(dep Dependency) bool {
-	systemArch := archFromSystem()
-
-	if systemArch == "amd64" && dep.Arch == "" {
-		return true
-	}
-
-	return systemArch == dep.Arch
 }
 
 func archFromSystem() string {
