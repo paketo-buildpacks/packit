@@ -21,12 +21,12 @@ jobs:
     name: Unit Tests
     runs-on: ubuntu-24.04
     steps:
+    - name: Checkout
+      uses: actions/checkout@v4
     - name: Setup Go
       uses: actions/setup-go@v5
       with:
-        go-version: 'stable'
-    - name: Checkout
-      uses: actions/checkout@v4
+        go-version-file: go.mod
     - name: Run Unit Tests
       run: ./scripts/unit.sh
 
@@ -35,14 +35,14 @@ jobs:
     runs-on: ubuntu-24.04
     needs: unit
     steps:
-    - name: Setup Go
-      uses: actions/setup-go@v5
-      with:
-        go-version: 'stable'
     - name: Checkout
       uses: actions/checkout@v4
       with:
         fetch-tags: true
+    - name: Setup Go
+      uses: actions/setup-go@v5
+      with:
+        go-version-file: go.mod
     - name: Reset Draft Release
       id: reset
       uses: paketo-buildpacks/github-config/actions/release/reset-draft@main
