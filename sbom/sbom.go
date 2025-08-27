@@ -14,6 +14,8 @@ import (
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
 	"github.com/paketo-buildpacks/packit/v2/postal"
+
+	_ "modernc.org/sqlite" // required for rpmdb and other features
 )
 
 // UnknownCPE is a Common Platform Enumeration (CPE) that uses the NA (Not
@@ -43,7 +45,7 @@ func Generate(path string) (SBOM, error) {
 
 	src, err := syft.GetSource(ctx, path, nil)
 	if err != nil {
-		return SBOM{}, nil
+		return SBOM{}, err
 	}
 
 	config := syft.DefaultCreateSBOMConfig()
@@ -51,7 +53,7 @@ func Generate(path string) (SBOM, error) {
 
 	bom, err := syft.CreateSBOM(ctx, src, config)
 	if err != nil {
-		return SBOM{}, nil
+		return SBOM{}, err
 	}
 
 	return SBOM{
