@@ -111,6 +111,18 @@ func (s Service) Resolve(path, id, version, stack string) (Dependency, error) {
 		return Dependency{}, err
 	}
 
+	var targetOs string
+	targetOs = os.Getenv("CNB_TARGET_OS")
+	if targetOs == "" {
+		targetOs = runtime.GOOS
+	}
+
+	var targetArch string
+	targetArch = os.Getenv("CNB_TARGET_ARCH")
+	if targetArch == "" {
+		targetArch = runtime.GOARCH
+	}
+
 	if version == "" {
 		version = "default"
 	}
@@ -145,11 +157,7 @@ func (s Service) Resolve(path, id, version, stack string) (Dependency, error) {
 
 	var supportedVersions []string
 	for _, dependency := range dependencies {
-		if dependency.ID != id || !stacksInclude(dependency.Stacks, stack) {
-			continue
-		}
-
-		if dependency.Arch != "" && archFromSystem() != dependency.Arch {
+		if dependency.ID != id || !stacksInclude(dependency.Stacks, stack) || !supportsPlatform(targetOs, targetArch, dependency) {
 			continue
 		}
 
@@ -224,15 +232,6 @@ func (s Service) Resolve(path, id, version, stack string) (Dependency, error) {
 	})
 
 	return compatibleVersions[0], nil
-}
-
-func archFromSystem() string {
-	archFromEnv, ok := os.LookupEnv("BP_ARCH")
-	if !ok {
-		archFromEnv = runtime.GOARCH
-	}
-
-	return archFromEnv
 }
 
 func stringSliceContains(slice []string, str string) bool {

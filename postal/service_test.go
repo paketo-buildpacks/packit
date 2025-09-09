@@ -310,67 +310,6 @@ version = "4.5.6"
 			})
 		})
 
-		context("when the dependencies specify an architecture", func() {
-			it.Before(func() {
-				err := os.WriteFile(path, []byte(`
-[metadata]
-[metadata.default-versions]
-some-entry = "1.2.x"
-
-[[metadata.dependencies]]
-id = "some-entry"
-sha256 = "some-sha-amd64"
-stacks = ["*"]
-uri = "some-uri"
-version = "1.2.3"
-os = "linux"
-arch = "amd64"
-
-[[metadata.dependencies]]
-id = "some-entry"
-sha256 = "some-sha-arm64"
-stacks = ["*"]
-uri = "some-uri"
-version = "1.2.3"
-os = "linux"
-arch = "arm64"
-
-`), 0600)
-				Expect(err).NotTo(HaveOccurred())
-			})
-
-			context("BP_ARCH is valid", func() {
-				it.Before(func() {
-					Expect(os.Setenv("BP_ARCH", "amd64")).To(Succeed())
-				})
-
-				it.After(func() {
-					Expect(os.Unsetenv("BP_ARCH")).To(Succeed())
-				})
-
-				it("picks dependency with the correct arch", func() {
-					dependency, err := service.Resolve(path, "some-entry", "1.2.3", "some-stack")
-					Expect(err).NotTo(HaveOccurred())
-					Expect(dependency.SHA256).To(Equal("some-sha-amd64"))
-				})
-			})
-
-			context("BP_ARCH is not valid", func() {
-				it.Before(func() {
-					Expect(os.Setenv("BP_ARCH", "some-invalid-arch")).To(Succeed())
-				})
-
-				it.After(func() {
-					Expect(os.Unsetenv("BP_ARCH")).To(Succeed())
-				})
-
-				it("returns an error", func() {
-					_, err := service.Resolve(path, "some-other-entry", "1.2.3", "some-stack")
-					Expect(err).To(MatchError(ContainSubstring("failed to satisfy")))
-				})
-			})
-		})
-
 		context("when both a wildcard stack constraint and a specific stack constraint exist for the same dependency version", func() {
 			it.Before(func() {
 				err := os.WriteFile(path, []byte(`
@@ -416,6 +355,76 @@ version = "1.2.3"
 					URI:     "some-uri-specific-stack",
 					SHA256:  "some-sha",
 					Version: "1.2.3",
+				}))
+			})
+		})
+
+		context("When os and arch constraint exists for the same dependency version", func() {
+			it.Before(func() {
+				err := os.WriteFile(path, []byte(`
+[metadata]
+[[metadata.dependencies]]
+arch = "amd64"
+os = "linux"
+id = "node"
+stacks = ["some-stack"]
+version = "20.19.4"
+uri = "some-uri-linux-x64.tar.xz"
+
+[[metadata.dependencies]]
+arch = "arm64"
+os = "linux"
+id = "node"
+stacks = ["some-stack"]
+version = "20.19.4"
+uri = "some-uri-linux-arm64.tar.xz"
+
+[[metadata.dependencies]]
+arch = "some-arch"
+os = "some-os"
+id = "node"
+stacks = ["some-stack"]
+version = "22.19.0"
+uri = "some-uri-some-os-some-arch.tar.xz"
+
+[[metadata.dependencies]]
+arch = "amd64"
+os = "linux"
+id = "node"
+stacks = ["some-stack"]
+version = "22.19.0"
+uri = "some-uri-linux-x64.tar.xz"
+
+[[metadata.dependencies]]
+arch = "arm64"
+os = "linux"
+id = "node"
+stacks = ["some-stack"]
+version = "22.19.0"
+uri = "some-uri-linux-arm64.tar.xz"
+`), 0600)
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(os.Setenv("CNB_TARGET_ARCH", "some-arch")).To(Succeed())
+				Expect(os.Setenv("CNB_TARGET_OS", "some-os")).To(Succeed())
+
+			})
+
+			it.After(func() {
+				Expect(os.Unsetenv("CNB_TARGET_ARCH")).To(Succeed())
+				Expect(os.Unsetenv("CNB_TARGET_OS")).To(Succeed())
+			})
+
+			it("finds the best matching dependency given a plan entry", func() {
+				dependency, err := service.Resolve(path, "node", "22.19.0", "some-stack")
+				Expect(err).NotTo(HaveOccurred())
+				Expect(dependency).To(Equal(postal.Dependency{
+					ID:      "node",
+					Stacks:  []string{"some-stack"},
+					URI:     "some-uri-some-os-some-arch.tar.xz",
+					Version: "22.19.0",
+					OS:      "some-os",
+					Arch:    "some-arch",
 				}))
 			})
 		})

@@ -112,3 +112,17 @@ func stacksInclude(stacks []string, stack string) bool {
 	}
 	return false
 }
+
+func supportsPlatform(targetOs, targetArch string, dependency Dependency) bool {
+
+	// Avoid strict checking in case of dependency does not specify OS/Arch
+	if dependency.OS == "" && dependency.Arch == "" {
+		return true
+	}
+
+	if targetOs != dependency.OS || targetArch != dependency.Arch {
+		return false
+	}
+
+	return true
+}
