@@ -113,7 +113,7 @@ func stacksInclude(stacks []string, stack string) bool {
 	return false
 }
 
-func platformInclude(targetOs, targetArch string, dependency Dependency) bool {
+func supportsPlatform(targetOs, targetArch string, dependency Dependency) bool {
 
 	if dependency.OS == "" && dependency.Arch == "" {
 		dependency.OS = "linux"

@@ -157,7 +157,7 @@ func (s Service) Resolve(path, id, version, stack string) (Dependency, error) {
 
 	var supportedVersions []string
 	for _, dependency := range dependencies {
-		if dependency.ID != id || !stacksInclude(dependency.Stacks, stack) || !platformInclude(targetOs, targetArch, dependency) {
+		if dependency.ID != id || !stacksInclude(dependency.Stacks, stack) || !supportsPlatform(targetOs, targetArch, dependency) {
 			continue
 		}
 
