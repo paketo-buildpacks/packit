@@ -226,15 +226,6 @@ func (s Service) Resolve(path, id, version, stack string) (Dependency, error) {
 	return compatibleVersions[0], nil
 }
 
-func archFromSystem() string {
-	archFromEnv, ok := os.LookupEnv("BP_ARCH")
-	if !ok {
-		archFromEnv = runtime.GOARCH
-	}
-
-	return archFromEnv
-}
-
 func stringSliceContains(slice []string, str string) bool {
 	for _, s := range slice {
 		if s == str {
