@@ -115,9 +115,9 @@ func stacksInclude(stacks []string, stack string) bool {
 
 func supportsPlatform(targetOs, targetArch string, dependency Dependency) bool {
 
+	// Avoid strict checking in case of dependency does not specify OS/Arch
 	if dependency.OS == "" && dependency.Arch == "" {
-		dependency.OS = "linux"
-		dependency.Arch = "amd64"
+		return true
 	}
 
 	if targetOs != dependency.OS || targetArch != dependency.Arch {
