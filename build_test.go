@@ -90,12 +90,22 @@ api = "0.8"
 		binaryPath = filepath.Join(cnbDir, "bin", "build")
 
 		Expect(os.Setenv("CNB_STACK_ID", "some-stack")).To(Succeed())
+		Expect(os.Setenv("CNB_TARGET_OS", "some-os")).To(Succeed())
+		Expect(os.Setenv("CNB_TARGET_ARCH", "some-arch")).To(Succeed())
+		Expect(os.Setenv("CNB_TARGET_VARIANT", "some-variant")).To(Succeed())
+		Expect(os.Setenv("CNB_TARGET_DISTRO_NAME", "some-distro-name")).To(Succeed())
+		Expect(os.Setenv("CNB_TARGET_DISTRO_VERSION", "some-distro-version")).To(Succeed())
 
 		exitHandler = &fakes.ExitHandler{}
 	})
 
 	it.After(func() {
 		Expect(os.Unsetenv("CNB_STACK_ID")).To(Succeed())
+		Expect(os.Unsetenv("CNB_TARGET_OS")).To(Succeed())
+		Expect(os.Unsetenv("CNB_TARGET_ARCH")).To(Succeed())
+		Expect(os.Unsetenv("CNB_TARGET_VARIANT")).To(Succeed())
+		Expect(os.Unsetenv("CNB_TARGET_DISTRO_NAME")).To(Succeed())
+		Expect(os.Unsetenv("CNB_TARGET_DISTRO_VERSION")).To(Succeed())
 
 		Expect(os.Chdir(workingDir)).To(Succeed())
 		Expect(os.RemoveAll(tmpDir)).To(Succeed())
@@ -115,6 +125,15 @@ api = "0.8"
 		Expect(context).To(Equal(packit.BuildContext{
 			CNBPath: cnbDir,
 			Stack:   "some-stack",
+			TargetInfo: packit.TargetInfo{
+				OS:      "some-os",
+				Arch:    "some-arch",
+				Variant: "some-variant",
+			},
+			TargetDistro: packit.TargetDistro{
+				Name:    "some-distro-name",
+				Version: "some-distro-version",
+			},
 			Platform: packit.Platform{
 				Path: platformDir,
 			},
@@ -474,7 +493,16 @@ api = "0.6"
 				Platform: packit.Platform{
 					Path: platformDir,
 				},
-				Stack:      "some-stack",
+				Stack: "some-stack",
+				TargetInfo: packit.TargetInfo{
+					OS:      "some-os",
+					Arch:    "some-arch",
+					Variant: "some-variant",
+				},
+				TargetDistro: packit.TargetDistro{
+					Name:    "some-distro-name",
+					Version: "some-distro-version",
+				},
 				WorkingDir: tmpDir,
 				Plan: packit.BuildpackPlan{
 					Entries: []packit.BuildpackPlanEntry{
@@ -532,7 +560,16 @@ api = "0.6"
 				Platform: packit.Platform{
 					Path: platformDir,
 				},
-				Stack:      "some-stack",
+				Stack: "some-stack",
+				TargetInfo: packit.TargetInfo{
+					OS:      "some-os",
+					Arch:    "some-arch",
+					Variant: "some-variant",
+				},
+				TargetDistro: packit.TargetDistro{
+					Name:    "some-distro-name",
+					Version: "some-distro-version",
+				},
 				WorkingDir: tmpDir,
 				Plan: packit.BuildpackPlan{
 					Entries: []packit.BuildpackPlanEntry{
@@ -590,7 +627,16 @@ api = "0.6"
 				Platform: packit.Platform{
 					Path: platformDir,
 				},
-				Stack:      "some-stack",
+				Stack: "some-stack",
+				TargetInfo: packit.TargetInfo{
+					OS:      "some-os",
+					Arch:    "some-arch",
+					Variant: "some-variant",
+				},
+				TargetDistro: packit.TargetDistro{
+					Name:    "some-distro-name",
+					Version: "some-distro-version",
+				},
 				WorkingDir: tmpDir,
 				Plan: packit.BuildpackPlan{
 					Entries: []packit.BuildpackPlanEntry{
@@ -648,7 +694,16 @@ api = "0.6"
 				Platform: packit.Platform{
 					Path: platformDir,
 				},
-				Stack:      "some-stack",
+				Stack: "some-stack",
+				TargetInfo: packit.TargetInfo{
+					OS:      "some-os",
+					Arch:    "some-arch",
+					Variant: "some-variant",
+				},
+				TargetDistro: packit.TargetDistro{
+					Name:    "some-distro-name",
+					Version: "some-distro-version",
+				},
 				WorkingDir: tmpDir,
 				Plan: packit.BuildpackPlan{
 					Entries: []packit.BuildpackPlanEntry{
