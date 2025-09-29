@@ -83,12 +83,16 @@ api = "0.9"
 		Expect(os.Setenv("CNB_BP_PLAN_PATH", planPath)).To(Succeed())
 		Expect(os.Setenv("CNB_PLATFORM_DIR", platformDir)).To(Succeed())
 		Expect(os.Setenv("CNB_EXTENSION_DIR", cnbDir)).To(Succeed())
+		Expect(os.Setenv("CNB_TARGET_OS", "some-os")).To(Succeed())
+		Expect(os.Setenv("CNB_TARGET_ARCH", "some-arch")).To(Succeed())
+		Expect(os.Setenv("CNB_TARGET_VARIANT", "some-variant")).To(Succeed())
+		Expect(os.Setenv("CNB_TARGET_DISTRO_NAME", "some-distro-name")).To(Succeed())
+		Expect(os.Setenv("CNB_TARGET_DISTRO_VERSION", "some-distro-version")).To(Succeed())
 
 		exitHandler = &fakes.ExitHandler{}
 		exitHandler.ErrorCall.Stub = func(err error) {
 			Expect(err).NotTo(HaveOccurred())
 		}
-
 	})
 
 	it.After(func() {
@@ -96,10 +100,74 @@ api = "0.9"
 		Expect(os.Unsetenv("CNB_BP_PLAN_PATH")).To(Succeed())
 		Expect(os.Unsetenv("CNB_PLATFORM_DIR")).To(Succeed())
 		Expect(os.Unsetenv("CNB_EXTENSION_DIR")).To(Succeed())
+		Expect(os.Unsetenv("CNB_TARGET_OS")).To(Succeed())
+		Expect(os.Unsetenv("CNB_TARGET_ARCH")).To(Succeed())
+		Expect(os.Unsetenv("CNB_TARGET_VARIANT")).To(Succeed())
+		Expect(os.Unsetenv("CNB_TARGET_DISTRO_NAME")).To(Succeed())
+		Expect(os.Unsetenv("CNB_TARGET_DISTRO_VERSION")).To(Succeed())
 
 		Expect(os.Chdir(workingDir)).To(Succeed())
 		Expect(os.RemoveAll(tmpDir)).To(Succeed())
 		Expect(os.RemoveAll(platformDir)).To(Succeed())
+	})
+
+	it("when the CNB_TARGET_* is not set, provides the generate context to the given GenerateFunc", func() {
+		Expect(os.Unsetenv("CNB_TARGET_OS")).To(Succeed())
+		Expect(os.Unsetenv("CNB_TARGET_ARCH")).To(Succeed())
+		Expect(os.Unsetenv("CNB_TARGET_VARIANT")).To(Succeed())
+		Expect(os.Unsetenv("CNB_TARGET_DISTRO_NAME")).To(Succeed())
+		Expect(os.Unsetenv("CNB_TARGET_DISTRO_VERSION")).To(Succeed())
+
+		var context packit.GenerateContext
+		packit.Generate(func(ctx packit.GenerateContext) (packit.GenerateResult, error) {
+			context = ctx
+
+			return packit.GenerateResult{}, nil
+		}, packit.WithArgs([]string{binaryPath}), packit.WithExitHandler(exitHandler))
+
+		Expect(exitHandler.ErrorCall.CallCount).To(Equal(0))
+		Expect(context).To(Equal(packit.GenerateContext{
+			CNBPath: cnbDir,
+			Stack:   "some-stack",
+			Platform: packit.Platform{
+				Path: platformDir,
+			},
+			WorkingDir: tmpDir,
+			TargetInfo: packit.TargetInfo{
+				OS:      "",
+				Arch:    "",
+				Variant: "",
+			},
+			TargetDistro: packit.TargetDistro{
+				Name:    "",
+				Version: "",
+			},
+			Plan: packit.BuildpackPlan{
+				Entries: []packit.BuildpackPlanEntry{
+					{
+						Name: "some-entry",
+						Metadata: map[string]interface{}{
+							"version":  "some-version",
+							"some-key": "some-value",
+						},
+					},
+				},
+			},
+			Info: packit.Info{
+				ID:          "some-id",
+				Name:        "some-name",
+				Version:     "some-version",
+				Homepage:    "some-homepage",
+				Description: "some-description",
+				Keywords:    []string{"some-keyword"},
+				Licenses: []packit.BuildpackInfoLicense{
+					{
+						Type: "some-license-type",
+						URI:  "some-license-uri",
+					},
+				},
+			},
+		}))
 	})
 
 	it("provides the generate context to the given GenerateFunc", func() {
@@ -118,6 +186,15 @@ api = "0.9"
 				Path: platformDir,
 			},
 			WorkingDir: tmpDir,
+			TargetInfo: packit.TargetInfo{
+				OS:      "some-os",
+				Arch:    "some-arch",
+				Variant: "some-variant",
+			},
+			TargetDistro: packit.TargetDistro{
+				Name:    "some-distro-name",
+				Version: "some-distro-version",
+			},
 			Plan: packit.BuildpackPlan{
 				Entries: []packit.BuildpackPlanEntry{
 					{
