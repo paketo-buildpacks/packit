@@ -55,10 +55,22 @@ type ErrNoDeps struct {
 	version           string
 	stack             string
 	supportedVersions []string
+	targetOs          string
+	targetArch        string
 }
 
 // Error implements the error.Error interface
 func (e *ErrNoDeps) Error() string {
+	if e.targetOs != "" && e.targetArch != "" {
+		return fmt.Sprintf("failed to satisfy %q dependency version constraint %q: no compatible versions on %q/%q platform. Supported versions are: [%s]",
+			e.id,
+			e.version,
+			e.targetOs,
+			e.targetArch,
+			strings.Join(e.supportedVersions, ", "),
+		)
+	}
+
 	return fmt.Sprintf("failed to satisfy %q dependency version constraint %q: no compatible versions on %q stack. Supported versions are: [%s]",
 		e.id,
 		e.version,
@@ -174,7 +186,7 @@ func (s Service) Resolve(path, id, version, stack string) (Dependency, error) {
 	}
 
 	if len(compatibleVersions) == 0 {
-		return Dependency{}, &ErrNoDeps{id, version, stack, supportedVersions}
+		return Dependency{}, &ErrNoDeps{id, version, stack, supportedVersions, targetOs, targetArch}
 	}
 
 	stacksForVersion := map[string][]string{}
