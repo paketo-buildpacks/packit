@@ -86,7 +86,11 @@ func (e Emitter) SelectedDependency(entry packit.BuildpackPlanEntry, dependency 
 		source = "<unknown>"
 	}
 
-	e.Subprocess("Selected %s version (using %s): %s", dependency.Name, source, dependency.Version)
+	if dependency.OS != "" && dependency.Arch != "" {
+		e.Process("Selected %s version (using %s): %s for %s/%s", dependency.Name, source, dependency.Version, dependency.OS, dependency.Arch)
+	} else {
+		e.Process("Selected %s version (using %s): %s", dependency.Name, source, dependency.Version)
+	}
 
 	if (dependency.DeprecationDate != time.Time{}) {
 		deprecationDate := dependency.DeprecationDate

@@ -54,6 +54,12 @@ type BuildContext struct {
 	// WorkingDir is the location of the application source code as provided by
 	// the lifecycle.
 	WorkingDir string
+
+	// TargetInfo contains info of the target (os, arch, ...).
+	TargetInfo TargetInfo
+
+	// TargetDistro is the target distribution (name, version).
+	TargetDistro TargetDistro
 }
 
 // BuildResult allows buildpack authors to indicate the result of the build
@@ -156,7 +162,16 @@ func Build(f BuildFunc, options ...Option) {
 		Platform: Platform{
 			Path: platformPath,
 		},
-		Stack:      os.Getenv("CNB_STACK_ID"),
+		Stack: os.Getenv("CNB_STACK_ID"),
+		TargetInfo: TargetInfo{
+			OS:      os.Getenv("CNB_TARGET_OS"),
+			Arch:    os.Getenv("CNB_TARGET_ARCH"),
+			Variant: os.Getenv("CNB_TARGET_VARIANT"),
+		},
+		TargetDistro: TargetDistro{
+			Name:    os.Getenv("CNB_TARGET_DISTRO_NAME"),
+			Version: os.Getenv("CNB_TARGET_DISTRO_VERSION"),
+		},
 		WorkingDir: pwd,
 		Plan:       plan,
 		Layers: Layers{

@@ -58,14 +58,14 @@ func ExampleEmitter_SelectedDependency() {
 	emitter.SelectedDependency(entry, dependency, deprecationDate.Add(24*time.Hour))
 
 	// Output:
-	// SelectedDependency
-	//     Selected Some Dependency version (using some-source): some-version
+	//SelectedDependency
+	//   Selected Some Dependency version (using some-source): some-version
 	//
-	//     Selected Some Dependency version (using some-source): some-version
+	//   Selected Some Dependency version (using some-source): some-version
 	//       Version some-version of Some Dependency will be deprecated after 2021-04-01.
 	//       Migrate your application to a supported version of Some Dependency before this time.
 	//
-	//     Selected Some Dependency version (using some-source): some-version
+	//   Selected Some Dependency version (using some-source): some-version
 	//       Version some-version of Some Dependency is deprecated.
 	//       Migrate your application to a supported version of Some Dependency.
 	//

@@ -57,3 +57,24 @@ type InfoLicense struct {
 	// the buildpack.toml.
 	URI string `toml:"uri"`
 }
+
+// TargetDistro is the supported target distro
+type TargetDistro struct {
+	// Name is the name of the supported distro.
+	Name string `toml:"name"`
+
+	// Version is the version of the supported distro.
+	Version string `toml:"version"`
+}
+
+// TargetInfo is the supported target
+type TargetInfo struct {
+	// OS is the supported os.
+	OS string `toml:"os"`
+
+	// Arch is the supported architecture.
+	Arch string `toml:"arch"`
+
+	// Variant is the supported variant of the architecture.
+	Variant string `toml:"variant"`
+}
