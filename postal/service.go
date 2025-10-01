@@ -118,9 +118,22 @@ func (s Service) WithDependencyMirrorResolver(mirrorResolver MirrorResolver) Ser
 // used. If there is no default version for that dependency, a wildcard
 // constraint will be used.
 func (s Service) Resolve(path, id, version, stack string) (Dependency, error) {
-	dependencies, defaultVersion, err := parseBuildpack(path, id)
+	_, apiV10orGreater := os.LookupEnv("CNB_TARGET_OS")
+
+	if apiV10orGreater && stack != "" {
+		return Dependency{}, fmt.Errorf("Stack id must be empty on API version 0.10 or greater")
+	}
+
+	allDependencies, defaultVersion, err := parseBuildpack(path, id)
 	if err != nil {
 		return Dependency{}, err
+	}
+
+	dependencies := []Dependency{}
+	for _, dep := range allDependencies {
+		if dep.ID == id {
+			dependencies = append(dependencies, dep)
+		}
 	}
 
 	var targetOs string
@@ -169,8 +182,14 @@ func (s Service) Resolve(path, id, version, stack string) (Dependency, error) {
 
 	var supportedVersions []string
 	for _, dependency := range dependencies {
-		if dependency.ID != id || !stacksInclude(dependency.Stacks, stack) || !supportsPlatform(targetOs, targetArch, dependency) {
-			continue
+		if apiV10orGreater {
+			if !supportsPlatform(targetOs, targetArch, dependency) {
+				continue
+			}
+		} else {
+			if !stacksInclude(dependency.Stacks, stack) || !supportsPlatform(targetOs, targetArch, dependency) {
+				continue
+			}
 		}
 
 		sVersion, err := semver.NewVersion(dependency.Version)
@@ -185,21 +204,43 @@ func (s Service) Resolve(path, id, version, stack string) (Dependency, error) {
 		supportedVersions = append(supportedVersions, dependency.Version)
 	}
 
-	if len(compatibleVersions) == 0 {
+	if len(compatibleVersions) == 0 && apiV10orGreater {
 		return Dependency{}, &ErrNoDeps{id, version, stack, supportedVersions, targetOs, targetArch}
+	} else if len(compatibleVersions) == 0 {
+		return Dependency{}, &ErrNoDeps{id, version, stack, supportedVersions, "", ""}
 	}
 
-	stacksForVersion := map[string][]string{}
+	if apiV10orGreater {
+		targetsForVersion := map[string][]string{}
 
-	for _, dep := range compatibleVersions {
-		stacksForVersion[dep.Version] = append(stacksForVersion[dep.Version], dep.Stacks...)
-	}
-
-	for version, stacks := range stacksForVersion {
-		count := stringSliceElementCount(stacks, "*")
-		if count > 1 {
-			return Dependency{}, fmt.Errorf("multiple dependencies support wildcard stack for version: %q", version)
+		for _, dep := range compatibleVersions {
+			targetsForVersion[dep.Version] = append(targetsForVersion[dep.Version], fmt.Sprintf("%s/%s", dep.OS, dep.Arch))
 		}
+
+		// Ensure that there are no duplicate target os/arch entries for a given version
+		for version, targets := range targetsForVersion {
+			mapDuplicateTargetVersion := make(map[string]bool)
+			for _, target := range targets {
+				if mapDuplicateTargetVersion[target] {
+					return Dependency{}, fmt.Errorf("Dependency with version %q has multiple entries for %s/%s", version, targetOs, targetArch)
+				}
+				mapDuplicateTargetVersion[target] = true
+			}
+		}
+	} else {
+		stacksForVersion := map[string][]string{}
+
+		for _, dep := range compatibleVersions {
+			stacksForVersion[dep.Version] = append(stacksForVersion[dep.Version], dep.Stacks...)
+		}
+
+		for version, stacks := range stacksForVersion {
+			count := stringSliceElementCount(stacks, "*")
+			if count > 1 {
+				return Dependency{}, fmt.Errorf("multiple dependencies support wildcard stack for version: %q", version)
+			}
+		}
+
 	}
 
 	sort.Slice(compatibleVersions, func(i, j int) bool {

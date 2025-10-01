@@ -359,7 +359,7 @@ version = "1.2.3"
 			})
 		})
 
-		context("When os and arch constraint exists for the same dependency version", func() {
+		context("When different os and arch constraint exists for the same dependency version", func() {
 			it.Before(func() {
 				err := os.WriteFile(path, []byte(`
 [metadata]
@@ -416,7 +416,7 @@ uri = "some-uri-linux-arm64.tar.xz"
 			})
 
 			it("finds the best matching dependency given a plan entry", func() {
-				dependency, err := service.Resolve(path, "node", "22.19.0", "some-stack")
+				dependency, err := service.Resolve(path, "node", "22.19.0", "")
 				Expect(err).NotTo(HaveOccurred())
 				Expect(dependency).To(Equal(postal.Dependency{
 					ID:      "node",
@@ -500,6 +500,59 @@ version = "1.2.3"
 					_, err := service.Resolve(path, "some-entry", "9.9.9", "some-stack")
 					Expect(errors.As(err, &expectedErr)).To(BeTrue())
 					Expect(err).To(MatchError(ContainSubstring("failed to satisfy \"some-entry\" dependency version constraint \"9.9.9\": no compatible versions on \"some-stack\" stack. Supported versions are: [1.2.3, 4.5.6]")))
+				})
+			})
+		})
+
+		context("failure cases when target metadata has been specified.", func() {
+
+			it.Before(func() {
+				Expect(os.Setenv("CNB_TARGET_ARCH", "some-arch")).To(Succeed())
+				Expect(os.Setenv("CNB_TARGET_OS", "some-os")).To(Succeed())
+				err := os.WriteFile(path, []byte(`
+		[[metadata.dependencies]]
+		id = "some-entry"
+		sha256 = "some-sha-A"
+		os = "some-os"
+		arch = "some-arch"
+		uri = "some-uri-A"
+		version = "1.2.3"
+
+		[[metadata.dependencies]]
+		id = "some-entry"
+		sha256 = "some-sha-B"
+		os = "some-os"
+		arch = "some-arch"
+		uri = "some-uri-B"
+		version = "1.2.3"
+		`), 0600)
+				Expect(err).NotTo(HaveOccurred())
+			})
+
+			it.After(func() {
+				Expect(os.Unsetenv("CNB_TARGET_ARCH")).To(Succeed())
+				Expect(os.Unsetenv("CNB_TARGET_OS")).To(Succeed())
+			})
+
+			context("when multiple dependencies have the same os and arch", func() {
+
+				it("returns an error", func() {
+					_, err := service.Resolve(path, "some-entry", "1.2.3", "")
+					Expect(err).To(MatchError(ContainSubstring(`Dependency with version "1.2.3" has multiple entries for some-os/some-arch`)))
+				})
+			})
+
+			it("targets metadata are provided and stack id is also passed as an input", func() {
+				_, err := service.Resolve(path, "some-entry", "9.9.9", "some-stack")
+				Expect(err).To(MatchError(ContainSubstring("Stack id must be empty on API version 0.10 or greater")))
+			})
+
+			context("when the entry version constraint cannot be satisfied", func() {
+				it("returns a typed error with all the supported versions listed", func() {
+					expectedErr := &postal.ErrNoDeps{}
+					_, err := service.Resolve(path, "some-entry", "9.9.9", "")
+					Expect(errors.As(err, &expectedErr)).To(BeTrue())
+					Expect(err).To(MatchError(ContainSubstring("failed to satisfy \"some-entry\" dependency version constraint \"9.9.9\": no compatible versions on \"some-os\"/\"some-arch\" platform. Supported versions are: [1.2.3, 1.2.3]")))
 				})
 			})
 		})
