@@ -2,7 +2,6 @@ package scribe_test
 
 import (
 	"bytes"
-	"fmt"
 	"testing"
 	"time"
 
@@ -51,7 +50,7 @@ func testEmitter(t *testing.T, context spec.G, it spec.S) {
 		it("prints details about the selected dependency", func() {
 			emitter.SelectedDependency(entry, dependency, now)
 			Expect(buffer.String()).To(ContainLines(
-				"  Selected Some Dependency version (using some-source): some-version",
+				"    Selected Some Dependency version (using some-source): some-version",
 				"",
 			))
 		})
@@ -60,7 +59,7 @@ func testEmitter(t *testing.T, context spec.G, it spec.S) {
 			it("prints details about the selected dependency", func() {
 				emitter.SelectedDependency(packit.BuildpackPlanEntry{}, dependency, now)
 				Expect(buffer.String()).To(ContainLines(
-					"  Selected Some Dependency version (using <unknown>): some-version",
+					"    Selected Some Dependency version (using <unknown>): some-version",
 					"",
 				))
 			})
@@ -84,9 +83,8 @@ func testEmitter(t *testing.T, context spec.G, it spec.S) {
 
 			it("returns a warning that the dependency will be deprecated after the deprecation date", func() {
 				emitter.SelectedDependency(entry, dependency, now)
-				fmt.Println(buffer.String())
 				Expect(buffer.String()).To(ContainLines(
-					"  Selected Some Dependency version (using some-source): some-version",
+					"    Selected Some Dependency version (using some-source): some-version",
 					"      Version some-version of Some Dependency will be deprecated after 2021-04-01.",
 					"      Migrate your application to a supported version of Some Dependency before this time.",
 					"",
@@ -115,7 +113,7 @@ func testEmitter(t *testing.T, context spec.G, it spec.S) {
 			it("returns a warning that the version of the dependency is no longer supported", func() {
 				emitter.SelectedDependency(entry, dependency, now)
 				Expect(buffer.String()).To(ContainLines(
-					"  Selected Some Dependency version (using some-source): some-version",
+					"    Selected Some Dependency version (using some-source): some-version",
 					"      Version some-version of Some Dependency is deprecated.",
 					"      Migrate your application to a supported version of Some Dependency.",
 					"",
@@ -142,7 +140,7 @@ func testEmitter(t *testing.T, context spec.G, it spec.S) {
 			it("returns a warning that the version of the dependency is no longer supported", func() {
 				emitter.SelectedDependency(entry, dependency, now)
 				Expect(buffer.String()).To(ContainLines(
-					"  Selected Some Dependency version (using some-source): some-version",
+					"    Selected Some Dependency version (using some-source): some-version",
 					"      Version some-version of Some Dependency is deprecated.",
 					"      Migrate your application to a supported version of Some Dependency.",
 					"",
