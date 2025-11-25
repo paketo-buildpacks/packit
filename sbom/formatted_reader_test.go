@@ -137,7 +137,7 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 
 			// Ensure documentNamespace and creationInfo.created have reproducible values
 			// The DocumentNamespace includes the sha1 uuid of the data, which may differ if running locally versus in github actions
-			Expect(spdxOutput.DocumentNamespace).To(Equal("https://paketo.io/packit/dir/testdata-b1dafd91-f0f8-5e16-8d44-577cffd1ad84"), buffer.String())
+			Expect(spdxOutput.DocumentNamespace).To(MatchRegexp(`^https://paketo\.io/packit/dir/testdata-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`), buffer.String())
 			Expect(spdxOutput.CreationInfo.Created).To(BeZero(), buffer.String())
 
 			rerunBuffer := bytes.NewBuffer(nil)
@@ -188,7 +188,7 @@ func testFormattedReader(t *testing.T, context spec.G, it spec.S) {
 
 					// Ensure documentNamespace and creationInfo.created have reproducible values
 					// The DocumentNamespace includes the sha1 uuid of the data, which may differ if running locally versus in github actions
-					Expect(spdxOutput.DocumentNamespace).To(Equal("https://paketo.io/packit/dir/testdata-b355867c-6d04-5a00-bebd-f887ccff0f33"), buffer.String())
+					Expect(spdxOutput.DocumentNamespace).To(MatchRegexp(`^https://paketo\.io/packit/dir/testdata-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`), buffer.String())
 					Expect(spdxOutput.CreationInfo.Created).To(Equal(time.Unix(1659551872, 0).UTC()), buffer.String())
 
 					rerunBuffer := bytes.NewBuffer(nil)
