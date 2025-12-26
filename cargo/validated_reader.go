@@ -11,7 +11,7 @@ import (
 	"io"
 )
 
-var ChecksumValidationError = errors.New("validation error: checksum does not match")
+var ErrorChecksumMismatch = errors.New("validation error: checksum does not match")
 
 type ValidatedReader struct {
 	reader   io.Reader
@@ -69,7 +69,7 @@ func (vr ValidatedReader) Read(p []byte) (int, error) {
 	if done {
 		sum := hex.EncodeToString(vr.hash.Sum(nil))
 		if sum != vr.checksum.Hash() {
-			return n, ChecksumValidationError
+			return n, ErrorChecksumMismatch
 		}
 
 		return n, io.EOF
@@ -81,7 +81,7 @@ func (vr ValidatedReader) Read(p []byte) (int, error) {
 func (vr ValidatedReader) Valid() (bool, error) {
 	_, err := io.Copy(io.Discard, vr)
 	if err != nil {
-		if err == ChecksumValidationError {
+		if err == ErrorChecksumMismatch {
 			return false, nil
 		}
 

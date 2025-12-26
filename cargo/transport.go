@@ -36,7 +36,7 @@ func (t Transport) Drop(root, uri string) (io.ReadCloser, error) {
 	}
 
 	if response.StatusCode >= 400 {
-		response.Body.Close()
+		_ = response.Body.Close()
 		return nil, fmt.Errorf("unexpected status code %d while fetching %q", response.StatusCode, uri)
 	}
 

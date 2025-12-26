@@ -32,7 +32,8 @@ func testTransport(t *testing.T, context spec.G, it spec.S) {
 				server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 					switch req.URL.Path {
 					case "/some-bundle":
-						fmt.Fprint(w, "some-bundle-contents")
+						_, err := fmt.Fprint(w, "some-bundle-contents")
+						Expect(err).NotTo(HaveOccurred())
 					default:
 						http.NotFound(w, req)
 					}
