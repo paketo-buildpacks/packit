@@ -29,7 +29,9 @@ func (na NopArchive) Decompress(destination string) error {
 	if err != nil {
 		return err
 	}
-	defer file.Close()
+	defer func() {
+		_ = file.Close()
+	}()
 
 	_, err = io.Copy(file, na.reader)
 	if err != nil {

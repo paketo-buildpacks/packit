@@ -31,7 +31,9 @@ func (z ZipArchive) Decompress(destination string) error {
 	if err != nil {
 		return err
 	}
-	defer os.Remove(buffer.Name())
+	defer func() {
+		_ = os.Remove(buffer.Name())
+	}()
 
 	size, err := io.Copy(buffer, z.reader)
 	if err != nil {

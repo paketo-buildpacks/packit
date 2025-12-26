@@ -29,7 +29,9 @@ func (e Executable) Decompress(destination string) error {
 	if err != nil {
 		return err
 	}
-	defer file.Close()
+	defer func() {
+		_ = file.Close()
+	}()
 
 	_, err = io.Copy(file, e.reader)
 	if err != nil {
