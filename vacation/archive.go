@@ -71,7 +71,8 @@ func (a Archive) Decompress(destination string) error {
 	case "text/plain; charset=utf-8",
 		"application/jar",
 		"application/java-archive",
-		"application/octet-stream":
+		"application/octet-stream",
+		"text/x-shellscript":
 		decompressor = NewNopArchive(bufferedReader).WithName(a.name)
 	default:
 		return fmt.Errorf("unsupported archive type: %s", mime.String())
