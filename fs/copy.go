@@ -45,13 +45,17 @@ func copyFile(source, destination string) error {
 	if err != nil {
 		return err
 	}
-	defer sourceFile.Close()
+	defer func() {
+		_ = sourceFile.Close()
+	}()
 
 	destinationFile, err := os.Create(destination)
 	if err != nil {
 		return err
 	}
-	defer destinationFile.Close()
+	defer func() {
+		_ = destinationFile.Close()
+	}()
 
 	_, err = io.Copy(destinationFile, sourceFile)
 	if err != nil {
