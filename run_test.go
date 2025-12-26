@@ -106,7 +106,10 @@ clear-env = false
 		it.Before(func() {
 			file, err := os.CreateTemp("", "plan.toml")
 			Expect(err).NotTo(HaveOccurred())
-			defer file.Close()
+			defer func() {
+				err := file.Close()
+				Expect(err).NotTo(HaveOccurred())
+			}()
 
 			_, err = file.WriteString(`
 [[entries]]

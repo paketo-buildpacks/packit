@@ -44,7 +44,10 @@ func testGenerate(t *testing.T, context spec.G, it spec.S) {
 
 		file, err := os.CreateTemp("", "plan.toml")
 		Expect(err).NotTo(HaveOccurred())
-		defer file.Close()
+		defer func() {
+			err := file.Close()
+			Expect(err).NotTo(HaveOccurred())
+		}()
 
 		_, err = file.WriteString(`
 [[entries]]
