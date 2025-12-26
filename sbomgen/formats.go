@@ -29,7 +29,7 @@ func (f Format) Extension() (string, error) {
 	case f == SyftFormat:
 		return "syft.json", nil
 	default:
-		return "", fmt.Errorf("Unknown mediatype %s", f)
+		return "", fmt.Errorf("unknown mediatype %s", f)
 	}
 }
 

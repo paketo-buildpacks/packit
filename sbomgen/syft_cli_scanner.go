@@ -125,7 +125,7 @@ func (s SyftCLIScanner) specMediatypeToSyftOutputFormat(mediatype string) (strin
 	case strings.HasPrefix(mediatype, SyftFormat):
 		// The syft tool does not support providing a version for the syft mediatype.
 		if optionalVersionParam != "" {
-			return "", fmt.Errorf("The syft mediatype does not allow providing a ;version=<ver> param. Got: %s", mediatype)
+			return "", fmt.Errorf("the syft mediatype does not allow providing a ;version=<ver> param. Got: %s", mediatype)
 		}
 		return "syft-json", nil
 	default:
@@ -141,7 +141,9 @@ func (s SyftCLIScanner) makeCycloneDXReproducible(path string) error {
 	if err != nil {
 		return fmt.Errorf("unable to read CycloneDX JSON file %s:%w", path, err)
 	}
-	defer in.Close()
+	defer func() {
+		_ = in.Close()
+	}()
 
 	input := map[string]interface{}{}
 	if err := json.NewDecoder(in).Decode(&input); err != nil {
@@ -160,7 +162,9 @@ func (s SyftCLIScanner) makeCycloneDXReproducible(path string) error {
 	if err != nil {
 		return fmt.Errorf("unable to open CycloneDX JSON for writing %s: %w", path, err)
 	}
-	defer out.Close()
+	defer func() {
+		_ = out.Close()
+	}()
 
 	if err := json.NewEncoder(out).Encode(input); err != nil {
 		return fmt.Errorf("unable to encode CycloneDX: %w", err)
@@ -178,7 +182,9 @@ func (s SyftCLIScanner) makeSPDXReproducible(path string) error {
 	if err != nil {
 		return fmt.Errorf("unable to read SPDX JSON file %s:%w", path, err)
 	}
-	defer in.Close()
+	defer func() {
+		_ = in.Close()
+	}()
 
 	input := map[string]interface{}{}
 	if err := json.NewDecoder(in).Decode(&input); err != nil {
@@ -228,7 +234,9 @@ func (s SyftCLIScanner) makeSPDXReproducible(path string) error {
 	if err != nil {
 		return fmt.Errorf("unable to open SPDX JSON for writing %s: %w", path, err)
 	}
-	defer out.Close()
+	defer func() {
+		_ = out.Close()
+	}()
 
 	if err := json.NewEncoder(out).Encode(input); err != nil {
 		return fmt.Errorf("unable to encode SPDX: %w", err)

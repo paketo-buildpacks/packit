@@ -36,7 +36,7 @@ func testFormats(t *testing.T, context spec.G, it spec.S) {
 				it("returns error", func() {
 					f = sbomgen.SyftFormat + ";version=9.8.7"
 					ext, err := f.Extension()
-					Expect(err).To(MatchError(ContainSubstring("Unknown mediatype application/vnd.syft+json;version=9.8.7")))
+					Expect(err).To(MatchError(ContainSubstring("unknown mediatype application/vnd.syft+json;version=9.8.7")))
 					Expect(ext).To(Equal(""))
 				})
 			})
