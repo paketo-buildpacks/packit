@@ -17,7 +17,9 @@ func (tw TOMLWriter) Write(path string, value interface{}) error {
 	if err != nil {
 		return err
 	}
-	defer file.Close()
+	defer func() {
+		_ = file.Close()
+	}()
 
 	return toml.NewEncoder(file).Encode(value)
 }

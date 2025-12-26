@@ -16,7 +16,9 @@ func (fw FileWriter) Write(path string, reader io.Reader) error {
 	if err != nil {
 		return err
 	}
-	defer file.Close()
+	defer func() {
+		_ = file.Close()
+	}()
 
 	_, err = io.Copy(file, reader)
 	if err != nil {
