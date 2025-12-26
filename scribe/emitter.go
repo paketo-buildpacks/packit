@@ -94,7 +94,7 @@ func (e Emitter) SelectedDependency(entry packit.BuildpackPlanEntry, dependency 
 		case (deprecationDate.Add(-30*24*time.Hour).Before(now) && deprecationDate.After(now)):
 			e.Action("Version %s of %s will be deprecated after %s.", dependency.Version, dependency.Name, dependency.DeprecationDate.Format("2006-01-02"))
 			e.Action("Migrate your application to a supported version of %s before this time.", dependency.Name)
-		case (deprecationDate == now || deprecationDate.Before(now)):
+		case (deprecationDate.Equal(now) || deprecationDate.Before(now)):
 			e.Action("Version %s of %s is deprecated.", dependency.Version, dependency.Name)
 			e.Action("Migrate your application to a supported version of %s.", dependency.Name)
 		}

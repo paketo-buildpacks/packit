@@ -111,5 +111,5 @@ func (l LeveledLogger) printf(writer io.Writer, format string, v ...interface{})
 	if !strings.HasSuffix(format, "\n") {
 		format = format + "\n"
 	}
-	fmt.Fprintf(writer, format, v...)
+	_, _ = fmt.Fprintf(writer, format, v...)
 }
