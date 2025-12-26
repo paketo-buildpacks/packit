@@ -291,7 +291,9 @@ func (s Service) Deliver(dependency Dependency, cnbPath, layerPath, platformPath
 	if err != nil {
 		return fmt.Errorf("failed to fetch dependency: %s", err)
 	}
-	defer bundle.Close()
+	defer func() {
+		_ = bundle.Close()
+	}()
 
 	validatedReader := cargo.NewValidatedReader(bundle, dependencyChecksum)
 
