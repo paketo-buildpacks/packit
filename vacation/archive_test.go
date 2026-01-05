@@ -432,6 +432,51 @@ func testArchive(t *testing.T, context spec.G, it spec.S) {
 			})
 		})
 
+		context("when passed the reader of a script", func() {
+			var (
+				archive vacation.Archive
+				tempDir string
+			)
+
+			it.Before(func() {
+				var err error
+				tempDir, err = os.MkdirTemp("", "vacation")
+				Expect(err).NotTo(HaveOccurred())
+
+				buffer := bytes.NewBuffer([]byte(`#!/usr/bin/env bash`))
+
+				archive = vacation.NewArchive(buffer)
+			})
+
+			it.After(func() {
+				Expect(os.RemoveAll(tempDir)).To(Succeed())
+			})
+
+			it("writes a text file onto the path", func() {
+				err := archive.Decompress(tempDir)
+				Expect(err).NotTo(HaveOccurred())
+
+				content, err := os.ReadFile(filepath.Join(tempDir, "artifact"))
+				Expect(err).NotTo(HaveOccurred())
+				Expect(content).To(Equal([]byte(`#!/usr/bin/env bash`)))
+			})
+
+			context("when given a name", func() {
+				it.Before(func() {
+					archive = archive.WithName("some-text-file")
+				})
+
+				it("writes a text file onto the path with that name", func() {
+					err := archive.Decompress(tempDir)
+					Expect(err).NotTo(HaveOccurred())
+
+					content, err := os.ReadFile(filepath.Join(tempDir, "some-text-file"))
+					Expect(err).NotTo(HaveOccurred())
+					Expect(content).To(Equal([]byte(`#!/usr/bin/env bash`)))
+				})
+			})
+		})
+
 		context("when passed the reader of a jar file", func() {
 			var (
 				archive vacation.Archive
