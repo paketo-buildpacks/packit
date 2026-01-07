@@ -36,6 +36,7 @@ func NewArchive(inputReader io.Reader) Archive {
 // - "application/jar"
 // - "application/java-archive"
 // - "application/octet-stream"
+// - "text/x-shellscript"
 // and write the contents of the input stream to a file name specified by the
 // `Archive.WithName()` option in the destination directory.
 func (a Archive) Decompress(destination string) error {
