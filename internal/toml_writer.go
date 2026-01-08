@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"errors"
 	"os"
 
 	"github.com/pelletier/go-toml"
@@ -17,9 +18,12 @@ func (tw TOMLWriter) Write(path string, value interface{}) error {
 	if err != nil {
 		return err
 	}
+
+	var errs error
+
 	defer func() {
-		_ = file.Close()
+		errs = errors.Join(errs, file.Close())
 	}()
 
-	return toml.NewEncoder(file).Encode(value)
+	return errors.Join(errs, toml.NewEncoder(file).Encode(value))
 }

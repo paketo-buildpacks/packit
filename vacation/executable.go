@@ -1,6 +1,7 @@
 package vacation
 
 import (
+	"errors"
 	"io"
 	"os"
 	"path/filepath"
@@ -29,21 +30,19 @@ func (e Executable) Decompress(destination string) error {
 	if err != nil {
 		return err
 	}
+
+	var errs error
+
 	defer func() {
-		_ = file.Close()
+		errs = errors.Join(errs, file.Close())
 	}()
 
 	_, err = io.Copy(file, e.reader)
 	if err != nil {
-		return err
+		return errors.Join(errs, err)
 	}
 
-	err = os.Chmod(filepath.Join(destination, e.name), 0755)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return errors.Join(errs, os.Chmod(filepath.Join(destination, e.name), 0755))
 }
 
 // WithName provides a way of overriding the name of the file

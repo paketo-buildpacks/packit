@@ -3,26 +3,25 @@
 //
 // Below is an example showing how you might invoke the `echo` executable with arguments;
 //
-//   package main
+//	package main
 //
-//   import (
-//   	"os"
+//	import (
+//		"os"
 //
-//   	"github.com/paketo-buildpacks/packit/v2/pexec"
-//   )
+//		"github.com/paketo-buildpacks/packit/v2/pexec"
+//	)
 //
-//   func main() {
-//   	echo := pexec.NewExecutable("echo")
+//	func main() {
+//		echo := pexec.NewExecutable("echo")
 //
-//   	err := echo.Execute(pexec.Execution{
-//   		Args:   []string{"hello from pexec"},
-//   		Stdout: os.Stdout,
-//   	})
-//   	if err != nil {
-//   		panic(err)
-//   	}
+//		err := echo.Execute(pexec.Execution{
+//			Args:   []string{"hello from pexec"},
+//			Stdout: os.Stdout,
+//		})
+//		if err != nil {
+//			panic(err)
+//		}
 //
-//   	// Output: hello from pexec
-//   }
-//
+//		// Output: hello from pexec
+//	}
 package pexec

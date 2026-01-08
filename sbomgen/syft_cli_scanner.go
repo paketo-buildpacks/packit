@@ -2,6 +2,7 @@ package sbomgen
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/url"
 	"os"
@@ -28,8 +29,10 @@ type Executable interface {
 // Example Usage:
 //
 // syftCLIScanner := sbomgen.NewSyftCLIScanner(
+//
 //	pexec.NewExecutable("syft"),
 //	scribe.NewEmitter(os.Stdout),
+//
 // )
 type SyftCLIScanner struct {
 	syftCLI Executable
@@ -141,13 +144,16 @@ func (s SyftCLIScanner) makeCycloneDXReproducible(path string) error {
 	if err != nil {
 		return fmt.Errorf("unable to read CycloneDX JSON file %s:%w", path, err)
 	}
+
+	var errs error
+
 	defer func() {
-		_ = in.Close()
+		errs = errors.Join(errs, in.Close())
 	}()
 
 	input := map[string]interface{}{}
 	if err := json.NewDecoder(in).Decode(&input); err != nil {
-		return fmt.Errorf("unable to decode CycloneDX JSON %s: %w", path, err)
+		return errors.Join(errs, fmt.Errorf("unable to decode CycloneDX JSON %s: %w", path, err))
 	}
 
 	delete(input, "serialNumber")
@@ -160,17 +166,19 @@ func (s SyftCLIScanner) makeCycloneDXReproducible(path string) error {
 
 	out, err := os.Create(path)
 	if err != nil {
-		return fmt.Errorf("unable to open CycloneDX JSON for writing %s: %w", path, err)
+		return errors.Join(fmt.Errorf("unable to open CycloneDX JSON for writing %s: %w", path, err))
 	}
+
 	defer func() {
-		_ = out.Close()
+		errs = errors.Join(errs, out.Close())
 	}()
 
 	if err := json.NewEncoder(out).Encode(input); err != nil {
-		return fmt.Errorf("unable to encode CycloneDX: %w", err)
+		errs = errors.Join(fmt.Errorf("unable to encode CycloneDX: %w", err))
 	}
 
-	return nil
+	// ensure deferred errors are also returned
+	return errs
 }
 
 // Makes SPDX SBOM more reproducible.
@@ -182,13 +190,16 @@ func (s SyftCLIScanner) makeSPDXReproducible(path string) error {
 	if err != nil {
 		return fmt.Errorf("unable to read SPDX JSON file %s:%w", path, err)
 	}
+
+	var errs error
+
 	defer func() {
-		_ = in.Close()
+		errs = errors.Join(errs, in.Close())
 	}()
 
 	input := map[string]interface{}{}
 	if err := json.NewDecoder(in).Decode(&input); err != nil {
-		return fmt.Errorf("unable to decode SPDX JSON %s: %w", path, err)
+		return errors.Join(errs, fmt.Errorf("unable to decode SPDX JSON %s: %w", path, err))
 	}
 
 	// Makes the creationInfo reproducible so a hash can be taken for the
@@ -200,7 +211,7 @@ func (s SyftCLIScanner) makeSPDXReproducible(path string) error {
 		if sourceDateEpoch != "" {
 			sde, err := strconv.ParseInt(sourceDateEpoch, 10, 64)
 			if err != nil {
-				return fmt.Errorf("failed to parse SOURCE_DATE_EPOCH: %w", err)
+				return errors.Join(errs, fmt.Errorf("failed to parse SOURCE_DATE_EPOCH: %w", err))
 			}
 			creationInfo["created"] = time.Unix(sde, 0).UTC()
 		}
@@ -212,12 +223,12 @@ func (s SyftCLIScanner) makeSPDXReproducible(path string) error {
 
 		data, err := json.Marshal(input)
 		if err != nil {
-			return fmt.Errorf("failed to checksum SPDX document: %w", err)
+			return errors.Join(errs, fmt.Errorf("failed to checksum SPDX document: %w", err))
 		}
 
 		uri, err := url.Parse(namespace)
 		if err != nil {
-			return fmt.Errorf("failed to parse SPDX documentNamespace url: %w", err)
+			return errors.Join(errs, fmt.Errorf("failed to parse SPDX documentNamespace url: %w", err))
 		}
 
 		uri.Host = "paketo.io"
@@ -232,14 +243,15 @@ func (s SyftCLIScanner) makeSPDXReproducible(path string) error {
 
 	out, err := os.Create(path)
 	if err != nil {
-		return fmt.Errorf("unable to open SPDX JSON for writing %s: %w", path, err)
+		return errors.Join(errs, fmt.Errorf("unable to open SPDX JSON for writing %s: %w", path, err))
 	}
 	defer func() {
-		_ = out.Close()
+		errs = errors.Join(errs, out.Close())
 	}()
 
 	if err := json.NewEncoder(out).Encode(input); err != nil {
-		return fmt.Errorf("unable to encode SPDX: %w", err)
+		errs = errors.Join(errs, fmt.Errorf("unable to encode SPDX: %w", err))
 	}
-	return nil
+	// ensure deferred error are also returned
+	return errs
 }
