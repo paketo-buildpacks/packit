@@ -92,11 +92,11 @@ func testPexec(t *testing.T, context spec.G, it spec.S) {
 			var path string
 			it.Before(func() {
 				path = os.Getenv("PATH")
-				os.Setenv("PATH", "some-path")
+				Expect(os.Setenv("PATH", "some-path")).To(Succeed())
 			})
 
 			it.After(func() {
-				os.Setenv("PATH", path)
+				Expect(os.Setenv("PATH", path)).To(Succeed())
 			})
 
 			it("executes the given arguments against the executable", func() {

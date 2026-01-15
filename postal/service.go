@@ -291,7 +291,12 @@ func (s Service) Deliver(dependency Dependency, cnbPath, layerPath, platformPath
 	if err != nil {
 		return fmt.Errorf("failed to fetch dependency: %s", err)
 	}
-	defer bundle.Close()
+
+	var errs error
+
+	defer func() {
+		errs = errors.Join(errs, bundle.Close())
+	}()
 
 	validatedReader := cargo.NewValidatedReader(bundle, dependencyChecksum)
 
@@ -301,19 +306,20 @@ func (s Service) Deliver(dependency Dependency, cnbPath, layerPath, platformPath
 	}
 	err = vacation.NewArchive(validatedReader).WithName(name).StripComponents(dependency.StripComponents).Decompress(layerPath)
 	if err != nil {
-		return err
+		return errors.Join(errs, err)
 	}
 
 	ok, err := validatedReader.Valid()
 	if err != nil {
-		return fmt.Errorf("failed to validate dependency: %s", err)
+		return errors.Join(errs, fmt.Errorf("failed to validate dependency: %s", err))
 	}
 
 	if !ok {
-		return errors.New("failed to validate dependency: checksum does not match")
+		errs = errors.Join(errs, errors.New("failed to validate dependency: checksum does not match"))
 	}
 
-	return nil
+	// ensure deferred error are also returned
+	return errs
 }
 
 // GenerateBillOfMaterials will generate a list of BOMEntry values given a

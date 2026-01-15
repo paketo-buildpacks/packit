@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"errors"
 	"io"
 	"os"
 )
@@ -16,12 +17,13 @@ func (fw FileWriter) Write(path string, reader io.Reader) error {
 	if err != nil {
 		return err
 	}
-	defer file.Close()
+
+	var errs error
+
+	defer func() {
+		errs = errors.Join(errs, file.Close())
+	}()
 
 	_, err = io.Copy(file, reader)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return errors.Join(errs, err)
 }

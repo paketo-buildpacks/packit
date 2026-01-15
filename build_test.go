@@ -52,7 +52,10 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 
 		file, err := os.CreateTemp("", "plan.toml")
 		Expect(err).NotTo(HaveOccurred())
-		defer file.Close()
+		defer func() {
+			err := file.Close()
+			Expect(err).NotTo(HaveOccurred())
+		}()
 
 		_, err = file.WriteString(`
 [[entries]]
@@ -472,11 +475,11 @@ api = "0.6"
 
 	context("when the CNB_BUILDPACK_DIR environment variable is set", func() {
 		it.Before(func() {
-			os.Setenv("CNB_BUILDPACK_DIR", cnbDir)
+			Expect(os.Setenv("CNB_BUILDPACK_DIR", cnbDir)).To(Succeed())
 		})
 
 		it.After(func() {
-			os.Unsetenv("CNB_BUILDPACK_DIR")
+			Expect(os.Unsetenv("CNB_BUILDPACK_DIR")).To(Succeed())
 		})
 
 		it("sets the correct value for CNBdir in the Build context", func() {
@@ -539,11 +542,11 @@ api = "0.6"
 
 	context("when the CNB_LAYERS_DIR environment variable is set", func() {
 		it.Before(func() {
-			os.Setenv("CNB_LAYERS_DIR", layersDir)
+			Expect(os.Setenv("CNB_LAYERS_DIR", layersDir)).To(Succeed())
 		})
 
 		it.After(func() {
-			os.Unsetenv("CNB_LAYERS_DIR")
+			Expect(os.Unsetenv("CNB_LAYERS_DIR")).To(Succeed())
 		})
 
 		it("sets the correct value for layers dir in the Build context", func() {
@@ -606,11 +609,11 @@ api = "0.6"
 
 	context("when the CNB_PLATFORM_DIR environment variable is set", func() {
 		it.Before(func() {
-			os.Setenv("CNB_PLATFORM_DIR", platformDir)
+			Expect(os.Setenv("CNB_PLATFORM_DIR", platformDir)).To(Succeed())
 		})
 
 		it.After(func() {
-			os.Unsetenv("CNB_PLATFORM_DIR")
+			Expect(os.Unsetenv("CNB_PLATFORM_DIR")).To(Succeed())
 		})
 
 		it("sets the correct value for platform dir in the Build context", func() {
@@ -673,11 +676,11 @@ api = "0.6"
 
 	context("when the CNB_BP_PLAN_PATH environment variable is set", func() {
 		it.Before(func() {
-			os.Setenv("CNB_BP_PLAN_PATH", planPath)
+			Expect(os.Setenv("CNB_BP_PLAN_PATH", planPath)).To(Succeed())
 		})
 
 		it.After(func() {
-			os.Unsetenv("CNB_BP_PLAN_PATH")
+			Expect(os.Unsetenv("CNB_BP_PLAN_PATH")).To(Succeed())
 		})
 
 		it("sets the correct value for platform dir in the Build context", func() {

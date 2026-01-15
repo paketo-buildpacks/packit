@@ -28,10 +28,10 @@ func TestUnitPexec(t *testing.T) {
 	Expect(err).NotTo(HaveOccurred())
 
 	existingPath = os.Getenv("PATH")
-	os.Setenv("PATH", filepath.Dir(fakeCLI))
+	Expect(os.Setenv("PATH", filepath.Dir(fakeCLI))).To(Succeed())
 
 	t.Cleanup(func() {
-		os.Setenv("PATH", existingPath)
+		Expect(os.Setenv("PATH", existingPath)).To(Succeed())
 		gexec.CleanupBuildArtifacts()
 	})
 

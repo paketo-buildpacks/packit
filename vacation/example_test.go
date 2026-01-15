@@ -42,7 +42,10 @@ func ExampleArchive() {
 		}
 	}
 
-	tw.Close()
+	err := tw.Close()
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	zipBuffer := bytes.NewBuffer(nil)
 	zw := zip.NewWriter(zipBuffer)
@@ -67,13 +70,18 @@ func ExampleArchive() {
 		}
 	}
 
-	zw.Close()
+	err = zw.Close()
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	destination, err := os.MkdirTemp("", "destination")
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer os.RemoveAll(destination)
+	defer func() {
+		_ = os.RemoveAll(destination)
+	}()
 
 	archive := vacation.NewArchive(bytes.NewReader(tarBuffer.Bytes()))
 	if err := archive.Decompress(destination); err != nil {
@@ -130,7 +138,10 @@ func ExampleArchive_StripComponents() {
 		}
 	}
 
-	tw.Close()
+	err := tw.Close()
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	zipBuffer := bytes.NewBuffer(nil)
 	zw := zip.NewWriter(zipBuffer)
@@ -155,13 +166,18 @@ func ExampleArchive_StripComponents() {
 		}
 	}
 
-	zw.Close()
+	err = zw.Close()
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	destination, err := os.MkdirTemp("", "destination")
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer os.RemoveAll(destination)
+	defer func() {
+		_ = os.RemoveAll(destination)
+	}()
 
 	archive := vacation.NewArchive(bytes.NewReader(tarBuffer.Bytes())).StripComponents(1)
 	if err := archive.Decompress(destination); err != nil {
@@ -219,13 +235,18 @@ func ExampleTarArchive() {
 		}
 	}
 
-	tw.Close()
+	err := tw.Close()
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	destination, err := os.MkdirTemp("", "destination")
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer os.RemoveAll(destination)
+	defer func() {
+		_ = os.RemoveAll(destination)
+	}()
 
 	archive := vacation.NewTarArchive(bytes.NewReader(buffer.Bytes()))
 	if err := archive.Decompress(destination); err != nil {
@@ -280,13 +301,18 @@ func ExampleTarArchive_StripComponents() {
 		}
 	}
 
-	tw.Close()
+	err := tw.Close()
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	destination, err := os.MkdirTemp("", "destination")
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer os.RemoveAll(destination)
+	defer func() {
+		_ = os.RemoveAll(destination)
+	}()
 
 	archive := vacation.NewTarArchive(bytes.NewReader(buffer.Bytes())).StripComponents(1)
 	if err := archive.Decompress(destination); err != nil {
@@ -322,13 +348,18 @@ func ExampleGzipArchive() {
 		log.Fatal(err)
 	}
 
-	gw.Close()
+	err = gw.Close()
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	destination, err := os.MkdirTemp("", "destination")
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer os.RemoveAll(destination)
+	defer func() {
+		_ = os.RemoveAll(destination)
+	}()
 
 	archive := vacation.NewGzipArchive(bytes.NewReader(buffer.Bytes())).WithName("gzip-file")
 	if err := archive.Decompress(destination); err != nil {
@@ -340,7 +371,10 @@ func ExampleGzipArchive() {
 		log.Fatal(err)
 	}
 
-	fmt.Println(string(content))
+	_, err = fmt.Println(string(content))
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	// Output:
 	// Gzip file contents
@@ -372,14 +406,22 @@ func ExampleGzipArchive_StripComponents() {
 		}
 	}
 
-	tw.Close()
-	gw.Close()
+	err := tw.Close()
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = gw.Close()
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	destination, err := os.MkdirTemp("", "destination")
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer os.RemoveAll(destination)
+	defer func() {
+		_ = os.RemoveAll(destination)
+	}()
 
 	archive := vacation.NewGzipArchive(bytes.NewReader(buffer.Bytes())).StripComponents(1)
 	if err := archive.Decompress(destination); err != nil {
@@ -418,13 +460,18 @@ func ExampleXZArchive() {
 		log.Fatal(err)
 	}
 
-	xw.Close()
+	err = xw.Close()
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	destination, err := os.MkdirTemp("", "destination")
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer os.RemoveAll(destination)
+	defer func() {
+		_ = os.RemoveAll(destination)
+	}()
 
 	archive := vacation.NewXZArchive(bytes.NewReader(buffer.Bytes())).WithName("xz-file")
 	if err := archive.Decompress(destination); err != nil {
@@ -436,7 +483,10 @@ func ExampleXZArchive() {
 		log.Fatal(err)
 	}
 
-	fmt.Println(string(contents))
+	_, err = fmt.Println(string(contents))
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	// Output:
 	// XZ file contents
@@ -472,14 +522,23 @@ func ExampleXZArchive_StripComponents() {
 		}
 	}
 
-	tw.Close()
-	xw.Close()
+	err = tw.Close()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = xw.Close()
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	destination, err := os.MkdirTemp("", "destination")
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer os.RemoveAll(destination)
+	defer func() {
+		_ = os.RemoveAll(destination)
+	}()
 
 	archive := vacation.NewXZArchive(bytes.NewReader(buffer.Bytes())).StripComponents(1)
 	if err := archive.Decompress(destination); err != nil {
@@ -523,13 +582,18 @@ func ExampleBzip2Archive() {
 		log.Fatal(err)
 	}
 
-	bz.Close()
+	err = bz.Close()
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	destination, err := os.MkdirTemp("", "destination")
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer os.RemoveAll(destination)
+	defer func() {
+		_ = os.RemoveAll(destination)
+	}()
 
 	archive := vacation.NewBzip2Archive(bytes.NewReader(buffer.Bytes())).WithName("bzip2-file")
 	if err := archive.Decompress(destination); err != nil {
@@ -541,7 +605,10 @@ func ExampleBzip2Archive() {
 		log.Fatal(err)
 	}
 
-	fmt.Println(string(contents))
+	_, err = fmt.Println(string(contents))
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	// Output:
 	// Bzip2 file contents
@@ -582,14 +649,23 @@ func ExampleBzip2Archive_StripComponents() {
 		}
 	}
 
-	tw.Close()
-	bz.Close()
+	err = tw.Close()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = bz.Close()
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	destination, err := os.MkdirTemp("", "destination")
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer os.RemoveAll(destination)
+	defer func() {
+		_ = os.RemoveAll(destination)
+	}()
 
 	archive := vacation.NewBzip2Archive(bytes.NewReader(buffer.Bytes())).StripComponents(1)
 	if err := archive.Decompress(destination); err != nil {
@@ -643,13 +719,18 @@ func ExampleZipArchive() {
 		}
 	}
 
-	zw.Close()
+	err := zw.Close()
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	destination, err := os.MkdirTemp("", "destination")
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer os.RemoveAll(destination)
+	defer func() {
+		_ = os.RemoveAll(destination)
+	}()
 
 	archive := vacation.NewZipArchive(bytes.NewReader(buffer.Bytes()))
 	if err := archive.Decompress(destination); err != nil {

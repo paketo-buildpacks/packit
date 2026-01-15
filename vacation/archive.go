@@ -36,6 +36,7 @@ func NewArchive(inputReader io.Reader) Archive {
 // - "application/jar"
 // - "application/java-archive"
 // - "application/octet-stream"
+// - "text/x-shellscript"
 // and write the contents of the input stream to a file name specified by the
 // `Archive.WithName()` option in the destination directory.
 func (a Archive) Decompress(destination string) error {
@@ -71,7 +72,8 @@ func (a Archive) Decompress(destination string) error {
 	case "text/plain; charset=utf-8",
 		"application/jar",
 		"application/java-archive",
-		"application/octet-stream":
+		"application/octet-stream",
+		"text/x-shellscript":
 		decompressor = NewNopArchive(bufferedReader).WithName(a.name)
 	default:
 		return fmt.Errorf("unsupported archive type: %s", mime.String())

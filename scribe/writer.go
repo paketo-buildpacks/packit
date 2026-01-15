@@ -82,7 +82,7 @@ func (w *Writer) Write(b []byte) (int, error) {
 
 	var indentedLines [][]byte
 	for index, line := range lines {
-		if !(index == 0 && !w.linestart) {
+		if index != 0 || w.linestart {
 			line = append([]byte(w.prefix), line...)
 
 			for i := 0; i < w.indent; i++ {

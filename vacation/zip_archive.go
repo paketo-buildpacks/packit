@@ -2,6 +2,7 @@ package vacation
 
 import (
 	"archive/zip"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -31,16 +32,21 @@ func (z ZipArchive) Decompress(destination string) error {
 	if err != nil {
 		return err
 	}
-	defer os.Remove(buffer.Name())
+
+	var errs error
+
+	defer func() {
+		errs = errors.Join(errs, os.Remove(buffer.Name()))
+	}()
 
 	size, err := io.Copy(buffer, z.reader)
 	if err != nil {
-		return err
+		return errors.Join(errs, err)
 	}
 
 	zr, err := zip.NewReader(buffer, size)
 	if err != nil {
-		return fmt.Errorf("failed to create zip reader: %w", err)
+		return errors.Join(errs, fmt.Errorf("failed to create zip reader: %w", err))
 	}
 
 	var symlinks []link
@@ -55,7 +61,7 @@ func (z ZipArchive) Decompress(destination string) error {
 
 		err = checkExtractPath(name, destination)
 		if err != nil {
-			return err
+			return errors.Join(errs, err)
 		}
 
 		fileNames := strings.Split(name, "/")
@@ -72,17 +78,17 @@ func (z ZipArchive) Decompress(destination string) error {
 		case f.FileInfo().IsDir():
 			err = os.MkdirAll(path, os.ModePerm)
 			if err != nil {
-				return fmt.Errorf("failed to unzip directory: %w", err)
+				return errors.Join(errs, fmt.Errorf("failed to unzip directory: %w", err))
 			}
 		case f.FileInfo().Mode()&os.ModeSymlink != 0:
 			fd, err := f.Open()
 			if err != nil {
-				return err
+				return errors.Join(errs, err)
 			}
 
 			linkname, err := io.ReadAll(fd)
 			if err != nil {
-				return err
+				return errors.Join(errs, err)
 			}
 
 			// Collect all of the headers for symlinks so that they can be verified
@@ -95,53 +101,53 @@ func (z ZipArchive) Decompress(destination string) error {
 		default:
 			err = os.MkdirAll(filepath.Dir(path), os.ModePerm)
 			if err != nil {
-				return fmt.Errorf("failed to unzip directory that was part of file path: %w", err)
+				return errors.Join(errs, fmt.Errorf("failed to unzip directory that was part of file path: %w", err))
 			}
 
 			dst, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode())
 			if err != nil {
-				return fmt.Errorf("failed to unzip file: %w", err)
+				return errors.Join(errs, fmt.Errorf("failed to unzip file: %w", err))
 			}
 
 			src, err := f.Open()
 			if err != nil {
-				return err
+				return errors.Join(errs, err)
 			}
 
 			_, err = io.Copy(dst, src)
 			if err != nil {
-				return err
+				return errors.Join(errs, err)
 			}
 
 			if err := dst.Close(); err != nil {
-				return err
+				return errors.Join(errs, err)
 			}
 
 			if err := src.Close(); err != nil {
-				return err
+				return errors.Join(errs, err)
 			}
 		}
 	}
 
 	symlinks, err = sortLinks(symlinks)
 	if err != nil {
-		return err
+		return errors.Join(errs, err)
 	}
 
 	for _, link := range symlinks {
 		// Check to see if the file that will be linked to is valid for symlinking
 		_, err := filepath.EvalSymlinks(linknameFullPath(link.path, link.name))
 		if err != nil {
-			return fmt.Errorf("failed to evaluate symlink %s: %w", link.path, err)
+			return errors.Join(errs, fmt.Errorf("failed to evaluate symlink %s: %w", link.path, err))
 		}
 
 		err = os.Symlink(link.name, link.path)
 		if err != nil {
-			return fmt.Errorf("failed to unzip symlink: %s", err)
+			return errors.Join(errs, fmt.Errorf("failed to unzip symlink: %s", err))
 		}
 	}
 
-	return nil
+	return errs
 }
 
 // StripComponents removes the first n levels from the final decompression

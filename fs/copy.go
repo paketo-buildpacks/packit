@@ -45,30 +45,36 @@ func copyFile(source, destination string) error {
 	if err != nil {
 		return err
 	}
-	defer sourceFile.Close()
+
+	var errs error
+
+	defer func() {
+		errs = errors.Join(errs, sourceFile.Close())
+	}()
 
 	destinationFile, err := os.Create(destination)
 	if err != nil {
-		return err
+		errs = errors.Join(errs, err)
+		return errs
 	}
-	defer destinationFile.Close()
+
+	defer func() {
+		errs = errors.Join(errs, destinationFile.Close())
+	}()
 
 	_, err = io.Copy(destinationFile, sourceFile)
 	if err != nil {
-		return err
+		errs = errors.Join(errs, err)
+		return errs
 	}
 
 	info, err := sourceFile.Stat()
 	if err != nil {
-		return err
+		errs = errors.Join(errs, err)
+		return errs
 	}
 
-	err = os.Chmod(destination, info.Mode())
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return errors.Join(errs, os.Chmod(destination, info.Mode()))
 }
 
 func copyDirectory(source, destination string) error {

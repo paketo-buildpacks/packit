@@ -133,7 +133,13 @@ func Detect(f DetectFunc, options ...Option) {
 		config.exitHandler.Error(err)
 		return
 	}
-	defer file.Close()
+
+	defer func() {
+		err := file.Close()
+		if err != nil {
+			config.exitHandler.Error(err)
+		}
+	}()
 
 	err = toml.NewEncoder(file).Encode(result.Plan)
 	if err != nil {

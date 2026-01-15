@@ -34,7 +34,10 @@ func (e Executable) Execute(execution Execution) error {
 			}
 		}
 		if path != "" {
-			os.Setenv("PATH", path)
+			err := os.Setenv("PATH", path)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
@@ -43,7 +46,10 @@ func (e Executable) Execute(execution Execution) error {
 		return err
 	}
 
-	os.Setenv("PATH", envPath)
+	err = os.Setenv("PATH", envPath)
+	if err != nil {
+		return err
+	}
 
 	cmd := exec.Command(executable, execution.Args...)
 

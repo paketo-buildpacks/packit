@@ -1,6 +1,7 @@
 package vacation
 
 import (
+	"errors"
 	"io"
 	"os"
 	"path/filepath"
@@ -29,14 +30,14 @@ func (na NopArchive) Decompress(destination string) error {
 	if err != nil {
 		return err
 	}
-	defer file.Close()
+	var errs error
+
+	defer func() {
+		errs = errors.Join(errs, file.Close())
+	}()
 
 	_, err = io.Copy(file, na.reader)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return errors.Join(errs, err)
 }
 
 // WithName provides a way of overriding the name of the file

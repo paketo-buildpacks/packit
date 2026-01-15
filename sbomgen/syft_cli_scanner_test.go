@@ -276,15 +276,17 @@ func testSyftCLIScanner(t *testing.T, context spec.G, it spec.S) {
 					it("shows an error", func() {
 						err := syftCLIScanner.GenerateSBOM("some-path", layersDir, "some-layer-name",
 							sbomgen.CycloneDXFormat, sbomgen.SPDXFormat, sbomgen.SyftFormat+";version=1.2.3")
-						Expect(err).To(MatchError(ContainSubstring("The syft mediatype does not allow providing a ;version=<ver> param")))
+						Expect(err).To(MatchError(ContainSubstring("the syft mediatype does not allow providing a ;version=<ver> param")))
 					})
 				})
 
 				context("syft CLI execution fails", func() {
 					it.Before(func() {
 						executable.ExecuteCall.Stub = func(execution pexec.Execution) error {
-							fmt.Fprintln(execution.Stdout, "cli error stdout")
-							fmt.Fprintln(execution.Stderr, "cli error stderr")
+							_, err = fmt.Fprintln(execution.Stdout, "cli error stdout")
+							Expect(err).NotTo(HaveOccurred())
+							_, err = fmt.Fprintln(execution.Stderr, "cli error stderr")
+							Expect(err).NotTo(HaveOccurred())
 							return fmt.Errorf("cli command failed")
 						}
 					})
