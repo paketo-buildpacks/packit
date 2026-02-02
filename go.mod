@@ -7,7 +7,7 @@ require (
 	github.com/Masterminds/semver/v3 v3.4.0
 	github.com/anchore/syft v1.41.1
 	github.com/dsnet/compress v0.0.2-0.20230904184137-39efe44ab707
-	github.com/gabriel-vasile/mimetype v1.4.12
+	github.com/gabriel-vasile/mimetype v1.4.13
 	github.com/google/uuid v1.6.0
 	github.com/onsi/gomega v1.39.1
 	github.com/pelletier/go-toml v1.9.5
