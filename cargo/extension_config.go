@@ -49,13 +49,8 @@ type ConfigExtension struct {
 	Homepage    string                   `toml:"homepage,omitempty"    json:"homepage,omitempty"`
 	Description string                   `toml:"description,omitempty" json:"description,omitempty"`
 	Keywords    []string                 `toml:"keywords,omitempty"    json:"keywords,omitempty"`
-	Licenses    []ConfigExtensionLicense `toml:"licenses,omitempty"    json:"licenses,omitempty"`
+	Licenses    []ConfigBuildpackLicense `toml:"licenses,omitempty"    json:"licenses,omitempty"`
 	SBOMFormats []string                 `toml:"sbom-formats,omitempty"    json:"sbom-formats,omitempty"`
-}
-
-type ConfigExtensionLicense struct {
-	Type string `toml:"type" json:"type"`
-	URI  string `toml:"uri"  json:"uri"`
 }
 
 func EncodeExtensionConfig(writer io.Writer, extensionConfig ExtensionConfig) error {
