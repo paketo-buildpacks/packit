@@ -35,7 +35,7 @@ func testExtensionConfig(t *testing.T, context spec.G, it spec.S) {
 					Homepage:    "some-extension-homepage",
 					Description: "some-extension-description",
 					Keywords:    []string{"some-extension-keyword"},
-					Licenses: []cargo.ConfigExtensionLicense{
+					Licenses: []cargo.ConfigBuildpackLicense{
 						{
 							Type: "some-license-type",
 							URI:  "some-license-uri",
@@ -77,7 +77,7 @@ func testExtensionConfig(t *testing.T, context spec.G, it spec.S) {
 						"some-dependency": "1.2.x",
 					},
 				},
-				Targets: []cargo.ExtensionConfigTarget{
+				Targets: []cargo.ConfigTarget{
 					{
 						OS:   "linux",
 						Arch: "arm64",
@@ -152,7 +152,7 @@ api = "0.7"
 						Homepage:    "some-extension-homepage",
 						Description: "some-extension-description",
 						Keywords:    []string{"some-extension-keyword"},
-						Licenses: []cargo.ConfigExtensionLicense{
+						Licenses: []cargo.ConfigBuildpackLicense{
 							{
 								Type: "some-license-type",
 								URI:  "some-license-uri",
@@ -311,7 +311,7 @@ keywords = [ "some-extension-keyword" ]
 					Homepage:    "some-extension-homepage",
 					Description: "some-extension-description",
 					Keywords:    []string{"some-extension-keyword"},
-					Licenses: []cargo.ConfigExtensionLicense{
+					Licenses: []cargo.ConfigBuildpackLicense{
 						{
 							Type: "some-license-type",
 							URI:  "some-license-uri",
@@ -410,7 +410,7 @@ api = "0.2"
 						Name:     "some-extension-name",
 						Version:  "some-extension-version",
 						Homepage: "some-extension-homepage",
-						Licenses: []cargo.ConfigExtensionLicense{
+						Licenses: []cargo.ConfigBuildpackLicense{
 							{
 								Type: "some-license-type",
 								URI:  "some-license-uri",
