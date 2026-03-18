@@ -36,7 +36,7 @@ func (m FormattedMap) String() string {
 			key = key + " "
 		}
 
-		builder.WriteString(fmt.Sprintf("%s -> \"%v\"\n", key, value))
+		fmt.Fprintf(&builder, "%s -> \"%v\"\n", key, value)
 	}
 
 	return strings.TrimSpace(builder.String())
