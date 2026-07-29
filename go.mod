@@ -5,7 +5,7 @@ go 1.26.3
 require (
 	github.com/BurntSushi/toml v1.6.0
 	github.com/Masterminds/semver/v3 v3.5.0
-	github.com/anchore/syft v1.49.0
+	github.com/anchore/syft v1.50.0
 	github.com/dsnet/compress v0.0.2-0.20230904184137-39efe44ab707
 	github.com/gabriel-vasile/mimetype v1.4.15
 	github.com/google/uuid v1.6.0
@@ -147,7 +147,7 @@ require (
 	github.com/googleapis/enterprise-certificate-proxy v0.3.14 // indirect
 	github.com/googleapis/gax-go/v2 v2.17.0 // indirect
 	github.com/gookit/color v1.6.1 // indirect
-	github.com/gpustack/gguf-parser-go v0.24.1 // indirect
+	github.com/gpustack/gguf-parser-go v0.25.0 // indirect
 	github.com/hashicorp/aws-sdk-go-base/v2 v2.0.0-beta.72 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
