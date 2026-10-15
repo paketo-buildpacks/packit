@@ -87,7 +87,7 @@ func testSBOM(t *testing.T, context spec.G, it spec.S) {
 	context("GenerateFromDependency", func() {
 		it("generates a SBOM from a dependency for latest schema versions", func() {
 			bom, err := sbom.GenerateFromDependency(postal.Dependency{
-				CPE:            "cpe:2.3:a:golang:go:1.16.9:*:*:*:*:*:*:*",
+				CPEs:           []string{"cpe:2.3:a:golang:go:1.16.9:*:*:*:*:*:*:*"},
 				ID:             "go",
 				Licenses:       []string{"BSD-3-Clause"},
 				Name:           "Go",
@@ -192,7 +192,7 @@ func testSBOM(t *testing.T, context spec.G, it spec.S) {
 
 		it("generates a SBOM from a dependency in CycloneDX 1.4 JSON", func() {
 			bom, err := sbom.GenerateFromDependency(postal.Dependency{
-				CPE:            "cpe:2.3:a:golang:go:1.16.9:*:*:*:*:*:*:*",
+				CPEs:           []string{"cpe:2.3:a:golang:go:1.16.9:*:*:*:*:*:*:*"},
 				ID:             "go",
 				Licenses:       []string{"BSD-3-Clause"},
 				Name:           "Go",
@@ -334,6 +334,7 @@ func testSBOM(t *testing.T, context spec.G, it spec.S) {
 		context("when the input dependency has CPEs and CPE", func() {
 			it("uses CPEs, not CPE", func() {
 				bom, err := sbom.GenerateFromDependency(postal.Dependency{
+					//nolint:staticcheck // SA1019: verifies CPEs take precedence over deprecated CPE.
 					CPE:            "cpe:2.3:a:golang:go:1.16.9:*:*:*:*:*:*:*",
 					CPEs:           []string{"cpe:2.3:a:some:other:cpe:*:*:*:*:*:*:*", "cpe:2.3:a:another:cpe:to:include:*:*:*:*:*:*"},
 					ID:             "go",
@@ -380,7 +381,7 @@ func testSBOM(t *testing.T, context spec.G, it spec.S) {
 			context("when the CPE is invalid", func() {
 				it("returns an error", func() {
 					_, err := sbom.GenerateFromDependency(postal.Dependency{
-						CPE: "foo",
+						CPEs: []string{"foo"},
 					}, "some-path")
 					Expect(err).To(MatchError(ContainSubstring("unsupported format")))
 				})
