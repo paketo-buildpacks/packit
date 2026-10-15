@@ -80,6 +80,8 @@ jobs:
     runs-on: ubuntu-24.04
     needs: [ unit, release ]
     if: ${{ always() && needs.unit.result == 'failure' || needs.release.result == 'failure' }}
+    permissions:
+      issues: write
     steps:
     - name: File Failure Alert Issue
       uses: paketo-buildpacks/github-config/actions/issue/file@main

@@ -73,6 +73,8 @@ jobs:
     runs-on: ubuntu-24.04
     needs: [download, approve]
     if: ${{ always() && needs.download.result == 'failure' || needs.approve.result == 'failure' }}
+    permissions:
+      issues: write
     steps:
     - name: File Failure Alert Issue
       uses: paketo-buildpacks/github-config/actions/issue/file@main
