@@ -128,6 +128,7 @@ strip-components = 1
 				CPE:             "some-cpe",
 				CPEs:            []string{"some-cpe", "other-cpe"},
 				DeprecationDate: deprecationDate,
+				EOLDate:         deprecationDate,
 				ID:              "some-entry",
 				Stacks:          []string{"some-stack"},
 				URI:             "some-uri",
@@ -191,6 +192,7 @@ strip-components = 1
 					Expect(err).NotTo(HaveOccurred())
 					Expect(dependency).To(Equal(postal.Dependency{
 						DeprecationDate: deprecationDate,
+						EOLDate:         deprecationDate,
 						CPE:             "some-cpe",
 						CPEs:            []string{"some-cpe", "other-cpe"},
 						ID:              "some-entry",
@@ -213,6 +215,7 @@ strip-components = 1
 						CPE:             "some-cpe",
 						CPEs:            []string{"some-cpe", "other-cpe"},
 						DeprecationDate: deprecationDate,
+						EOLDate:         deprecationDate,
 						ID:              "some-entry",
 						Stacks:          []string{"some-stack"},
 						URI:             "some-uri",
@@ -233,6 +236,7 @@ strip-components = 1
 						CPE:             "some-cpe",
 						CPEs:            []string{"some-cpe", "other-cpe"},
 						DeprecationDate: deprecationDate,
+						EOLDate:         deprecationDate,
 						ID:              "some-entry",
 						Stacks:          []string{"some-stack"},
 						URI:             "some-uri",

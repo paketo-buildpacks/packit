@@ -29,8 +29,16 @@ type ConfigTarget struct {
 }
 
 type ConfigDistro struct {
-	Name    string `toml:"name" json:"name"`
-	Version string `toml:"version"  json:"version"`
+	Name    string `toml:"name"              json:"name"`
+	Version string `toml:"version,omitempty" json:"version,omitempty"`
+}
+
+// ConfigDependencyLicense is a license applied to a dependency, in the standard
+// dependency metadata format: an array of tables, each with a required type and
+// an optional uri.
+type ConfigDependencyLicense struct {
+	Type string `toml:"type,omitempty" json:"type,omitempty"`
+	URI  string `toml:"uri,omitempty"  json:"uri,omitempty"`
 }
 
 type ConfigBuildpack struct {
@@ -60,24 +68,138 @@ type ConfigMetadata struct {
 }
 
 type ConfigMetadataDependency struct {
-	Arch            string         `toml:"arch"             json:"arch,omitempty"`
-	Checksum        string         `toml:"checksum"         json:"checksum,omitempty"`
-	CPE             string         `toml:"cpe"              json:"cpe,omitempty"`
-	Distros         []ConfigDistro `toml:"distros"          json:"distros,omitempty"`
-	PURL            string         `toml:"purl"             json:"purl,omitempty"`
-	DeprecationDate *time.Time     `toml:"deprecation_date" json:"deprecation_date,omitempty"`
-	ID              string         `toml:"id"               json:"id,omitempty"`
-	Licenses        []interface{}  `toml:"licenses"         json:"licenses,omitempty"`
-	Name            string         `toml:"name"             json:"name,omitempty"`
-	OS              string         `toml:"os"               json:"os,omitempty"`
-	SHA256          string         `toml:"sha256"           json:"sha256,omitempty"`
-	Source          string         `toml:"source"           json:"source,omitempty"`
-	SourceChecksum  string         `toml:"source-checksum"  json:"source-checksum,omitempty"`
-	SourceSHA256    string         `toml:"source_sha256"    json:"source_sha256,omitempty"`
-	Stacks          []string       `toml:"stacks"           json:"stacks,omitempty"`
-	StripComponents int            `toml:"strip-components" json:"strip-components,omitempty"`
-	URI             string         `toml:"uri"              json:"uri,omitempty"`
-	Version         string         `toml:"version"          json:"version,omitempty"`
+	Arch     string `toml:"arch"             json:"arch,omitempty"`
+	Checksum string `toml:"checksum"         json:"checksum,omitempty"`
+
+	// CPE is the Common Platform Enumerator for the dependency.
+	//
+	// Deprecated: use CPEs instead.
+	CPE string `toml:"cpe"              json:"cpe,omitempty"`
+
+	// CPEs are the Common Platform Enumerators for the dependency.
+	CPEs    []string       `toml:"cpes"             json:"cpes,omitempty"`
+	Distros []ConfigDistro `toml:"distros"          json:"distros,omitempty"`
+
+	// PURL is the package URL for the dependency.
+	//
+	// Deprecated: use PURLs instead.
+	PURL string `toml:"purl"             json:"purl,omitempty"`
+
+	// PURLs are the package URLs for the dependency.
+	PURLs []string `toml:"purls"            json:"purls,omitempty"`
+
+	// DeprecationDate is the date after which the dependency is considered
+	// deprecated.
+	//
+	// Deprecated: use EOLDate instead.
+	DeprecationDate *time.Time `toml:"deprecation_date" json:"deprecation_date,omitempty"`
+
+	// EOLDate is the date after which the dependency is considered end of life.
+	EOLDate *time.Time `toml:"eol-date"         json:"eol-date,omitempty"`
+
+	ID string `toml:"id"               json:"id,omitempty"`
+
+	// Licenses is the legacy representation of the dependency licenses, as a
+	// list of license identifiers.
+	//
+	// Deprecated: use LicenseEntries instead.
+	Licenses []interface{} `toml:"-" json:"-"`
+
+	// LicenseEntries is the standard representation of the dependency licenses:
+	// an array of tables, each with a type and an optional uri.
+	//
+	// Licenses and LicenseEntries share the single licenses key, so they are
+	// (un)marshalled by the custom methods below rather than by struct tags.
+	LicenseEntries []ConfigDependencyLicense `toml:"-" json:"-"`
+
+	Name           string `toml:"name"             json:"name,omitempty"`
+	OS             string `toml:"os"               json:"os,omitempty"`
+	SHA256         string `toml:"sha256"           json:"sha256,omitempty"`
+	Source         string `toml:"source"           json:"source,omitempty"`
+	SourceChecksum string `toml:"source-checksum"  json:"source-checksum,omitempty"`
+
+	// SourceSHA256 is the hex-encoded SHA256 checksum of the source-code
+	// representation of the dependency. It is also read from the legacy
+	// source_sha256 spelling, which used an underscore separator.
+	//
+	// Deprecated: use SourceChecksum instead.
+	SourceSHA256    string   `toml:"source-sha256"    json:"source-sha256,omitempty"`
+	Stacks          []string `toml:"stacks"           json:"stacks,omitempty"`
+	StripComponents int      `toml:"strip-components" json:"strip-components,omitempty"`
+	URI             string   `toml:"uri"              json:"uri,omitempty"`
+	Version         string   `toml:"version"          json:"version,omitempty"`
+}
+
+// MarshalJSON encodes the dependency, collapsing the two license
+// representations onto the single licenses key.
+//
+// The standard table form is emitted when LicenseEntries is set. Otherwise the
+// legacy list of identifiers is emitted, so buildpack.toml files that use the
+// older format round-trip unchanged.
+func (d ConfigMetadataDependency) MarshalJSON() ([]byte, error) {
+	type alias ConfigMetadataDependency
+
+	content, err := json.Marshal(alias(d))
+	if err != nil {
+		return nil, err
+	}
+
+	var encoded map[string]interface{}
+	if err := json.Unmarshal(content, &encoded); err != nil {
+		return nil, err
+	}
+
+	switch {
+	case len(d.LicenseEntries) > 0:
+		encoded["licenses"] = d.LicenseEntries
+	case len(d.Licenses) > 0:
+		encoded["licenses"] = d.Licenses
+	}
+
+	return json.Marshal(encoded)
+}
+
+// UnmarshalJSON decodes the single licenses key into whichever of Licenses or
+// LicenseEntries matches the representation used in the document.
+func (d *ConfigMetadataDependency) UnmarshalJSON(data []byte) error {
+	type alias ConfigMetadataDependency
+
+	var decoded alias
+	if err := json.Unmarshal(data, &decoded); err != nil {
+		return err
+	}
+
+	*d = ConfigMetadataDependency(decoded)
+
+	var raw struct {
+		Licenses           []json.RawMessage `json:"licenses"`
+		LegacySourceSHA256 string            `json:"source_sha256"`
+	}
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return err
+	}
+
+	// The source hash was previously written with an underscore separator.
+	if d.SourceSHA256 == "" {
+		d.SourceSHA256 = raw.LegacySourceSHA256
+	}
+
+	for _, value := range raw.Licenses {
+		var identifier string
+		if err := json.Unmarshal(value, &identifier); err == nil {
+			d.Licenses = append(d.Licenses, identifier)
+			continue
+		}
+
+		var entry ConfigDependencyLicense
+		if err := json.Unmarshal(value, &entry); err != nil {
+			return err
+		}
+
+		d.LicenseEntries = append(d.LicenseEntries, entry)
+	}
+
+	return nil
 }
 
 type ConfigMetadataDependencyConstraint struct {

@@ -77,6 +77,12 @@ func GenerateFromDependency(dependency postal.Dependency, path string) (SBOM, er
 		dependency.CPEs = []string{dependency.CPE}
 	}
 
+	//nolint Ignore SA1019, informed usage of deprecated field
+	purl := dependency.PURL
+	if purl == "" && len(dependency.PURLs) > 0 {
+		purl = dependency.PURLs[0]
+	}
+
 	var cpes []cpe.CPE
 	for _, cpeString := range dependency.CPEs {
 		cpe, err := cpe.New(cpeString, cpe.DeclaredSource)
@@ -90,13 +96,16 @@ func GenerateFromDependency(dependency postal.Dependency, path string) (SBOM, er
 	for _, license := range dependency.Licenses {
 		licenses.Add(pkg.NewLicense(license))
 	}
+	for _, license := range dependency.LicenseEntries {
+		licenses.Add(pkg.NewLicense(license.Type))
+	}
 
 	catalog := pkg.NewCollection(pkg.Package{
 		Name:     dependency.Name,
 		Version:  dependency.Version,
 		Licenses: licenses,
 		CPEs:     cpes,
-		PURL:     dependency.PURL,
+		PURL:     purl,
 	})
 
 	return SBOM{

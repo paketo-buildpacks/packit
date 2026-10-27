@@ -89,8 +89,9 @@ func testSBOM(t *testing.T, context spec.G, it spec.S) {
 			bom, err := sbom.GenerateFromDependency(postal.Dependency{
 				CPEs:           []string{"cpe:2.3:a:golang:go:1.16.9:*:*:*:*:*:*:*"},
 				ID:             "go",
-				Licenses:       []string{"BSD-3-Clause"},
+				LicenseEntries: []postal.License{{Type: "BSD-3-Clause"}},
 				Name:           "Go",
+				//nolint:staticcheck // SA1019: verifies the deprecated PURL field is still honored.
 				PURL:           "pkg:generic/go@go1.16.9?checksum=0a1cc7fd7bd20448f71ebed64d846138850d5099b18cf5cc10a4fc45160d8c3d&download_url=https://dl.google.com/go/go1.16.9.src.tar.gz",
 				Checksum:       "sha256:ca9ef23a5db944b116102b87c1ae9344b27e011dae7157d2f1e501abd39e9829",
 				Source:         "https://dl.google.com/go/go1.16.9.src.tar.gz",
@@ -194,8 +195,9 @@ func testSBOM(t *testing.T, context spec.G, it spec.S) {
 			bom, err := sbom.GenerateFromDependency(postal.Dependency{
 				CPEs:           []string{"cpe:2.3:a:golang:go:1.16.9:*:*:*:*:*:*:*"},
 				ID:             "go",
-				Licenses:       []string{"BSD-3-Clause"},
+				LicenseEntries: []postal.License{{Type: "BSD-3-Clause"}},
 				Name:           "Go",
+				//nolint:staticcheck // SA1019: verifies the deprecated PURL field is still honored.
 				PURL:           "pkg:generic/go@go1.16.9?checksum=0a1cc7fd7bd20448f71ebed64d846138850d5099b18cf5cc10a4fc45160d8c3d&download_url=https://dl.google.com/go/go1.16.9.src.tar.gz",
 				Checksum:       "sha256:ca9ef23a5db944b116102b87c1ae9344b27e011dae7157d2f1e501abd39e9829",
 				Source:         "https://dl.google.com/go/go1.16.9.src.tar.gz",
@@ -242,7 +244,7 @@ func testSBOM(t *testing.T, context spec.G, it spec.S) {
 			it("succeeds in generating an SBOM without CPEs", func() {
 				bom, err := sbom.GenerateFromDependency(postal.Dependency{
 					ID:             "go",
-					Licenses:       []string{"BSD-3-Clause"},
+					LicenseEntries: []postal.License{{Type: "BSD-3-Clause"}},
 					Name:           "Go",
 					Checksum:       "sha256:ca9ef23a5db944b116102b87c1ae9344b27e011dae7157d2f1e501abd39e9829",
 					Source:         "https://dl.google.com/go/go1.16.9.src.tar.gz",
@@ -331,6 +333,65 @@ func testSBOM(t *testing.T, context spec.G, it spec.S) {
 				}}), spdx.String())
 			})
 		})
+		context("when the input dependency only has PURLs", func() {
+			it("uses the first PURL", func() {
+				bom, err := sbom.GenerateFromDependency(postal.Dependency{
+					ID:       "go",
+					Name:     "Go",
+					PURLs:    []string{"pkg:generic/go@go1.16.9", "pkg:generic/other@go1.16.9"},
+					Version:  "1.16.9",
+					Checksum: "sha256:ca9ef23a5db944b116102b87c1ae9344b27e011dae7157d2f1e501abd39e9829",
+				}, "some-path")
+				Expect(err).NotTo(HaveOccurred())
+
+				formatter, err := bom.InFormats(sbom.SyftFormat)
+				Expect(err).NotTo(HaveOccurred())
+
+				syft := bytes.NewBuffer(nil)
+				for _, format := range formatter.Formats() {
+					if format.Extension == "syft.json" {
+						_, err = io.Copy(syft, format.Content)
+						Expect(err).NotTo(HaveOccurred())
+					}
+				}
+
+				var syftDefaultOutput syftOutput
+				err = json.NewDecoder(syft).Decode(&syftDefaultOutput)
+				Expect(err).NotTo(HaveOccurred(), syft.String())
+
+				Expect(syftDefaultOutput.Artifacts[0].PURL).To(Equal("pkg:generic/go@go1.16.9"), syft.String())
+			})
+		})
+		context("when the input dependency uses the deprecated Licenses field", func() {
+			it("still includes the licenses", func() {
+				bom, err := sbom.GenerateFromDependency(postal.Dependency{
+					ID: "go",
+					//nolint:staticcheck // SA1019: verifies the deprecated Licenses field is still honored.
+					Licenses: []string{"BSD-3-Clause"},
+					Name:     "Go",
+					Version:  "1.16.9",
+					CPEs:     []string{"cpe:2.3:a:golang:go:1.16.9:*:*:*:*:*:*:*"},
+				}, "some-path")
+				Expect(err).NotTo(HaveOccurred())
+
+				formatter, err := bom.InFormats(sbom.SyftFormat)
+				Expect(err).NotTo(HaveOccurred())
+
+				syft := bytes.NewBuffer(nil)
+				for _, format := range formatter.Formats() {
+					if format.Extension == "syft.json" {
+						_, err = io.Copy(syft, format.Content)
+						Expect(err).NotTo(HaveOccurred())
+					}
+				}
+
+				var syftDefaultOutput syftOutput
+				err = json.NewDecoder(syft).Decode(&syftDefaultOutput)
+				Expect(err).NotTo(HaveOccurred(), syft.String())
+
+				Expect(syftDefaultOutput.Artifacts[0].Licenses).To(ContainElement(syftLicense{Value: "BSD-3-Clause"}), syft.String())
+			})
+		})
 		context("when the input dependency has CPEs and CPE", func() {
 			it("uses CPEs, not CPE", func() {
 				bom, err := sbom.GenerateFromDependency(postal.Dependency{
@@ -338,7 +399,7 @@ func testSBOM(t *testing.T, context spec.G, it spec.S) {
 					CPE:            "cpe:2.3:a:golang:go:1.16.9:*:*:*:*:*:*:*",
 					CPEs:           []string{"cpe:2.3:a:some:other:cpe:*:*:*:*:*:*:*", "cpe:2.3:a:another:cpe:to:include:*:*:*:*:*:*"},
 					ID:             "go",
-					Licenses:       []string{"BSD-3-Clause"},
+					LicenseEntries: []postal.License{{Type: "BSD-3-Clause"}},
 					Name:           "Go",
 					Checksum:       "sha256:ca9ef23a5db944b116102b87c1ae9344b27e011dae7157d2f1e501abd39e9829",
 					Source:         "https://dl.google.com/go/go1.16.9.src.tar.gz",
