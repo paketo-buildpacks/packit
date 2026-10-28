@@ -130,16 +130,14 @@ type ConfigMetadataDependency struct {
 	Version         string   `toml:"version"          json:"version,omitempty"`
 }
 
-// MarshalJSON encodes the dependency, collapsing the two license
+// marshalDependency encodes a dependency struct, collapsing the two license
 // representations onto the single licenses key.
 //
-// The standard table form is emitted when LicenseEntries is set. Otherwise the
-// legacy list of identifiers is emitted, so buildpack.toml files that use the
-// older format round-trip unchanged.
-func (d ConfigMetadataDependency) MarshalJSON() ([]byte, error) {
-	type alias ConfigMetadataDependency
-
-	content, err := json.Marshal(alias(d))
+// The standard table form is emitted when entries is set. Otherwise the legacy
+// list of identifiers is emitted, so buildpack.toml and extension.toml files
+// that use the older format round-trip unchanged.
+func marshalDependency(value any, legacy []interface{}, entries []ConfigDependencyLicense) ([]byte, error) {
+	content, err := json.Marshal(value)
 	if err != nil {
 		return nil, err
 	}
@@ -150,13 +148,62 @@ func (d ConfigMetadataDependency) MarshalJSON() ([]byte, error) {
 	}
 
 	switch {
-	case len(d.LicenseEntries) > 0:
-		encoded["licenses"] = d.LicenseEntries
-	case len(d.Licenses) > 0:
-		encoded["licenses"] = d.Licenses
+	case len(entries) > 0:
+		encoded["licenses"] = entries
+	case len(legacy) > 0:
+		encoded["licenses"] = legacy
 	}
 
 	return json.Marshal(encoded)
+}
+
+// unmarshalDependency decodes a dependency struct and splits the single
+// licenses key into whichever representation the document uses. It also returns
+// the value of the legacy source_sha256 key, which used an underscore separator.
+func unmarshalDependency(data []byte, value any) (string, []interface{}, []ConfigDependencyLicense, error) {
+	if err := json.Unmarshal(data, value); err != nil {
+		return "", nil, nil, err
+	}
+
+	var raw struct {
+		Licenses           []json.RawMessage `json:"licenses"`
+		LegacySourceSHA256 string            `json:"source_sha256"`
+	}
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return "", nil, nil, err
+	}
+
+	var licenses []interface{}
+	var entries []ConfigDependencyLicense
+
+	for _, item := range raw.Licenses {
+		var identifier string
+		if err := json.Unmarshal(item, &identifier); err == nil {
+			licenses = append(licenses, identifier)
+			continue
+		}
+
+		var entry ConfigDependencyLicense
+		if err := json.Unmarshal(item, &entry); err != nil {
+			return "", nil, nil, err
+		}
+
+		entries = append(entries, entry)
+	}
+
+	return raw.LegacySourceSHA256, licenses, entries, nil
+}
+
+// MarshalJSON encodes the dependency, collapsing the two license
+// representations onto the single licenses key.
+//
+// The standard table form is emitted when LicenseEntries is set. Otherwise the
+// legacy list of identifiers is emitted, so buildpack.toml files that use the
+// older format round-trip unchanged.
+func (d ConfigMetadataDependency) MarshalJSON() ([]byte, error) {
+	type alias ConfigMetadataDependency
+
+	return marshalDependency(alias(d), d.Licenses, d.LicenseEntries)
 }
 
 // UnmarshalJSON decodes the single licenses key into whichever of Licenses or
@@ -165,38 +212,19 @@ func (d *ConfigMetadataDependency) UnmarshalJSON(data []byte) error {
 	type alias ConfigMetadataDependency
 
 	var decoded alias
-	if err := json.Unmarshal(data, &decoded); err != nil {
+
+	legacySourceSHA256, licenses, entries, err := unmarshalDependency(data, &decoded)
+	if err != nil {
 		return err
 	}
 
 	*d = ConfigMetadataDependency(decoded)
-
-	var raw struct {
-		Licenses           []json.RawMessage `json:"licenses"`
-		LegacySourceSHA256 string            `json:"source_sha256"`
-	}
-	if err := json.Unmarshal(data, &raw); err != nil {
-		return err
-	}
+	d.Licenses = licenses
+	d.LicenseEntries = entries
 
 	// The source hash was previously written with an underscore separator.
 	if d.SourceSHA256 == "" {
-		d.SourceSHA256 = raw.LegacySourceSHA256
-	}
-
-	for _, value := range raw.Licenses {
-		var identifier string
-		if err := json.Unmarshal(value, &identifier); err == nil {
-			d.Licenses = append(d.Licenses, identifier)
-			continue
-		}
-
-		var entry ConfigDependencyLicense
-		if err := json.Unmarshal(value, &entry); err != nil {
-			return err
-		}
-
-		d.LicenseEntries = append(d.LicenseEntries, entry)
+		d.SourceSHA256 = legacySourceSHA256
 	}
 
 	return nil
@@ -387,29 +415,44 @@ func convertPatches(cons []ConfigMetadataDependencyConstraint, c map[string]inte
 
 // Accomplishes the same this as the convertPatches function but for strip components in the dependencies list.
 func convertStripComponents(deps []ConfigMetadataDependency, c map[string]interface{}) (map[string]interface{}, error) {
-	if len(deps) > 0 {
-		metadata, ok := c["metadata"].(map[string]interface{})
-		if !ok {
-			return nil, fmt.Errorf("failure to assert type: unexpected data in metadata")
-		}
-
-		dependencies, ok := metadata["dependencies"].([]interface{})
-		if !ok {
-			return nil, fmt.Errorf("failure to assert type: unexpected data in constraints")
-		}
-
-		for _, dependency := range dependencies {
-			stripComponents, ok := dependency.(map[string]interface{})["strip-components"]
-			if !ok {
-				continue
-			}
-
-			floatStripComponents, ok := stripComponents.(float64)
-			if !ok {
-				return nil, fmt.Errorf("failure to assert type: unexpected data")
-			}
-			dependency.(map[string]interface{})["strip-components"] = int(floatStripComponents)
-		}
+	if len(deps) == 0 {
+		return c, nil
 	}
+
+	return convertDependencyStripComponents(c)
+}
+
+func convertExtensionStripComponents(deps []ConfigExtensionMetadataDependency, c map[string]interface{}) (map[string]interface{}, error) {
+	if len(deps) == 0 {
+		return c, nil
+	}
+
+	return convertDependencyStripComponents(c)
+}
+
+func convertDependencyStripComponents(c map[string]interface{}) (map[string]interface{}, error) {
+	metadata, ok := c["metadata"].(map[string]interface{})
+	if !ok {
+		return nil, fmt.Errorf("failure to assert type: unexpected data in metadata")
+	}
+
+	dependencies, ok := metadata["dependencies"].([]interface{})
+	if !ok {
+		return nil, fmt.Errorf("failure to assert type: unexpected data in constraints")
+	}
+
+	for _, dependency := range dependencies {
+		stripComponents, ok := dependency.(map[string]interface{})["strip-components"]
+		if !ok {
+			continue
+		}
+
+		floatStripComponents, ok := stripComponents.(float64)
+		if !ok {
+			return nil, fmt.Errorf("failure to assert type: unexpected data")
+		}
+		dependency.(map[string]interface{})["strip-components"] = int(floatStripComponents)
+	}
+
 	return c, nil
 }
