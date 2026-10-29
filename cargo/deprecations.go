@@ -32,14 +32,17 @@ const licensesReplacement = "licenses tables with type and uri"
 
 // dependencyKeyDeprecations maps deprecated dependency metadata keys to what
 // should be used instead.
+//
+// sha256 and stacks are deliberately absent: both are still written by tooling
+// (including jam) as part of dependency updates, and neither is marked
+// deprecated on the config structs, so reporting them would produce warnings
+// that cannot yet be acted on.
 var dependencyKeyDeprecations = map[string]string{
 	"cpe":              "cpes",
 	"deprecation_date": "eol-date",
 	"purl":             "purls",
-	"sha256":           "checksum",
 	"source-sha256":    "source-checksum",
 	"source_sha256":    "source-checksum",
-	"stacks":           "distros, os, and arch",
 }
 
 // DeprecatedDependencyKeys returns the deprecated dependency metadata keys used

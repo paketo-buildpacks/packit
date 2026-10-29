@@ -69,9 +69,7 @@ func testDeprecations(t *testing.T, context spec.G, it spec.S) {
 				{Path: "metadata.dependencies[0]", ID: "some-dependency", Key: "deprecation_date", Replacement: "eol-date"},
 				{Path: "metadata.dependencies[0]", ID: "some-dependency", Key: "licenses", Replacement: "licenses tables with type and uri"},
 				{Path: "metadata.dependencies[0]", ID: "some-dependency", Key: "purl", Replacement: "purls"},
-				{Path: "metadata.dependencies[0]", ID: "some-dependency", Key: "sha256", Replacement: "checksum"},
 				{Path: "metadata.dependencies[0]", ID: "some-dependency", Key: "source_sha256", Replacement: "source-checksum"},
-				{Path: "metadata.dependencies[0]", ID: "some-dependency", Key: "stacks", Replacement: "distros, os, and arch"},
 			}))
 		})
 
