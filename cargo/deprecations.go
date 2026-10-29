@@ -25,18 +25,20 @@ type Deprecation struct {
 	Replacement string
 }
 
-// licensesReplacement is used for the licenses key, which is only deprecated
-// when it uses the legacy list of identifiers rather than the standard list of
-// tables.
-const licensesReplacement = "licenses tables with type and uri"
-
 // dependencyKeyDeprecations maps deprecated dependency metadata keys to what
 // should be used instead.
 //
-// sha256 and stacks are deliberately absent: both are still written by tooling
-// (including jam) as part of dependency updates, and neither is marked
-// deprecated on the config structs, so reporting them would produce warnings
-// that cannot yet be acted on.
+// Only renames that are safe to apply are listed. sha256, stacks, and the
+// legacy list-of-identifiers form of licenses are deliberately absent:
+//
+//   - sha256 and stacks are still written by tooling (including jam) as part of
+//     dependency updates, and neither is marked deprecated on the config
+//     structs.
+//   - rewriting licenses from a list of identifiers to a list of tables breaks
+//     parsing for any consumer still on a packit release that predates table
+//     support, so it should not be encouraged until that support is widespread.
+//
+// Reporting them would produce warnings that cannot be acted on safely.
 var dependencyKeyDeprecations = map[string]string{
 	"cpe":              "cpes",
 	"deprecation_date": "eol-date",
@@ -74,12 +76,6 @@ func DeprecatedDependencyKeys(r io.Reader) ([]Deprecation, error) {
 
 		for _, key := range keys {
 			replacement, deprecated := dependencyKeyDeprecations[key]
-
-			if !deprecated && key == "licenses" && hasLegacyLicenses(dependency[key]) {
-				replacement = licensesReplacement
-				deprecated = true
-			}
-
 			if !deprecated {
 				continue
 			}
@@ -114,29 +110,4 @@ func dependencyTables(value interface{}) []map[string]interface{} {
 	default:
 		return nil
 	}
-}
-
-// hasLegacyLicenses reports whether the licenses value uses the legacy list of
-// identifiers form rather than the standard list of tables.
-func hasLegacyLicenses(value interface{}) bool {
-	var licenses []interface{}
-
-	switch items := value.(type) {
-	case []map[string]interface{}:
-		return false
-
-	case []interface{}:
-		licenses = items
-
-	default:
-		return false
-	}
-
-	for _, license := range licenses {
-		if _, ok := license.(string); ok {
-			return true
-		}
-	}
-
-	return false
 }
