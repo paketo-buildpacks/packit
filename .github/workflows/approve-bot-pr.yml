@@ -66,7 +66,7 @@ jobs:
       run: |
         gh pr merge ${{ needs.download.outputs.pr-number }} --auto --rebase
       env:
-        GITHUB_TOKEN: ${{ secrets.PAKETO_BOT_GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.PAKETO_BOT_REVIEWER_GITHUB_TOKEN }}
 
   failure:
     name: Alert on Failure
