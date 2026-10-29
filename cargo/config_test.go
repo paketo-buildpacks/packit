@@ -72,12 +72,17 @@ func testConfig(t *testing.T, context spec.G, it spec.S) {
 					PrePackage:   "some-pre-package-script.sh",
 					Dependencies: []cargo.ConfigMetadataDependency{
 						{
-							Checksum:        "sha256:some-sum",
-							CPE:             "some-cpe",
-							PURL:            "some-purl",
-							DeprecationDate: &deprecationDate,
-							ID:              "some-dependency",
-							Licenses:        []interface{}{"fancy-license", "fancy-license-2"},
+							Checksum: "sha256:some-sum",
+							CPE:      "some-cpe",
+							CPEs:     []string{"some-cpe", "other-cpe"},
+							PURL:     "some-purl",
+							PURLs:    []string{"some-purl", "other-purl"},
+							EOLDate:  &deprecationDate,
+							ID:       "some-dependency",
+							LicenseEntries: []cargo.ConfigDependencyLicense{
+								{Type: "fancy-license"},
+								{Type: "fancy-license-2"},
+							},
 							Name:            "Some Dependency",
 							SHA256:          "shasum",
 							Source:          "source",
@@ -151,15 +156,16 @@ api = "0.6"
 [[metadata.dependencies]]
 	checksum = "sha256:some-sum"
   cpe = "some-cpe"
+  cpes = ["some-cpe", "other-cpe"]
   purl = "some-purl"
-  deprecation_date = "2020-06-01T00:00:00Z"
+  purls = ["some-purl", "other-purl"]
+  eol-date = "2020-06-01T00:00:00Z"
   id = "some-dependency"
-	licenses = ["fancy-license", "fancy-license-2"]
   name = "Some Dependency"
   sha256 = "shasum"
 	source = "source"
 	source-checksum = "sha256:source-shasum"
-  source_sha256 = "source-shasum"
+  source-sha256 = "source-shasum"
   stacks = ["io.buildpacks.stacks.bionic", "org.cloudfoundry.stacks.tiny"]
   strip-components = 1
   uri = "http://some-url"
@@ -170,6 +176,12 @@ api = "0.6"
 	[[metadata.dependencies.distros]]
 	name = "some-distro-name"
 	version = "some-distro-version"
+
+  [[metadata.dependencies.licenses]]
+  type = "fancy-license"
+
+  [[metadata.dependencies.licenses]]
+  type = "fancy-license-2"
 
 [[metadata.dependency-constraints]]
   id = "some-dependency"
@@ -239,17 +251,17 @@ api = "0.6"
 						PrePackage:   "some-pre-package-script.sh",
 						Dependencies: []cargo.ConfigMetadataDependency{
 							{
-								Checksum:        "sha256:some-sum",
-								CPE:             "some-cpe",
-								PURL:            "some-purl",
-								DeprecationDate: &deprecationDate,
-								ID:              "some-dependency",
-								Licenses: []interface{}{
-									cargo.ConfigBuildpackLicense{
+								Checksum: "sha256:some-sum",
+								CPE:      "some-cpe",
+								PURL:     "some-purl",
+								EOLDate:  &deprecationDate,
+								ID:       "some-dependency",
+								LicenseEntries: []cargo.ConfigDependencyLicense{
+									{
 										Type: "fancy-license",
 										URI:  "some-license-uri",
 									},
-									cargo.ConfigBuildpackLicense{
+									{
 										Type: "fancy-license-2",
 										URI:  "some-license-uri",
 									},
@@ -315,13 +327,13 @@ api = "0.6"
 	checksum = "sha256:some-sum"
   cpe = "some-cpe"
   purl = "some-purl"
-  deprecation_date = "2020-06-01T00:00:00Z"
+  eol-date = "2020-06-01T00:00:00Z"
   id = "some-dependency"
   name = "Some Dependency"
   sha256 = "shasum"
 	source = "source"
 	source-checksum = "sha256:source-shasum"
-  source_sha256 = "source-shasum"
+  source-sha256 = "source-shasum"
   stacks = ["io.buildpacks.stacks.bionic", "org.cloudfoundry.stacks.tiny"]
   uri = "http://some-url"
   version = "1.2.3"
@@ -465,10 +477,10 @@ api = "0.6"
 
 [[metadata.dependencies]]
 	checksum = "sha256:some-sum"
-  cpe = "some-cpe"
-  purl = "some-purl"
+  cpes = ["some-cpe", "other-cpe"]
+  purls = ["some-purl", "other-purl"]
+  eol-date = "2020-06-01T00:00:00Z"
   id = "some-dependency"
-	licenses = ["fancy-license", "fancy-license-2"]
   name = "Some Dependency"
   sha256 = "shasum"
   source = "source"
@@ -484,6 +496,14 @@ api = "0.6"
 	[[metadata.dependencies.distros]]
 	name = "some-distro-name"
 	version = "some-distro-version"
+
+	[[metadata.dependencies.licenses]]
+	type = "fancy-license"
+	uri = "some-license-uri"
+
+	[[metadata.dependencies.licenses]]
+	type = "fancy-license-2"
+	uri = "some-license-uri"
 
 [[metadata.dependency-constraints]]
   id = "some-dependency"
@@ -507,6 +527,9 @@ api = "0.6"
 		version = "other-version"
 		optional = true
 `)
+
+			eolDate, err := time.Parse(time.RFC3339, "2020-06-01T00:00:00Z")
+			Expect(err).NotTo(HaveOccurred())
 
 			var config cargo.Config
 			Expect(cargo.DecodeConfig(tomlBuffer, &config)).To(Succeed())
@@ -546,11 +569,15 @@ api = "0.6"
 					PrePackage: "some-pre-package-script.sh",
 					Dependencies: []cargo.ConfigMetadataDependency{
 						{
-							Checksum:        "sha256:some-sum",
-							CPE:             "some-cpe",
-							PURL:            "some-purl",
-							ID:              "some-dependency",
-							Licenses:        []interface{}{"fancy-license", "fancy-license-2"},
+							Checksum: "sha256:some-sum",
+							CPEs:     []string{"some-cpe", "other-cpe"},
+							PURLs:    []string{"some-purl", "other-purl"},
+							EOLDate:  &eolDate,
+							ID:       "some-dependency",
+							LicenseEntries: []cargo.ConfigDependencyLicense{
+								{Type: "fancy-license", URI: "some-license-uri"},
+								{Type: "fancy-license-2", URI: "some-license-uri"},
+							},
 							Name:            "Some Dependency",
 							SHA256:          "shasum",
 							Source:          "source",
@@ -708,14 +735,14 @@ api = "0.2"
 								CPE:      "some-cpe",
 								PURL:     "some-purl",
 								ID:       "some-dependency",
-								Licenses: []interface{}{
-									map[string]interface{}{
-										"type": "fancy-license",
-										"uri":  "some-license-uri",
+								LicenseEntries: []cargo.ConfigDependencyLicense{
+									{
+										Type: "fancy-license",
+										URI:  "some-license-uri",
 									},
-									map[string]interface{}{
-										"type": "fancy-license-2",
-										"uri":  "some-license-uri",
+									{
+										Type: "fancy-license-2",
+										URI:  "some-license-uri",
 									},
 								},
 								Name:           "Some Dependency",
@@ -765,6 +792,335 @@ api = "0.2"
 				it("returns an error", func() {
 					err := cargo.DecodeConfig(errorReader{}, &cargo.Config{})
 					Expect(err).To(MatchError(ContainSubstring("failed to read")))
+				})
+			})
+		})
+	})
+
+	// The backwards compatibility contexts below cover the dependency metadata
+	// keys that predate the standard dependency metadata format (RFC 0059).
+	// They exist to guarantee that buildpack.toml files written in the older
+	// format keep working. Remove them once the legacy keys are no longer
+	// supported.
+	context("backwards compatibility", func() {
+		context("DecodeConfig", func() {
+			context("when the dependency uses the legacy cpe and purl keys", func() {
+				it("decodes them into CPE and PURL", func() {
+					tomlBuffer := strings.NewReader(`
+[[metadata.dependencies]]
+	id = "some-dependency"
+	cpe = "some-cpe"
+	purl = "some-purl"
+	uri = "http://some-url"
+	version = "1.2.3"
+`)
+					var config cargo.Config
+					Expect(cargo.DecodeConfig(tomlBuffer, &config)).To(Succeed())
+
+					Expect(config.Metadata.Dependencies).To(HaveLen(1))
+					Expect(config.Metadata.Dependencies[0].CPE).To(Equal("some-cpe"))
+					Expect(config.Metadata.Dependencies[0].CPEs).To(BeEmpty())
+					Expect(config.Metadata.Dependencies[0].PURL).To(Equal("some-purl"))
+					Expect(config.Metadata.Dependencies[0].PURLs).To(BeEmpty())
+				})
+			})
+
+			context("when the dependency uses the legacy deprecation_date key", func() {
+				it("decodes it into DeprecationDate", func() {
+					tomlBuffer := strings.NewReader(`
+[[metadata.dependencies]]
+	id = "some-dependency"
+	deprecation_date = "2020-06-01T00:00:00Z"
+	uri = "http://some-url"
+	version = "1.2.3"
+`)
+					eolDate, err := time.Parse(time.RFC3339, "2020-06-01T00:00:00Z")
+					Expect(err).NotTo(HaveOccurred())
+
+					var config cargo.Config
+					Expect(cargo.DecodeConfig(tomlBuffer, &config)).To(Succeed())
+
+					Expect(config.Metadata.Dependencies).To(HaveLen(1))
+					Expect(config.Metadata.Dependencies[0].DeprecationDate).To(Equal(&eolDate))
+				})
+			})
+
+			context("when the dependency uses the standard eol-date key", func() {
+				it("decodes it into EOLDate", func() {
+					tomlBuffer := strings.NewReader(`
+[[metadata.dependencies]]
+	id = "some-dependency"
+	eol-date = "2020-06-01T00:00:00Z"
+	uri = "http://some-url"
+	version = "1.2.3"
+`)
+					eolDate, err := time.Parse(time.RFC3339, "2020-06-01T00:00:00Z")
+					Expect(err).NotTo(HaveOccurred())
+
+					var config cargo.Config
+					Expect(cargo.DecodeConfig(tomlBuffer, &config)).To(Succeed())
+
+					Expect(config.Metadata.Dependencies).To(HaveLen(1))
+					Expect(config.Metadata.Dependencies[0].EOLDate).To(Equal(&eolDate))
+				})
+			})
+
+			context("when the dependency uses the legacy bare string licenses form", func() {
+				it("decodes them into Licenses", func() {
+					tomlBuffer := strings.NewReader(`
+[[metadata.dependencies]]
+	id = "some-dependency"
+	licenses = ["fancy-license", "fancy-license-2"]
+	uri = "http://some-url"
+	version = "1.2.3"
+`)
+					var config cargo.Config
+					Expect(cargo.DecodeConfig(tomlBuffer, &config)).To(Succeed())
+
+					Expect(config.Metadata.Dependencies).To(HaveLen(1))
+					Expect(config.Metadata.Dependencies[0].Licenses).To(Equal([]interface{}{
+						"fancy-license",
+						"fancy-license-2",
+					}))
+					Expect(config.Metadata.Dependencies[0].LicenseEntries).To(BeEmpty())
+				})
+			})
+
+			context("when the dependency uses the standard licenses table form", func() {
+				it("decodes them into LicenseEntries", func() {
+					tomlBuffer := strings.NewReader(`
+[[metadata.dependencies]]
+	id = "some-dependency"
+	uri = "http://some-url"
+	version = "1.2.3"
+
+	[[metadata.dependencies.licenses]]
+	type = "fancy-license"
+	uri = "http://some-url/license"
+`)
+					var config cargo.Config
+					Expect(cargo.DecodeConfig(tomlBuffer, &config)).To(Succeed())
+
+					Expect(config.Metadata.Dependencies).To(HaveLen(1))
+					Expect(config.Metadata.Dependencies[0].Licenses).To(BeEmpty())
+					Expect(config.Metadata.Dependencies[0].LicenseEntries).To(Equal([]cargo.ConfigDependencyLicense{
+						{Type: "fancy-license", URI: "http://some-url/license"},
+					}))
+				})
+			})
+
+			context("when the dependency uses the legacy sha256 and source_sha256 keys", func() {
+				it("decodes them", func() {
+					tomlBuffer := strings.NewReader(`
+[[metadata.dependencies]]
+	id = "some-dependency"
+	sha256 = "some-sha"
+	source_sha256 = "some-source-sha"
+	stacks = ["some-stack"]
+	uri = "http://some-url"
+	version = "1.2.3"
+`)
+					var config cargo.Config
+					Expect(cargo.DecodeConfig(tomlBuffer, &config)).To(Succeed())
+
+					Expect(config.Metadata.Dependencies).To(HaveLen(1))
+					Expect(config.Metadata.Dependencies[0].SHA256).To(Equal("some-sha"))
+					Expect(config.Metadata.Dependencies[0].SourceSHA256).To(Equal("some-source-sha"))
+					Expect(config.Metadata.Dependencies[0].Stacks).To(Equal([]string{"some-stack"}))
+				})
+			})
+
+			context("when both the legacy and standard keys are present", func() {
+				it("decodes both", func() {
+					tomlBuffer := strings.NewReader(`
+[[metadata.dependencies]]
+	id = "some-dependency"
+	eol-date = "2020-06-01T00:00:00Z"
+	deprecation_date = "2019-01-01T00:00:00Z"
+	uri = "http://some-url"
+	version = "1.2.3"
+`)
+					eolDate, err := time.Parse(time.RFC3339, "2020-06-01T00:00:00Z")
+					Expect(err).NotTo(HaveOccurred())
+
+					deprecationDate, err := time.Parse(time.RFC3339, "2019-01-01T00:00:00Z")
+					Expect(err).NotTo(HaveOccurred())
+
+					var config cargo.Config
+					Expect(cargo.DecodeConfig(tomlBuffer, &config)).To(Succeed())
+
+					Expect(config.Metadata.Dependencies).To(HaveLen(1))
+					Expect(config.Metadata.Dependencies[0].EOLDate).To(Equal(&eolDate))
+					Expect(config.Metadata.Dependencies[0].DeprecationDate).To(Equal(&deprecationDate))
+				})
+			})
+		})
+
+		context("EncodeConfig", func() {
+			context("when the dependency uses the legacy CPE and PURL fields", func() {
+				it("encodes the legacy cpe and purl keys", func() {
+					err := cargo.EncodeConfig(buffer, cargo.Config{
+						Buildpack: cargo.ConfigBuildpack{
+							ID: "some-buildpack-id",
+						},
+						Metadata: cargo.ConfigMetadata{
+							Dependencies: []cargo.ConfigMetadataDependency{
+								{
+									CPE:     "some-cpe",
+									ID:      "some-dependency",
+									PURL:    "some-purl",
+									URI:     "http://some-url",
+									Version: "1.2.3",
+								},
+							},
+						},
+					})
+					Expect(err).NotTo(HaveOccurred())
+					Expect(buffer.String()).To(MatchTOML(`
+[buildpack]
+	id = "some-buildpack-id"
+
+[[metadata.dependencies]]
+	cpe = "some-cpe"
+	id = "some-dependency"
+	purl = "some-purl"
+	uri = "http://some-url"
+	version = "1.2.3"
+`))
+				})
+			})
+
+			context("when a dependency was decoded from the legacy format", func() {
+				it("writes the legacy keys back out unchanged", func() {
+					tomlBuffer := strings.NewReader(`
+[buildpack]
+	id = "some-buildpack-id"
+
+[[metadata.dependencies]]
+	id = "some-dependency"
+	cpe = "some-cpe"
+	purl = "some-purl"
+	deprecation_date = "2020-06-01T00:00:00Z"
+	licenses = ["fancy-license"]
+	sha256 = "some-sha"
+	source-sha256 = "some-source-sha"
+	stacks = ["some-stack"]
+	uri = "http://some-url"
+	version = "1.2.3"
+`)
+					var config cargo.Config
+					Expect(cargo.DecodeConfig(tomlBuffer, &config)).To(Succeed())
+					Expect(cargo.EncodeConfig(buffer, config)).To(Succeed())
+
+					// Every legacy key is written back out in its original form so
+					// that anything still reading the old format keeps working.
+					Expect(buffer.String()).To(MatchTOML(`
+[buildpack]
+	id = "some-buildpack-id"
+
+[[metadata.dependencies]]
+	cpe = "some-cpe"
+	deprecation_date = "2020-06-01T00:00:00Z"
+	id = "some-dependency"
+	licenses = ["fancy-license"]
+	purl = "some-purl"
+	sha256 = "some-sha"
+	source-sha256 = "some-source-sha"
+	stacks = ["some-stack"]
+	uri = "http://some-url"
+	version = "1.2.3"
+`))
+				})
+			})
+
+			context("when the dependency uses the old source_sha256 spelling", func() {
+				it("still reads it", func() {
+					tomlBuffer := strings.NewReader(`
+[[metadata.dependencies]]
+	id = "some-dependency"
+	source_sha256 = "some-source-sha"
+	uri = "http://some-url"
+	version = "1.2.3"
+`)
+					var config cargo.Config
+					Expect(cargo.DecodeConfig(tomlBuffer, &config)).To(Succeed())
+
+					Expect(config.Metadata.Dependencies).To(HaveLen(1))
+					Expect(config.Metadata.Dependencies[0].SourceSHA256).To(Equal("some-source-sha"))
+				})
+			})
+
+			context("when a dependency license has no type", func() {
+				it("does not add an empty type", func() {
+					tomlBuffer := strings.NewReader(`
+[buildpack]
+	id = "some-buildpack-id"
+
+[[metadata.dependencies]]
+	id = "some-dependency"
+	uri = "http://some-url"
+	version = "1.2.3"
+
+	[[metadata.dependencies.licenses]]
+	uri = "http://some-url/license"
+`)
+					var config cargo.Config
+					Expect(cargo.DecodeConfig(tomlBuffer, &config)).To(Succeed())
+					Expect(cargo.EncodeConfig(buffer, config)).To(Succeed())
+
+					Expect(buffer.String()).To(MatchTOML(`
+[buildpack]
+	id = "some-buildpack-id"
+
+[[metadata.dependencies]]
+	id = "some-dependency"
+	uri = "http://some-url"
+	version = "1.2.3"
+
+	[[metadata.dependencies.licenses]]
+	uri = "http://some-url/license"
+`))
+				})
+			})
+
+			context("when a dependency was decoded from the standard format", func() {
+				it("writes the standard keys back out unchanged", func() {
+					tomlBuffer := strings.NewReader(`
+[buildpack]
+	id = "some-buildpack-id"
+
+[[metadata.dependencies]]
+	id = "some-dependency"
+	cpes = ["some-cpe"]
+	purls = ["some-purl"]
+	eol-date = "2020-06-01T00:00:00Z"
+	uri = "http://some-url"
+	version = "1.2.3"
+
+	[[metadata.dependencies.licenses]]
+	type = "fancy-license"
+	uri = "http://some-url/license"
+`)
+					var config cargo.Config
+					Expect(cargo.DecodeConfig(tomlBuffer, &config)).To(Succeed())
+					Expect(cargo.EncodeConfig(buffer, config)).To(Succeed())
+
+					Expect(buffer.String()).To(MatchTOML(`
+[buildpack]
+	id = "some-buildpack-id"
+
+[[metadata.dependencies]]
+	cpes = ["some-cpe"]
+	eol-date = "2020-06-01T00:00:00Z"
+	id = "some-dependency"
+	purls = ["some-purl"]
+	uri = "http://some-url"
+	version = "1.2.3"
+
+	[[metadata.dependencies.licenses]]
+	type = "fancy-license"
+	uri = "http://some-url/license"
+`))
 				})
 			})
 		})

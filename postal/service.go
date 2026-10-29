@@ -380,8 +380,14 @@ func (s Service) GenerateBillOfMaterials(dependencies ...Dependency) []packit.BO
 			paketoBomMetadata.DeprecationDate = dependency.DeprecationDate
 		}
 
-		if dependency.Licenses != nil {
+		if len(dependency.Licenses) > 0 {
 			paketoBomMetadata.Licenses = dependency.Licenses
+		} else if len(dependency.LicenseEntries) > 0 {
+			licenses := make([]string, 0, len(dependency.LicenseEntries))
+			for _, license := range dependency.LicenseEntries {
+				licenses = append(licenses, license.Type)
+			}
+			paketoBomMetadata.Licenses = licenses
 		}
 
 		if dependency.PURL != "" {
