@@ -13,6 +13,7 @@ func TestUnitCargo(t *testing.T) {
 	suite("BuildpackParser", testBuildpackParser)
 	suite("ExtensionParser", testExtensionParser)
 	suite("Config", testConfig)
+	suite("Deprecations", testDeprecations)
 	suite("ExtensionConfig", testExtensionConfig)
 	suite("DirectoryDuplicator", testDirectoryDuplicator)
 	suite("Transport", testTransport)
