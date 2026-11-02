@@ -65,6 +65,17 @@ jobs:
           tag="${{ steps.semver.outputs.tag }}"
         fi
         echo "tag=${tag}" >> "$GITHUB_OUTPUT"
+    - name: Generate Release Notes
+      env:
+        GH_TOKEN: ${{ secrets.PAKETO_BOT_GITHUB_TOKEN }}
+      run: |
+        gh api \
+          --method POST \
+          -H "Accept: application/vnd.github+json" \
+          "/repos/${{ github.repository }}/releases/generate-notes" \
+          -f tag_name="v${{ steps.tag.outputs.tag }}" \
+          -f target_commitish="${{ github.sha }}" \
+          --jq .body > release_notes.md
     - name: Create Release
       uses: paketo-buildpacks/github-config/actions/release/create@main
       with:
@@ -73,6 +84,7 @@ jobs:
         tag_name: v${{ steps.tag.outputs.tag }}
         target_commitish: ${{ github.sha }}
         name: v${{ steps.tag.outputs.tag }}
+        body_filepath: release_notes.md
         draft: true
 
   failure:
