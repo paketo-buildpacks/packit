@@ -19,6 +19,19 @@ jobs:
       with:
         go-version-file: go.mod
 
+    - name: Read options
+      id: options
+      run: |
+        setup_qemu=false
+        if [[ -f scripts/options.json ]]; then
+          setup_qemu="$(jq -r '.setup_qemu // false' scripts/options.json)"
+        fi
+        echo "setup_qemu=${setup_qemu}" >> "${GITHUB_OUTPUT}"
+
+    - name: Set up QEMU
+      if: steps.options.outputs.setup_qemu == 'true'
+      uses: docker/setup-qemu-action@99012661954931238ded8c8b007157a8430204e1 # v4.4.0
+
     - name: Run Unit Tests
       run: ./scripts/unit.sh
 
